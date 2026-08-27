@@ -6,6 +6,34 @@
     <title>Compasso | Governança Cloud</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- NOVO (rebranding Compasso, 27/08/2026): o app inteiro usa a escala
+         "red-*" do Tailwind como cor de marca (herdado do Compasso, onde "red"
+         era literalmente o vermelho da cliente de origem) — em vez de caçar e trocar
+         cada uma das centenas de classes text-red-/bg-red-/border-red-
+         espalhadas pelas telas, remapeamos aqui o QUE a escala "red"
+         resolve pra, no Tailwind Play CDN. Toda classe red-* existente
+         (e futura) passa a renderizar automaticamente na cor de marca do
+         Compasso, sem precisar tocar em nenhuma tela. Valores = escala
+         "indigo" oficial do Tailwind (já testada/acessível), só emprestada
+         pro nome "red" por conveniência — não é indigo de verdade em
+         nenhum outro sentido.
+         css/styles.css (.brand-red-text/.brand-red-bg) foi atualizado em
+         conjunto — mesma cor, mesmo motivo. -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        red: {
+                            50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
+                            400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
+                            800: '#3730a3', 900: '#312e81'
+                        }
+                    }
+                }
+            }
+        };
+    </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Plotly.js -->

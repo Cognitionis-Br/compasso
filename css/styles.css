@@ -6,9 +6,11 @@ body {
     overflow: hidden; /* Evita rolagem dupla na estrutura Shell */
 }
 
-/* Identidade visual contida */
-.brand-red-text { color: #DC2626; }
-.brand-red-bg { background-color: #DC2626; }
+/* Identidade visual contida — cor de marca do Compasso (indigo-700 do
+   Tailwind), a mesma pra qual a escala red-* foi remapeada no
+   tailwind.config de index.html. Mantém as duas em sincronia se mudar. */
+.brand-red-text { color: #4338CA; }
+.brand-red-bg { background-color: #4338CA; }
 
 /* Cartões e painéis mais limpos, sem bordas gritantes */
 .kpi-card { 

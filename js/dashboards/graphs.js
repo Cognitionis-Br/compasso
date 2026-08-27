@@ -40,7 +40,7 @@ function renderGraphOrcadoVsRealizadoUn(listaFiltrada) {
         // sozinho, e tickangle inclina o texto pra caber melhor.
         Plotly.newPlot('chartOrcadoVsRealizadoUn', [
             { name: 'Previsto ($)', x: uns, y: orcadoVals, type: 'bar', marker: { color: '#1E3A8A' } },
-            { name: 'Realizado ($)', x: uns, y: realizadoVals, type: 'bar', marker: { color: '#EB0A1E' } }
+            { name: 'Realizado ($)', x: uns, y: realizadoVals, type: 'bar', marker: { color: '#4F46E5' } }
         ], {
             barmode: 'group',
             margin: { t: 10, b: 80, l: 50, r: 10 },
