@@ -1,0 +1,12 @@
+# Scratch test harnesses used during development sessions — never meant to ship.
+_claude_test_*.html
+
+# OS/editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local secrets, if ever introduced (none committed today — provider keys
+# live as Netlify environment variables, not files in this repo).
+.env
+.env.local
