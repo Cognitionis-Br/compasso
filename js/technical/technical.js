@@ -64,10 +64,8 @@ const CONFIG_CONCLUSAO_TECHNICAL = {
     campoHorasPos: 'horas_tech',
     campoAlertaVariacaoHoras: 'tech_alerta_variacao_horas',
     campoVariacaoPercentualHoras: 'tech_variacao_percentual_horas',
-    // NOVO (Mudança de Orçamento, 27/08/2026): ver mesmo comentário em
-    // CONFIG_CONCLUSAO_REQUERIMENTOS (js/requirements/requirements.js).
-    campoPercentualBloqueioHoras: 'tech_percentual_horas',
-    campoPercentualBloqueioValor: 'tech_percentual_valor',
+    // REMOVIDO (Licenciamento de Módulos, 28/08/2026): ver mesmo
+    // comentário em CONFIG_CONCLUSAO_REQUERIMENTOS (js/requirements/requirements.js).
     etapaNomeRBAC: 'FECHAR ESPECIFICAÇÃO',
     faseFluxoEmail: 'TECHNICAL',
     quandoDisparaConcluir: 'Após fechar especificação',

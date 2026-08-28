@@ -7,56 +7,40 @@
 // confirmarConclusaoFaseGenerica (js/requirements/requirements.js) pra
 // decidir se bloqueia o projeto pra Mudança de Orçamento (Governança).
 //
-// Nasce com tudo NULL — sem bloqueio nenhum até o admin preencher aqui.
+// SIMPLIFICADO (Licenciamento de Módulos, 28/08/2026): eram 4 campos
+// separados (req/tech × horas/valor) — viraram 1 parâmetro único
+// (percentual_bloqueio_variacao), aplicado igual nas duas fases e nas
+// duas dimensões. As 4 colunas antigas continuam na base (histórico), só
+// deixaram de ser lidas/escritas por aqui. Esta tela só é alcançável
+// quando o módulo FINANCEIRO está ativo (TAB_MODULO_MAP, js/core/licenca.js).
+//
+// Nasce NULL — sem bloqueio nenhum até o admin preencher aqui.
 // =========================================================================
 
 async function renderPercentualBloqueioOrcamentoView() {
     const { data, error } = await _supabase.from('config_bloqueio_orcamento').select('*').eq('id', 1).maybeSingle();
     const cfg = error || !data ? {} : data;
 
-    const preencher = (id, valor) => {
-        const el = document.getElementById(id);
-        if (el) el.value = (valor === null || valor === undefined) ? '' : valor;
-    };
-    preencher('bloqueioReqPercentualHoras', cfg.req_percentual_horas);
-    preencher('bloqueioReqPercentualValor', cfg.req_percentual_valor);
-    preencher('bloqueioTechPercentualHoras', cfg.tech_percentual_horas);
-    preencher('bloqueioTechPercentualValor', cfg.tech_percentual_valor);
+    const el = document.getElementById('bloqueioPercentualVariacao');
+    if (el) el.value = (cfg.percentual_bloqueio_variacao === null || cfg.percentual_bloqueio_variacao === undefined) ? '' : cfg.percentual_bloqueio_variacao;
 }
 
 async function salvarPercentualBloqueioOrcamento() {
-    const lerPercentual = (id) => {
-        const bruto = (document.getElementById(id).value || '').trim();
-        return bruto === '' ? null : Number(bruto);
-    };
-
-    const campos = [
-        ['Requerimentos — Horas', 'bloqueioReqPercentualHoras'],
-        ['Requerimentos — Valor', 'bloqueioReqPercentualValor'],
-        ['Technical — Horas', 'bloqueioTechPercentualHoras'],
-        ['Technical — Valor', 'bloqueioTechPercentualValor']
-    ];
-    const valores = {};
-    for (const [label, id] of campos) {
-        const v = lerPercentual(id);
-        if (v !== null && (isNaN(v) || v < 0)) {
-            return alert(`Percentual inválido em "${label}" — informe um número positivo ou deixe em branco (sem bloqueio nesse campo).`);
-        }
-        valores[id] = v;
+    const bruto = (document.getElementById('bloqueioPercentualVariacao').value || '').trim();
+    const valor = bruto === '' ? null : Number(bruto);
+    if (valor !== null && (isNaN(valor) || valor < 0)) {
+        return alert('Percentual inválido — informe um número positivo ou deixe em branco (sem bloqueio).');
     }
 
     const payload = {
-        req_percentual_horas: valores.bloqueioReqPercentualHoras,
-        req_percentual_valor: valores.bloqueioReqPercentualValor,
-        tech_percentual_horas: valores.bloqueioTechPercentualHoras,
-        tech_percentual_valor: valores.bloqueioTechPercentualValor,
+        percentual_bloqueio_variacao: valor,
         atualizado_por: currentUser ? currentUser.nome : 'desconhecido',
         atualizado_em: new Date().toISOString()
     };
 
     const { error } = await _supabase.from('config_bloqueio_orcamento').update(payload).eq('id', 1);
-    if (error) return alert('Erro ao salvar os percentuais: ' + error.message);
+    if (error) return alert('Erro ao salvar o percentual: ' + error.message);
 
-    alert('✅ Percentuais de bloqueio de orçamento salvos com sucesso!');
+    alert('✅ Percentual de bloqueio de orçamento salvo com sucesso!');
     await renderPercentualBloqueioOrcamentoView();
 }

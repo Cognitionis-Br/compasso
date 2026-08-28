@@ -59,6 +59,19 @@ function switchTab(tabId) {
 
     document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
 
+    // NOVO (Licenciamento de Módulos, 28/08/2026): bloqueia o carregamento
+    // da view se o módulo dono dela (js/core/licenca.js, TAB_MODULO_MAP)
+    // não estiver ativo — mesmo que o acesso seja forçado (URL, console,
+    // etc.), sem depender só do menu já estar escondido.
+    const moduloDaTela = moduloDoTab(tabId);
+    if (moduloDaTela && !moduloAtivo(moduloDaTela)) {
+        const nomeExibicao = document.getElementById('moduloBloqueadoNome');
+        if (nomeExibicao) nomeExibicao.innerText = NOME_EXIBICAO_MODULO[moduloDaTela] || moduloDaTela;
+        const bloqueado = document.getElementById('view-modulo-bloqueado');
+        if (bloqueado) bloqueado.classList.remove('hidden');
+        return;
+    }
+
     const targetView = document.getElementById('view-' + tabId);
     if (targetView) targetView.classList.remove('hidden');
 
@@ -110,6 +123,22 @@ function switchTab(tabId) {
     if (tabId === 'cargos') { mudarAbaCargos('criar'); renderCargosView(); }
     if (tabId === 'percentual_bloqueio_orcamento') renderPercentualBloqueioOrcamentoView();
     if (tabId === 'mudanca_orcamento') renderMudancaOrcamentoView();
+    // NOVO (Licenciamento de Módulos, 28/08/2026): restrita a
+    // ADMINISTRADOR — mesma camada dupla de Ferramentas de Dev (catálogo
+    // de atividades pra visibilidade do link + checagem extra de
+    // ehAdministrador aqui pro conteúdo de verdade).
+    if (tabId === 'licenciamento_modulos') {
+        const restrito = document.getElementById('licenciamentoModulosRestrito');
+        const conteudo = document.getElementById('licenciamentoModulosConteudo');
+        if (ehAdministrador) {
+            if (restrito) restrito.classList.add('hidden');
+            if (conteudo) conteudo.classList.remove('hidden');
+            renderLicenciamentoModulosView();
+        } else {
+            if (restrito) restrito.classList.remove('hidden');
+            if (conteudo) conteudo.classList.add('hidden');
+        }
+    }
     if (tabId === 'return_benefit') renderReturnBenefitView();
     if (tabId === 'governanca') renderGovernancaView();
     if (tabId === 'retomar_hold') renderRetomarHoldView();

@@ -512,7 +512,12 @@ function usuarioTemAlgumaAtividadeDoTab(tabId) {
 
 function aplicarVisibilidadeMenu() {
     tabIdsDoCatalogo().forEach(tabId => {
-        const temAcesso = usuarioTemAlgumaAtividadeDoTab(tabId);
+        // NOVO (Licenciamento de Módulos, 28/08/2026): visibilidade agora
+        // depende de DUAS checagens independentes — RBAC (o de sempre) E
+        // o módulo dono da tela estar licenciado/ativo (js/core/licenca.js).
+        // Falhar qualquer uma das duas esconde o item — sem módulo não
+        // adianta ter a atividade, e vice-versa.
+        const temAcesso = usuarioTemAlgumaAtividadeDoTab(tabId) && moduloAtivo(moduloDoTab(tabId));
         const link = document.getElementById(`link-${tabId}`);
         if (link) link.classList.toggle('hidden', !temAcesso);
         // Abas da barra superior (Dashboard, Consultas, Roadmap etc.) usam

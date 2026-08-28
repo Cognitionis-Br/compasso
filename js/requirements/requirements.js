@@ -158,12 +158,11 @@ const CONFIG_CONCLUSAO_REQUERIMENTOS = {
     campoHorasPos: 'horas_req',
     campoAlertaVariacaoHoras: 'req_alerta_variacao_horas',
     campoVariacaoPercentualHoras: 'req_variacao_percentual_horas',
-    // NOVO (Mudança de Orçamento, 27/08/2026): campos de
-    // config_bloqueio_orcamento usados por confirmarConclusaoFaseGenerica
-    // pra decidir se BLOQUEIA o avanço (diferente do alerta amarelo/
-    // vermelho acima, que é só informativo).
-    campoPercentualBloqueioHoras: 'req_percentual_horas',
-    campoPercentualBloqueioValor: 'req_percentual_valor',
+    // REMOVIDO (Licenciamento de Módulos, 28/08/2026): campos por-fase
+    // (campoPercentualBloqueioHoras/Valor) — confirmarConclusaoFaseGenerica
+    // agora lê um parâmetro único (config_bloqueio_orcamento.percentual_
+    // bloqueio_variacao), o mesmo pras duas fases e as duas dimensões, e só
+    // bloqueia se o módulo FINANCEIRO estiver ativo (js/core/licenca.js).
     etapaNomeRBAC: 'FECHAR REQUERIMENTOS',
     faseFluxoEmail: 'REQUERIMENTS',
     quandoDisparaConcluir: 'Após fechar requerimentos',
@@ -321,19 +320,21 @@ async function confirmarConclusaoFaseGenerica() {
         ? `\n\n${alertaHoras.nivel === 'vermelho' ? '🔴' : '🟡'} ATENÇÃO: variação de ${alertaHoras.percentual}% em HORAS em relação ao ${config.labelReferencia}!`
         : '';
 
-    // NOVO (Mudança de Orçamento, 27/08/2026): checa se a variação estoura
-    // o percentual de BLOQUEIO parametrizado (Administração > Percentual
-    // de Bloqueio de Orçamento) — diferente do alerta amarelo/vermelho
-    // acima, que é só informativo e nunca impediu o avanço. Lê ao vivo
-    // (não usa cache) — mesmo padrão já usado pra chave geral de e-mail —
-    // pra não bloquear/liberar com um valor desatualizado numa sessão
-    // aberta há muito tempo. Campos NULL (não configurados) nunca bloqueiam.
-    const { data: configBloqueio } = await _supabase.from('config_bloqueio_orcamento').select('*').eq('id', 1).maybeSingle();
-    const limiteValor = configBloqueio && configBloqueio[config.campoPercentualBloqueioValor] != null ? Number(configBloqueio[config.campoPercentualBloqueioValor]) : null;
-    const limiteHoras = configBloqueio && configBloqueio[config.campoPercentualBloqueioHoras] != null ? Number(configBloqueio[config.campoPercentualBloqueioHoras]) : null;
-    const estourouValor = limiteValor !== null && alerta.percentual > limiteValor;
-    const estourouHoras = limiteHoras !== null && alertaHoras.percentual > limiteHoras;
-    const vaiBloquear = estourouValor || estourouHoras;
+    // AJUSTADO (Licenciamento de Módulos, 28/08/2026): o bloqueio de
+    // variação de orçamento agora depende do módulo FINANCEIRO estar
+    // ativo (js/core/licenca.js) E de um percentual único configurado
+    // (Administração > Percentual de Bloqueio de Orçamento) — o mesmo
+    // limite vale pra horas e pra valor, nas duas fases. Sem FINANCEIRO
+    // ativo, nunca bloqueia, mesmo com um percentual configurado. Lê ao
+    // vivo (não usa cache) — mesmo padrão já usado pra chave geral de
+    // e-mail — pra não bloquear/liberar com um valor desatualizado numa
+    // sessão aberta há muito tempo.
+    let vaiBloquear = false;
+    if (moduloAtivo('FINANCEIRO')) {
+        const { data: configBloqueio } = await _supabase.from('config_bloqueio_orcamento').select('percentual_bloqueio_variacao').eq('id', 1).maybeSingle();
+        const limite = configBloqueio && configBloqueio.percentual_bloqueio_variacao != null ? Number(configBloqueio.percentual_bloqueio_variacao) : null;
+        vaiBloquear = limite !== null && (alerta.percentual > limite || alertaHoras.percentual > limite);
+    }
 
     const avisoBloqueio = vaiBloquear
         ? `\n\n⛔ A variação ultrapassa o percentual de bloqueio parametrizado — o projeto ficará BLOQUEADO, aguardando aprovação em Governança → Mudança de Orçamento, em vez de seguir direto para ${config.proximaFase}.`

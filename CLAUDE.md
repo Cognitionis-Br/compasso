@@ -114,6 +114,32 @@ Two independent layers, don't confuse them:
   change the single `require()` in `enviar-email.js` — no other file needs to change. Provider credentials
   are Netlify environment variables (e.g. `EMAILJS_PUBLIC_KEY`), configured per-deployment, never committed.
 
+### Licenciamento de Módulos (28/08/2026, Compasso-only — doesn't exist in Compasso)
+
+`js/core/licenca.js` gates whole blocks of the system behind a per-module on/off flag
+(`licenca_modulos` table: `WORKFLOW`, `EMAIL`, `FINANCEIRO`, `PLANEJAMENTO_ESTRATEGICO`), meant to reflect
+what a customer actually contracted. `TAB_MODULO_MAP` in that file is the single source of truth for which
+`tabId` belongs to which module — a tabId absent from the map is NÚCLEO (auth, cadastros base, RBAC screens,
+dashboard) and is never blocked. Two independent enforcement points read the same map, and both need to stay
+in sync with it: `aplicarVisibilidadeMenu()` (`js/config/funcoes.js`) hides the sidebar/top-bar link, and
+`switchTab()` (`js/ui/navigation.js`) refuses to load the view even if reached directly (shows
+`view-modulo-bloqueado` instead) — this second check exists specifically so a forced/stale link can't bypass
+licensing. `carregarLicenca()` is called once at login (`js/auth/auth.js:entrarNoSistema`), right alongside
+the other config loads (funções, cargos, e-mail geral) — cache it like those, don't query
+`licenca_modulos` ad hoc elsewhere.
+
+The admin screen (`Administração > Licenciamento de Módulos`, `renderLicenciamentoModulosView` in
+`js/core/licenca.js`) is restricted to `ehAdministrador` with the same double layer as Ferramentas de Dev:
+it's in `catalogo_atividades` (so it *could* be granted to another role) but the view itself re-checks
+`ehAdministrador` before showing real content — don't treat the catalog grant alone as sufficient
+authorization if you ever touch this screen.
+
+Mudança de Orçamento (`js/requirements/requirements.js:confirmarConclusaoFaseGenerica`,
+`js/config/bloqueio-orcamento.js`) now depends on the `FINANCEIRO` module being active *and* a single
+`config_bloqueio_orcamento.percentual_bloqueio_variacao` value (one number, applied to both horas and valor,
+both Requerimentos and Technical) — the older four separate columns (`req_percentual_horas` etc.) still exist
+in the DB as history but are no longer read or written by the app.
+
 ### Privileged operations requiring the Supabase service role key
 
 Never do these from client-side code with the anon key. The one existing example,

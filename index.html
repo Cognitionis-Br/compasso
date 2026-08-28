@@ -52,9 +52,14 @@
     <!-- LOGIN BLOQUEANTE -->
     <div id="loginScreen" class="fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-xl shadow-2xl max-w-sm w-full p-8 border-t-4 border-red-600">
+            <!-- SUBSTITUÍDO (Licenciamento de Módulos, 28/08/2026): wordmark em
+                 texto trocado pela logo oficial (img/compasso-logo-principal.png).
+                 max-h + object-contain mantêm a proporção original da imagem,
+                 max-w limita a largura pro logo nunca encostar nas bordas do
+                 painel/formulário abaixo. -->
             <div class="text-center mb-6">
-                <div class="text-3xl font-extrabold text-gray-900 tracking-tight">COM<span class="brand-red-text">PASSO</span></div>
-                <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mt-1">Cloud Governance</p>
+                <img src="img/compasso-logo-principal.png" alt="Compasso" class="mx-auto max-h-16 max-w-[85%] object-contain">
+                <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mt-2">Cloud Governance</p>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
@@ -272,6 +277,7 @@
                         <button onclick="switchTab('fila_email')" id="link-fila_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fila de E-mail</button>
                         <button onclick="switchTab('cargos')" id="link-cargos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cargos</button>
                         <button onclick="switchTab('percentual_bloqueio_orcamento')" id="link-percentual_bloqueio_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Percentual de Bloqueio de Orçamento</button>
+                        <button onclick="switchTab('licenciamento_modulos')" id="link-licenciamento_modulos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Licenciamento de Módulos</button>
                     </div>
                 </div>
 
@@ -2453,35 +2459,50 @@
                      de Technical — acima disso, o projeto é bloqueado (ver
                      Governança > Mudança de Orçamento). Tudo em branco = sem
                      bloqueio nenhum. -->
+                <!-- SIMPLIFICADO (Licenciamento de Módulos, 28/08/2026): 1 parâmetro
+                     único (percentual_bloqueio_variacao) em vez de 4 campos
+                     separados por fase/dimensão — os campos antigos
+                     (req_percentual_horas etc.) continuam na base como
+                     histórico, mas deixam de ser lidos. Tela só existe quando
+                     o módulo FINANCEIRO está ativo (TAB_MODULO_MAP,
+                     js/core/licenca.js). -->
                 <div id="view-percentual_bloqueio_orcamento" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Percentual de Bloqueio de Orçamento</h2></div>
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-2xl">
-                        <p class="text-xs text-gray-500 mb-4">Percentual aceito de variação de orçamento (horas e valor) na conclusão de cada fase. Quando a variação real ultrapassar o percentual configurado aqui, o projeto é bloqueado e passa a exigir aprovação em Governança &gt; Mudança de Orçamento antes de seguir no workflow. Deixe em branco pra não bloquear naquele campo.</p>
-                        <h4 class="text-xs font-bold uppercase text-purple-700 mb-2 border-b pb-1">Concluir Etapa de Requerimentos</h4>
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Variação de Horas (%)</label>
-                                <input type="number" id="bloqueioReqPercentualHoras" min="0" step="1" class="w-full p-2 border border-gray-300 rounded text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Variação de Valor (%)</label>
-                                <input type="number" id="bloqueioReqPercentualValor" min="0" step="1" class="w-full p-2 border border-gray-300 rounded text-sm">
-                            </div>
-                        </div>
-                        <h4 class="text-xs font-bold uppercase text-cyan-700 mb-2 border-b pb-1">Concluir Etapa de Technical</h4>
-                        <div class="grid grid-cols-2 gap-3 mb-4">
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Variação de Horas (%)</label>
-                                <input type="number" id="bloqueioTechPercentualHoras" min="0" step="1" class="w-full p-2 border border-gray-300 rounded text-sm">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Variação de Valor (%)</label>
-                                <input type="number" id="bloqueioTechPercentualValor" min="0" step="1" class="w-full p-2 border border-gray-300 rounded text-sm">
-                            </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-lg">
+                        <p class="text-xs text-gray-500 mb-4">Percentual aceito de variação de orçamento (horas ou valor) na conclusão de Requerimentos e de Technical. Quando a variação real ultrapassar o percentual configurado aqui, o projeto é bloqueado e passa a exigir aprovação em Governança &gt; Mudança de Orçamento antes de seguir no workflow. Deixe em branco pra não bloquear.</p>
+                        <div class="mb-4">
+                            <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Percentual de Bloqueio de Variação (%)</label>
+                            <input type="number" id="bloqueioPercentualVariacao" min="0" step="1" class="w-full p-2 border border-gray-300 rounded text-sm">
                         </div>
                         <button onclick="salvarPercentualBloqueioOrcamento()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition text-sm">
-                            <i class="fa-solid fa-floppy-disk"></i> Salvar Percentuais
+                            <i class="fa-solid fa-floppy-disk"></i> Salvar Percentual
                         </button>
+                    </div>
+                </div>
+
+                <!-- NOVO (Licenciamento de Módulos, 28/08/2026): tela restrita a
+                     ADMINISTRADOR (mesma camada dupla de Ferramentas de Dev —
+                     catálogo de atividades + checagem extra de ehAdministrador
+                     dentro da própria view, ver switchTab em js/ui/navigation.js). -->
+                <div id="view-licenciamento_modulos" class="tab-content hidden">
+                    <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Licenciamento de Módulos</h2></div>
+                    <div id="licenciamentoModulosRestrito" class="hidden bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm p-4 rounded-lg">
+                        <i class="fa-solid fa-lock"></i> Tela restrita a administradores.
+                    </div>
+                    <div id="licenciamentoModulosConteudo" class="hidden">
+                        <p class="text-xs text-gray-500 mb-4 max-w-2xl">Liga/desliga blocos inteiros do sistema conforme o plano contratado. Desativar um módulo esconde imediatamente os itens de menu correspondentes pra todos os usuários e bloqueia o carregamento direto das telas.</p>
+                        <div id="licenciamentoModulosLista" class="space-y-3 max-w-2xl"></div>
+                    </div>
+                </div>
+
+                <!-- NOVO (Licenciamento de Módulos, 28/08/2026): mostrada por
+                     switchTab (js/ui/navigation.js) no lugar de qualquer tela
+                     cujo módulo esteja desativado. -->
+                <div id="view-modulo-bloqueado" class="tab-content hidden">
+                    <div class="bg-white p-10 rounded-lg shadow-sm border border-gray-200 max-w-lg mx-auto mt-10 text-center">
+                        <i class="fa-solid fa-lock text-4xl text-gray-300 mb-4"></i>
+                        <h2 class="text-lg font-bold text-gray-800 mb-2">Módulo não disponível</h2>
+                        <p class="text-sm text-gray-500">O módulo <b id="moduloBloqueadoNome"></b> não está incluído no seu plano atual. Fale com o administrador do sistema para mais informações.</p>
                     </div>
                 </div>
 
@@ -3999,6 +4020,7 @@
     <!-- SCRIPT CONTROLADOR -->
     <script src="./js/core/supabase-client.js"></script>
     <script src="./js/core/state.js"></script>
+    <script src="./js/core/licenca.js"></script>
     <script src="./js/core/fiscal-year.js"></script>
     <script src="./js/core/filtro-af-visao.js"></script>
     <script src="./js/core/workflow-engine.js"></script>
