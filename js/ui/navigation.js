@@ -123,14 +123,16 @@ function switchTab(tabId) {
     if (tabId === 'cargos') { mudarAbaCargos('criar'); renderCargosView(); }
     if (tabId === 'percentual_bloqueio_orcamento') renderPercentualBloqueioOrcamentoView();
     if (tabId === 'mudanca_orcamento') renderMudancaOrcamentoView();
-    // NOVO (Licenciamento de Módulos, 28/08/2026): restrita a
-    // ADMINISTRADOR — mesma camada dupla de Ferramentas de Dev (catálogo
-    // de atividades pra visibilidade do link + checagem extra de
-    // ehAdministrador aqui pro conteúdo de verdade).
+    // AJUSTADO (papel Proprietário, 28/08/2026): restrita a ehProprietario
+    // (mais forte que ehAdministrador) — mesma camada dupla de Ferramentas
+    // de Dev (catálogo de atividades pra visibilidade do link + checagem
+    // extra aqui pro conteúdo de verdade), só que com o papel mais
+    // privilegiado. Um Administrador comum (sem eh_proprietario) cai no
+    // "restrito" mesmo tendo acesso_irrestrito a tudo mais.
     if (tabId === 'licenciamento_modulos') {
         const restrito = document.getElementById('licenciamentoModulosRestrito');
         const conteudo = document.getElementById('licenciamentoModulosConteudo');
-        if (ehAdministrador) {
+        if (ehProprietario) {
             if (restrito) restrito.classList.add('hidden');
             if (conteudo) conteudo.classList.remove('hidden');
             renderLicenciamentoModulosView();

@@ -140,6 +140,18 @@ Mudança de Orçamento (`js/requirements/requirements.js:confirmarConclusaoFaseG
 both Requerimentos and Technical) — the older four separate columns (`req_percentual_horas` etc.) still exist
 in the DB as history but are no longer read or written by the app.
 
+### Papel Proprietário (28/08/2026, Compasso-only)
+
+More privileged than `ehAdministrador`: `funcoes.eh_proprietario` (a role named `PROPRIETARIO` was seeded,
+`acesso_irrestrito=true` + `eh_proprietario=true`, not assigned to anyone by default — assign it manually via
+Perfis de Acesso > Atribuição de Função aos Usuários). It's the *only* level with access to Licenciamento de
+Módulos — a regular ADMINISTRADOR (even with `acesso_irrestrito`) is explicitly denied that one screen, both
+in `switchTab` (`js/ui/navigation.js`) and via the dedicated sidebar group `grupo-proprietario`
+(`aplicarVisibilidadeMenu`, `js/config/funcoes.js`) which hides the *whole group wrapper*, not just the link
+— unlike Ferramentas de Dev's older pattern, where the group header stays visible and only the link inside
+hides. Follow the `grupo-proprietario` pattern (not the Ferramentas de Dev one) for any future privilege tier
+that needs a fully segregated section.
+
 ### Privileged operations requiring the Supabase service role key
 
 Never do these from client-side code with the anon key. The one existing example,

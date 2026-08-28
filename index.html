@@ -277,7 +277,6 @@
                         <button onclick="switchTab('fila_email')" id="link-fila_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fila de E-mail</button>
                         <button onclick="switchTab('cargos')" id="link-cargos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cargos</button>
                         <button onclick="switchTab('percentual_bloqueio_orcamento')" id="link-percentual_bloqueio_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Percentual de Bloqueio de Orçamento</button>
-                        <button onclick="switchTab('licenciamento_modulos')" id="link-licenciamento_modulos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Licenciamento de Módulos</button>
                     </div>
                 </div>
 
@@ -295,6 +294,24 @@
                     </button>
                     <div id="menu-devtools" class="submenu pl-9 pr-2 mt-1 space-y-1">
                         <button onclick="switchTab('dev_tools')" id="link-dev_tools" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-red-500 hover:text-red-700 rounded border-l-2 border-transparent transition-colors">Ferramentas de Dev</button>
+                    </div>
+                </div>
+
+                <!-- GRUPO: PROPRIETÁRIO -->
+                <!-- NOVO (papel Proprietário, 28/08/2026): separado e segregado do
+                     grupo Administração de propósito — o grupo inteiro (não só o
+                     link) fica escondido pra quem não é Proprietário, ver
+                     aplicarVisibilidadeGrupoProprietario (js/config/funcoes.js). -->
+                <div id="grupo-proprietario" class="mb-2 hidden">
+                    <button onclick="toggleSidebarMenu('menu-proprietario', 'icon-proprietario')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-purple-700 hover:text-purple-900 hover:bg-purple-50 rounded transition-colors group">
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-crown text-purple-400 group-hover:text-purple-600 w-4 text-center mt-0.5"></i>
+                            <span class="uppercase tracking-wider">Proprietário</span>
+                        </div>
+                        <i id="icon-proprietario" class="fa-solid fa-chevron-down text-[10px] text-purple-400 chevron"></i>
+                    </button>
+                    <div id="menu-proprietario" class="submenu pl-9 pr-2 mt-1 space-y-1">
+                        <button onclick="switchTab('licenciamento_modulos')" id="link-licenciamento_modulos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Licenciamento de Módulos</button>
                     </div>
                 </div>
 
@@ -369,9 +386,13 @@
                 <!-- TELA HOME / BEM-VINDO -->
                 <div id="view-home" class="tab-content max-w-4xl mx-auto mt-10">
                     <div class="text-center space-y-4 mb-10">
-                        <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 text-red-600 mb-2 border border-red-100 shadow-sm">
-                            <i class="fa-solid fa-bolt text-2xl"></i>
-                        </div>
+                        <!-- SUBSTITUÍDO (papel Proprietário, 28/08/2026): ícone de raio
+                             trocado pela logo oficial acima do título — testei como
+                             fundo do círculo antes e a logo (é um logotipo com texto,
+                             não um ícone) ficava ilegível espremida num quadrado
+                             pequeno; em tamanho maior acima do título ela funciona
+                             como uma tela de abertura de verdade. -->
+                        <img src="img/compasso-logo-principal.png" alt="Compasso" class="mx-auto max-h-14 object-contain mb-2">
                         <h2 class="text-2xl font-bold text-gray-900">Workspace de Governança</h2>
                         <p class="text-sm text-gray-500 max-w-lg mx-auto">
                             Selecione um módulo no menu lateral para atuar na esteira de projetos, ou utilize as visões no topo para acessar relatórios gerenciais e roadmaps.
@@ -2249,6 +2270,16 @@
                                         Acesso Irrestrito (ignora o catálogo de atividades abaixo e a restrição de área — acesso total ao sistema, como ADMINISTRADOR)
                                     </label>
                                 </div>
+                                <!-- NOVO (papel Proprietário, 28/08/2026): separado do Acesso
+                                     Irrestrito de propósito — mesmo uma função com acesso
+                                     irrestrito (Administrador) NÃO enxerga Licenciamento de
+                                     Módulos a não ser que esta flag também esteja marcada. -->
+                                <div class="mb-4 bg-purple-50 border border-purple-200 rounded p-3">
+                                    <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-purple-800">
+                                        <input type="checkbox" id="funcaoEhProprietarioInput" onchange="if (this.checked) document.getElementById('funcaoAcessoIrrestritoInput').checked = true;">
+                                        É Proprietário (único nível com acesso a Licenciamento de Módulos — implica Acesso Irrestrito)
+                                    </label>
+                                </div>
                                 <div class="mb-4">
                                     <label class="block text-[10px] font-bold uppercase mb-2 text-gray-600">Atividades * (pelo menos uma é obrigatória, a não ser que seja Acesso Irrestrito)</label>
                                     <div id="funcaoMatrizPermissoesContainer" class="bg-white p-3 border border-gray-200 rounded"></div>
@@ -2487,7 +2518,7 @@
                 <div id="view-licenciamento_modulos" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Licenciamento de Módulos</h2></div>
                     <div id="licenciamentoModulosRestrito" class="hidden bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm p-4 rounded-lg">
-                        <i class="fa-solid fa-lock"></i> Tela restrita a administradores.
+                        <i class="fa-solid fa-lock"></i> Tela restrita ao Proprietário do sistema.
                     </div>
                     <div id="licenciamentoModulosConteudo" class="hidden">
                         <p class="text-xs text-gray-500 mb-4 max-w-2xl">Liga/desliga blocos inteiros do sistema conforme o plano contratado. Desativar um módulo esconde imediatamente os itens de menu correspondentes pra todos os usuários e bloqueia o carregamento direto das telas.</p>

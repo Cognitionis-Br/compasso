@@ -22,6 +22,13 @@
 let atividadesUsuarioAtual = new Set(); // activity_key do catálogo -> usuário tem acesso
 let funcoesUsuarioAtual = []; // nomes das funções do usuário logado
 let ehAdministrador = false;
+// NOVO (papel Proprietário, 28/08/2026): mais privilegiado que
+// ehAdministrador — o único com acesso a Licenciamento de Módulos
+// (js/core/licenca.js). Todo Proprietário também é Administrador
+// (funcoes.acesso_irrestrito=true na função PROPRIETARIO), mas o
+// contrário não vale: Administrador comum segue com as mesmas funções de
+// sempre, MENOS licenciamento de módulos.
+let ehProprietario = false;
 
 // NOVO: alterna entre as 2 abas de Funções e Permissões.
 function mudarAbaFuncoes(aba) {
@@ -86,6 +93,7 @@ function renderFuncoesTable() {
                         ? `<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px]">INATIVA</span>`
                         : `<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px]">ATIVA</span>`}
                     ${f.acesso_irrestrito ? `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px] ml-1">ACESSO IRRESTRITO</span>` : ''}
+                    ${f.eh_proprietario ? `<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[10px] ml-1">PROPRIETÁRIO</span>` : ''}
                 </td>
                 <td class="p-3 text-right space-x-2 whitespace-nowrap">
                     ${inativa
@@ -154,6 +162,8 @@ function editFuncao(id) {
     document.getElementById('funcaoDescricaoInput').value = funcao.descricao || '';
     const inputIrrestrito = document.getElementById('funcaoAcessoIrrestritoInput');
     if (inputIrrestrito) inputIrrestrito.checked = funcao.acesso_irrestrito === true;
+    const inputProprietario = document.getElementById('funcaoEhProprietarioInput');
+    if (inputProprietario) inputProprietario.checked = funcao.eh_proprietario === true;
 
     const marcadas = new Set(
         funcaoAtividadesData.filter(fa => fa.funcao_id === id).map(fa => fa.atividade_id)
@@ -175,6 +185,8 @@ function limparFormularioFuncao() {
     document.getElementById('funcaoDescricaoInput').value = '';
     const inputIrrestrito = document.getElementById('funcaoAcessoIrrestritoInput');
     if (inputIrrestrito) inputIrrestrito.checked = false;
+    const inputProprietario = document.getElementById('funcaoEhProprietarioInput');
+    if (inputProprietario) inputProprietario.checked = false;
     document.getElementById('btnSalvarFuncao').innerText = 'Salvar Função';
     renderMatrizPermissoesFormulario();
 }
@@ -185,7 +197,11 @@ async function saveFuncao(e) {
     const nome = document.getElementById('funcaoNomeInput').value.trim().toUpperCase();
     const descricao = document.getElementById('funcaoDescricaoInput').value.trim();
     const inputIrrestrito = document.getElementById('funcaoAcessoIrrestritoInput');
-    const acessoIrrestrito = inputIrrestrito ? inputIrrestrito.checked : false;
+    const inputProprietario = document.getElementById('funcaoEhProprietarioInput');
+    const ehProprietarioForm = inputProprietario ? inputProprietario.checked : false;
+    // Proprietário sempre implica Acesso Irrestrito — reforçado aqui (não só
+    // no onchange do checkbox no HTML) pra não depender só do JS do formulário.
+    const acessoIrrestrito = ehProprietarioForm || (inputIrrestrito ? inputIrrestrito.checked : false);
 
     if (!nome) return alert('Informe o nome da função!');
 
@@ -203,10 +219,10 @@ async function saveFuncao(e) {
     let funcaoId = id ? Number(id) : null;
 
     if (funcaoId) {
-        const { error } = await _supabase.from('funcoes').update({ nome, descricao, acesso_irrestrito: acessoIrrestrito }).eq('id', funcaoId);
+        const { error } = await _supabase.from('funcoes').update({ nome, descricao, acesso_irrestrito: acessoIrrestrito, eh_proprietario: ehProprietarioForm }).eq('id', funcaoId);
         if (error) return alert('Erro ao atualizar função: ' + error.message);
     } else {
-        const { data, error } = await _supabase.from('funcoes').insert([{ nome, descricao, acesso_irrestrito: acessoIrrestrito }]).select();
+        const { data, error } = await _supabase.from('funcoes').insert([{ nome, descricao, acesso_irrestrito: acessoIrrestrito, eh_proprietario: ehProprietarioForm }]).select();
         if (error) return alert('Erro ao cadastrar função: ' + error.message);
         funcaoId = data && data[0] ? data[0].id : null;
         if (!funcaoId) return alert('Função criada, mas não foi possível obter o ID para salvar as atividades. Recarregue e edite a função para ajustar as atividades.');
@@ -352,6 +368,7 @@ async function carregarPermissoesUsuarioAtual() {
     atividadesUsuarioAtual = new Set();
     funcoesUsuarioAtual = [];
     ehAdministrador = false;
+    ehProprietario = false;
 
     // NOVO (Fase 4): garante que atividadesData (o catálogo inteiro) esteja
     // carregado pra qualquer usuário logado, não só quando visita a tela
@@ -366,7 +383,7 @@ async function carregarPermissoesUsuarioAtual() {
 
     const { data: minhasFuncoes, error: errFuncoes } = await _supabase
         .from('usuario_funcoes')
-        .select('funcao_id, funcoes(nome, acesso_irrestrito)')
+        .select('funcao_id, funcoes(nome, acesso_irrestrito, eh_proprietario)')
         .eq('usuario_id', currentUser.id);
 
     if (errFuncoes || !minhasFuncoes) return;
@@ -378,6 +395,10 @@ async function carregarPermissoesUsuarioAtual() {
     // assim, não só a chamada "ADMINISTRADOR") — o nome continua valendo
     // como fallback de segurança, caso a flag não tenha sido marcada.
     ehAdministrador = minhasFuncoes.some(mf => mf.funcoes && mf.funcoes.acesso_irrestrito === true) || funcoesUsuarioAtual.includes('ADMINISTRADOR');
+    // NOVO (papel Proprietário, 28/08/2026): mesmo padrão acima, mas pra
+    // eh_proprietario — nome 'PROPRIETARIO' como fallback de segurança,
+    // igual já valia pra ADMINISTRADOR.
+    ehProprietario = minhasFuncoes.some(mf => mf.funcoes && mf.funcoes.eh_proprietario === true) || funcoesUsuarioAtual.includes('PROPRIETARIO');
 
     if (funcaoIds.length === 0) return;
 
@@ -525,6 +546,13 @@ function aplicarVisibilidadeMenu() {
         const viewBtn = document.getElementById(`view-btn-${tabId}`);
         if (viewBtn) viewBtn.classList.toggle('hidden', !temAcesso);
     });
+
+    // NOVO (papel Proprietário, 28/08/2026): o grupo inteiro do menu
+    // lateral (não só o link de dentro) só aparece pra quem é Proprietário
+    // — diferente do padrão de Ferramentas de Dev, onde o grupo em si
+    // fica sempre visível e só o link some.
+    const grupoProprietario = document.getElementById('grupo-proprietario');
+    if (grupoProprietario) grupoProprietario.classList.toggle('hidden', !ehProprietario);
 }
 
 // NOVO (Fase 4): esconde, dentro de uma tela de 2+ sub-abas já visível, os
