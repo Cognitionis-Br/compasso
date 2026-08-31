@@ -21,6 +21,18 @@
 
 const HORAS_MINIMO_RANGE_TOTAL = 0;
 
+// AJUSTADO (padronização de telas, a pedido do usuário): 2 abas — Cadastrar
+// Porte / Portes Cadastrados — mesmo padrão de mudarAbaCargos.
+function mudarAbaPortes(aba) {
+    ['criar', 'cadastrados'].forEach(a => {
+        const btn = document.getElementById(`portesBtn-${a}`);
+        const painel = document.getElementById(`portesPainel-${a}`);
+        if (btn) btn.className = `portes-btn px-4 py-2 rounded-md text-sm font-bold border-2 ${a === aba ? 'bg-red-700 text-white border-red-700' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
+        if (painel) painel.classList.toggle('hidden', a !== aba);
+    });
+    aplicarVisibilidadeSubAbas('portes', 'portesBtn');
+}
+
 async function loadPortes() {
     const { data, error } = await _supabase.from('portes').select('*').order('horas_minimo');
     portesData = error ? [] : (data || []);
@@ -54,6 +66,8 @@ function renderPortesTable() {
 async function editPorte(id) {
     const porte = portesData.find(p => p.id === id);
     if (!porte) return;
+
+    mudarAbaPortes('criar');
 
     const emUso = await porteEstaEmUso(porte.codigo);
 
@@ -137,6 +151,7 @@ async function savePorte(e) {
 
     limparFormularioPorte();
     await loadPortes();
+    mudarAbaPortes('cadastrados');
 }
 
 // Avisa (sem bloquear) se a cobertura de horas tem buraco — esperado

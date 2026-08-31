@@ -119,7 +119,7 @@ function switchTab(tabId) {
     if (tabId === 'contratos_vinculos') renderContratosVinculosView();
     if (tabId === 'registro_valores_contrato') renderRegistroValoresView();
     if (tabId === 'relatorio_projetos_contratos') renderRelatorioProjetosContratosView();
-    if (tabId === 'tipos_projeto') renderTiposProjetoView();
+    if (tabId === 'tipos_projeto') { mudarAbaTiposProjeto('criar'); renderTiposProjetoView(); }
     if (tabId === 'cargos') { mudarAbaCargos('criar'); renderCargosView(); }
     if (tabId === 'percentual_bloqueio_orcamento') renderPercentualBloqueioOrcamentoView();
     if (tabId === 'mudanca_orcamento') renderMudancaOrcamentoView();
@@ -141,7 +141,7 @@ function switchTab(tabId) {
             if (conteudo) conteudo.classList.add('hidden');
         }
     }
-    if (tabId === 'return_benefit') renderReturnBenefitView();
+    if (tabId === 'return_benefit') { mudarAbaReturnBenefit('criar'); renderReturnBenefitView(); }
     if (tabId === 'governanca') renderGovernancaView();
     if (tabId === 'retomar_hold') renderRetomarHoldView();
     if (tabId === 'conclusao_projeto') renderConclusaoProjetoView();
@@ -151,9 +151,9 @@ function switchTab(tabId) {
     if (tabId === 'cronograma_evolucao') renderCronogramaEvolucaoView();
     if (tabId === 'usuarios') { mudarAbaUsuarios('criar'); renderUsuariosView(); }
     if (tabId === 'ano_fiscal') loadAnoFiscalConfig();
-    if (tabId === 'areas') loadAreas();
-    if (tabId === 'pessoas_solicitantes') loadPessoasSolicitantes();
-    if (tabId === 'portes') loadPortes();
+    if (tabId === 'areas') { mudarAbaAreas('criar'); loadAreas(); }
+    if (tabId === 'pessoas_solicitantes') { mudarAbaPessoasSolicitantes('criar'); loadPessoasSolicitantes(); }
+    if (tabId === 'portes') { mudarAbaPortes('criar'); loadPortes(); }
     if (tabId === 'responsaveis') { mudarAbaResponsaveis('criar'); loadResponsaveis(); }
     if (tabId === 'workflow_etapas') loadFasesEtapas();
     // AJUSTADO (Controle de acesso por atividade, Fase 4): estas 3 telas

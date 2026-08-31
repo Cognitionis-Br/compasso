@@ -9,6 +9,18 @@
 
 let tiposProjetoCache = [];
 
+// AJUSTADO (padronização de telas, a pedido do usuário): 2 abas — Cadastrar
+// Tipo de Projeto / Tipos de Projeto Cadastrados — mesmo padrão de mudarAbaCargos.
+function mudarAbaTiposProjeto(aba) {
+    ['criar', 'cadastrados'].forEach(a => {
+        const btn = document.getElementById(`tiposProjetoBtn-${a}`);
+        const painel = document.getElementById(`tiposProjetoPainel-${a}`);
+        if (btn) btn.className = `tipos-projeto-btn px-4 py-2 rounded-md text-sm font-bold border-2 ${a === aba ? 'bg-red-700 text-white border-red-700' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
+        if (painel) painel.classList.toggle('hidden', a !== aba);
+    });
+    aplicarVisibilidadeSubAbas('tipos_projeto', 'tiposProjetoBtn');
+}
+
 async function renderTiposProjetoView() {
     const { data, error } = await _supabase.from('tipos_projeto').select('*').order('codigo');
     tiposProjetoCache = error ? [] : (data || []);
@@ -64,6 +76,7 @@ async function salvarTipoProjeto() {
     document.getElementById('tipoProjetoCodigoInput').value = '';
     document.getElementById('tipoProjetoDescricaoInput').value = '';
     await renderTiposProjetoView();
+    mudarAbaTiposProjeto('cadastrados');
 }
 
 async function alternarAtivoTipoProjeto(id) {

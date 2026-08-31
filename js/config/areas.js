@@ -8,7 +8,20 @@
 // AJUSTADO 10/08/2026 (lista de ajustes do usuário, item 1): lista e
 // seletor sempre em ordem alfabética por nome; ao editar, a tela rola até
 // o formulário.
+//
+// AJUSTADO (padronização de telas, a pedido do usuário): 2 abas — Cadastrar
+// Área / Áreas Cadastradas — mesmo padrão de mudarAbaCargos/mudarAbaUsuarios.
 // =========================================================================
+function mudarAbaAreas(aba) {
+    ['criar', 'cadastrados'].forEach(a => {
+        const btn = document.getElementById(`areasBtn-${a}`);
+        const painel = document.getElementById(`areasPainel-${a}`);
+        if (btn) btn.className = `areas-btn px-4 py-2 rounded-md text-sm font-bold border-2 ${a === aba ? 'bg-red-700 text-white border-red-700' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
+        if (painel) painel.classList.toggle('hidden', a !== aba);
+    });
+    aplicarVisibilidadeSubAbas('areas', 'areasBtn');
+}
+
 async function loadAreas() {
     const { data } = await _supabase.from('areas_solicitantes').select('*').order('nome');
     if (data && data.length > 0) {
@@ -79,6 +92,7 @@ function renderAreasTable() {
 function editArea(id) {
     const area = areasData.find(a => a.id === id);
     if (!area) return;
+    mudarAbaAreas('criar');
     document.getElementById('areaIdInput').value = area.id;
     document.getElementById('areaNomeInput').value = (area.nome || '').toUpperCase();
     document.getElementById('areaMnemonicoInput').value = (area.mnemonico || '').toUpperCase();
@@ -121,6 +135,7 @@ async function saveAreaSolicitante(e) {
     document.getElementById('btnSalvarArea').innerHTML = '<i class="fa-solid fa-plus"></i> Salvar Área';
 
     await loadAreas();
+    mudarAbaAreas('cadastrados');
 }
 
 // Exclusão lógica: inativa e loga quem/quando, em vez de apagar.

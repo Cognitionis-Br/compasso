@@ -5,7 +5,20 @@
 // alfabética, exclusão lógica. Usado para popular o seletor de
 // "Pessoa Solicitante" na tela de Nova Demanda, filtrado pela área
 // escolhida.
+//
+// AJUSTADO (padronização de telas, a pedido do usuário): 2 abas — Cadastrar
+// Pessoa Solicitante / Pessoas Solicitantes Cadastradas.
 // =========================================================================
+
+function mudarAbaPessoasSolicitantes(aba) {
+    ['criar', 'cadastrados'].forEach(a => {
+        const btn = document.getElementById(`pessoasSolicitantesBtn-${a}`);
+        const painel = document.getElementById(`pessoasSolicitantesPainel-${a}`);
+        if (btn) btn.className = `pessoas-solicitantes-btn px-4 py-2 rounded-md text-sm font-bold border-2 ${a === aba ? 'bg-red-700 text-white border-red-700' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
+        if (painel) painel.classList.toggle('hidden', a !== aba);
+    });
+    aplicarVisibilidadeSubAbas('pessoas_solicitantes', 'pessoasSolicitantesBtn');
+}
 
 async function loadPessoasSolicitantes() {
     const { data, error } = await _supabase.from('pessoas_solicitantes').select('*').order('nome');
@@ -68,6 +81,7 @@ function renderPessoasSolicitantesTable() {
 function editPessoaSolicitante(id) {
     const p = pessoasSolicitantesData.find(x => x.id === id);
     if (!p) return;
+    mudarAbaPessoasSolicitantes('criar');
     document.getElementById('pessoaIdInput').value = p.id;
     document.getElementById('pessoaNomeInput').value = p.nome;
     document.getElementById('pessoaEmailInput').value = p.email || '';
@@ -106,6 +120,7 @@ async function savePessoaSolicitante(e) {
     document.getElementById('btnSalvarPessoa').innerHTML = '<i class="fa-solid fa-plus"></i> Salvar Pessoa';
 
     await loadPessoasSolicitantes();
+    mudarAbaPessoasSolicitantes('cadastrados');
 }
 
 async function inativarPessoaSolicitante(id) {

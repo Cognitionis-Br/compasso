@@ -9,6 +9,18 @@
 
 let returnBenefitCache = [];
 
+// AJUSTADO (padronização de telas, a pedido do usuário): 2 abas — Cadastrar
+// Return / Benefit / Return / Benefit Cadastrados — mesmo padrão de mudarAbaCargos.
+function mudarAbaReturnBenefit(aba) {
+    ['criar', 'cadastrados'].forEach(a => {
+        const btn = document.getElementById(`returnBenefitBtn-${a}`);
+        const painel = document.getElementById(`returnBenefitPainel-${a}`);
+        if (btn) btn.className = `return-benefit-btn px-4 py-2 rounded-md text-sm font-bold border-2 ${a === aba ? 'bg-red-700 text-white border-red-700' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
+        if (painel) painel.classList.toggle('hidden', a !== aba);
+    });
+    aplicarVisibilidadeSubAbas('return_benefit', 'returnBenefitBtn');
+}
+
 async function renderReturnBenefitView() {
     const { data, error } = await _supabase.from('tipos_return_benefit').select('*').order('nome');
     returnBenefitCache = error ? [] : (data || []);
@@ -45,6 +57,7 @@ function limparFormReturnBenefit() {
 function editarReturnBenefit(id) {
     const rb = returnBenefitCache.find(x => x.id === id);
     if (!rb) return;
+    mudarAbaReturnBenefit('criar');
     document.getElementById('rbIdHidden').value = rb.id;
     document.getElementById('rbNomeInput').value = rb.nome;
     const radio = document.querySelector(`input[name="rbPermiteValor"][value="${rb.permite_valor ? 'sim' : 'nao'}"]`);
@@ -86,6 +99,7 @@ async function salvarReturnBenefit() {
     alert('✅ Return / Benefit salvo com sucesso!');
     limparFormReturnBenefit();
     await renderReturnBenefitView();
+    mudarAbaReturnBenefit('cadastrados');
 }
 
 async function alternarAtivoReturnBenefit(id) {

@@ -2026,9 +2026,19 @@
                 </div>
 
                 <div id="view-areas" class="tab-content hidden">
-                    <div class="mb-6 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Cadastro de Áreas Solicitantes</h2></div>
+                    <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Cadastro de Áreas Solicitantes</h2></div>
+
+                    <!-- AJUSTADO (padronização de telas, a pedido do usuário): 2 abas,
+                         mesmo padrão de Usuários/Funções/Cargos — uma pra cadastrar,
+                         outra pra consultar os cadastrados. -->
+                    <div class="flex gap-2 mb-4 flex-wrap">
+                        <button onclick="mudarAbaAreas('criar')" id="areasBtn-criar" class="areas-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Área</button>
+                        <button onclick="mudarAbaAreas('cadastrados')" id="areasBtn-cadastrados" class="areas-btn px-4 py-2 rounded-md text-sm font-bold border-2">Áreas Cadastradas</button>
+                    </div>
+
+                    <div id="areasPainel-criar" class="areas-painel">
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-                        <form onsubmit="saveAreaSolicitante(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-gray-50 p-4 rounded mb-6 border border-gray-200">
+                        <form onsubmit="saveAreaSolicitante(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-gray-50 p-4 rounded border border-gray-200">
                             <input type="hidden" id="areaIdInput" value="">
                             <div class="md:col-span-2">
                                 <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Nome da Área *</label>
@@ -2042,6 +2052,11 @@
                                 <button type="submit" id="btnSalvarArea" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition text-sm">Salvar Área</button>
                             </div>
                         </form>
+                    </div>
+                    </div>
+
+                    <div id="areasPainel-cadastrados" class="areas-painel hidden">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead><tr class="bg-gray-50 text-xs uppercase border-b"><th class="p-3">Nome da Área</th><th class="p-3 text-center">Mnemônico</th><th class="p-3">Status</th><th class="p-3 text-right">Ações</th></tr></thead>
@@ -2049,13 +2064,21 @@
                             </table>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div id="view-pessoas_solicitantes" class="tab-content hidden">
-                    <div class="mb-6 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Cadastro de Pessoas Solicitantes</h2></div>
+                    <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Cadastro de Pessoas Solicitantes</h2></div>
+
+                    <div class="flex gap-2 mb-4 flex-wrap">
+                        <button onclick="mudarAbaPessoasSolicitantes('criar')" id="pessoasSolicitantesBtn-criar" class="pessoas-solicitantes-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Pessoa Solicitante</button>
+                        <button onclick="mudarAbaPessoasSolicitantes('cadastrados')" id="pessoasSolicitantesBtn-cadastrados" class="pessoas-solicitantes-btn px-4 py-2 rounded-md text-sm font-bold border-2">Pessoas Solicitantes Cadastradas</button>
+                    </div>
+
+                    <div id="pessoasSolicitantesPainel-criar" class="pessoas-solicitantes-painel">
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
                         <p class="text-xs text-gray-500 mb-4">Usado para preencher "Pessoa Responsável / Solicitante" na tela de Nova Demanda, filtrado pela área escolhida.</p>
-                        <form onsubmit="savePessoaSolicitante(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-gray-50 p-4 rounded mb-6 border border-gray-200">
+                        <form onsubmit="savePessoaSolicitante(event)" class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end bg-gray-50 p-4 rounded border border-gray-200">
                             <input type="hidden" id="pessoaIdInput" value="">
                             <div>
                                 <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Nome *</label>
@@ -2075,6 +2098,11 @@
                                 <button type="submit" id="btnSalvarPessoa" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition text-sm"><i class="fa-solid fa-plus"></i> Salvar Pessoa</button>
                             </div>
                         </form>
+                    </div>
+                    </div>
+
+                    <div id="pessoasSolicitantesPainel-cadastrados" class="pessoas-solicitantes-painel hidden">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead><tr class="bg-gray-50 text-xs uppercase border-b"><th class="p-3">Nome</th><th class="p-3">E-mail</th><th class="p-3">Área</th><th class="p-3">Status</th><th class="p-3 text-right">Ações</th></tr></thead>
@@ -2082,13 +2110,21 @@
                             </table>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <div id="view-portes" class="tab-content hidden">
-                    <div class="mb-6 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Cadastro de Porte</h2></div>
+                    <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Cadastro de Porte</h2></div>
+
+                    <div class="flex gap-2 mb-4 flex-wrap">
+                        <button onclick="mudarAbaPortes('criar')" id="portesBtn-criar" class="portes-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Porte</button>
+                        <button onclick="mudarAbaPortes('cadastrados')" id="portesBtn-cadastrados" class="portes-btn px-4 py-2 rounded-md text-sm font-bold border-2">Portes Cadastrados</button>
+                    </div>
+
+                    <div id="portesPainel-criar" class="portes-painel">
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
                         <p class="text-xs text-gray-500 mb-4">Faixas de valor de orçamento que definem o porte de um projeto. Precisam cobrir de R$ 0,00 até R$ 999.999.999,99, sem sobreposição. Se um porte já estiver em uso por algum projeto, o valor mínimo/máximo dele fica travado (só a descrição continua editável).</p>
-                        <form onsubmit="savePorte(event)" class="bg-gray-50 p-4 rounded mb-4 border border-gray-200">
+                        <form onsubmit="savePorte(event)" class="bg-gray-50 p-4 rounded border border-gray-200">
                             <input type="hidden" id="porteIdInput" value="">
                             <div id="porteEmUsoAviso" class="hidden bg-amber-50 border border-amber-300 text-amber-800 text-xs font-bold p-2 rounded mb-3">
                                 <i class="fa-solid fa-lock"></i> Este porte já está em uso por algum projeto — horas mínimo/máximo travadas.
@@ -2117,6 +2153,11 @@
                                 </div>
                             </div>
                         </form>
+                    </div>
+                    </div>
+
+                    <div id="portesPainel-cadastrados" class="portes-painel hidden">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead><tr class="bg-gray-50 text-xs uppercase border-b"><th class="p-3">Código</th><th class="p-3">Descrição</th><th class="p-3 text-right">Horas Mínimo</th><th class="p-3 text-right">Horas Máximo</th><th class="p-3 text-right">Ações</th></tr></thead>
@@ -2124,6 +2165,7 @@
                             </table>
                         </div>
                         <div id="porteCoberturaAviso"></div>
+                    </div>
                     </div>
                 </div>
 
@@ -3003,11 +3045,17 @@
 
                 <!-- NOVO (item 0, Fase 1): Tipos de Projeto -->
                 <div id="view-tipos_projeto" class="tab-content hidden">
-                    <div class="mb-6 border-b pb-2">
+                    <div class="mb-4 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800">Tipos de Projeto</h2>
                         <p class="text-xs text-gray-500 mt-1">Código (5 letras) e descrição (até 80 caracteres). Depois de criado, não pode ser editado — só ativado ou inativado.</p>
                     </div>
 
+                    <div class="flex gap-2 mb-4 flex-wrap">
+                        <button onclick="mudarAbaTiposProjeto('criar')" id="tiposProjetoBtn-criar" class="tipos-projeto-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Tipo de Projeto</button>
+                        <button onclick="mudarAbaTiposProjeto('cadastrados')" id="tiposProjetoBtn-cadastrados" class="tipos-projeto-btn px-4 py-2 rounded-md text-sm font-bold border-2">Tipos de Projeto Cadastrados</button>
+                    </div>
+
+                    <div id="tiposProjetoPainel-criar" class="tipos-projeto-painel">
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mb-6">
                         <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Novo Tipo de Projeto</h4>
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
@@ -3024,7 +3072,9 @@
                             </div>
                         </div>
                     </div>
+                    </div>
 
+                    <div id="tiposProjetoPainel-cadastrados" class="tipos-projeto-painel hidden">
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
@@ -3036,15 +3086,22 @@
                             </table>
                         </div>
                     </div>
+                    </div>
                 </div>
 
                 <!-- Cadastro de Return / Benefit (Tabela 1 do Benefit Results da demanda) -->
                 <div id="view-return_benefit" class="tab-content hidden">
-                    <div class="mb-6 border-b pb-2">
+                    <div class="mb-4 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800">Return / Benefit</h2>
                         <p class="text-xs text-gray-500 mt-1">Tipos de retorno/benefício disponíveis pro quadro "Benefit Results" da demanda. O parâmetro "Permite Valor" controla se, ao escolher esse tipo na demanda, é possível informar um valor de NPV ou ROI.</p>
                     </div>
 
+                    <div class="flex gap-2 mb-4 flex-wrap">
+                        <button onclick="mudarAbaReturnBenefit('criar')" id="returnBenefitBtn-criar" class="return-benefit-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Return / Benefit</button>
+                        <button onclick="mudarAbaReturnBenefit('cadastrados')" id="returnBenefitBtn-cadastrados" class="return-benefit-btn px-4 py-2 rounded-md text-sm font-bold border-2">Return / Benefit Cadastrados</button>
+                    </div>
+
+                    <div id="returnBenefitPainel-criar" class="return-benefit-painel">
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mb-6">
                         <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Novo / Editar Return / Benefit</h4>
                         <input type="hidden" id="rbIdHidden">
@@ -3065,7 +3122,9 @@
                             </div>
                         </div>
                     </div>
+                    </div>
 
+                    <div id="returnBenefitPainel-cadastrados" class="return-benefit-painel hidden">
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
@@ -3076,6 +3135,7 @@
                                 <tbody id="returnBenefitTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
                             </table>
                         </div>
+                    </div>
                     </div>
                 </div>
 
