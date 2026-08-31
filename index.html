@@ -104,12 +104,12 @@
                     <button onclick="toggleSidebarMenu('menu-fy', 'icon-fy')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
                             <i class="fa-solid fa-calendar-days text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase tracking-wider">Fiscal Year</span>
+                            <span class="uppercase tracking-wider">Ano Fiscal</span>
                         </div>
                         <i id="icon-fy" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron rotate"></i>
                     </button>
                     <div id="menu-fy" class="submenu open pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('ano_fiscal')" id="link-ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Abertura Fiscal Year</button>
+                        <button onclick="switchTab('ano_fiscal')" id="link-ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Abertura Ano Fiscal</button>
                         <button onclick="switchTab('carry_over')" id="link-carry_over" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Projetos Carry Over</button>
                     </div>
                 </div>
@@ -128,7 +128,7 @@
                         <button onclick="switchTab('f1_formalizacao')" id="link-f1_formalizacao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Formalizar Demanda</button>
                         <button onclick="switchTab('f1_orcamento')" id="link-f1_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Orçamentar Demanda</button>
                         <button onclick="switchTab('aprov_comite')" id="link-aprov_comite" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Orçamento por Projeto</button>
-                        <button onclick="switchTab('aprov_orcamento_af')" id="link-aprov_orcamento_af" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Orçamento Fiscal Year</button>
+                        <button onclick="switchTab('aprov_orcamento_af')" id="link-aprov_orcamento_af" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Orçamento Ano Fiscal</button>
                         <button onclick="switchTab('projetos_adhoc')" id="link-projetos_adhoc" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Demanda Extraordinária</button>
                     </div>
                 </div>
@@ -138,12 +138,12 @@
                     <button onclick="toggleSidebarMenu('menu-req', 'icon-req')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
                             <i class="fa-solid fa-list-check text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase tracking-wider">Requeriments</span>
+                            <span class="uppercase tracking-wider">Requerimentos</span>
                         </div>
                         <i id="icon-req" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
                     <div id="menu-req" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('req_planejamento')" id="link-req_planejamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Gerar Requeriments</button>
+                        <button onclick="switchTab('req_planejamento')" id="link-req_planejamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Gerar Requerimentos</button>
                         <button onclick="switchTab('req_aprov_negocio')" id="link-req_aprov_negocio" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Avaliar Requerimentos – Por Negócio</button>
                         <button onclick="switchTab('req_aprov_ti')" id="link-req_aprov_ti" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Avaliar Requerimentos – Por TI</button>
                         <button onclick="switchTab('req_conclusao')" id="link-req_conclusao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Concluir Etapa de Requerimentos</button>
@@ -155,14 +155,14 @@
                     <button onclick="toggleSidebarMenu('menu-tech', 'icon-tech')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
                             <i class="fa-solid fa-drafting-compass text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase tracking-wider">Technical</span>
+                            <span class="uppercase tracking-wider">Especificação</span>
                         </div>
                         <i id="icon-tech" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
                     <div id="menu-tech" class="submenu pl-9 pr-2 mt-1 space-y-1">
                         <button onclick="switchTab('fase_technical')" id="link-fase_technical" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Gerar Especificação</button>
                         <button onclick="switchTab('tech_aval_negocio')" id="link-tech_aval_negocio" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Avaliar Especificação – Por Negócio</button>
-                        <button onclick="switchTab('tech_conclusao')" id="link-tech_conclusao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Concluir Etapa de Technical</button>
+                        <button onclick="switchTab('tech_conclusao')" id="link-tech_conclusao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Concluir Etapa de Especificação</button>
                     </div>
                 </div>
 
@@ -171,12 +171,12 @@
                     <button onclick="toggleSidebarMenu('menu-exec', 'icon-exec')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
                             <i class="fa-solid fa-code text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase tracking-wider">Execution</span>
+                            <span class="uppercase tracking-wider">Execução - Desenvolvimento</span>
                         </div>
                         <i id="icon-exec" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
                     <div id="menu-exec" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('fase_execution')" id="link-fase_execution" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Execution</button>
+                        <button onclick="switchTab('fase_execution')" id="link-fase_execution" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Execução - Desenvolvimento</button>
                         <button onclick="switchTab('fase_uat')" id="link-fase_uat" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">UAT</button>
                         <button onclick="switchTab('fase_golive')" id="link-fase_golive" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Go Live</button>
                         <button onclick="switchTab('conclusao_projeto')" id="link-conclusao_projeto" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Concluir Projeto / Subprojeto</button>
@@ -223,7 +223,9 @@
                 <!-- DIVISOR -->
                 <hr class="my-4 border-gray-200">
 
-                <!-- GRUPO: PERFIS DE ACESSO E RESPONSÁVEIS POR ATIVIDADES -->
+                <!-- GRUPO: PERFIS DE ACESSO -->
+                <!-- AJUSTADO (a pedido do usuário): "Responsáveis por Atividade" saiu
+                     daqui e foi pro grupo Administração (antes de Gestão de Templates). -->
                 <div class="mb-2">
                     <button onclick="toggleSidebarMenu('menu-perfis', 'icon-perfis')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
@@ -236,7 +238,6 @@
                         <button onclick="switchTab('usuarios')" id="link-usuarios" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Usuários & Perfis</button>
                         <button onclick="switchTab('funcoes_permissoes')" id="link-funcoes_permissoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Funções e Permissões</button>
                         <button onclick="switchTab('atribuicao_funcoes')" id="link-atribuicao_funcoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Atribuição de Funções aos Usuários</button>
-                        <button onclick="switchTab('responsaveis')" id="link-responsaveis" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Responsáveis por Atividade</button>
                         <button onclick="switchTab('restricao_area_atividades')" id="link-restricao_area_atividades" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Restrição de Área por Atividade</button>
                     </div>
                 </div>
@@ -255,8 +256,10 @@
                         <button onclick="switchTab('pessoas_solicitantes')" id="link-pessoas_solicitantes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pessoas Solicitantes</button>
                         <button onclick="switchTab('portes')" id="link-portes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cadastro de Porte</button>
                         <button onclick="switchTab('tipos_projeto')" id="link-tipos_projeto" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Tipos de Projeto</button>
-                        <button onclick="switchTab('return_benefit')" id="link-return_benefit" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Return / Benefit</button>
+                        <button onclick="switchTab('return_benefit')" id="link-return_benefit" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Retorno / Benefícios de Projeto</button>
                         <button onclick="switchTab('planejamento_estrategico')" id="link-planejamento_estrategico" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Planejamento Estratégico</button>
+                        <!-- AJUSTADO (a pedido do usuário): "Cargos" veio do grupo Administração. -->
+                        <button onclick="switchTab('cargos')" id="link-cargos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cargos</button>
                     </div>
                 </div>
 
@@ -272,10 +275,12 @@
                     <div id="menu-adm" class="submenu pl-9 pr-2 mt-1 space-y-1">
                         <button onclick="switchTab('workflow_etapas')" id="link-workflow_etapas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fases e Etapas do Workflow</button>
                         <button onclick="switchTab('prazos')" id="link-prazos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">SLA & Prazos</button>
-                        <button onclick="switchTab('gestao_templates')" id="link-gestao_templates" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Gestão de Templates</button>
-                        <button onclick="switchTab('gestao_fluxo_email')" id="link-gestao_fluxo_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Gestão do Fluxo de E-mail</button>
-                        <button onclick="switchTab('fila_email')" id="link-fila_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fila de E-mail</button>
-                        <button onclick="switchTab('cargos')" id="link-cargos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cargos</button>
+                        <!-- AJUSTADO (a pedido do usuário): "Responsáveis por Atividade" veio
+                             do grupo Perfis de Acesso e entra aqui, antes de Gestão de Templates. -->
+                        <button onclick="switchTab('responsaveis')" id="link-responsaveis" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Responsáveis por Atividade</button>
+                        <button onclick="switchTab('gestao_templates')" id="link-gestao_templates" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Envio de E-mail - Gestão de Templates</button>
+                        <button onclick="switchTab('gestao_fluxo_email')" id="link-gestao_fluxo_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Envio de E-mail - Gestão do Fluxo</button>
+                        <button onclick="switchTab('fila_email')" id="link-fila_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Envio de E-mail - Gestão de Fila de Envio</button>
                         <button onclick="switchTab('percentual_bloqueio_orcamento')" id="link-percentual_bloqueio_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Percentual de Bloqueio de Orçamento</button>
                     </div>
                 </div>
@@ -355,7 +360,7 @@
                         <button onclick="switchTab('visao_orcamento')" id="view-btn-visao_orcamento" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Financeiro</button>
                         <button onclick="switchTab('alertas_orcamento')" id="view-btn-alertas_orcamento" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Alertas de Orçamento</button>
                         <button onclick="switchTab('cronograma_evolucao')" id="view-btn-cronograma_evolucao" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Cronograma & Evolução</button>
-                        <button onclick="switchTab('consultas')" id="view-btn-consultas" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Consultas</button>
+                        <button onclick="switchTab('consultas')" id="view-btn-consultas" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Consulta de Projetos</button>
                     </nav>
                     <button onclick="rolarAbasVisao(1)" class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded flex-shrink-0" aria-label="Rolar abas para a direita">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
@@ -432,7 +437,7 @@
                             <p class="text-xs text-gray-500 mt-1">Visão global financeira e de status da esteira.</p>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Fiscal Year</label>
+                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Ano Fiscal</label>
                             <select id="dashSeletorAF" onchange="onMudarSeletorAFDashboard()" class="p-2 border border-gray-300 rounded text-xs font-bold bg-white">
                                 <option value="corrente">Ano Fiscal Corrente</option>
                                 <option value="proximo">Próximo Ano Fiscal (Pipeline)</option>
@@ -482,7 +487,7 @@
                     </div>
 
                     <section class="bg-white p-5 rounded-lg border border-gray-200 border-l-4 border-l-blue-400 shadow-sm mb-6">
-                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Projetos na Criação do Fiscal Year</h3>
+                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Projetos na Criação do Ano Fiscal</h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
@@ -500,7 +505,7 @@
                     </section>
 
                     <section class="bg-white p-5 rounded-lg border border-gray-200 border-l-4 border-l-purple-400 shadow-sm mb-6">
-                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Projetos Extraordinários na Criação do Fiscal Year</h3>
+                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Projetos Extraordinários na Criação do Ano Fiscal</h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
@@ -518,7 +523,7 @@
                     </section>
 
                     <section class="bg-white p-5 rounded-lg border border-gray-200 border-l-4 border-l-indigo-400 shadow-sm mb-6">
-                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Portfolio de Projetos do Fiscal Year</h3>
+                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Portfolio de Projetos do Ano Fiscal</h3>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
@@ -604,8 +609,8 @@
                                     <option value="">-- Todas --</option>
                                     <option value="BUSINESS CASE">Business Case</option>
                                     <option value="REQUIREMENTS">Requerimentos</option>
-                                    <option value="TECHNICAL">Technical</option>
-                                    <option value="EXECUTION">Execution</option>
+                                    <option value="TECHNICAL">Especificação</option>
+                                    <option value="EXECUTION">Execução - Desenvolvimento</option>
                                     <option value="UAT">UAT</option>
                                     <option value="GO LIVE">Go-Live</option>
                                     <option value="CONCLUIDO">Concluído</option>
@@ -655,7 +660,7 @@
                             <p class="text-xs text-gray-500 mt-1">Busca e ordenação livre de qualquer projeto do portfólio, independente da tela de Dashboard.</p>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Fiscal Year</label>
+                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Ano Fiscal</label>
                             <select id="consultaSeletorAF" onchange="onMudarSeletorAFConsulta()" class="p-2 border border-gray-300 rounded text-xs font-bold bg-white">
                                 <option value="corrente">Ano Fiscal Corrente</option>
                                 <option value="proximo">Próximo Ano Fiscal (Pipeline)</option>
@@ -681,8 +686,8 @@
                                     <option value="">-- Todas --</option>
                                     <option value="BUSINESS CASE">Business Case</option>
                                     <option value="REQUIREMENTS">Requerimentos</option>
-                                    <option value="TECHNICAL">Technical</option>
-                                    <option value="EXECUTION">Execution</option>
+                                    <option value="TECHNICAL">Especificação</option>
+                                    <option value="EXECUTION">Execução - Desenvolvimento</option>
                                     <option value="UAT">UAT</option>
                                     <option value="GO LIVE">Go-Live</option>
                                     <option value="CONCLUIDO">Concluído</option>
@@ -726,7 +731,7 @@
                             <p class="text-xs text-gray-500 mt-1">Acompanhamento das fases encadeadas do portfólio.</p>
                         </div>
                         <div>
-                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Fiscal Year</label>
+                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Ano Fiscal</label>
                             <select id="roadmapSeletorAF" onchange="onMudarSeletorAFRoadmap()" class="p-2 border border-gray-300 rounded text-xs font-bold bg-white">
                                 <option value="corrente">Ano Fiscal Corrente</option>
                                 <option value="proximo">Próximo Ano Fiscal (Pipeline)</option>
@@ -784,7 +789,7 @@
                                 <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> &gt; 20%</span>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Fiscal Year</label>
+                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Ano Fiscal</label>
                                 <select id="visaoOrcSeletorAF" onchange="onMudarSeletorAFVisaoOrcamento()" class="p-2 border border-gray-300 rounded text-xs font-bold bg-white">
                                     <option value="corrente">Ano Fiscal Corrente</option>
                                     <option value="proximo">Próximo Ano Fiscal (Pipeline)</option>
@@ -840,7 +845,7 @@
                                         <th class="p-3 text-center">Porte</th>
                                         <th class="p-3 text-right">Orçamento Original (BC)</th>
                                         <th class="p-3 text-right">Pós-Requisitos</th>
-                                        <th class="p-3 text-right">Pós-Technical</th>
+                                        <th class="p-3 text-right">Pós-Especificação</th>
                                         <th class="p-3 text-right">Variação (%)</th>
                                         <th class="p-3 text-center">Saúde</th>
                                     </tr>
@@ -856,7 +861,7 @@
                 <div id="view-alertas_orcamento" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Alertas de Variação de Orçamento</h2>
-                        <p class="text-xs text-gray-500 mt-1">Projetos cuja conclusão de Requerimentos ou Technical teve variação de orçamento acima de 10% em relação ao valor anterior.</p>
+                        <p class="text-xs text-gray-500 mt-1">Projetos cuja conclusão de Requerimentos ou Especificação teve variação de orçamento acima de 10% em relação ao valor anterior.</p>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div class="overflow-x-auto hidden md:block">
@@ -1101,7 +1106,7 @@
                                 <label class="block text-xs font-bold text-gray-700 uppercase mb-2">Benefit Results</label>
                                 <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end mb-3">
                                     <div class="md:col-span-2">
-                                        <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Return / Benefit</label>
+                                        <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Retorno / Benefício de Projeto</label>
                                         <select id="bcBenefitTipo" onchange="onChangeBenefitTipoDemanda()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
                                             <option value="">-- Selecione --</option>
                                         </select>
@@ -1121,7 +1126,7 @@
                                 <button type="button" onclick="adicionarBeneficioDemanda()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded shadow mb-3"><i class="fa-solid fa-plus"></i> Adicionar Benefit Result</button>
                                 <table class="w-full text-left border-collapse text-xs">
                                     <thead><tr class="bg-white text-[10px] uppercase border-b border-gray-200">
-                                        <th class="p-2">Return / Benefit</th><th class="p-2">Métrica</th><th class="p-2 text-right">Valor</th><th class="p-2 text-center">Ação</th>
+                                        <th class="p-2">Retorno / Benefício de Projeto</th><th class="p-2">Métrica</th><th class="p-2 text-right">Valor</th><th class="p-2 text-center">Ação</th>
                                     </tr></thead>
                                     <tbody id="bcBenefitTableBody"><tr><td colspan="4" class="p-2 text-center text-gray-400 italic">Nenhum Benefit Result adicionado</td></tr></tbody>
                                 </table>
@@ -1217,9 +1222,9 @@
                     <!-- NOVO: 3 abas, conforme a proposição V2 (mesmo padrão
                          que será reaproveitado em Requerimentos). -->
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaOrcamentarDemanda('a_planejar')" id="orcDemandaBtn-a_planejar" class="orc-demanda-btn px-4 py-2 rounded-md text-sm font-bold border-2">A Planejar</button>
-                        <button onclick="mudarAbaOrcamentarDemanda('em_andamento')" id="orcDemandaBtn-em_andamento" class="orc-demanda-btn px-4 py-2 rounded-md text-sm font-bold border-2">Em Andamento</button>
-                        <button onclick="mudarAbaOrcamentarDemanda('concluidas')" id="orcDemandaBtn-concluidas" class="orc-demanda-btn px-4 py-2 rounded-md text-sm font-bold border-2">Concluídas</button>
+                        <button onclick="mudarAbaOrcamentarDemanda('a_planejar')" id="orcDemandaBtn-a_planejar" class="orc-demanda-btn px-4 py-2 rounded-md text-sm font-bold border-2">Planejar Orçamentação</button>
+                        <button onclick="mudarAbaOrcamentarDemanda('em_andamento')" id="orcDemandaBtn-em_andamento" class="orc-demanda-btn px-4 py-2 rounded-md text-sm font-bold border-2">Executar Orçamentação</button>
+                        <button onclick="mudarAbaOrcamentarDemanda('concluidas')" id="orcDemandaBtn-concluidas" class="orc-demanda-btn px-4 py-2 rounded-md text-sm font-bold border-2">Orçamentação Concluída</button>
                     </div>
 
                     <div id="orcDemandaPainel-a_planejar" class="orc-demanda-painel">
@@ -1313,7 +1318,7 @@
                 <div id="view-aprov_orcamento_af" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2 flex justify-between items-end">
                         <div>
-                            <h2 class="text-xl font-bold text-gray-800">Aprovar Orçamento Fiscal Year</h2>
+                            <h2 class="text-xl font-bold text-gray-800">Aprovar Orçamento Ano Fiscal</h2>
                             <p class="text-xs text-gray-500 mt-1">Transição em lote de todos os projetos aprovados para a fase de Requisitos.</p>
                         </div>
                         <div class="text-right">
@@ -1365,15 +1370,15 @@
                 <!-- TELA: REQ PLANEJAMENTO -->
                 <div id="view-req_planejamento" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Gerar Requeriments</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Gerar Requerimentos</h2>
                         <p class="text-xs text-gray-500 mt-1">Planejamento (responsável e datas) e registro de execução (% de evolução) do levantamento de requisitos.</p>
                     </div>
 
                     <!-- NOVO: 3 abas, mesmo padrão V2 de Orçamentar Demanda. -->
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaGerarRequerimentos('a_planejar')" id="reqGerarBtn-a_planejar" class="req-gerar-btn px-4 py-2 rounded-md text-sm font-bold border-2">A Planejar</button>
-                        <button onclick="mudarAbaGerarRequerimentos('em_andamento')" id="reqGerarBtn-em_andamento" class="req-gerar-btn px-4 py-2 rounded-md text-sm font-bold border-2">Em Andamento</button>
-                        <button onclick="mudarAbaGerarRequerimentos('concluidas')" id="reqGerarBtn-concluidas" class="req-gerar-btn px-4 py-2 rounded-md text-sm font-bold border-2">Concluídas</button>
+                        <button onclick="mudarAbaGerarRequerimentos('a_planejar')" id="reqGerarBtn-a_planejar" class="req-gerar-btn px-4 py-2 rounded-md text-sm font-bold border-2">Planejar Requerimentos</button>
+                        <button onclick="mudarAbaGerarRequerimentos('em_andamento')" id="reqGerarBtn-em_andamento" class="req-gerar-btn px-4 py-2 rounded-md text-sm font-bold border-2">Executar Requerimentos</button>
+                        <button onclick="mudarAbaGerarRequerimentos('concluidas')" id="reqGerarBtn-concluidas" class="req-gerar-btn px-4 py-2 rounded-md text-sm font-bold border-2">Requerimentos Concluídos</button>
                     </div>
 
                     <div id="reqGerarPainel-a_planejar" class="req-gerar-painel">
@@ -1445,8 +1450,8 @@
                     </div>
                     <!-- NOVO: 2 botões, padrão V2. -->
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaAvaliarTI('a_planejar')" id="avalTIBtn-a_planejar" class="aval-ti-btn px-4 py-2 rounded-md text-sm font-bold border-2">A Planejar</button>
-                        <button onclick="mudarAbaAvaliarTI('execucao')" id="avalTIBtn-execucao" class="aval-ti-btn px-4 py-2 rounded-md text-sm font-bold border-2">Execução</button>
+                        <button onclick="mudarAbaAvaliarTI('a_planejar')" id="avalTIBtn-a_planejar" class="aval-ti-btn px-4 py-2 rounded-md text-sm font-bold border-2">Planejar Avaliação de Requerimentos - TI</button>
+                        <button onclick="mudarAbaAvaliarTI('execucao')" id="avalTIBtn-execucao" class="aval-ti-btn px-4 py-2 rounded-md text-sm font-bold border-2">Executar Avaliação de Requerimentos - TI</button>
                     </div>
 
                     <div id="avalTIPainel-a_planejar" class="aval-ti-painel">
@@ -1498,8 +1503,8 @@
                     </div>
                     <!-- NOVO: 2 botões, padrão V2. -->
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaAvaliarNegocio('a_planejar')" id="avalNegBtn-a_planejar" class="aval-neg-btn px-4 py-2 rounded-md text-sm font-bold border-2">A Planejar</button>
-                        <button onclick="mudarAbaAvaliarNegocio('execucao')" id="avalNegBtn-execucao" class="aval-neg-btn px-4 py-2 rounded-md text-sm font-bold border-2">Execução</button>
+                        <button onclick="mudarAbaAvaliarNegocio('a_planejar')" id="avalNegBtn-a_planejar" class="aval-neg-btn px-4 py-2 rounded-md text-sm font-bold border-2">Planejar Avaliação de Requerimentos - Negócios</button>
+                        <button onclick="mudarAbaAvaliarNegocio('execucao')" id="avalNegBtn-execucao" class="aval-neg-btn px-4 py-2 rounded-md text-sm font-bold border-2">Executar Avaliação de Requerimentos - Negócios</button>
                     </div>
 
                     <div id="avalNegPainel-a_planejar" class="aval-neg-painel">
@@ -1573,8 +1578,8 @@
                     </div>
                     <!-- NOVO: 2 botões, padrão V2. -->
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaGerarEspecificacao('a_planejar')" id="techGerarBtn-a_planejar" class="tech-gerar-btn px-4 py-2 rounded-md text-sm font-bold border-2">A Planejar</button>
-                        <button onclick="mudarAbaGerarEspecificacao('execucao')" id="techGerarBtn-execucao" class="tech-gerar-btn px-4 py-2 rounded-md text-sm font-bold border-2">Execução</button>
+                        <button onclick="mudarAbaGerarEspecificacao('a_planejar')" id="techGerarBtn-a_planejar" class="tech-gerar-btn px-4 py-2 rounded-md text-sm font-bold border-2">Planejar Especificação</button>
+                        <button onclick="mudarAbaGerarEspecificacao('execucao')" id="techGerarBtn-execucao" class="tech-gerar-btn px-4 py-2 rounded-md text-sm font-bold border-2">Executar Especificação</button>
                     </div>
 
                     <div id="techGerarPainel-a_planejar" class="tech-gerar-painel">
@@ -1602,7 +1607,7 @@
                      mesmo padrão de "Conclusão" de Requerimentos. -->
                 <div id="view-tech_conclusao" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Concluir Etapa de Technical</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Concluir Etapa de Especificação</h2>
                         <p class="text-xs text-gray-500 mt-1">Revisão de valor e ratificação/retificação de porte, com alerta de variação em relação ao orçamento de Requerimentos.</p>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -1625,8 +1630,8 @@
                     </div>
                     <!-- NOVO: 2 botões, padrão V2. -->
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaAvalEspecNegocio('a_planejar')" id="techAvalNegBtn-a_planejar" class="tech-aval-neg-btn px-4 py-2 rounded-md text-sm font-bold border-2">A Planejar</button>
-                        <button onclick="mudarAbaAvalEspecNegocio('execucao')" id="techAvalNegBtn-execucao" class="tech-aval-neg-btn px-4 py-2 rounded-md text-sm font-bold border-2">Execução</button>
+                        <button onclick="mudarAbaAvalEspecNegocio('a_planejar')" id="techAvalNegBtn-a_planejar" class="tech-aval-neg-btn px-4 py-2 rounded-md text-sm font-bold border-2">Planejar Especificação - Negócios</button>
+                        <button onclick="mudarAbaAvalEspecNegocio('execucao')" id="techAvalNegBtn-execucao" class="tech-aval-neg-btn px-4 py-2 rounded-md text-sm font-bold border-2">Executar Especificação - Negócios</button>
                     </div>
 
                     <div id="techAvalNegPainel-a_planejar" class="tech-aval-neg-painel">
@@ -1672,15 +1677,15 @@
 
                 <div id="view-fase_execution" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Execution</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Execução - Desenvolvimento</h2>
                     </div>
 
                     <!-- NOVO (item 10, relatório de melhorias): 3 botões,
                          mesmo padrão V2. -->
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaExecution('a_planejar')" id="execBtn-a_planejar" class="exec-btn px-4 py-2 rounded-md text-sm font-bold border-2">Projetos a Planejar</button>
-                        <button onclick="mudarAbaExecution('em_andamento')" id="execBtn-em_andamento" class="exec-btn px-4 py-2 rounded-md text-sm font-bold border-2">Projetos em Andamento</button>
-                        <button onclick="mudarAbaExecution('subprojetos')" id="execBtn-subprojetos" class="exec-btn px-4 py-2 rounded-md text-sm font-bold border-2">Subprojetos</button>
+                        <button onclick="mudarAbaExecution('a_planejar')" id="execBtn-a_planejar" class="exec-btn px-4 py-2 rounded-md text-sm font-bold border-2">Planejar Execução - Desenvolvimento</button>
+                        <button onclick="mudarAbaExecution('em_andamento')" id="execBtn-em_andamento" class="exec-btn px-4 py-2 rounded-md text-sm font-bold border-2">Executar Desenvolvimento</button>
+                        <button onclick="mudarAbaExecution('subprojetos')" id="execBtn-subprojetos" class="exec-btn px-4 py-2 rounded-md text-sm font-bold border-2">Gerir Subprojetos</button>
                     </div>
 
                     <div id="execPainel-a_planejar" class="exec-painel">
@@ -1735,7 +1740,7 @@
                          diferentes por atividade no futuro. -->
                     <div class="flex gap-2 mb-4 flex-wrap">
                         <button onclick="mudarAbaUAT('ratificar')" id="uatBtn-ratificar" class="uat-btn px-4 py-2 rounded-md text-sm font-bold border-2">Retificar/Ratificar Planejamento</button>
-                        <button onclick="mudarAbaUAT('em_andamento')" id="uatBtn-em_andamento" class="uat-btn px-4 py-2 rounded-md text-sm font-bold border-2">Projetos em Andamento</button>
+                        <button onclick="mudarAbaUAT('em_andamento')" id="uatBtn-em_andamento" class="uat-btn px-4 py-2 rounded-md text-sm font-bold border-2">Executar UAT</button>
                     </div>
 
                     <div id="uatPainel-ratificar" class="uat-painel">
@@ -1769,7 +1774,7 @@
                          eram botões embutidos na lista de Execução). -->
                     <div class="flex gap-2 mb-4 flex-wrap">
                         <button onclick="mudarAbaGoLive('ratificar')" id="goliveBtn-ratificar" class="golive-btn px-4 py-2 rounded-md text-sm font-bold border-2">Retificar/Ratificar Planejamento</button>
-                        <button onclick="mudarAbaGoLive('em_andamento')" id="goliveBtn-em_andamento" class="golive-btn px-4 py-2 rounded-md text-sm font-bold border-2">Projetos em Andamento</button>
+                        <button onclick="mudarAbaGoLive('em_andamento')" id="goliveBtn-em_andamento" class="golive-btn px-4 py-2 rounded-md text-sm font-bold border-2">Executar Go-Live</button>
                         <button onclick="mudarAbaGoLive('ocorrencias')" id="goliveBtn-ocorrencias" class="golive-btn px-4 py-2 rounded-md text-sm font-bold border-2">Gestão de Ocorrências</button>
                         <button onclick="mudarAbaGoLive('termo_aceite')" id="goliveBtn-termo_aceite" class="golive-btn px-4 py-2 rounded-md text-sm font-bold border-2">Termo de Aceite</button>
                     </div>
@@ -1848,7 +1853,7 @@
                     <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
                         <div class="kpi-card p-4 border-l-4 border-l-red-600"><span class="text-[10px] font-bold text-gray-400 uppercase">Orçamento Aprovado AF</span><div id="adhocKpiAprovado" class="text-base font-extrabold text-gray-800 mt-1">R$ 0,00</div></div>
                         <div class="kpi-card p-4 border-l-4 border-l-amber-500"><span class="text-[10px] font-bold text-gray-400 uppercase">Pós-Requisitos</span><div id="adhocKpiReq" class="text-base font-extrabold text-gray-800 mt-1">R$ 0,00</div></div>
-                        <div class="kpi-card p-4 border-l-4 border-l-blue-600"><span class="text-[10px] font-bold text-gray-400 uppercase">Pós-Technical</span><div id="adhocKpiTech" class="text-base font-extrabold text-gray-800 mt-1">R$ 0,00</div></div>
+                        <div class="kpi-card p-4 border-l-4 border-l-blue-600"><span class="text-[10px] font-bold text-gray-400 uppercase">Pós-Especificação</span><div id="adhocKpiTech" class="text-base font-extrabold text-gray-800 mt-1">R$ 0,00</div></div>
                         <div class="kpi-card p-4 border-l-4 border-l-gray-600"><span class="text-[10px] font-bold text-gray-400 uppercase">Realizado Total</span><div id="adhocKpiRealizado" class="text-base font-extrabold text-gray-800 mt-1">R$ 0,00</div></div>
                         <div class="kpi-card p-4 border-l-4 border-l-green-600 bg-green-50"><span class="text-[10px] font-bold text-green-700 uppercase">Saldo Remanescente</span><div id="adhocKpiSaldo" class="text-base font-extrabold text-green-800 mt-1">R$ 0,00</div></div>
                         <div class="kpi-card p-4 border-l-4 border-l-purple-500 bg-purple-50"><span class="text-[10px] font-bold text-purple-700 uppercase">Extraordinário Aprovado, Aguardando Inclusão</span><div id="adhocKpiPendenteInclusao" class="text-base font-extrabold text-purple-800 mt-1">R$ 0,00</div></div>
@@ -1935,7 +1940,7 @@
                                     <th class="p-3">Situação</th>
                                     <th class="p-3 text-right">Orç. Business Case</th>
                                     <th class="p-3 text-right">Orç. Requerimentos</th>
-                                    <th class="p-3 text-right">Orç. Technical</th>
+                                    <th class="p-3 text-right">Orç. Especificação</th>
                                     <th class="p-3 text-right">Saldo Carryover</th>
                                     <th class="p-3 text-center">Ação</th>
                                 </tr></thead>
@@ -2032,8 +2037,8 @@
                          mesmo padrão de Usuários/Funções/Cargos — uma pra cadastrar,
                          outra pra consultar os cadastrados. -->
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaAreas('criar')" id="areasBtn-criar" class="areas-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Área</button>
-                        <button onclick="mudarAbaAreas('cadastrados')" id="areasBtn-cadastrados" class="areas-btn px-4 py-2 rounded-md text-sm font-bold border-2">Áreas Cadastradas</button>
+                        <button onclick="mudarAbaAreas('criar')" id="areasBtn-criar" class="areas-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Áreas Solicitantes</button>
+                        <button onclick="mudarAbaAreas('cadastrados')" id="areasBtn-cadastrados" class="areas-btn px-4 py-2 rounded-md text-sm font-bold border-2">Áreas Solicitantes Cadastradas</button>
                     </div>
 
                     <div id="areasPainel-criar" class="areas-painel">
@@ -2117,8 +2122,8 @@
                     <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Cadastro de Porte</h2></div>
 
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaPortes('criar')" id="portesBtn-criar" class="portes-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Porte</button>
-                        <button onclick="mudarAbaPortes('cadastrados')" id="portesBtn-cadastrados" class="portes-btn px-4 py-2 rounded-md text-sm font-bold border-2">Portes Cadastrados</button>
+                        <button onclick="mudarAbaPortes('criar')" id="portesBtn-criar" class="portes-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Porte de Projeto</button>
+                        <button onclick="mudarAbaPortes('cadastrados')" id="portesBtn-cadastrados" class="portes-btn px-4 py-2 rounded-md text-sm font-bold border-2">Portes de Projeto Cadastrados</button>
                     </div>
 
                     <div id="portesPainel-criar" class="portes-painel">
@@ -2388,7 +2393,7 @@
                      Fluxo). -->
                 <div id="view-gestao_templates" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Gestão de Templates</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Envio de E-mail - Gestão de Templates</h2>
                         <p class="text-xs text-gray-500 mt-1">Textos de e-mail reutilizáveis — a associação de quando/pra quem enviar fica em Gestão do Fluxo de E-mail.</p>
                     </div>
 
@@ -2442,7 +2447,7 @@
                      destinatário+remetente+template cadastrados. -->
                 <div id="view-gestao_fluxo_email" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Gestão do Fluxo de E-mail</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Envio de E-mail - Gestão do Fluxo</h2>
                         <p class="text-xs text-gray-500 mt-1">Cada linha representa um ponto do workflow onde um e-mail PODE ser disparado. Cadastre destinatário, remetente e template pra poder ativar.</p>
                     </div>
                     <div id="chaveGeralEmailContainer"></div>
@@ -2465,7 +2470,7 @@
                      ajustadas no item 13. -->
                 <div id="view-fila_email" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Fila de E-mail</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Envio de E-mail - Gestão de Fila de Envio</h2>
                         <p class="text-xs text-gray-500 mt-1">Tudo que já foi gerado — nada é enviado de verdade ainda (ver item 12/14 do escopo).</p>
                     </div>
                     <div id="avisoChaveGeralEmailFila" class="hidden bg-red-50 border-2 border-red-300 text-red-800 text-xs font-bold rounded-lg p-3 mb-4">⛔ A Chave Geral de Envio de E-mail está desligada (aba Gestão do Fluxo de E-mail) — nada será enfileirado nem enviado até ela ser ligada de novo.</div>
@@ -2492,7 +2497,7 @@
                     <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Cargos</h2></div>
 
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaCargos('criar')" id="cargosBtn-criar" class="cargos-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Cargo</button>
+                        <button onclick="mudarAbaCargos('criar')" id="cargosBtn-criar" class="cargos-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Cargos</button>
                         <button onclick="mudarAbaCargos('cadastrados')" id="cargosBtn-cadastrados" class="cargos-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cargos Cadastrados</button>
                     </div>
 
@@ -2542,7 +2547,7 @@
                 <div id="view-percentual_bloqueio_orcamento" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Percentual de Bloqueio de Orçamento</h2></div>
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-lg">
-                        <p class="text-xs text-gray-500 mb-4">Percentual aceito de variação de orçamento (horas ou valor) na conclusão de Requerimentos e de Technical. Quando a variação real ultrapassar o percentual configurado aqui, o projeto é bloqueado e passa a exigir aprovação em Governança &gt; Mudança de Orçamento antes de seguir no workflow. Deixe em branco pra não bloquear.</p>
+                        <p class="text-xs text-gray-500 mb-4">Percentual aceito de variação de orçamento (horas ou valor) na conclusão de Requerimentos e de Especificação. Quando a variação real ultrapassar o percentual configurado aqui, o projeto é bloqueado e passa a exigir aprovação em Governança &gt; Mudança de Orçamento antes de seguir no workflow. Deixe em branco pra não bloquear.</p>
                         <div class="mb-4">
                             <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Percentual de Bloqueio de Variação (%)</label>
                             <input type="number" id="bloqueioPercentualVariacao" min="0" step="1" class="w-full p-2 border border-gray-300 rounded text-sm">
@@ -2936,7 +2941,7 @@
                 <div id="view-mudanca_orcamento" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800">Mudança de Orçamento</h2>
-                        <p class="text-xs text-gray-500 mt-1">Projetos bloqueados na conclusão de Requerimentos ou Technical por variação de orçamento acima do percentual parametrizado. Clique em "Analisar" pra ver os valores em detalhe e aprovar a continuidade.</p>
+                        <p class="text-xs text-gray-500 mt-1">Projetos bloqueados na conclusão de Requerimentos ou Especificação por variação de orçamento acima do percentual parametrizado. Clique em "Analisar" pra ver os valores em detalhe e aprovar a continuidade.</p>
                     </div>
 
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -2959,16 +2964,20 @@
                         <p class="text-xs text-gray-500 mt-1">Pilares e Iniciativas Estratégicas, associados a um Ano Fiscal. A chave de uso é sempre Ano Fiscal + Pilar + Iniciativa.</p>
                     </div>
 
-                    <!-- NOVO: 2 botões, mesmo padrão V2. -->
+                    <!-- AJUSTADO (padronização de telas, a pedido do usuário): cada
+                         sub-área (Pilares / Iniciativas) passa a ter aba de
+                         Cadastrar + aba de Cadastrados — 4 sub-abas no total. -->
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaPlanejamentoEstrategico('pilares')" id="planEstBtn-pilares" class="plan-est-btn px-4 py-2 rounded-md text-sm font-bold border-2">Pilares Estratégicos</button>
-                        <button onclick="mudarAbaPlanejamentoEstrategico('iniciativas')" id="planEstBtn-iniciativas" class="plan-est-btn px-4 py-2 rounded-md text-sm font-bold border-2">Iniciativas Estratégicas</button>
+                        <button onclick="mudarAbaPlanejamentoEstrategico('pilares_criar')" id="planEstBtn-pilares_criar" class="plan-est-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Pilares Estratégicos</button>
+                        <button onclick="mudarAbaPlanejamentoEstrategico('pilares_cadastrados')" id="planEstBtn-pilares_cadastrados" class="plan-est-btn px-4 py-2 rounded-md text-sm font-bold border-2">Pilares Estratégicos Cadastrados</button>
+                        <button onclick="mudarAbaPlanejamentoEstrategico('iniciativas_criar')" id="planEstBtn-iniciativas_criar" class="plan-est-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Iniciativas Estratégicas</button>
+                        <button onclick="mudarAbaPlanejamentoEstrategico('iniciativas_cadastrados')" id="planEstBtn-iniciativas_cadastrados" class="plan-est-btn px-4 py-2 rounded-md text-sm font-bold border-2">Iniciativas Estratégicas Cadastradas</button>
                     </div>
 
-                    <div id="planEstPainel-pilares" class="plan-est-painel">
-                    <!-- PILARES ESTRATÉGICOS -->
+                    <div id="planEstPainel-pilares_criar" class="plan-est-painel">
+                    <!-- PILARES ESTRATÉGICOS — CADASTRAR -->
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                        <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Pilares Estratégicos</h4>
+                        <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Cadastrar Pilar Estratégico</h4>
                         <input type="hidden" id="pilarIdHidden">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
                             <div>
@@ -2986,11 +2995,16 @@
                             <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Descrição</label>
                             <textarea id="pilarDescricaoInput" rows="2" class="w-full p-2 border border-gray-300 rounded text-xs"></textarea>
                         </div>
-                        <div class="flex gap-2 mb-4">
+                        <div class="flex gap-2">
                             <button onclick="salvarPilarEstrategico()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded text-xs transition"><i class="fa-solid fa-floppy-disk"></i> Salvar Pilar</button>
                             <button onclick="limparFormPilar()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded text-xs transition">Limpar</button>
                         </div>
+                    </div>
+                    </div>
 
+                    <div id="planEstPainel-pilares_cadastrados" class="plan-est-painel hidden">
+                    <!-- PILARES ESTRATÉGICOS — CADASTRADOS -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
@@ -3003,10 +3017,10 @@
                     </div>
                     </div>
 
-                    <div id="planEstPainel-iniciativas" class="plan-est-painel hidden">
-                    <!-- INICIATIVAS ESTRATÉGICAS -->
+                    <div id="planEstPainel-iniciativas_criar" class="plan-est-painel hidden">
+                    <!-- INICIATIVAS ESTRATÉGICAS — CADASTRAR -->
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                        <h4 class="font-bold text-gray-800 text-sm mb-1 uppercase tracking-wider">Iniciativas Estratégicas</h4>
+                        <h4 class="font-bold text-gray-800 text-sm mb-1 uppercase tracking-wider">Cadastrar Iniciativa Estratégica</h4>
                         <p class="text-xs text-gray-500 mb-4">Selecione o Pilar primeiro — a iniciativa herda o Ano Fiscal dele.</p>
                         <input type="hidden" id="iniciativaIdHidden">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
@@ -3025,11 +3039,16 @@
                             <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Descrição</label>
                             <textarea id="iniciativaDescricaoInput" rows="2" class="w-full p-2 border border-gray-300 rounded text-xs"></textarea>
                         </div>
-                        <div class="flex gap-2 mb-4">
+                        <div class="flex gap-2">
                             <button onclick="salvarIniciativaEstrategica()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded text-xs transition"><i class="fa-solid fa-floppy-disk"></i> Salvar Iniciativa</button>
                             <button onclick="limparFormIniciativa()" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded text-xs transition">Limpar</button>
                         </div>
+                    </div>
+                    </div>
 
+                    <div id="planEstPainel-iniciativas_cadastrados" class="plan-est-painel hidden">
+                    <!-- INICIATIVAS ESTRATÉGICAS — CADASTRADAS -->
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
@@ -3092,18 +3111,18 @@
                 <!-- Cadastro de Return / Benefit (Tabela 1 do Benefit Results da demanda) -->
                 <div id="view-return_benefit" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Return / Benefit</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Retorno / Benefícios de Projeto</h2>
                         <p class="text-xs text-gray-500 mt-1">Tipos de retorno/benefício disponíveis pro quadro "Benefit Results" da demanda. O parâmetro "Permite Valor" controla se, ao escolher esse tipo na demanda, é possível informar um valor de NPV ou ROI.</p>
                     </div>
 
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaReturnBenefit('criar')" id="returnBenefitBtn-criar" class="return-benefit-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Return / Benefit</button>
-                        <button onclick="mudarAbaReturnBenefit('cadastrados')" id="returnBenefitBtn-cadastrados" class="return-benefit-btn px-4 py-2 rounded-md text-sm font-bold border-2">Return / Benefit Cadastrados</button>
+                        <button onclick="mudarAbaReturnBenefit('criar')" id="returnBenefitBtn-criar" class="return-benefit-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Retorno / Benefício de Projeto</button>
+                        <button onclick="mudarAbaReturnBenefit('cadastrados')" id="returnBenefitBtn-cadastrados" class="return-benefit-btn px-4 py-2 rounded-md text-sm font-bold border-2">Retornos / Benefícios de Projeto Cadastrados</button>
                     </div>
 
                     <div id="returnBenefitPainel-criar" class="return-benefit-painel">
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mb-6">
-                        <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Novo / Editar Return / Benefit</h4>
+                        <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Novo / Editar Retorno / Benefício de Projeto</h4>
                         <input type="hidden" id="rbIdHidden">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                             <div class="md:col-span-2">
@@ -3170,7 +3189,7 @@
                          reabrir nada no final. Diferente da limpeza acima,
                          que preserva o AF2027 aberto. -->
                     <div id="devToolsLimpezaTotalConteudo" class="hidden bg-red-100 p-6 rounded-lg shadow-sm border-2 border-dashed border-red-500 mb-6">
-                        <p class="text-xs text-red-800 mb-4 font-bold">⚠️ Mais destrutivo que a limpeza acima: apaga FISICAMENTE todos os projetos (de qualquer Ano Fiscal) e também TODA a configuração de Ano Fiscal em `anos_fiscais_config` — inclusive os totais já fechados (valor e quantidade). Não reabre nenhum AF no final: depois de rodar, é preciso ir em Fiscal Year → Abertura Fiscal Year pra começar do zero.</p>
+                        <p class="text-xs text-red-800 mb-4 font-bold">⚠️ Mais destrutivo que a limpeza acima: apaga FISICAMENTE todos os projetos (de qualquer Ano Fiscal) e também TODA a configuração de Ano Fiscal em `anos_fiscais_config` — inclusive os totais já fechados (valor e quantidade). Não reabre nenhum AF no final: depois de rodar, é preciso ir em Ano Fiscal → Abertura Ano Fiscal pra começar do zero.</p>
                         <button onclick="limparBaseCompletamente()" class="bg-red-900 hover:bg-black text-white font-bold py-2 px-4 rounded transition text-sm">
                             <i class="fa-solid fa-bomb"></i> Apagar TUDO e Zerar Totais
                         </button>
@@ -3239,8 +3258,8 @@
                                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Fase de Destino *</label>
                                 <select id="devTesteFase" onchange="onDevTesteFaseChange()" class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
                                     <option value="REQUIREMENTS">Requerimentos</option>
-                                    <option value="TECHNICAL">Technical</option>
-                                    <option value="EXECUTION">Execution</option>
+                                    <option value="TECHNICAL">Especificação</option>
+                                    <option value="EXECUTION">Execução - Desenvolvimento</option>
                                     <option value="UAT">UAT</option>
                                     <option value="GOLIVE">Go-Live</option>
                                 </select>
@@ -3282,11 +3301,11 @@
 
                         <div id="devTesteBlocoTechnical" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 hidden">
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Orçamento Technical (R$) *</label>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Orçamento Especificação (R$) *</label>
                                 <input type="number" id="devTesteValTech" min="0" step="0.01" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Horas Technical *</label>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Horas Especificação *</label>
                                 <input type="number" id="devTesteHorasTech" min="0" step="0.5" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
                             </div>
                         </div>
@@ -3295,7 +3314,7 @@
                             <label class="flex items-center gap-2 text-xs font-bold text-gray-700"><input type="checkbox" id="devTesteAdhoc" onchange="onDevTesteAdhocChange()"> Demanda Extraordinária</label>
                             <label class="flex items-center gap-2 text-xs font-bold text-gray-700"><input type="checkbox" id="devTesteCarryover"> Marcar como Carryover</label>
                         </div>
-                        <p id="devTesteAvisoAdhoc" class="text-[11px] text-amber-700 font-bold mb-4 hidden">Demanda Extraordinária entra sempre em Business Case, com orçamento definido mas ainda pendente de aprovação do Comitê — vai aparecer em "Aprovar Orçamento por Projeto (Comitê)" pra testar os passos de aprovação/reprovação. Fase de destino, Requerimentos/Technical e Carryover ficam desabilitados enquanto esta opção estiver marcada.</p>
+                        <p id="devTesteAvisoAdhoc" class="text-[11px] text-amber-700 font-bold mb-4 hidden">Demanda Extraordinária entra sempre em Business Case, com orçamento definido mas ainda pendente de aprovação do Comitê — vai aparecer em "Aprovar Orçamento por Projeto (Comitê)" pra testar os passos de aprovação/reprovação. Fase de destino, Requerimentos/Especificação e Carryover ficam desabilitados enquanto esta opção estiver marcada.</p>
 
                         <button onclick="criarProjetoTeste()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded transition text-sm">
                             <i class="fa-solid fa-flask"></i> Criar Projeto de Teste
@@ -3416,7 +3435,7 @@
                     <label class="block text-[10px] font-bold text-gray-600 uppercase mb-2">Benefit Results</label>
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end mb-3">
                         <div class="md:col-span-2">
-                            <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Return / Benefit</label>
+                            <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Retorno / Benefício de Projeto</label>
                             <select id="detBenefitTipo" onchange="onChangeBenefitTipoDetalhe()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
                                 <option value="">-- Selecione --</option>
                             </select>
@@ -3436,7 +3455,7 @@
                     <button type="button" onclick="adicionarBeneficioDetalhe()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-3 py-1.5 rounded shadow mb-3"><i class="fa-solid fa-plus"></i> Adicionar Benefit Result</button>
                     <table class="w-full text-left border-collapse text-xs">
                         <thead><tr class="bg-gray-50 text-[10px] uppercase border-b border-gray-200">
-                            <th class="p-2">Return / Benefit</th><th class="p-2">Métrica</th><th class="p-2 text-right">Valor</th><th class="p-2 text-center">Ação</th>
+                            <th class="p-2">Retorno / Benefício de Projeto</th><th class="p-2">Métrica</th><th class="p-2 text-right">Valor</th><th class="p-2 text-center">Ação</th>
                         </tr></thead>
                         <tbody id="detBenefitTableBody"><tr><td colspan="4" class="p-2 text-center text-gray-400 italic">Nenhum Benefit Result adicionado</td></tr></tbody>
                     </table>

@@ -143,7 +143,7 @@ async function criarProjetoTeste() {
         valTech = Number(document.getElementById('devTesteValTech').value);
         horasTech = Number(document.getElementById('devTesteHorasTech').value);
         if (!valTech || valTech <= 0 || !horasTech || horasTech <= 0) {
-            return alert('Informe o Orçamento e as Horas de Technical — obrigatórios pra essa fase de destino!');
+            return alert('Informe o Orçamento e as Horas de Especificação — obrigatórios pra essa fase de destino!');
         }
     }
 

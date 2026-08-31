@@ -113,7 +113,7 @@ function switchTab(tabId) {
     if (tabId === 'gestao_templates') { mudarAbaTemplates('incluir'); renderGestaoTemplatesView(); }
     if (tabId === 'gestao_fluxo_email') renderGestaoFluxoEmailView();
     if (tabId === 'fila_email') renderFilaEmailPendentes();
-    if (tabId === 'planejamento_estrategico') { mudarAbaPlanejamentoEstrategico('pilares'); renderPlanejamentoEstrategicoView(); }
+    if (tabId === 'planejamento_estrategico') { mudarAbaPlanejamentoEstrategico('pilares_criar'); renderPlanejamentoEstrategicoView(); }
     if (tabId === 'empresas_terceirizadas') { mudarAbaEmpresas('criar'); renderEmpresasTerceirizadasView(); }
     if (tabId === 'contratos_projeto') { mudarAbaContratos('criar'); renderContratosProjetoView(); }
     if (tabId === 'contratos_vinculos') renderContratosVinculosView();

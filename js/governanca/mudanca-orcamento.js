@@ -21,7 +21,7 @@ function obterValoresMudancaOrcamento(p) {
     const ehTechnical = (p.etapa_atual || '').toUpperCase() === 'TECHNICAL';
     return {
         ehTechnical,
-        labelFase: ehTechnical ? 'Requerimentos → Technical' : 'Business Case → Requerimentos',
+        labelFase: ehTechnical ? 'Requerimentos → Especificação' : 'Business Case → Requerimentos',
         valorReferencia: ehTechnical ? (Number(p.val_req) || 0) : (Number(p.val_bc) || 0),
         valorNovo: ehTechnical ? (Number(p.val_tech) || 0) : (Number(p.val_req) || 0),
         horasReferencia: ehTechnical ? (Number(p.horas_req) || 0) : (Number(p.horas_bc) || 0),

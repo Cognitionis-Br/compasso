@@ -77,7 +77,7 @@ async function onChangeAnoFiscalDemanda() {
 
     if (tipo === 'extraordinaria') {
         document.getElementById('bcAvisoAFFechadoTexto').innerText =
-            `Fiscal Year ${af} já está com o orçamento fechado, a realizar ou em realização. As novas demandas incluídas nessa situação deverão ter o processo de aprovação através do menu "Aprovar Demanda Extraordinária".`;
+            `Ano Fiscal ${af} já está com o orçamento fechado, a realizar ou em realização. As novas demandas incluídas nessa situação deverão ter o processo de aprovação através do menu "Aprovar Demanda Extraordinária".`;
         avisoBox.classList.remove('hidden');
         const radioNao = document.querySelector('input[name="bcConfirmaExtraordinaria"][value="nao"]');
         if (radioNao) radioNao.checked = true;

@@ -32,7 +32,7 @@ function verificarElegibilidadeCarryover(p, anosFiscaisConfigCache) {
     const proximoValido = configProximo && (configProximo.recebimento_demandas_aberto === true || configProximo.orcamento_fechado === true);
 
     if (!proximoValido) {
-        return { elegivel: false, motivo: `O ${proximoAF} ainda não está aberto nem com orçamento fechado — abra-o em Fiscal Year → Abertura Fiscal Year antes de marcar Carryover.` };
+        return { elegivel: false, motivo: `O ${proximoAF} ainda não está aberto nem com orçamento fechado — abra-o em Ano Fiscal → Abertura Ano Fiscal antes de marcar Carryover.` };
     }
     return { elegivel: true, motivo: null };
 }

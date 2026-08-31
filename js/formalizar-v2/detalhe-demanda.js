@@ -208,7 +208,7 @@ async function adicionarBeneficioDetalhe() {
     const tipoSelect = document.getElementById('detBenefitTipo');
     const tipoId = tipoSelect.value;
     if (!tipoId) {
-        return alert('Selecione um Return / Benefit antes de adicionar!');
+        return alert('Selecione um Retorno / Benefício de Projeto antes de adicionar!');
     }
     const tipo = returnBenefitDetalheCache.find(rb => String(rb.id) === tipoId);
     if (!tipo) return;

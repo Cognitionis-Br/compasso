@@ -437,7 +437,7 @@ async function renderBlocosCriacaoEPortfolioFY(listaFiltrada) {
         const totalBloco2 = normais.length + extraordinarias.length + carryover.length;
 
         elBody2.innerHTML =
-            linha('Total de Projetos Incluídos na Abertura do Fiscal Year', normais.length, 'bg-blue-50 text-blue-800') +
+            linha('Total de Projetos Incluídos na Abertura do Ano Fiscal', normais.length, 'bg-blue-50 text-blue-800') +
             linha('Total Demandas Extraordinárias', extraordinarias.length, 'bg-purple-50 text-purple-800') +
             linha('Total Demandas Carryover', carryover.length, 'bg-orange-50 text-orange-800');
         const elTotal2 = document.getElementById('tablePortfolioFYTotal');

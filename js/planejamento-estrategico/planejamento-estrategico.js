@@ -13,9 +13,10 @@
 let pilaresCache = [];
 let iniciativasCache = [];
 
-// NOVO: alterna entre as 2 abas de Planejamento Estratégico.
+// AJUSTADO (padronização de telas, a pedido do usuário): 4 sub-abas —
+// Cadastrar/Cadastrados de Pilares e Cadastrar/Cadastradas de Iniciativas.
 function mudarAbaPlanejamentoEstrategico(aba) {
-    ['pilares', 'iniciativas'].forEach(a => {
+    ['pilares_criar', 'pilares_cadastrados', 'iniciativas_criar', 'iniciativas_cadastrados'].forEach(a => {
         const btn = document.getElementById(`planEstBtn-${a}`);
         const painel = document.getElementById(`planEstPainel-${a}`);
         if (btn) btn.className = `plan-est-btn px-4 py-2 rounded-md text-sm font-bold border-2 ${a === aba ? 'bg-red-700 text-white border-red-700' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
@@ -130,6 +131,7 @@ function limparFormPilar() {
 function editarPilar(id) {
     const p = pilaresCache.find(x => x.id === id);
     if (!p) return;
+    mudarAbaPlanejamentoEstrategico('pilares_criar');
     document.getElementById('pilarIdHidden').value = p.id;
     document.getElementById('pilarAnoFiscalSelect').value = p.ano_fiscal;
     document.getElementById('pilarNomeInput').value = p.nome;
@@ -172,6 +174,7 @@ async function salvarPilarEstrategico() {
     limparFormPilar();
     await carregarPilares();
     await carregarIniciativas();
+    mudarAbaPlanejamentoEstrategico('pilares_cadastrados');
 }
 
 async function alternarAtivoPilar(id) {
@@ -214,6 +217,7 @@ function limparFormIniciativa() {
 function editarIniciativa(id) {
     const ini = iniciativasCache.find(x => x.id === id);
     if (!ini) return;
+    mudarAbaPlanejamentoEstrategico('iniciativas_criar');
     document.getElementById('iniciativaIdHidden').value = ini.id;
     document.getElementById('iniciativaPilarSelect').value = ini.pilar_id;
     document.getElementById('iniciativaNomeInput').value = ini.nome;
@@ -255,6 +259,7 @@ async function salvarIniciativaEstrategica() {
     alert('✅ Iniciativa salva com sucesso!');
     limparFormIniciativa();
     await carregarIniciativas();
+    mudarAbaPlanejamentoEstrategico('iniciativas_cadastrados');
 }
 
 async function alternarAtivoIniciativa(id) {

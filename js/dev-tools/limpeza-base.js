@@ -234,7 +234,7 @@ async function limparBaseCompletamente() {
     const { error: errorFilaEmail } = await _supabase.from('emails_pendentes').delete().neq('id', 0);
     if (errorFilaEmail) console.error('Erro ao limpar a fila de e-mails:', errorFilaEmail.message);
 
-    alert(`✅ Limpeza total concluída — ${codigosParaApagar.length} projeto(s) apagado(s) fisicamente. Nenhum Ano Fiscal restou configurado. Numeração de projetos zerada. Fila de e-mails limpa.\n\n⚠️ Vá em Fiscal Year → Abertura Fiscal Year pra reabrir um Ano Fiscal antes de formalizar novas demandas.`);
+    alert(`✅ Limpeza total concluída — ${codigosParaApagar.length} projeto(s) apagado(s) fisicamente. Nenhum Ano Fiscal restou configurado. Numeração de projetos zerada. Fila de e-mails limpa.\n\n⚠️ Vá em Ano Fiscal → Abertura Ano Fiscal pra reabrir um Ano Fiscal antes de formalizar novas demandas.`);
 
     await loadProjects();
     await renderListaProjetosDevTools();
