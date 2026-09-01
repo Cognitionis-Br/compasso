@@ -40,13 +40,14 @@ async function renderTiposProjetoView() {
             <td class="p-3 text-[10px] text-gray-400">${escapeHtml(t.criado_por) || '-'} · ${t.criado_em ? new Date(t.criado_em).toLocaleString('pt-BR') : '-'}</td>
             <td class="p-3 text-center">${t.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
             <td class="p-3 text-center">
-                <button onclick="alternarAtivoTipoProjeto(${t.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i> ${t.ativo ? 'Inativar' : 'Reativar'}</button>
+                ${botaoSePodeAtivarInativar('tipos_projeto', `<button onclick="alternarAtivoTipoProjeto(${t.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i> ${t.ativo ? 'Inativar' : 'Reativar'}</button>`)}
             </td>
         </tr>
     `).join('');
 }
 
 async function salvarTipoProjeto() {
+    if (!usuarioPodeIncluirTela('tipos_projeto')) return alert('Você não tem permissão para incluir tipos de projeto.');
     const codigo = document.getElementById('tipoProjetoCodigoInput').value.trim().toUpperCase();
     const descricao = document.getElementById('tipoProjetoDescricaoInput').value.trim();
 
@@ -82,6 +83,8 @@ async function salvarTipoProjeto() {
 async function alternarAtivoTipoProjeto(id) {
     const t = tiposProjetoCache.find(x => x.id === id);
     if (!t) return;
+    if (t.ativo && !usuarioPodeDeletarTela('tipos_projeto')) return alert('Você não tem permissão para inativar tipos de projeto.');
+    if (!t.ativo && !usuarioPodeAlterarTela('tipos_projeto')) return alert('Você não tem permissão para reativar tipos de projeto.');
 
     const acao = t.ativo ? 'inativar' : 'reativar';
     if (!confirm(`Confirma ${acao} o Tipo de Projeto "${t.codigo} - ${t.descricao}"?${t.ativo ? ' Projetos que já usam esse tipo continuam normalmente — só bloqueia escolher esse tipo em demandas novas.' : ''}`)) return;

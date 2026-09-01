@@ -112,8 +112,8 @@ function renderResponsaveisTable() {
                 <td class="p-3 text-gray-600">${usuario ? usuario.email : '-'}</td>
                 <td class="p-3">${badges || '<span class="text-gray-400 italic">Nenhuma</span>'}</td>
                 <td class="p-3 text-right space-x-2 whitespace-nowrap">
-                    <button onclick="editarAtividadesResponsavel('${usuarioId}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
-                    <button onclick="removerTodasAtividadesResponsavel('${usuarioId}')" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-trash"></i> Remover Todas</button>
+                    ${botaoSePodeAlterar('responsaveis', `<button onclick="editarAtividadesResponsavel('${usuarioId}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`)}
+                    ${botaoSePodeDeletar('responsaveis', `<button onclick="removerTodasAtividadesResponsavel('${usuarioId}')" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-trash"></i> Remover Todas</button>`)}
                 </td>
             </tr>
         `;
@@ -141,6 +141,7 @@ function editarAtividadesResponsavel(usuarioId) {
 
 async function salvarAtividadesResponsavel(e) {
     e.preventDefault();
+    if (!usuarioPodeIncluirTela('responsaveis') && !usuarioPodeAlterarTela('responsaveis')) return alert('Você não tem permissão para atribuir atividades a responsáveis.');
     const usuarioId = document.getElementById('respUsuarioSelect').value;
     if (!usuarioId) return alert('Selecione um usuário!');
 
@@ -167,6 +168,7 @@ async function salvarAtividadesResponsavel(e) {
 }
 
 async function removerTodasAtividadesResponsavel(usuarioId) {
+    if (!usuarioPodeDeletarTela('responsaveis')) return alert('Você não tem permissão para remover atribuições de responsáveis.');
     if (!confirm('Deseja realmente remover todas as atividades atribuídas a este usuário?')) return;
     const { error } = await _supabase.from('usuario_atividades_responsavel').delete().eq('usuario_id', usuarioId);
     if (error) return alert('Erro ao remover: ' + error.message);

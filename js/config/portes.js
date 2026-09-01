@@ -55,7 +55,7 @@ function renderPortesTable() {
             <td class="p-3 text-right font-mono">${p.horas_minimo != null ? Number(p.horas_minimo).toLocaleString('pt-BR') + 'h' : '-'}</td>
             <td class="p-3 text-right font-mono">${p.horas_maximo != null ? Number(p.horas_maximo).toLocaleString('pt-BR') + 'h' : '-'}</td>
             <td class="p-3 text-right">
-                <button onclick="editPorte(${p.id})" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
+                ${botaoSePodeAlterar('portes', `<button onclick="editPorte(${p.id})" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`)}
             </td>
         </tr>
     `).join('');
@@ -110,6 +110,8 @@ async function porteEstaEmUso(codigo) {
 async function savePorte(e) {
     e.preventDefault();
     const id = document.getElementById('porteIdInput').value;
+    if (!id && !usuarioPodeIncluirTela('portes')) return alert('Você não tem permissão para incluir portes.');
+    if (id && !usuarioPodeAlterarTela('portes')) return alert('Você não tem permissão para alterar portes.');
     const codigo = document.getElementById('porteCodigoInput').value.trim().toUpperCase();
     const descricao = document.getElementById('porteDescricaoInput').value.trim();
     const horas_minimo = parseFloat(document.getElementById('porteHorasMinimoInput').value);

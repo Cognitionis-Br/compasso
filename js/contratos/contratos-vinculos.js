@@ -74,7 +74,7 @@ async function renderContratosVinculosView() {
                 <td class="p-3 text-right font-mono">R$ ${Number(v.valor_vinculo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                 <td class="p-3 text-center">
                     ${editavel
-                        ? `<button onclick="excluirVinculoContrato(${v.id})" class="text-red-600 hover:text-red-800 font-bold text-xs"><i class="fa-solid fa-trash-can"></i> Excluir</button>`
+                        ? botaoSePodeDeletar('contratos_vinculos', `<button onclick="excluirVinculoContrato(${v.id})" class="text-red-600 hover:text-red-800 font-bold text-xs"><i class="fa-solid fa-trash-can"></i> Excluir</button>`)
                         : `<span class="text-gray-400 text-[10px] font-bold" title="Vínculo já com valor realizado — travado">🔒 Travado</span>`}
                 </td>
             </tr>
@@ -194,6 +194,7 @@ async function logAlteracaoVinculoContrato(contratoId, projetoCodigo, acao, valo
 }
 
 async function salvarVinculoContrato() {
+    if (!usuarioPodeIncluirTela('contratos_vinculos') && !usuarioPodeAlterarTela('contratos_vinculos')) return alert('Você não tem permissão para vincular contratos.');
     const projetoCodigo = document.getElementById('vinculoProjetoSelect').value;
     const contratoId = Number(document.getElementById('vinculoContratoSelect').value);
     const valorVinculo = Number(document.getElementById('vinculoValorInput').value);
@@ -244,6 +245,7 @@ async function salvarVinculoContrato() {
 async function excluirVinculoContrato(id) {
     const v = contratosVinculosCache.find(x => x.id === id);
     if (!v) return;
+    if (!usuarioPodeDeletarTela('contratos_vinculos')) return alert('Você não tem permissão para excluir vínculos de contrato.');
 
     if (Number(v.valor_realizado || 0) > 0) {
         return alert('⛔ Este vínculo já tem valor realizado — não pode mais ser excluído.');

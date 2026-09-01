@@ -41,8 +41,8 @@ async function renderGestaoTemplatesView() {
             <td class="p-3 text-center">${t.eh_template_governanca ? '<span class="bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Governança</span>' : '-'}</td>
             <td class="p-3 text-center">${t.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
             <td class="p-3 text-center space-x-2">
-                <button onclick="editarTemplateEmail(${t.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>
-                <button onclick="alternarAtivoTemplateEmail(${t.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>
+                ${botaoSePodeAlterar('gestao_templates', `<button onclick="editarTemplateEmail(${t.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>`)}
+                ${botaoSePodeAtivarInativar('gestao_templates', `<button onclick="alternarAtivoTemplateEmail(${t.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>`)}
             </td>
         </tr>
     `).join('');
@@ -69,6 +69,8 @@ function editarTemplateEmail(id) {
 
 async function salvarTemplateEmail() {
     const id = document.getElementById('templateIdHidden').value;
+    if (!id && !usuarioPodeIncluirTela('gestao_templates')) return alert('Você não tem permissão para incluir templates.');
+    if (id && !usuarioPodeAlterarTela('gestao_templates')) return alert('Você não tem permissão para alterar templates.');
     const assunto = document.getElementById('templateAssuntoInput').value.trim();
     const texto = document.getElementById('templateTextoInput').value.trim();
     const checkGovernancaSalvar = document.getElementById('templateGovernancaCheck');
@@ -101,6 +103,8 @@ async function salvarTemplateEmail() {
 async function alternarAtivoTemplateEmail(id) {
     const t = emailTemplatesCache.find(x => x.id === id);
     if (!t) return;
+    if (t.ativo && !usuarioPodeDeletarTela('gestao_templates')) return alert('Você não tem permissão para inativar templates.');
+    if (!t.ativo && !usuarioPodeAlterarTela('gestao_templates')) return alert('Você não tem permissão para reativar templates.');
     if (!confirm(`Confirma ${t.ativo ? 'inativar' : 'reativar'} o template "${t.assunto}"?${t.ativo ? ' Fluxos que usam esse template pra enviar deixarão de conseguir disparar até você trocar o template deles.' : ''}`)) return;
 
     const { error } = await _supabase.from('email_templates').update({ ativo: !t.ativo }).eq('id', id);

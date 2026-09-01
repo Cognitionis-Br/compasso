@@ -112,10 +112,10 @@ function renderUsuariosTable() {
                 </td>
                 <td class="p-3 text-xs text-gray-500">${u.criado_por || '-'}</td>
                 <td class="p-3 text-right space-x-2 whitespace-nowrap">
-                    ${!inativo ? `<button onclick="editarPerfilUsuario('${u.id}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>` : ''}
+                    ${!inativo ? botaoSePodeAlterar('usuarios', `<button onclick="editarPerfilUsuario('${u.id}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`) : ''}
                     ${inativo
-                        ? `<button onclick="reativarUsuario('${u.id}')" class="text-green-700 hover:text-green-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`
-                        : `<button onclick="inativarUsuario('${u.id}')" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-user-slash"></i> Inativar</button>`}
+                        ? botaoSePodeAlterar('usuarios', `<button onclick="reativarUsuario('${u.id}')" class="text-green-700 hover:text-green-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`)
+                        : botaoSePodeDeletar('usuarios', `<button onclick="inativarUsuario('${u.id}')" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-user-slash"></i> Inativar</button>`)}
                 </td>
             </tr>
         `;
@@ -169,6 +169,7 @@ function fecharModalEditarPerfilUsuario() {
 }
 
 async function salvarEdicaoPerfilUsuario() {
+    if (!usuarioPodeAlterarTela('usuarios')) return alert('Você não tem permissão para alterar usuários.');
     const id = document.getElementById('editarPerfilIdHidden').value;
     const novoNome = document.getElementById('editarPerfilNomeInput').value.trim();
     const novaArea = document.getElementById('editarPerfilAreaSelect').value;
@@ -202,6 +203,7 @@ function gerarSenhaAleatoria() {
 // resolve.
 async function saveNovoUsuario(e) {
     e.preventDefault();
+    if (!usuarioPodeIncluirTela('usuarios')) return alert('Você não tem permissão para incluir usuários.');
 
     const nome = document.getElementById('usuarioNomeInput').value.trim().toUpperCase();
     const email = document.getElementById('usuarioEmailInput').value.trim().toLowerCase();
@@ -261,6 +263,7 @@ async function saveNovoUsuario(e) {
 }
 
 async function inativarUsuario(id) {
+    if (!usuarioPodeDeletarTela('usuarios')) return alert('Você não tem permissão para inativar usuários.');
     if (!confirm('Deseja realmente inativar este usuário? Ele perderá acesso ao sistema no próximo login.')) return;
 
     const { error } = await _supabase.from('perfis_usuarios').update({
@@ -274,6 +277,7 @@ async function inativarUsuario(id) {
 }
 
 async function reativarUsuario(id) {
+    if (!usuarioPodeAlterarTela('usuarios')) return alert('Você não tem permissão para reativar usuários.');
     if (!confirm('Deseja reativar este usuário?')) return;
 
     const { error } = await _supabase.from('perfis_usuarios').update({

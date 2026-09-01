@@ -49,7 +49,7 @@ function renderCargosTable() {
             <td class="p-3 text-[10px] text-gray-400">${escapeHtml(c.criado_por) || '-'} · ${c.criado_em ? new Date(c.criado_em).toLocaleString('pt-BR') : '-'}</td>
             <td class="p-3 text-center">${c.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
             <td class="p-3 text-center">
-                <button onclick="alternarAtivoCargo(${c.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i> ${c.ativo ? 'Inativar' : 'Reativar'}</button>
+                ${botaoSePodeAtivarInativar('cargos', `<button onclick="alternarAtivoCargo(${c.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i> ${c.ativo ? 'Inativar' : 'Reativar'}</button>`)}
             </td>
         </tr>
     `).join('');
@@ -62,6 +62,7 @@ function cargosAtivos() {
 }
 
 async function salvarCargo() {
+    if (!usuarioPodeIncluirTela('cargos')) return alert('Você não tem permissão para incluir cargos.');
     const nome = document.getElementById('cargoNomeInput').value.trim().toUpperCase();
 
     if (!nome) {
@@ -89,6 +90,8 @@ async function salvarCargo() {
 async function alternarAtivoCargo(id) {
     const c = cargosData.find(x => x.id === id);
     if (!c) return;
+    if (c.ativo && !usuarioPodeDeletarTela('cargos')) return alert('Você não tem permissão para inativar cargos.');
+    if (!c.ativo && !usuarioPodeAlterarTela('cargos')) return alert('Você não tem permissão para reativar cargos.');
 
     const acao = c.ativo ? 'inativar' : 'reativar';
     if (!confirm(`Confirma ${acao} o cargo "${c.nome}"?${c.ativo ? ' Usuários que já têm esse cargo continuam com ele — só bloqueia escolher esse cargo em cadastros/edições novas.' : ''}`)) return;

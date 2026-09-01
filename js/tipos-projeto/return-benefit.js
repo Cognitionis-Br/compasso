@@ -40,8 +40,8 @@ async function renderReturnBenefitView() {
             <td class="p-3 text-[10px] text-gray-400">${rb.atualizado_por || rb.criado_por || '-'} · ${(rb.atualizado_em || rb.criado_em) ? new Date(rb.atualizado_em || rb.criado_em).toLocaleString('pt-BR') : '-'}</td>
             <td class="p-3 text-center">${rb.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
             <td class="p-3 text-center space-x-2">
-                <button onclick="editarReturnBenefit(${rb.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>
-                <button onclick="alternarAtivoReturnBenefit(${rb.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>
+                ${botaoSePodeAlterar('return_benefit', `<button onclick="editarReturnBenefit(${rb.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>`)}
+                ${botaoSePodeAtivarInativar('return_benefit', `<button onclick="alternarAtivoReturnBenefit(${rb.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>`)}
             </td>
         </tr>
     `).join('');
@@ -66,6 +66,8 @@ function editarReturnBenefit(id) {
 
 async function salvarReturnBenefit() {
     const id = document.getElementById('rbIdHidden').value;
+    if (!id && !usuarioPodeIncluirTela('return_benefit')) return alert('Você não tem permissão para incluir Return / Benefit.');
+    if (id && !usuarioPodeAlterarTela('return_benefit')) return alert('Você não tem permissão para alterar Return / Benefit.');
     const nome = document.getElementById('rbNomeInput').value.trim();
     const radioPermite = document.querySelector('input[name="rbPermiteValor"]:checked');
     const permiteValor = !radioPermite || radioPermite.value === 'sim';
@@ -105,6 +107,8 @@ async function salvarReturnBenefit() {
 async function alternarAtivoReturnBenefit(id) {
     const rb = returnBenefitCache.find(x => x.id === id);
     if (!rb) return;
+    if (rb.ativo && !usuarioPodeDeletarTela('return_benefit')) return alert('Você não tem permissão para inativar Return / Benefit.');
+    if (!rb.ativo && !usuarioPodeAlterarTela('return_benefit')) return alert('Você não tem permissão para reativar Return / Benefit.');
 
     if (rb.ativo) {
         // Só pode inativar se ainda não estiver em uso — mesmo padrão do

@@ -48,10 +48,28 @@ Cada fase só começa depois da anterior aprovada.
   - `saveFuncao` grava `{funcao_id, atividade_id, pode_consultar, pode_incluir, pode_alterar, pode_deletar}`;
     Incluir/Alterar/Deletar forçam `pode_consultar = true`; "pelo menos uma atividade" = pelo menos um Consultar.
   - `carregarPermissoesUsuarioAtual` carrega as flags → `crudUsuarioAtual` (Map, OR entre funções).
-  - Novos helpers `usuarioPodeIncluir/Alterar/Deletar(activityKey)` (admin/irrestrito = true).
-    **Ainda não plugados nos botões das telas** — `usuarioTemAtividade` (≥ Consultar) segue governando tudo.
-    Plugar os botões Incluir/Editar/Excluir de cada lista é etapa seguinte (Fase 2b), fora deste passo.
-- **Pendente:** rodar o SQL no Supabase.
+  - Helpers `usuarioPodeIncluir/Alterar/Deletar(activityKey)` (admin/irrestrito = true).
+- Rodado e verificado (131 concessões → `consultar=true`, resto `false`).
+
+## Fase 2b — CRUD plugado nos botões das telas de lista (2026-09-01) — **CÓDIGO PRONTO (sem SQL)**
+
+Modelo **combinado por tela** (as abas "Cadastrados" também têm Editar/Inativar):
+o verbo vale se QUALQUER atividade da tela (`tabId`, `tabId:*`) tiver a flag.
+`consultar` continua individual por sub-aba.
+
+- `js/config/funcoes.js`: `atividadesDaTela(tabId)`, `usuarioPodeIncluirTela/AlterarTela/DeletarTela(tabId)`,
+  helpers de template `botaoSePodeIncluir/Alterar/Deletar/AtivarInativar(tabId, html)`.
+  `aplicarVisibilidadeSubAbas`: sub-aba `*:criar` só aparece se puder incluir OU alterar.
+- Botões por linha (Editar / Excluir / Inativar / Reativar) e handlers `salvar*` /
+  `alternarAtivo*` gateados em: **areas, pessoas_solicitantes, portes, cargos, tipos_projeto,
+  return_benefit, planejamento_estrategico, responsaveis, usuarios, empresas_terceirizadas,
+  contratos_projeto, contratos_vinculos, gestao_templates**. Guarda dupla: esconde o botão
+  E valida no `salvar`/`alternarAtivo` (novo → incluir; edição → alterar; inativar → deletar).
+- Admin / `acesso_irrestrito` / `eh_proprietario`: tudo liberado, sem mudança.
+
+**⚠️ Impacto:** como a Fase 2 migrou todas as concessões com só `consultar`, funções
+não-admin (ex.: GOVERNANÇA) passam a **só visualizar** essas telas até um admin marcar
+Incluir/Alterar/Deletar em Funções e Permissões. Comportamento pretendido (opt-in de escrita).
 
 ## Fase 3 — Remover do catálogo comum os itens de administração (2026-09-01) — **CÓDIGO PRONTO, aguardando rodar o SQL**
 

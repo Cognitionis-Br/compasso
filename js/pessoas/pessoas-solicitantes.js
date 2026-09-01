@@ -69,9 +69,9 @@ function renderPessoasSolicitantesTable() {
                 </td>
                 <td class="p-3 text-right space-x-2 whitespace-nowrap">
                     ${inativo
-                        ? `<button onclick="reativarPessoaSolicitante(${p.id})" class="text-green-700 hover:text-green-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`
-                        : `<button onclick="editPessoaSolicitante(${p.id})" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
-                           <button onclick="inativarPessoaSolicitante(${p.id})" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-user-slash"></i> Inativar</button>`}
+                        ? botaoSePodeAlterar('pessoas_solicitantes', `<button onclick="reativarPessoaSolicitante(${p.id})" class="text-green-700 hover:text-green-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`)
+                        : botaoSePodeAlterar('pessoas_solicitantes', `<button onclick="editPessoaSolicitante(${p.id})" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`)
+                          + botaoSePodeDeletar('pessoas_solicitantes', `<button onclick="inativarPessoaSolicitante(${p.id})" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-user-slash"></i> Inativar</button>`)}
                 </td>
             </tr>
         `;
@@ -93,6 +93,8 @@ function editPessoaSolicitante(id) {
 async function savePessoaSolicitante(e) {
     e.preventDefault();
     const id = document.getElementById('pessoaIdInput').value;
+    if (!id && !usuarioPodeIncluirTela('pessoas_solicitantes')) return alert('Você não tem permissão para incluir pessoas solicitantes.');
+    if (id && !usuarioPodeAlterarTela('pessoas_solicitantes')) return alert('Você não tem permissão para alterar pessoas solicitantes.');
     const nome = document.getElementById('pessoaNomeInput').value.trim().toUpperCase();
     const email = document.getElementById('pessoaEmailInput').value.trim();
     const area = document.getElementById('pessoaAreaInput').value;

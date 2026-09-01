@@ -68,8 +68,8 @@ async function carregarPilares() {
             <td class="p-3 text-[10px] text-gray-400">${escapeHtml(p.atualizado_por) || '-'} · ${p.atualizado_em ? new Date(p.atualizado_em).toLocaleString('pt-BR') : '-'}</td>
             <td class="p-3 text-center">${p.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
             <td class="p-3 text-center space-x-2">
-                <button onclick="editarPilar(${p.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>
-                <button onclick="alternarAtivoPilar(${p.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>
+                ${botaoSePodeAlterar('planejamento_estrategico', `<button onclick="editarPilar(${p.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>`)}
+                ${botaoSePodeAtivarInativar('planejamento_estrategico', `<button onclick="alternarAtivoPilar(${p.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>`)}
             </td>
         </tr>
     `).join('');
@@ -111,8 +111,8 @@ async function carregarIniciativas() {
                 <td class="p-3 text-[10px] text-gray-400">${escapeHtml(ini.atualizado_por) || '-'} · ${ini.atualizado_em ? new Date(ini.atualizado_em).toLocaleString('pt-BR') : '-'}</td>
                 <td class="p-3 text-center">${ini.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
                 <td class="p-3 text-center space-x-2">
-                    <button onclick="editarIniciativa(${ini.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>
-                    <button onclick="alternarAtivoIniciativa(${ini.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>
+                    ${botaoSePodeAlterar('planejamento_estrategico', `<button onclick="editarIniciativa(${ini.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>`)}
+                    ${botaoSePodeAtivarInativar('planejamento_estrategico', `<button onclick="alternarAtivoIniciativa(${ini.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>`)}
                 </td>
             </tr>
         `;
@@ -140,6 +140,8 @@ function editarPilar(id) {
 
 async function salvarPilarEstrategico() {
     const id = document.getElementById('pilarIdHidden').value;
+    if (!id && !usuarioPodeIncluirTela('planejamento_estrategico')) return alert('Você não tem permissão para incluir pilares.');
+    if (id && !usuarioPodeAlterarTela('planejamento_estrategico')) return alert('Você não tem permissão para alterar pilares.');
     const ano_fiscal = document.getElementById('pilarAnoFiscalSelect').value;
     const nome = document.getElementById('pilarNomeInput').value.trim();
     const descricao = document.getElementById('pilarDescricaoInput').value.trim();
@@ -180,6 +182,8 @@ async function salvarPilarEstrategico() {
 async function alternarAtivoPilar(id) {
     const p = pilaresCache.find(x => x.id === id);
     if (!p) return;
+    if (p.ativo && !usuarioPodeDeletarTela('planejamento_estrategico')) return alert('Você não tem permissão para inativar pilares.');
+    if (!p.ativo && !usuarioPodeAlterarTela('planejamento_estrategico')) return alert('Você não tem permissão para reativar pilares.');
 
     if (p.ativo) {
         // Só pode inativar se ainda não estiver em uso — checa se algum
@@ -226,6 +230,8 @@ function editarIniciativa(id) {
 
 async function salvarIniciativaEstrategica() {
     const id = document.getElementById('iniciativaIdHidden').value;
+    if (!id && !usuarioPodeIncluirTela('planejamento_estrategico')) return alert('Você não tem permissão para incluir iniciativas.');
+    if (id && !usuarioPodeAlterarTela('planejamento_estrategico')) return alert('Você não tem permissão para alterar iniciativas.');
     const pilar_id = document.getElementById('iniciativaPilarSelect').value;
     const nome = document.getElementById('iniciativaNomeInput').value.trim();
     const descricao = document.getElementById('iniciativaDescricaoInput').value.trim();
@@ -265,6 +271,8 @@ async function salvarIniciativaEstrategica() {
 async function alternarAtivoIniciativa(id) {
     const ini = iniciativasCache.find(x => x.id === id);
     if (!ini) return;
+    if (ini.ativo && !usuarioPodeDeletarTela('planejamento_estrategico')) return alert('Você não tem permissão para inativar iniciativas.');
+    if (!ini.ativo && !usuarioPodeAlterarTela('planejamento_estrategico')) return alert('Você não tem permissão para reativar iniciativas.');
 
     if (ini.ativo) {
         const { count: emUsoCount, error: errorUso } = await _supabase.from('projetos').select('codigo', { count: 'exact', head: true }).eq('iniciativa_estrategica_id', id);

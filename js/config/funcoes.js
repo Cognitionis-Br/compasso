@@ -487,10 +487,8 @@ function botaoSeTemAtividade(activityKey, htmlBotao) {
     return usuarioTemAtividade(activityKey) ? htmlBotao : '';
 }
 
-// NOVO (segurança Fase 2): checagens CRUD por atividade. Admin/irrestrito
-// sempre true. Ainda NÃO plugadas nos botões das telas — os consumidores
-// (Incluir/Editar/Excluir de cada lista) migram numa etapa seguinte;
-// por ora `usuarioTemAtividade` (>= Consultar) continua governando tudo.
+// NOVO (segurança Fase 2): checagens CRUD por activity_key. Admin/irrestrito
+// sempre true.
 function usuarioPodeIncluir(activityKey) {
     if (ehAdministrador) return true;
     const p = crudUsuarioAtual.get(activityKey);
@@ -505,6 +503,37 @@ function usuarioPodeDeletar(activityKey) {
     if (ehAdministrador) return true;
     const p = crudUsuarioAtual.get(activityKey);
     return !!(p && p.d);
+}
+
+// -------------------------------------------------------------------------
+// NOVO (segurança Fase 2b, 2026-09-01): CRUD no NÍVEL DA TELA (combinado).
+// As abas "xxx Cadastrados" também têm ações de modificação (Editar,
+// Inativar) — então o verbo vale se QUALQUER atividade da tela
+// (xxx:criar OU xxx:cadastrados OU xxx) tiver a flag. `consultar` continua
+// individual por sub-aba (aplicarVisibilidadeSubAbas).
+// -------------------------------------------------------------------------
+function atividadesDaTela(tabId) {
+    return atividadesData.filter(a => a.activity_key === tabId || a.activity_key.startsWith(tabId + ':'));
+}
+function usuarioPodeIncluirTela(tabId) {
+    if (ehAdministrador) return true;
+    return atividadesDaTela(tabId).some(a => usuarioPodeIncluir(a.activity_key));
+}
+function usuarioPodeAlterarTela(tabId) {
+    if (ehAdministrador) return true;
+    return atividadesDaTela(tabId).some(a => usuarioPodeAlterar(a.activity_key));
+}
+function usuarioPodeDeletarTela(tabId) {
+    if (ehAdministrador) return true;
+    return atividadesDaTela(tabId).some(a => usuarioPodeDeletar(a.activity_key));
+}
+// Helpers de template string (retornam o HTML só se o verbo for permitido).
+function botaoSePodeIncluir(tabId, html) { return usuarioPodeIncluirTela(tabId) ? html : ''; }
+function botaoSePodeAlterar(tabId, html) { return usuarioPodeAlterarTela(tabId) ? html : ''; }
+function botaoSePodeDeletar(tabId, html) { return usuarioPodeDeletarTela(tabId) ? html : ''; }
+// Botão de ativar/inativar (alternarAtivoX) é um só — aparece se puder alterar OU deletar.
+function botaoSePodeAtivarInativar(tabId, html) {
+    return (usuarioPodeAlterarTela(tabId) || usuarioPodeDeletarTela(tabId)) ? html : '';
 }
 
 // -------------------------------------------------------------------------
@@ -654,10 +683,22 @@ function aplicarVisibilidadeSubAbas(tabId, prefixoBotao) {
 
     const prefixoPainel = prefixoBotao.replace(/Btn$/, 'Painel');
 
+    // NOVO (Fase 2b): sub-aba de cadastro ("...:criar" / "..._criar") só
+    // aparece se, além de consultar, o usuário puder incluir OU alterar
+    // nesta tela — senão o formulário não teria pra que servir.
+    const podeVerSubAba = (a) => {
+        if (!atividadesUsuarioAtual.has(a.activity_key)) return false;
+        const chave = a.activity_key.split(':')[1] || '';
+        if (/(^|_)criar$/.test(chave)) {
+            return usuarioPodeIncluirTela(tabId) || usuarioPodeAlterarTela(tabId);
+        }
+        return true;
+    };
+
     subatividades.forEach(a => {
         const chave = a.activity_key.split(':')[1];
         const btn = document.getElementById(`${prefixoBotao}-${chave}`);
-        if (btn) btn.classList.toggle('hidden', !atividadesUsuarioAtual.has(a.activity_key));
+        if (btn) btn.classList.toggle('hidden', !podeVerSubAba(a));
     });
 
     const painelAtivo = subatividades.find(a => {
@@ -665,10 +706,10 @@ function aplicarVisibilidadeSubAbas(tabId, prefixoBotao) {
         const painel = document.getElementById(`${prefixoPainel}-${chave}`);
         return painel && !painel.classList.contains('hidden');
     });
-    const painelAtivoPermitido = painelAtivo && atividadesUsuarioAtual.has(painelAtivo.activity_key);
+    const painelAtivoPermitido = painelAtivo && podeVerSubAba(painelAtivo);
 
     if (!painelAtivoPermitido) {
-        const primeiraPermitida = subatividades.find(a => atividadesUsuarioAtual.has(a.activity_key));
+        const primeiraPermitida = subatividades.find(a => podeVerSubAba(a));
         if (primeiraPermitida) {
             const chaveAlvo = primeiraPermitida.activity_key.split(':')[1];
             subatividades.forEach(a => {

@@ -51,7 +51,7 @@ async function renderEmpresasTerceirizadasView() {
                     <td class="p-3 font-mono font-bold">${escapeHtml(e.codigo)}</td>
                     <td class="p-3 font-semibold">${escapeHtml(e.nome)}</td>
                     <td class="p-3 text-center">${e.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
-                    <td class="p-3 text-center"><button onclick="alternarAtivoEmpresa('${escapeJsAttr(e.codigo)}')" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i></button></td>
+                    <td class="p-3 text-center">${botaoSePodeAtivarInativar('empresas_terceirizadas', `<button onclick="alternarAtivoEmpresa('${escapeJsAttr(e.codigo)}')" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i></button>`)}</td>
                 </tr>
             `).join('');
     }
@@ -65,6 +65,7 @@ async function renderEmpresasTerceirizadasView() {
 }
 
 async function salvarEmpresaTerceirizada() {
+    if (!usuarioPodeIncluirTela('empresas_terceirizadas')) return alert('Você não tem permissão para incluir empresas terceirizadas.');
     const codigo = document.getElementById('empresaCodigoInput').value.trim().toUpperCase();
     const nome = document.getElementById('empresaNomeInput').value.trim();
 
@@ -89,6 +90,8 @@ async function salvarEmpresaTerceirizada() {
 async function alternarAtivoEmpresa(codigo) {
     const e = empresasTerceirizadasCache.find(x => x.codigo === codigo);
     if (!e) return;
+    if (e.ativo && !usuarioPodeDeletarTela('empresas_terceirizadas')) return alert('Você não tem permissão para inativar empresas terceirizadas.');
+    if (!e.ativo && !usuarioPodeAlterarTela('empresas_terceirizadas')) return alert('Você não tem permissão para reativar empresas terceirizadas.');
     if (!confirm(`Confirma ${e.ativo ? 'inativar' : 'reativar'} a empresa "${e.nome}"?`)) return;
 
     const { error } = await _supabase.from('empresas_terceirizadas').update({ ativo: !e.ativo }).eq('codigo', codigo);
@@ -145,6 +148,7 @@ async function alternarStatusContrato(id) {
 }
 
 async function salvarContratoProjeto() {
+    if (!usuarioPodeIncluirTela('contratos_projeto')) return alert('Você não tem permissão para incluir contratos.');
     const empresaCodigo = document.getElementById('contratoEmpresaSelect').value;
     const numeroContrato = document.getElementById('contratoNumeroInput').value.trim();
     const dataInicio = document.getElementById('contratoDataInicioInput').value;
