@@ -56,6 +56,30 @@ function renderAnoFiscalPanel() {
     const afAtualFechado = configAtualAF ? configAtualAF.orcamento_fechado === true : false;
     const podeAbrir = afAtualFechado && !proximoAberto;
 
+    // BOOTSTRAP (2026-09-01): depois de "Limpar Base Completamente" a
+    // tabela anos_fiscais_config fica vazia — não existe linha nem pro AF
+    // corrente. Sem isso, nenhuma tela que lê AF (Formalizar Demanda,
+    // Pilar Estratégico, etc.) tem o que listar, e o botão de "abrir
+    // próximo AF" fica travado (exige o corrente fechado). Aqui a tela
+    // deixa inicializar o AF corrente do zero.
+    if (!configAtualAF) {
+        container.innerHTML = `
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-lg p-4">
+                <h4 class="text-sm font-bold text-amber-800 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Nenhum Ano Fiscal configurado</h4>
+                <p class="text-xs text-amber-700 mb-3">
+                    O Ano Fiscal corrente (<b>${infoAF.afAtualStr}</b>) ainda não existe em <code>anos_fiscais_config</code>
+                    — normal logo após uma limpeza total de base. Inicialize-o para liberar o recebimento de demandas
+                    e as telas que dependem de Ano Fiscal (Formalizar Demanda, Pilar Estratégico, etc.).
+                </p>
+                <button onclick="inicializarAnoFiscalCorrente()"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded text-xs transition">
+                    <i class="fa-solid fa-calendar-plus"></i> Inicializar ${infoAF.afAtualStr} (aberto para demandas)
+                </button>
+            </div>
+        `;
+        return;
+    }
+
     container.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-sm">
             <div class="bg-gray-50 border border-gray-200 rounded p-3">
@@ -114,6 +138,31 @@ async function obterAFAbertoParaDemandas() {
     if (error || !data) return null;
     const valido = data.find(r => r.orcamento_fechado !== true);
     return valido ? valido.ano_fiscal : null;
+}
+
+// BOOTSTRAP (2026-09-01): cria a linha do AF corrente em anos_fiscais_config
+// quando ela não existe (base recém-limpada). Estado inicial = aberto para
+// demandas, orçamento não fechado — o mesmo que limparBaseSomenteAF2027 já
+// deixava pro AF preservado.
+async function inicializarAnoFiscalCorrente() {
+    if (!usuarioPodeAlterarTela('ano_fiscal') && !usuarioPodeIncluirTela('ano_fiscal')) {
+        return alert('Você não tem permissão para inicializar o Ano Fiscal.');
+    }
+    const infoAF = getInfoAnoFiscal();
+    if (!confirm(`Inicializar o Ano Fiscal ${infoAF.afAtualStr}?\n\nEle nasce ABERTO para recebimento de demandas normais, com o orçamento ainda em construção (não fechado).`)) {
+        return;
+    }
+    const { error } = await _supabase.from('anos_fiscais_config').upsert({
+        ano_fiscal: infoAF.afAtualStr,
+        recebimento_demandas_aberto: true,
+        orcamento_fechado: false,
+        aberto_por: currentUser ? currentUser.nome : null,
+        aberto_em: new Date().toISOString()
+    }, { onConflict: 'ano_fiscal' });
+    if (error) return alert('Erro ao inicializar o Ano Fiscal: ' + error.message);
+
+    alert(`✅ ${infoAF.afAtualStr} inicializado e aberto para demandas.`);
+    await loadAnoFiscalConfig();
 }
 
 async function abrirRecebimentoProximoAF() {
