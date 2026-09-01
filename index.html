@@ -256,6 +256,7 @@
                         <button onclick="switchTab('pessoas_solicitantes')" id="link-pessoas_solicitantes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pessoas Solicitantes</button>
                         <button onclick="switchTab('portes')" id="link-portes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cadastro de Porte</button>
                         <button onclick="switchTab('tipos_projeto')" id="link-tipos_projeto" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Tipos de Projeto</button>
+                        <button onclick="switchTab('produtos')" id="link-produtos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cadastro de Produtos</button>
                         <button onclick="switchTab('return_benefit')" id="link-return_benefit" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Retorno / Benefícios de Projeto</button>
                         <button onclick="switchTab('planejamento_estrategico')" id="link-planejamento_estrategico" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Planejamento Estratégico</button>
                         <!-- AJUSTADO (a pedido do usuário): "Cargos" veio do grupo Administração. -->
@@ -1040,11 +1041,17 @@
                                 </div>
                             </div>
 
-                            <!-- Tipo de Projeto e Qualificação da Demanda -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                            <!-- Tipo de Projeto, Produto e Qualificação da Demanda -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                                 <div>
                                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tipo de Projeto *</label>
                                     <select id="bcTipoProjeto" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
+                                        <option value="" selected disabled>-- SELECIONE --</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Produto *</label>
+                                    <select id="bcProduto" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
                                         <option value="" selected disabled>-- SELECIONE --</option>
                                     </select>
                                 </div>
@@ -3108,6 +3115,52 @@
                     </div>
                 </div>
 
+                <!-- Cadastro de Produtos (Agrupamento de Orçamento por Produto) -->
+                <div id="view-produtos" class="tab-content hidden">
+                    <div class="mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Cadastro de Produtos</h2>
+                        <p class="text-xs text-gray-500 mt-1">Código e nome. Todo projeto pertence a um produto (escolhido na Formalização da Demanda) — é a base do agrupamento de orçamento por produto. Depois de criado não é editável, só ativado/inativado.</p>
+                    </div>
+
+                    <div class="flex gap-2 mb-4 flex-wrap">
+                        <button onclick="mudarAbaProdutos('criar')" id="produtosBtn-criar" class="produtos-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Produto</button>
+                        <button onclick="mudarAbaProdutos('cadastrados')" id="produtosBtn-cadastrados" class="produtos-btn px-4 py-2 rounded-md text-sm font-bold border-2">Produtos Cadastrados</button>
+                    </div>
+
+                    <div id="produtosPainel-criar" class="produtos-painel">
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mb-6">
+                        <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Novo Produto</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Código * (até 20)</label>
+                                <input type="text" id="produtoCodigoInput" maxlength="20" class="w-full p-2 border border-gray-300 rounded text-xs uppercase font-mono">
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Nome * (até 80)</label>
+                                <input type="text" id="produtoNomeInput" maxlength="80" class="w-full p-2 border border-gray-300 rounded text-xs">
+                            </div>
+                            <div>
+                                <button onclick="salvarProduto()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded text-xs transition"><i class="fa-solid fa-floppy-disk"></i> Criar Produto</button>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <div id="produtosPainel-cadastrados" class="produtos-painel hidden">
+                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
+                                    <th class="p-3">Código</th><th class="p-3">Nome</th><th class="p-3">Criado por / em</th>
+                                    <th class="p-3 text-center">Ativo</th><th class="p-3 text-center">Ação</th>
+                                </tr></thead>
+                                <tbody id="produtosTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
                 <!-- Cadastro de Return / Benefit (Tabela 1 do Benefit Results da demanda) -->
                 <div id="view-return_benefit" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2">
@@ -4175,6 +4228,7 @@
     <script src="./js/email-gestao/envio-email.js"></script>
     <script src="./js/planejamento-estrategico/planejamento-estrategico.js"></script>
     <script src="./js/tipos-projeto/tipos-projeto.js"></script>
+    <script src="./js/config/produtos.js"></script>
     <script src="./js/config/cargos.js"></script>
     <script src="./js/config/bloqueio-orcamento.js"></script>
     <script src="./js/governanca/mudanca-orcamento.js"></script>

@@ -110,6 +110,20 @@ async function popularTiposProjetoParaDemanda() {
         (data || []).map(t => `<option value="${t.id}">${escapeHtml(t.codigo)} - ${escapeHtml(t.descricao)}</option>`).join('');
 }
 
+// NOVO (Agrupamento de Orçamento por Produto — item 2): Produto é
+// obrigatório em toda demanda nova. O sentinela NAO_CLASSIFICADO NÃO
+// aparece aqui (só existe como valor histórico dos projetos antigos).
+async function popularProdutosParaDemanda() {
+    const select = document.getElementById('bcProduto');
+    if (!select) return;
+    if (typeof carregarProdutosData === 'function') await carregarProdutosData();
+    const lista = (typeof produtosSelecionaveis === 'function')
+        ? produtosSelecionaveis()
+        : (produtosCache || []).filter(p => p.ativo && p.codigo !== 'NAO_CLASSIFICADO');
+    select.innerHTML = '<option value="" selected disabled>-- SELECIONE --</option>' +
+        lista.map(p => `<option value="${p.id}">${escapeHtml(p.codigo)} - ${escapeHtml(p.nome)}</option>`).join('');
+}
+
 // -------------------------------------------------------------------------
 // Benefit Results (quadro da demanda) — cada linha escolhe um Return/Benefit
 // (Tabela 1, ver js/tipos-projeto/return-benefit.js) e, se esse tipo
@@ -370,6 +384,7 @@ async function saveBusinessCase(e) {
     const pessoaResp = document.getElementById('bcPessoaResp').value;
     const dtSolicitacao = document.getElementById('bcDtSolicitacao').value;
     const tipoProjetoId = document.getElementById('bcTipoProjeto').value;
+    const produtoId = document.getElementById('bcProduto') ? document.getElementById('bcProduto').value : '';
     const tipoQualificacao = document.getElementById('bcTipoQualificacao').value;
     const descricaoProjeto = document.getElementById('bcDescricao').value.trim();
     const objetivo = document.getElementById('bcObjetivo').value.trim();
@@ -377,6 +392,9 @@ async function saveBusinessCase(e) {
 
     if (!tipoProjetoId) {
         return alert('Selecione o Tipo de Projeto!');
+    }
+    if (!produtoId) {
+        return alert('Selecione o Produto!');
     }
     // NOVO (a pedido do usuário 24/08/2026): campo voltou pra esta tela —
     // tinha sumido numa refatoração anterior (Formalizar Demanda V2) e
@@ -447,6 +465,7 @@ async function saveBusinessCase(e) {
     const novoProjeto = {
         codigo, nome, area, pessoa_solicitante: pessoaResp, data_solicitacao: dtSolicitacao, ano_fiscal: anoFiscal,
         tipo_projeto_id: Number(tipoProjetoId),
+        produto_id: Number(produtoId),
         tipo_qualificacao: tipoQualificacao,
         descricao_projeto: descricaoProjeto,
         objetivo: objetivo || null,

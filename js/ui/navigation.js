@@ -97,7 +97,7 @@ function switchTab(tabId) {
         activeViewBtn.classList.add('bg-gray-100', 'text-gray-900', 'border-b-2', 'border-red-600');
     }
 
-    if (tabId === 'f1_formalizacao') { mudarAbaFormalizarDemanda('criar'); popularOpcoesAFDemanda(); popularTiposProjetoParaDemanda(); popularTiposReturnBenefitParaDemanda(); renderF1Formalizadas(); }
+    if (tabId === 'f1_formalizacao') { mudarAbaFormalizarDemanda('criar'); popularOpcoesAFDemanda(); popularTiposProjetoParaDemanda(); popularProdutosParaDemanda(); popularTiposReturnBenefitParaDemanda(); renderF1Formalizadas(); }
     if (tabId === 'f1_orcamento') { mudarAbaOrcamentarDemanda('a_planejar'); renderF1OrcamentoView(); }
     if (tabId === 'aprov_comite') renderAprovComiteView();
     if (tabId === 'aprov_orcamento_af') renderAprovOrcamentoAFView();
@@ -120,6 +120,7 @@ function switchTab(tabId) {
     if (tabId === 'registro_valores_contrato') renderRegistroValoresView();
     if (tabId === 'relatorio_projetos_contratos') renderRelatorioProjetosContratosView();
     if (tabId === 'tipos_projeto') { mudarAbaTiposProjeto('criar'); renderTiposProjetoView(); }
+    if (tabId === 'produtos') { mudarAbaProdutos('criar'); renderProdutosView(); }
     if (tabId === 'cargos') { mudarAbaCargos('criar'); renderCargosView(); }
     if (tabId === 'percentual_bloqueio_orcamento') renderPercentualBloqueioOrcamentoView();
     if (tabId === 'mudanca_orcamento') renderMudancaOrcamentoView();
