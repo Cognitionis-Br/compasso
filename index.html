@@ -235,7 +235,7 @@
                         <i id="icon-perfis" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
                     <div id="menu-perfis" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('usuarios')" id="link-usuarios" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Usuários & Perfis</button>
+                        <button onclick="switchTab('usuarios')" id="link-usuarios" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Usuários</button>
                         <button onclick="switchTab('funcoes_permissoes')" id="link-funcoes_permissoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Funções e Permissões</button>
                         <button onclick="switchTab('atribuicao_funcoes')" id="link-atribuicao_funcoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Atribuição de Funções aos Usuários</button>
                         <button onclick="switchTab('restricao_area_atividades')" id="link-restricao_area_atividades" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Restrição de Área por Atividade</button>
@@ -1952,7 +1952,7 @@
 
                 <!-- ADMINISTRAÇÃO -->
                 <div id="view-usuarios" class="tab-content hidden">
-                    <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Usuários & Perfis</h2></div>
+                    <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Usuários</h2></div>
 
                     <div id="usuariosRestrito" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-6 text-amber-800 text-sm font-bold">
                         <i class="fa-solid fa-lock"></i> Acesso restrito a usuários com a função ADMINISTRADOR.
@@ -2182,7 +2182,7 @@
                          Usuários já cadastrados em Usuários & Perfis. -->
                     <div id="respNaoCasadosWrapper" class="hidden bg-amber-50 border-2 border-amber-300 rounded-lg p-4 mb-4">
                         <h4 class="font-bold text-amber-800 text-sm mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Responsáveis do cadastro antigo sem usuário correspondente</h4>
-                        <p class="text-xs text-amber-700 mb-3">Estes registros vinham do cadastro antigo (nome/e-mail digitados) e não foram migrados automaticamente porque o e-mail não bate com nenhum usuário cadastrado em "Usuários & Perfis". Cadastre o usuário com este e-mail (ou atribua as atividades a um usuário existente no formulário abaixo) pra resolver.</p>
+                        <p class="text-xs text-amber-700 mb-3">Estes registros vinham do cadastro antigo (nome/e-mail digitados) e não foram migrados automaticamente porque o e-mail não bate com nenhum usuário cadastrado em "Usuários". Cadastre o usuário com este e-mail (ou atribua as atividades a um usuário existente no formulário abaixo) pra resolver.</p>
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-xs bg-white rounded">
                                 <thead><tr class="bg-amber-100 text-amber-800 uppercase border-b"><th class="p-2">Nome (cadastro antigo)</th><th class="p-2">E-mail</th><th class="p-2">Atividades</th></tr></thead>

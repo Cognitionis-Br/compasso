@@ -119,12 +119,17 @@ function renderMatrizPermissoesFormulario(jaMarcadasIds) {
 
     // Agrupa mantendo a ordem de chegada (já vem ordenado por `ordem` do
     // catálogo) — Map preserva ordem de inserção das chaves em JS.
+    // AJUSTADO (Fase 1 de segurança, 2026-09-01): colunas grupo_funcao/funcao
+    // renomeadas para grupo/subgrupo; lê as duas formas pra sobreviver ao
+    // intervalo entre o deploy do front e a migração SQL.
     const porGrupo = new Map();
     atividadesData.forEach(a => {
-        if (!porGrupo.has(a.grupo_funcao)) porGrupo.set(a.grupo_funcao, new Map());
-        const porFuncao = porGrupo.get(a.grupo_funcao);
-        if (!porFuncao.has(a.funcao)) porFuncao.set(a.funcao, []);
-        porFuncao.get(a.funcao).push(a);
+        const g = a.grupo ?? a.grupo_funcao;
+        const s = a.subgrupo ?? a.funcao;
+        if (!porGrupo.has(g)) porGrupo.set(g, new Map());
+        const porFuncao = porGrupo.get(g);
+        if (!porFuncao.has(s)) porFuncao.set(s, []);
+        porFuncao.get(s).push(a);
     });
 
     const blocosGrupo = Array.from(porGrupo.entries()).map(([grupo, porFuncao]) => {
@@ -448,8 +453,9 @@ async function renderRestricaoAreaAtividadesView() {
 
     const porGrupo = new Map();
     atividadesData.forEach(a => {
-        if (!porGrupo.has(a.grupo_funcao)) porGrupo.set(a.grupo_funcao, []);
-        porGrupo.get(a.grupo_funcao).push(a);
+        const g = a.grupo ?? a.grupo_funcao; // ver nota Fase 1 em renderMatrizPermissoesFormulario
+        if (!porGrupo.has(g)) porGrupo.set(g, []);
+        porGrupo.get(g).push(a);
     });
 
     container.innerHTML = Array.from(porGrupo.entries()).map(([grupo, atividades]) => `
@@ -459,7 +465,7 @@ async function renderRestricaoAreaAtividadesView() {
                 <tbody class="divide-y divide-gray-100">
                     ${atividades.map(a => `
                         <tr>
-                            <td class="p-2 w-1/3 text-gray-600 font-semibold">${a.funcao}</td>
+                            <td class="p-2 w-1/3 text-gray-600 font-semibold">${a.subgrupo ?? a.funcao}</td>
                             <td class="p-2 w-1/3">${a.atividade}</td>
                             <td class="p-2 text-center">
                                 <label class="inline-flex items-center gap-1.5 cursor-pointer">
