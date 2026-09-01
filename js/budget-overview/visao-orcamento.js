@@ -21,7 +21,12 @@ async function renderVisaoOrcamentoView() {
     // Dashboard e Roadmap.
     renderFaixaAFSelecionado('visaoOrcFaixaAFSelecionado', modoAFVisaoOrcamento);
     // NOVO (Controle de acesso por atividade, Fase 5): restrição de área.
-    const baseAF = filtrarProjetosPorArea(filtrarProjetosPorAnoFiscalSelecionado(projectsData, modoAFVisaoOrcamento), 'visao_orcamento');
+    // NOVO (Agrupamento de Orçamento — item 5): 3º elo — agrupamento AF/Área/Produto.
+    const baseAF = filtrarProjetosPorAgrupamento(
+        filtrarProjetosPorArea(filtrarProjetosPorAnoFiscalSelecionado(projectsData, modoAFVisaoOrcamento), 'visao_orcamento'),
+        modoAgrupamentoOrcamento, valorAgrupamentoSelecionado);
+    renderSeletorAgrupamento('visaoSeletorAgrupamento', 'renderVisaoOrcamentoView');
+    renderQuadroOrcamentoAgrupado('visao', baseAF);
 
     // CORRIGIDO 10/08/2026 (bug reportado): a lista usada pros KPIs e pro
     // CAPEX/OPEX era diferente da lista usada na tabela — o quadro de

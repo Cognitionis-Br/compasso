@@ -125,8 +125,16 @@ async function renderDashboardMetrics() {
     // projectsData por essa lista já filtrada.
     // NOVO (Controle de acesso por atividade, Fase 5): restrição de área,
     // encadeada logo depois do filtro de Ano Fiscal.
-    const projectsDataFiltrado = filtrarProjetosPorArea(filtrarProjetosPorAnoFiscalSelecionado(projectsData, modoAFDashboard), 'dashboard');
+    // NOVO (Agrupamento de Orçamento — item 5): 3º elo da cascata —
+    // Ano Fiscal → restrição de área → agrupamento (AF/Área/Produto).
+    // Aplicado ANTES de tudo pra a tela inteira (quadro, listas, gráficos)
+    // refletir o subgrupo escolhido.
+    const projectsDataFiltrado = filtrarProjetosPorAgrupamento(
+        filtrarProjetosPorArea(filtrarProjetosPorAnoFiscalSelecionado(projectsData, modoAFDashboard), 'dashboard'),
+        modoAgrupamentoOrcamento, valorAgrupamentoSelecionado);
     renderFaixaAFSelecionado('dashFaixaAFSelecionado', modoAFDashboard);
+    renderSeletorAgrupamento('dashSeletorAgrupamento', 'renderDashboardMetrics');
+    renderQuadroOrcamentoAgrupado('dash', projectsDataFiltrado);
 
     let totOrcamentoOficial = 0;
     let totOrcamentoEmConstrucao = 0;

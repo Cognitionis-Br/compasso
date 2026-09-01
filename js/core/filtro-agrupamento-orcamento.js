@@ -153,3 +153,86 @@ function onMudarValorAgrupamento(containerId) {
     renderSeletorAgrupamento(containerId, document.getElementById(containerId).dataset.callback)
         .then(() => _dispararCallbackAgrupamento(containerId));
 }
+
+// -------------------------------------------------------------------------
+// Quadro de valores (item 6) — substitui os KPI cards no Dashboard e na
+// Visão de Orçamento. Recebe a lista JÁ filtrada por Ano Fiscal + área
+// (RBAC); aplica aqui o filtro de agrupamento e quebra CAPEX/OPEX
+// reaproveitando calcularCapexOpex().
+//   Orçamento Fechado  = Σ val_bc/previsto dos projetos oficiais (não
+//                        adhoc, não carryover, não cancelado/hold/reprovado)
+//   Orç. Extraordinário = Σ val_bc/previsto dos is_adhoc ativos
+//   Orç. Carry Over    = Σ valor_carryover dos is_carryover
+//   Orçamento Atual    = Fechado + Extraordinário + Carry Over
+//   Valores Já Realizados = Σ realizado dos ativos
+//   Orçamento a Realizar  = Orçamento Atual − Realizados   (substitui "Projeção Final")
+// -------------------------------------------------------------------------
+function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
+    const cont = document.getElementById(`${prefixo}QuadroOrcamento`);
+    if (!cont) return;
+    if (typeof calcularCapexOpex !== 'function') { cont.innerHTML = ''; return; }
+
+    const { modo, valor } = obterAgrupamentoOrcamento();
+    const lista = filtrarProjetosPorAgrupamento(listaAF || [], modo, valor);
+    const inativo = p => ['CANCELADO', 'REPROVADO', 'HOLD'].includes((p.sub_status || '').toUpperCase());
+
+    const ativos  = lista.filter(p => !inativo(p));
+    const adhoc   = ativos.filter(p => p.is_adhoc === true);
+    const carry   = lista.filter(p => p.is_carryover === true);
+    const oficial = ativos.filter(p => p.is_adhoc !== true && p.is_carryover !== true);
+
+    const fechado   = calcularCapexOpex(oficial);
+    const extra     = calcularCapexOpex(adhoc);
+    const carryv    = calcularCapexOpex(carry, p => Number(p.valor_carryover) || 0);
+    const realizado = calcularCapexOpex(ativos);
+
+    const g = (o, k) => o[k].orcado;
+    const r = (o, k) => o[k].realizado;
+    const linhas = {
+        fechadoCx: g(fechado, 'capex'),  fechadoOx: g(fechado, 'opex'),
+        extraCx:   g(extra, 'capex'),    extraOx:   g(extra, 'opex'),
+        carryCx:   g(carryv, 'capex'),   carryOx:   g(carryv, 'opex'),
+        realCx:    r(realizado, 'capex'), realOx:   r(realizado, 'opex'),
+    };
+    linhas.atualCx = linhas.fechadoCx + linhas.extraCx + linhas.carryCx;
+    linhas.atualOx = linhas.fechadoOx + linhas.extraOx + linhas.carryOx;
+    linhas.aRealizarCx = linhas.atualCx - linhas.realCx;
+    linhas.aRealizarOx = linhas.atualOx - linhas.realOx;
+
+    const contarTipo = t => lista.filter(p => (p.tipo_orcamento || '').toUpperCase() === t).length;
+    const fmt = v => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const linha = (rot, tot, cx, ox, dinheiro = true) => `
+        <tr>
+            <td class="p-2 font-semibold text-gray-700">${rot}</td>
+            <td class="p-2 text-right font-mono ${dinheiro ? 'font-bold' : 'font-extrabold text-gray-900'}">${dinheiro ? fmt(tot) : tot}</td>
+            <td class="p-2 text-right font-mono text-blue-800">${dinheiro ? fmt(cx) : cx}</td>
+            <td class="p-2 text-right font-mono text-purple-800">${dinheiro ? fmt(ox) : ox}</td>
+        </tr>`;
+
+    cont.innerHTML = `
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div class="px-4 py-2 bg-gray-50 border-b text-xs font-bold uppercase text-gray-600">
+                Visão por: <span class="text-gray-900">${rotuloAgrupamentoAtivo()}</span>
+            </div>
+            <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead><tr class="text-[10px] uppercase text-gray-400 border-b">
+                    <th class="p-2 text-left">Linha</th>
+                    <th class="p-2 text-right">Total</th>
+                    <th class="p-2 text-right">CAPEX</th>
+                    <th class="p-2 text-right">OPEX</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    ${linha('Total de Projetos', lista.length, contarTipo('CAPEX'), contarTipo('OPEX'), false)}
+                    ${linha('Orçamento Fechado', linhas.fechadoCx + linhas.fechadoOx, linhas.fechadoCx, linhas.fechadoOx)}
+                    ${linha('Orçamento Projetos Extraordinário', linhas.extraCx + linhas.extraOx, linhas.extraCx, linhas.extraOx)}
+                    ${linha('Orçamento Carry Over', linhas.carryCx + linhas.carryOx, linhas.carryCx, linhas.carryOx)}
+                    ${linha('Orçamento Atual', linhas.atualCx + linhas.atualOx, linhas.atualCx, linhas.atualOx)}
+                    ${linha('Valores Já Realizados', linhas.realCx + linhas.realOx, linhas.realCx, linhas.realOx)}
+                    ${linha('Orçamento a Realizar', linhas.aRealizarCx + linhas.aRealizarOx, linhas.aRealizarCx, linhas.aRealizarOx)}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    `;
+}

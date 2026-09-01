@@ -451,14 +451,11 @@
                          Ano Fiscal está selecionado, sempre no topo da tela. -->
                     <div id="dashFaixaAFSelecionado" class="mb-6"></div>
 
-                    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
-                        <div class="kpi-card p-4 border-l-4 border-l-red-600"><span class="text-[11px] font-bold text-gray-400 uppercase">Orçamento Fechado AF</span><div id="kpiOrcAprovado" class="text-lg font-extrabold text-gray-800 mt-1">R$ 0,00</div></div>
-                        <div class="kpi-card p-4 border-l-4 border-l-amber-500"><span class="text-[11px] font-bold text-gray-400 uppercase">Orçamento Extraordinário</span><div id="kpiOrcAdhoc" class="text-lg font-extrabold text-amber-600 mt-1">R$ 0,00</div></div>
-                        <div class="kpi-card p-4 border-l-4 border-l-red-600"><span class="text-[11px] font-bold text-gray-400 uppercase">Realizado Total</span><div id="kpiOrcUtilizado" class="text-lg font-extrabold text-red-600 mt-1">R$ 0,00</div></div>
-                        <div class="kpi-card p-4 border-l-4 border-l-blue-600"><span class="text-[11px] font-bold text-gray-400 uppercase">Projeção Final</span><div id="kpiProjecao" class="text-lg font-extrabold text-blue-700 mt-1">R$ 0,00</div></div>
-                        <div class="kpi-card p-4 border-l-4 border-l-gray-600"><span class="text-[11px] font-bold text-gray-400 uppercase">Saldo Remanescente</span><div id="kpiSaldo" class="text-lg font-extrabold text-gray-800 mt-1">R$ 0,00</div></div>
-                        <div class="kpi-card p-4 border-l-4 border-l-green-500"><span class="text-[11px] font-bold text-gray-400 uppercase">Total Projetos</span><div id="kpiTotalProjetos" class="text-lg font-extrabold text-gray-800 mt-1">0</div></div>
-                    </section>
+                    <!-- NOVO (Agrupamento de Orçamento — itens 5/6): seletor + quadro
+                         de valores por Ano Fiscal / Área / Produto, no lugar dos
+                         KPI cards antigos (incl. a "Projeção Final", removida). -->
+                    <div id="dashSeletorAgrupamento"></div>
+                    <div id="dashQuadroOrcamento" class="mb-6"></div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <section class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
@@ -804,11 +801,10 @@
                          Ano Fiscal está selecionado. -->
                     <div id="visaoOrcFaixaAFSelecionado" class="mb-6"></div>
 
-                    <section class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                        <div class="kpi-card p-4 border-l-4 border-l-red-600"><span class="text-[11px] font-bold text-gray-400 uppercase">Orçamento Fechado AF</span><div id="visaoKpiOrcAprovado" class="text-lg font-extrabold text-gray-800 mt-1">R$ 0,00</div></div>
-                        <div class="kpi-card p-4 border-l-4 border-l-red-600"><span class="text-[11px] font-bold text-gray-400 uppercase">Realizado Total</span><div id="visaoKpiOrcUtilizado" class="text-lg font-extrabold text-red-600 mt-1">R$ 0,00</div></div>
-                        <div class="kpi-card p-4 border-l-4 border-l-gray-600"><span class="text-[11px] font-bold text-gray-400 uppercase">Saldo Remanescente</span><div id="visaoKpiSaldo" class="text-lg font-extrabold text-gray-800 mt-1">R$ 0,00</div></div>
-                    </section>
+                    <!-- NOVO (Agrupamento de Orçamento — itens 5/6): seletor + quadro
+                         de valores por Ano Fiscal / Área / Produto. -->
+                    <div id="visaoSeletorAgrupamento"></div>
+                    <div id="visaoQuadroOrcamento" class="mb-6"></div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <section class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
