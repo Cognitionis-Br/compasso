@@ -201,35 +201,44 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
 
     const contarTipo = t => lista.filter(p => (p.tipo_orcamento || '').toUpperCase() === t).length;
     const fmt = v => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    const linha = (rot, tot, cx, ox, dinheiro = true) => `
-        <tr>
-            <td class="p-2 font-semibold text-gray-700">${rot}</td>
-            <td class="p-2 text-right font-mono ${dinheiro ? 'font-bold' : 'font-extrabold text-gray-900'}">${dinheiro ? fmt(tot) : tot}</td>
-            <td class="p-2 text-right font-mono text-blue-800">${dinheiro ? fmt(cx) : cx}</td>
-            <td class="p-2 text-right font-mono text-purple-800">${dinheiro ? fmt(ox) : ox}</td>
+
+    // rot=rótulo | opt: {ac: classe da faixa de destaque à esquerda,
+    //   forte: linha em negrito/fundo, sinal: colore o valor por sinal (a realizar)}
+    const linha = (rot, tot, cx, ox, opt = {}) => {
+        const dinheiro = opt.contagem !== true;
+        const corValor = v => opt.sinal ? (v < 0 ? 'text-red-700' : 'text-emerald-700') : '';
+        const tdV = (v, extra = '') => `<td class="p-2 text-right font-mono tabular-nums ${extra} ${dinheiro ? corValor(v) : 'text-gray-900'}">${dinheiro ? fmt(v) : v}</td>`;
+        return `
+        <tr class="${opt.forte ? 'bg-slate-50 font-bold' : ''}">
+            <td class="p-2 pl-3 uppercase text-[11px] tracking-wide font-bold text-gray-600 border-l-4 ${opt.ac || 'border-l-transparent'}">${rot}</td>
+            ${tdV(tot, opt.forte ? 'font-extrabold text-gray-900' : 'font-bold')}
+            ${tdV(cx, 'text-blue-800')}
+            ${tdV(ox, 'text-purple-800')}
         </tr>`;
+    };
 
     cont.innerHTML = `
         <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
-            <div class="px-4 py-2 bg-gray-50 border-b text-xs font-bold uppercase text-gray-600">
-                Visão por: <span class="text-gray-900">${rotuloAgrupamentoAtivo()}</span>
+            <div class="px-4 py-2.5 bg-slate-800 text-white text-xs font-bold uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-layer-group opacity-70"></i>
+                Visão por: <span class="text-amber-300">${rotuloAgrupamentoAtivo()}</span>
             </div>
             <div class="overflow-x-auto">
             <table class="w-full text-sm">
-                <thead><tr class="text-[10px] uppercase text-gray-400 border-b">
-                    <th class="p-2 text-left">Linha</th>
+                <thead><tr class="text-[10px] uppercase tracking-wider text-gray-400 border-b bg-gray-50">
+                    <th class="p-2 pl-3 text-left">Linha</th>
                     <th class="p-2 text-right">Total</th>
-                    <th class="p-2 text-right">CAPEX</th>
-                    <th class="p-2 text-right">OPEX</th>
+                    <th class="p-2 text-right text-blue-700">CAPEX</th>
+                    <th class="p-2 text-right text-purple-700">OPEX</th>
                 </tr></thead>
                 <tbody class="divide-y divide-gray-100">
-                    ${linha('Total de Projetos', lista.length, contarTipo('CAPEX'), contarTipo('OPEX'), false)}
-                    ${linha('Orçamento Fechado', linhas.fechadoCx + linhas.fechadoOx, linhas.fechadoCx, linhas.fechadoOx)}
-                    ${linha('Orçamento Projetos Extraordinário', linhas.extraCx + linhas.extraOx, linhas.extraCx, linhas.extraOx)}
-                    ${linha('Orçamento Carry Over', linhas.carryCx + linhas.carryOx, linhas.carryCx, linhas.carryOx)}
-                    ${linha('Orçamento Atual', linhas.atualCx + linhas.atualOx, linhas.atualCx, linhas.atualOx)}
-                    ${linha('Valores Já Realizados', linhas.realCx + linhas.realOx, linhas.realCx, linhas.realOx)}
-                    ${linha('Orçamento a Realizar', linhas.aRealizarCx + linhas.aRealizarOx, linhas.aRealizarCx, linhas.aRealizarOx)}
+                    ${linha('Total de Projetos', lista.length, contarTipo('CAPEX'), contarTipo('OPEX'), { contagem: true, ac: 'border-l-gray-300' })}
+                    ${linha('Orçamento Fechado', linhas.fechadoCx + linhas.fechadoOx, linhas.fechadoCx, linhas.fechadoOx, { ac: 'border-l-slate-400' })}
+                    ${linha('Orçamento Projetos Extraordinário', linhas.extraCx + linhas.extraOx, linhas.extraCx, linhas.extraOx, { ac: 'border-l-amber-400' })}
+                    ${linha('Orçamento Carry Over', linhas.carryCx + linhas.carryOx, linhas.carryCx, linhas.carryOx, { ac: 'border-l-orange-400' })}
+                    ${linha('Orçamento Atual', linhas.atualCx + linhas.atualOx, linhas.atualCx, linhas.atualOx, { ac: 'border-l-indigo-500', forte: true })}
+                    ${linha('Valores Já Realizados', linhas.realCx + linhas.realOx, linhas.realCx, linhas.realOx, { ac: 'border-l-red-400' })}
+                    ${linha('Orçamento a Realizar', linhas.aRealizarCx + linhas.aRealizarOx, linhas.aRealizarCx, linhas.aRealizarOx, { ac: 'border-l-emerald-500', forte: true, sinal: true })}
                 </tbody>
             </table>
             </div>

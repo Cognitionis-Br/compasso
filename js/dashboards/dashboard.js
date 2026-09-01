@@ -217,8 +217,6 @@ async function renderDashboardMetrics() {
 
     renderTabelaConsolidacaoPortfolio(displayOrcamento, projectsDataFiltrado, isFechadoParaAF);
     await renderBlocosCriacaoEPortfolioFY(projectsDataFiltrado);
-    renderQuadroCapexOpex('kpi', projetosNoOrcamentoExibido);
-    renderQuadroCarryOverCapexOpex('kpi', projectsDataFiltrado.filter(p => p.is_carryover === true));
 
     const dashTableBody = document.getElementById('dashTableBody');
     if (dashTableBody) {

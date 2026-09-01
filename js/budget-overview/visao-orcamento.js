@@ -66,8 +66,6 @@ async function renderVisaoOrcamentoView() {
     if (elKpiReal) elKpiReal.innerText = `R$ ${totRealizado.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
     const elKpiSaldo = document.getElementById('visaoKpiSaldo');
     if (elKpiSaldo) elKpiSaldo.innerText = `R$ ${(totOrcado - totRealizado).toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-    renderQuadroCapexOpex('visao', projsAF);
-    renderQuadroCarryOverCapexOpex('visao', baseAF.filter(p => p.is_carryover === true));
 
     // AJUSTADO (a pedido do usuário): a tabela agora respeita o mesmo
     // filtro de Ano Fiscal selecionado que os KPIs/CAPEX-OPEX acima —
