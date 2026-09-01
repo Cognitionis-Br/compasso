@@ -11,7 +11,7 @@
 --   - ano_fiscal            (continua 'AF2026')
 --   - is_carryover = true
 --   - valor_carryover
---   - carryover_marcado_por / _em / _etapa_marcacao / _sub_status_marcacao
+--   - carryover_marcado_por / _em
 --   - projeto_benefit_results (dados de objetivo/benefício do BC — igual ao
 --     reset padrão da ferramenta de dev, que também não mexe nisso)
 --
@@ -22,6 +22,14 @@
 --   - valores / horas / alertas de variação / reprovações / trade-off /
 --     validações TI-Negócio / conclusão final / mudança de orçamento
 --   - registros de fase e execução no AF corrente (projeto_etapas etc.)
+--
+-- REALINHA o snapshot de marcação do Carryover
+-- (carryover_etapa_marcacao / _sub_status_marcacao) para o estado pós-reset
+-- ('BUSINESS CASE' / 'A PLANEJAR'). Sem isso, verificarElegibilidadeDesmarcar
+-- (js/carryover/carryover.js) compara o sub_status atual contra um snapshot
+-- NULL (esses 7 foram marcados por "AJUSTE DE BASE" antes do snapshot
+-- existir) e conclui "já avançou de fase/status" — travando o botão
+-- Desmarcar mesmo com o projeto zerado na Fase 1.
 --
 -- Só 2 dos 7 tinham registro de fase (projeto_etapas): PRJ-FY26-049-RCT e
 -- PRJ-FY26-083-PRD. Para os outros 5 o efeito é praticamente nulo — o
@@ -79,7 +87,11 @@ BEGIN
         bloqueado_mudanca_orcamento = false,
         mudanca_orcamento_aprovado_por = NULL,
         mudanca_orcamento_aprovado_em = NULL,
-        mudanca_orcamento_motivo_aprovacao = NULL
+        mudanca_orcamento_motivo_aprovacao = NULL,
+        -- Snapshot do Carryover realinhado ao estado pós-reset, senão o
+        -- botão Desmarcar fica travado (ver cabeçalho).
+        carryover_etapa_marcacao = 'BUSINESS CASE',
+        carryover_sub_status_marcacao = 'A PLANEJAR'
     WHERE codigo = ANY(v_codigos);
 
     -- 2) Progresso granular de fase / execução no AF corrente.
