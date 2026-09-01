@@ -25,5 +25,10 @@ CREATE TABLE IF NOT EXISTS ajuste_orcamento_autorizacoes (
     autorizado_em          TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Sem RLS (mesmo tratamento das tabelas de log do sistema; o app grava
+-- com a chave publishable). Novos projetos Supabase às vezes ligam RLS
+-- por padrão — desliga explicitamente.
+ALTER TABLE ajuste_orcamento_autorizacoes DISABLE ROW LEVEL SECURITY;
+
 NOTIFY pgrst, 'reload schema';
 -- =========================================================================

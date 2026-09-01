@@ -36,6 +36,12 @@ UPDATE projetos
    SET produto_id = (SELECT id FROM produtos WHERE codigo = 'NAO_CLASSIFICADO')
  WHERE produto_id IS NULL;
 
+-- IMPORTANTE: projetos criados via SQL Editor podem nascer com RLS
+-- ligada e sem policy (novos projetos Supabase). `produtos` tem o mesmo
+-- tratamento de tipos_projeto/areas — SEM RLS (o app grava com a chave
+-- publishable). Desliga explicitamente.
+ALTER TABLE produtos DISABLE ROW LEVEL SECURITY;
+
 NOTIFY pgrst, 'reload schema';
 
 -- Conferência:
