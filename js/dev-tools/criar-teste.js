@@ -43,6 +43,20 @@ async function inicializarFormCriarTeste() {
         selTipoProjeto.innerHTML = options.join('');
     }
 
+    // NOVO (Agrupamento de Orçamento — itens 1/2): Produto virou atributo
+    // obrigatório da demanda. Mesmo tratamento de Tipo de Projeto — só
+    // produtos ativos, e o sentinela 'NAO_CLASSIFICADO' fica de fora
+    // (é valor histórico dos projetos migrados, não escolhível numa
+    // demanda nova).
+    const selProduto = document.getElementById('devTesteProduto');
+    if (selProduto) {
+        const { data } = await _supabase.from('produtos').select('*').eq('ativo', true).order('codigo');
+        const options = ['<option value="" selected disabled>-- SELECIONE --</option>'];
+        (data || []).filter(p => p.codigo !== 'NAO_CLASSIFICADO')
+            .forEach(p => options.push(`<option value="${p.id}">${escapeHtml(p.codigo)} — ${escapeHtml(p.nome)}</option>`));
+        selProduto.innerHTML = options.join('');
+    }
+
     onDevTesteFaseChange();
 }
 
@@ -108,6 +122,7 @@ async function criarProjetoTeste() {
     const pessoaResp = document.getElementById('devTesteResp').value;
     const anoFiscal = document.getElementById('devTesteAF').value;
     const tipoProjetoId = document.getElementById('devTesteTipoProjeto').value;
+    const produtoId = document.getElementById('devTesteProduto') ? document.getElementById('devTesteProduto').value : '';
     const tipoQualificacao = document.getElementById('devTesteQualificacao').value;
     const tipoOrcamento = document.getElementById('devTesteTipoOrcamento').value;
     const adhocMarcado = document.getElementById('devTesteAdhoc').checked;
@@ -124,6 +139,9 @@ async function criarProjetoTeste() {
 
     if (!nome || !area || !pessoaResp || !anoFiscal || !tipoProjetoId) {
         return alert('Preencha Nome, Área, Pessoa Solicitante, Ano Fiscal e Tipo de Projeto!');
+    }
+    if (!produtoId) {
+        return alert('Selecione o Produto! (obrigatório desde o Agrupamento de Orçamento)');
     }
     if (!valBc || valBc <= 0 || !horasBc || horasBc <= 0) {
         return alert('Informe o Orçamento e as Horas de Business Case (sempre obrigatórios — é o checkpoint base de qualquer fase)!');
@@ -163,6 +181,7 @@ async function criarProjetoTeste() {
     const payload = {
         codigo, nome, area, pessoa_solicitante: pessoaResp, data_solicitacao: hoje, ano_fiscal: anoFiscal,
         tipo_projeto_id: Number(tipoProjetoId),
+        produto_id: Number(produtoId),
         tipo_qualificacao: tipoQualificacao,
         tipo_orcamento: tipoOrcamento,
         descricao_projeto: 'Projeto de teste criado via Ferramentas de Dev.',

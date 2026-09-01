@@ -232,6 +232,20 @@ async function resetarBaseParaFase1() {
         console.error('Reset concluído, mas houve erro ao limpar log_aprovacao_mudanca_orcamento:', errorLogMudancaOrcamento.message);
     }
 
+    // NOVO (Agrupamento de Orçamento — item 8): autorizações especiais de
+    // ajuste de orçamento entre subgrupos diferentes. Referenciam código
+    // de projeto de origem E de destino, sem cascade — voltar pra fase 1
+    // torna essas autorizações fantasmas (mesmo tratamento de
+    // adhoc_aprovacoes / carryover acima). Dois deletes, um por ponta.
+    const { error: errorAjusteOrigem } = await _supabase.from('ajuste_orcamento_autorizacoes').delete().in('projeto_origem_codigo', codigos);
+    if (errorAjusteOrigem) {
+        console.error('Reset concluído, mas houve erro ao limpar ajuste_orcamento_autorizacoes (origem):', errorAjusteOrigem.message);
+    }
+    const { error: errorAjusteDestino } = await _supabase.from('ajuste_orcamento_autorizacoes').delete().in('projeto_destino_codigo', codigos);
+    if (errorAjusteDestino) {
+        console.error('Reset concluído, mas houve erro ao limpar ajuste_orcamento_autorizacoes (destino):', errorAjusteDestino.message);
+    }
+
     // NOVO: limpa a fila de e-mail também — sem isso, o teste geral
     // começaria com e-mails "fantasma" de projetos que já não existem
     // mais do jeito que existiam.

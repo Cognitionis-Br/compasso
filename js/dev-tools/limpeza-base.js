@@ -105,6 +105,15 @@ async function limparBaseSomenteAF2027() {
         const { error: errorBeneficios } = await _supabase.from('projeto_benefit_results').delete().in('projeto_codigo', codigosParaApagar);
         if (errorBeneficios) console.error('Erro ao limpar projeto_benefit_results:', errorBeneficios.message);
 
+        // NOVO (Agrupamento de Orçamento — item 8): autorizações de ajuste
+        // de orçamento entre subgrupos. Referenciam código de projeto de
+        // origem E de destino, sem cascade — limpar antes de apagar o
+        // projeto (mesma exigência de projeto_benefit_results).
+        const { error: errorAjusteOrigem } = await _supabase.from('ajuste_orcamento_autorizacoes').delete().in('projeto_origem_codigo', codigosParaApagar);
+        if (errorAjusteOrigem) console.error('Erro ao limpar ajuste_orcamento_autorizacoes (origem):', errorAjusteOrigem.message);
+        const { error: errorAjusteDestino } = await _supabase.from('ajuste_orcamento_autorizacoes').delete().in('projeto_destino_codigo', codigosParaApagar);
+        if (errorAjusteDestino) console.error('Erro ao limpar ajuste_orcamento_autorizacoes (destino):', errorAjusteDestino.message);
+
         const { error: errorProjetos } = await _supabase.from('projetos').delete().in('codigo', codigosParaApagar);
         if (errorProjetos) {
             alert('❌ Erro ao apagar os projetos: ' + errorProjetos.message);
@@ -214,6 +223,13 @@ async function limparBaseCompletamente() {
 
         const { error: errorBeneficios } = await _supabase.from('projeto_benefit_results').delete().in('projeto_codigo', codigosParaApagar);
         if (errorBeneficios) console.error('Erro ao limpar projeto_benefit_results:', errorBeneficios.message);
+
+        // NOVO (Agrupamento de Orçamento — item 8): ver mesmo comentário em
+        // limparBaseSomenteAF2027.
+        const { error: errorAjusteOrigem } = await _supabase.from('ajuste_orcamento_autorizacoes').delete().in('projeto_origem_codigo', codigosParaApagar);
+        if (errorAjusteOrigem) console.error('Erro ao limpar ajuste_orcamento_autorizacoes (origem):', errorAjusteOrigem.message);
+        const { error: errorAjusteDestino } = await _supabase.from('ajuste_orcamento_autorizacoes').delete().in('projeto_destino_codigo', codigosParaApagar);
+        if (errorAjusteDestino) console.error('Erro ao limpar ajuste_orcamento_autorizacoes (destino):', errorAjusteDestino.message);
 
         const { error: errorProjetos } = await _supabase.from('projetos').delete().in('codigo', codigosParaApagar);
         if (errorProjetos) {
@@ -333,6 +349,13 @@ async function excluirFisicamenteSelecionados() {
     // limparBaseSomenteAF2027.
     const { error: errorBeneficios } = await _supabase.from('projeto_benefit_results').delete().in('projeto_codigo', codigos);
     if (errorBeneficios) console.error('Erro ao limpar projeto_benefit_results:', errorBeneficios.message);
+
+    // NOVO (Agrupamento de Orçamento — item 8): ver mesmo comentário em
+    // limparBaseSomenteAF2027.
+    const { error: errorAjusteOrigem } = await _supabase.from('ajuste_orcamento_autorizacoes').delete().in('projeto_origem_codigo', codigos);
+    if (errorAjusteOrigem) console.error('Erro ao limpar ajuste_orcamento_autorizacoes (origem):', errorAjusteOrigem.message);
+    const { error: errorAjusteDestino } = await _supabase.from('ajuste_orcamento_autorizacoes').delete().in('projeto_destino_codigo', codigos);
+    if (errorAjusteDestino) console.error('Erro ao limpar ajuste_orcamento_autorizacoes (destino):', errorAjusteDestino.message);
 
     const { error } = await _supabase.from('projetos').delete().in('codigo', codigos);
     if (error) {
