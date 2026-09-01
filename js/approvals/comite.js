@@ -15,8 +15,16 @@ function renderAprovComiteView() {
     if (!tbody) return;
 
     // NOVO (Controle de acesso por atividade, Fase 5): restrição de área.
+    // CORRIGIDO (bug reportado 2026-09-01): demandas Carryover e
+    // Extraordinárias NÃO entram na aprovação de orçamento do AF corrente —
+    // cada uma tem seu processo exclusivo (Projetos Carry Over /
+    // Projetos Extraordinário → simulação de trade-off). Mesma exclusão
+    // que orcamento-af.js já fazia só pra Extraordinária, agora também
+    // aqui e também pra Carryover.
     const comiteDemandas = filtrarProjetosPorArea(projectsData.filter(p =>
         p.etapa_atual === 'BUSINESS CASE' &&
+        p.is_adhoc !== true &&
+        p.is_carryover !== true &&
         (p.sub_status === 'ORÇAMENTO REALIZADO' || p.sub_status === 'APROVADO' || p.sub_status === 'REPROVADO')
     ), 'aprov_comite').sort((a, b) => {
         // NOVO (item 6, novos ajustes): ordena por Status (sub_status)

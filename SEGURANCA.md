@@ -224,3 +224,23 @@ claro. `js/config/funcoes.js` (`podeGerenciarProprietario()` /
   descarta com aviso qualquer id Proprietário que chegue via DOM adulterado.
 - `saveFuncao` / `deleteFuncao` / `reativarFuncao`: bloqueiam criar/marcar/
   editar/inativar/reativar função Proprietário quando não é Proprietário.
+
+## Correção — Carryover / Extraordinária fora da aprovação do AF corrente (2026-09-01)
+
+Bug reportado: demandas marcadas como **Carryover** ou **Extraordinária**
+apareciam nas filas de aprovação de orçamento do AF corrente, em vez de
+ficarem restritas aos seus processos exclusivos (tela Projetos Carry Over /
+tela Projetos Extraordinário com simulação de trade-off).
+
+- `js/approvals/comite.js` (`renderAprovComiteView`): a fila "Aprovar
+  Orçamento por Projeto (Comitê)" não excluía nem `is_adhoc` nem
+  `is_carryover` — agora exclui os dois.
+- `js/approvals/orcamento-af.js`: já excluía `is_adhoc` em `projsAprovados`
+  (render + fechamento) e na checagem de `pendentes`; passou a excluir
+  também `is_carryover` nos 3 pontos.
+
+Extraordinária é promovida a Requerimentos pelo próprio fluxo em
+`js/adhoc/tradeoff.js` (`aprovarSimulacaoAdhoc`); Carryover entra no
+orçamento do AF seguinte pelo pool (`calcularPoolCarryover`), com o valor
+congelado na marcação — nenhum dos dois precisa passar pelo Comitê / pelo
+fechamento do AF corrente.

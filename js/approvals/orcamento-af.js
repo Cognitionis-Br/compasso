@@ -18,10 +18,14 @@ async function renderAprovOrcamentoAFView() {
     // CORRIGIDO 10/08/2026 (bug reportado pelo usuário): demandas Extraordinárias
     // não podem entrar na aprovação em lote do AF — elas têm seu próprio
     // fluxo de aprovação (simulação de trade-off, js/adhoc/tradeoff.js).
+    // CORRIGIDO 2026-09-01: mesma coisa pra Carryover — tem processo
+    // exclusivo (Projetos Carry Over) e o valor já entra pelo pool do AF
+    // seguinte, não pela aprovação do AF corrente.
     const projsAprovados = projectsData.filter(p =>
         p.etapa_atual === 'BUSINESS CASE' &&
         p.sub_status === 'APROVADO' &&
-        p.is_adhoc !== true
+        p.is_adhoc !== true &&
+        p.is_carryover !== true
     );
 
     const valorTotalAF = projsAprovados.reduce((acc, p) => acc + (Number(p.val_bc) || Number(p.previsto) || 0), 0);
@@ -81,6 +85,7 @@ async function executarAprovacaoGlobalOrcamentoAF() {
     const pendentes = projetosDoAno.filter(p =>
         (!p.etapa_atual || p.etapa_atual === 'BUSINESS CASE') &&
         p.is_adhoc !== true &&
+        p.is_carryover !== true &&
         ['A PLANEJAR', 'PLANEJADO', 'ORÇAMENTO REALIZADO'].includes(p.sub_status)
     );
 
@@ -89,11 +94,12 @@ async function executarAprovacaoGlobalOrcamentoAF() {
         return;
     }
 
-    // Mesma exclusão de Extraordinário do renderAprovOrcamentoAFView acima.
+    // Mesma exclusão de Extraordinário + Carryover do renderAprovOrcamentoAFView acima.
     const projsAprovados = projectsData.filter(p =>
         p.etapa_atual === 'BUSINESS CASE' &&
         p.sub_status === 'APROVADO' &&
-        p.is_adhoc !== true
+        p.is_adhoc !== true &&
+        p.is_carryover !== true
     );
 
     if (projsAprovados.length === 0) {
