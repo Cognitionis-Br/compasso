@@ -156,15 +156,16 @@ function switchTab(tabId) {
     if (tabId === 'portes') { mudarAbaPortes('criar'); loadPortes(); }
     if (tabId === 'responsaveis') { mudarAbaResponsaveis('criar'); loadResponsaveis(); }
     if (tabId === 'workflow_etapas') loadFasesEtapas();
-    // AJUSTADO (Controle de acesso por atividade, Fase 4): estas 3 telas
-    // deixam de ser hardcoded "só ADMINISTRADOR" e passam a seguir o
-    // catálogo — qualquer função pode ser configurada com acesso a elas
-    // (via Funções e Permissões), sem precisar de acesso_irrestrito.
-    // dev_tools continua a exceção (ver comentário abaixo).
+    // AJUSTADO (segurança Fase 3, 2026-09-01): estas 3 telas SAÍRAM do
+    // catálogo comum (não são mais concedíveis por função). Voltam a ser
+    // hardcoded por papel — visíveis/acessíveis só para Administrador OU
+    // Proprietário (Proprietário é superconjunto de Administrador).
+    // Licenciamento de Módulos segue exclusivo de Proprietário (mais abaixo).
+    const admOuProprietario = ehAdministrador || ehProprietario;
     if (tabId === 'funcoes_permissoes') {
         const restrito = document.getElementById('funcoesPermissoesRestrito');
         const conteudo = document.getElementById('funcoesPermissoesConteudo');
-        if (usuarioTemAlgumaAtividadeDoTab('funcoes_permissoes')) {
+        if (admOuProprietario) {
             if (restrito) restrito.classList.add('hidden');
             if (conteudo) conteudo.classList.remove('hidden');
             mudarAbaFuncoes('criar');
@@ -177,7 +178,7 @@ function switchTab(tabId) {
     if (tabId === 'atribuicao_funcoes') {
         const restrito = document.getElementById('atribuicaoFuncoesRestrito');
         const conteudo = document.getElementById('atribuicaoFuncoesConteudo');
-        if (usuarioTemAlgumaAtividadeDoTab('atribuicao_funcoes')) {
+        if (admOuProprietario) {
             if (restrito) restrito.classList.add('hidden');
             if (conteudo) conteudo.classList.remove('hidden');
             loadFuncoes();
@@ -189,7 +190,7 @@ function switchTab(tabId) {
     if (tabId === 'restricao_area_atividades') {
         const restrito = document.getElementById('restricaoAreaAtividadesRestrito');
         const conteudo = document.getElementById('restricaoAreaAtividadesConteudo');
-        if (usuarioTemAlgumaAtividadeDoTab('restricao_area_atividades')) {
+        if (admOuProprietario) {
             if (restrito) restrito.classList.add('hidden');
             if (conteudo) conteudo.classList.remove('hidden');
             renderRestricaoAreaAtividadesView();

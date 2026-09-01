@@ -628,6 +628,16 @@ function aplicarVisibilidadeMenu() {
     // fica sempre visível e só o link some.
     const grupoProprietario = document.getElementById('grupo-proprietario');
     if (grupoProprietario) grupoProprietario.classList.toggle('hidden', !ehProprietario);
+
+    // NOVO (segurança Fase 3, 2026-09-01): estas 3 telas saíram do catálogo
+    // comum — não passam mais por tabIdsDoCatalogo() acima. Visibilidade
+    // hardcoded por papel: Administrador OU Proprietário. (Licenciamento de
+    // Módulos fica dentro de #grupo-proprietario, já tratado acima.)
+    const admOuProprietario = ehAdministrador || ehProprietario;
+    ['funcoes_permissoes', 'atribuicao_funcoes', 'restricao_area_atividades'].forEach(tabId => {
+        const link = document.getElementById(`link-${tabId}`);
+        if (link) link.classList.toggle('hidden', !admOuProprietario);
+    });
 }
 
 // NOVO (Fase 4): esconde, dentro de uma tela de 2+ sub-abas já visível, os

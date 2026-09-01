@@ -53,7 +53,23 @@ Cada fase só começa depois da anterior aprovada.
     Plugar os botões Incluir/Editar/Excluir de cada lista é etapa seguinte (Fase 2b), fora deste passo.
 - **Pendente:** rodar o SQL no Supabase.
 
-## Fase 3 — Remover do catálogo comum os itens de administração — *não iniciada*
+## Fase 3 — Remover do catálogo comum os itens de administração (2026-09-01) — **CÓDIGO PRONTO, aguardando rodar o SQL**
+
+- Script: [`sql/2026-09-01_fase3_telas_admin_fora_do_catalogo.sql`](sql/2026-09-01_fase3_telas_admin_fora_do_catalogo.sql)
+  - `DELETE` das concessões (`funcao_atividades`) e das 5 linhas de `catalogo_atividades`:
+    `funcoes_permissoes:criar`, `funcoes_permissoes:cadastradas`, `atribuicao_funcoes`,
+    `restricao_area_atividades`, `licenciamento_modulos`.
+  - Único ponto da spec que autoriza `DELETE` nessas linhas. Idempotente.
+  - **Impacto:** a função GOVERNANÇA perde as 4 concessões que tinha — usuários
+    só com GOVERNANÇA deixam de ver Funções e Permissões / Atribuição / Restrição de Área.
+- Front:
+  - `js/ui/navigation.js` — `switchTab` das 3 primeiras telas: `usuarioTemAlgumaAtividadeDoTab(...)`
+    → `ehAdministrador || ehProprietario`. `licenciamento_modulos` inalterado (`ehProprietario`).
+  - `js/config/funcoes.js` — `aplicarVisibilidadeMenu`: como esses tabIds saem de
+    `tabIdsDoCatalogo()`, os `link-*` das 3 telas passam a ser escondidos/mostrados
+    explicitamente por `ehAdministrador || ehProprietario`. `link-licenciamento_modulos`
+    fica dentro de `#grupo-proprietario` (já togglado por `ehProprietario`).
+- **Pendente:** rodar o SQL no Supabase.
 
 Estas 4 telas saem de `catalogo_atividades` (deixam de ser concedíveis por
 função comum) e passam a ser checadas por *flag* de papel — nos **dois**
