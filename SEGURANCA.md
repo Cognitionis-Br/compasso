@@ -244,3 +244,26 @@ Extraordinária é promovida a Requerimentos pelo próprio fluxo em
 orçamento do AF seguinte pelo pool (`calcularPoolCarryover`), com o valor
 congelado na marcação — nenhum dos dois precisa passar pelo Comitê / pelo
 fechamento do AF corrente.
+
+## Menu por perfil + usuário Proprietário oculto abaixo dele (2026-09-01)
+
+1. **Cabeçalho de grupo do menu lateral some quando vazio.**
+   `aplicarVisibilidadeMenu` (js/config/funcoes.js) já escondia cada
+   `link-<tabId>` sem acesso, mas o título do grupo ("ANO FISCAL",
+   "BUSINESS CASE", "PERFIS DE ACESSO"...) continuava aparecendo com o
+   submenu vazio. Novo passo final: para cada `.submenu` dentro de
+   `#sidebarMenu`, se nenhum `.sidebar-link` filho está visível, esconde o
+   `<div>` do grupo inteiro. Baseado na classe `.hidden` real, então vale
+   também para links fora do catálogo. `#grupo-proprietario` é pulado (já
+   controlado por `ehProprietario`).
+
+2. **Usuário com função de Proprietário é invisível para quem está abaixo.**
+   - `js/users/usuarios.js` `renderUsuariosView`: quando `!ehProprietario`,
+     busca `usuario_funcoes + funcoes(eh_proprietario)`, monta
+     `usuariosIdsProprietario` e filtra esses ids de `usuariosData`.
+     `editarPerfilUsuario` já cai no `if (!u) return` (não está mais na
+     lista); `inativarUsuario` / `reativarUsuario` ganham
+     `usuarioAlvoEhProprietarioProtegido(id)`.
+   - `js/config/funcoes.js` `renderUsuariosFuncoesTable`: mesma lista de
+     ids (via `usuarioFuncoesData` + `funcoesData`), `usuariosVisiveis`
+     exclui os usuários-Proprietário para não-Proprietário.

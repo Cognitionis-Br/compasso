@@ -13,6 +13,19 @@
 // js/auth/auth.js).
 // =========================================================================
 
+// SEGURANÇA (2026-09-01): ids de usuários que têm função de Proprietário e
+// portanto ficam invisíveis/intocáveis para quem não é Proprietário.
+// Preenchido em renderUsuariosView.
+let usuariosIdsProprietario = new Set();
+function usuarioAlvoEhProprietarioProtegido(id) {
+    if (typeof ehProprietario !== 'undefined' && ehProprietario) return false;
+    if (usuariosIdsProprietario.has(id)) {
+        alert('Apenas o PROPRIETÁRIO pode gerenciar um usuário com função de Proprietário.');
+        return true;
+    }
+    return false;
+}
+
 // NOVO: alterna entre as 2 abas de Usuários & Perfis — mesmo padrão V2.
 function mudarAbaUsuarios(aba) {
     ['criar', 'cadastrados'].forEach(a => {
@@ -59,6 +72,27 @@ async function renderUsuariosView() {
     }
 
     usuariosData = data || [];
+
+    // SEGURANÇA (2026-09-01): quem não é Proprietário não enxerga na lista
+    // de Usuários quem tem uma função de Proprietário — mesma regra da tela
+    // de Funções e Permissões (a função PROPRIETÁRIO só existe para quem é
+    // Proprietário). O RLS de usuario_funcoes deixa Administrador ler todos
+    // os vínculos, então dá pra montar o conjunto aqui. Guardado em
+    // usuariosIdsProprietario para as ações (editar/inativar/reativar)
+    // recusarem esses ids se a linha for alcançada por DOM adulterado.
+    usuariosIdsProprietario = new Set();
+    if (typeof ehProprietario === 'undefined' || !ehProprietario) {
+        const { data: ufProp } = await _supabase
+            .from('usuario_funcoes')
+            .select('usuario_id, funcoes(eh_proprietario)');
+        usuariosIdsProprietario = new Set((ufProp || [])
+            .filter(uf => uf.funcoes && uf.funcoes.eh_proprietario === true)
+            .map(uf => uf.usuario_id));
+        if (usuariosIdsProprietario.size > 0) {
+            usuariosData = usuariosData.filter(u => !usuariosIdsProprietario.has(u.id));
+        }
+    }
+
     popularAreaSelectUsuario();
     await carregarCargosData(); // garante a lista mais atual, mesmo se Cargos nunca foi aberta nesta sessão
     popularCargoSelectUsuario();
@@ -264,6 +298,7 @@ async function saveNovoUsuario(e) {
 
 async function inativarUsuario(id) {
     if (!usuarioPodeDeletarTela('usuarios')) return alert('Você não tem permissão para inativar usuários.');
+    if (usuarioAlvoEhProprietarioProtegido(id)) return;
     if (!confirm('Deseja realmente inativar este usuário? Ele perderá acesso ao sistema no próximo login.')) return;
 
     const { error } = await _supabase.from('perfis_usuarios').update({
@@ -278,6 +313,7 @@ async function inativarUsuario(id) {
 
 async function reativarUsuario(id) {
     if (!usuarioPodeAlterarTela('usuarios')) return alert('Você não tem permissão para reativar usuários.');
+    if (usuarioAlvoEhProprietarioProtegido(id)) return;
     if (!confirm('Deseja reativar este usuário?')) return;
 
     const { error } = await _supabase.from('perfis_usuarios').update({

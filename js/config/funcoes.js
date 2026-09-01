@@ -400,7 +400,26 @@ function renderUsuariosFuncoesTable() {
     // cru de RLS.
     const funcoesAtribuiveis = funcoesAtivas().filter(f => podeGerenciarProprietario() || !ehFuncaoProprietario(f));
 
-    tbody.innerHTML = usuariosData.map(u => {
+    // SEGURANÇA: e o próprio USUÁRIO que tem função de Proprietário some da
+    // lista pra quem está abaixo dele (não-Proprietário).
+    const idsUsuarioProprietario = new Set(
+        usuarioFuncoesData
+            .filter(uf => {
+                const f = funcoesData.find(x => x.id === uf.funcao_id);
+                return f && f.eh_proprietario === true;
+            })
+            .map(uf => uf.usuario_id)
+    );
+    const usuariosVisiveis = podeGerenciarProprietario()
+        ? usuariosData
+        : usuariosData.filter(u => !idsUsuarioProprietario.has(u.id));
+
+    if (usuariosVisiveis.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="2" class="p-4 text-center text-gray-400 font-bold">Nenhum usuário disponível para atribuição.</td></tr>`;
+        return;
+    }
+
+    tbody.innerHTML = usuariosVisiveis.map(u => {
         const funcoesDoUsuario = new Set(
             usuarioFuncoesData.filter(uf => uf.usuario_id === u.id).map(uf => uf.funcao_id)
         );
@@ -741,6 +760,22 @@ function aplicarVisibilidadeMenu() {
     ['funcoes_permissoes', 'atribuicao_funcoes', 'restricao_area_atividades'].forEach(tabId => {
         const link = document.getElementById(`link-${tabId}`);
         if (link) link.classList.toggle('hidden', !admOuProprietario);
+    });
+
+    // NOVO (2026-09-01): esconde o CABEÇALHO do grupo lateral inteiro
+    // quando nenhum item dele ficou visível para o perfil logado — senão
+    // sobra o título do grupo ("ANO FISCAL", "BUSINESS CASE", "PERFIS DE
+    // ACESSO"...) com o submenu vazio. Baseado só na visibilidade real dos
+    // links (classe .hidden), então funciona mesmo para links que não
+    // vêm do catálogo. #grupo-proprietario é pulado (já controlado acima
+    // por ehProprietario).
+    document.querySelectorAll('#sidebarMenu .submenu').forEach(sub => {
+        if (sub.id === 'menu-proprietario') return;
+        const grupo = sub.parentElement;
+        if (!grupo) return;
+        const algumVisivel = Array.from(sub.querySelectorAll('.sidebar-link'))
+            .some(link => !link.classList.contains('hidden'));
+        grupo.classList.toggle('hidden', !algumVisivel);
     });
 }
 
