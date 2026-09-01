@@ -145,6 +145,40 @@ function recuperacaoSenhaFlagAtiva() {
     }
 }
 
+// NOVO (2026-09-01, bug reportado): quando o link de recuperação chega
+// inválido/expirado — inclusive quando um PRÉ-SCAN de segurança do
+// provedor de e-mail "abre" o link antes da pessoa clicar e consome o
+// token de uso único — o Supabase redireciona pra cá com
+// "#error=...&error_code=otp_expired&error_description=..." na hash.
+// Sem tratar, a pessoa só via a tela de login com um hash estranho e
+// nenhuma explicação. Retorna true se tratou um erro (pra pular o resto
+// do fluxo de recuperação no boot).
+function tratarErroLinkRecuperacaoSenha() {
+    const hash = window.location.hash || '';
+    if (hash.indexOf('error') === -1) return false;
+    const params = new URLSearchParams(hash.replace(/^#/, ''));
+    const code = params.get('error_code');
+    const desc = params.get('error_description');
+    if (!code && !desc && !params.get('error')) return false;
+
+    // limpa a hash pra não reprocessar no F5
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+    try { localStorage.removeItem(CHAVE_RECUPERACAO_SENHA_ATIVA); } catch (e) { /* ignorado */ }
+
+    const descLegivel = desc ? decodeURIComponent(desc.replace(/\+/g, ' ')) : '';
+    const expirado = code === 'otp_expired' || /expired|invalid/i.test(descLegivel);
+    const msg = expirado
+        ? 'O link de recuperação de senha expirou ou já foi usado.\n\n'
+          + 'Isso também acontece quando o provedor de e-mail abre o link automaticamente '
+          + '(verificação de segurança/antispam) antes de você clicar.\n\n'
+          + 'Peça um novo link em "Esqueci minha senha" e abra assim que receber.'
+        : 'Não foi possível validar o link de recuperação de senha'
+          + (descLegivel ? ':\n\n' + descLegivel : '.')
+          + '\n\nPeça um novo link em "Esqueci minha senha".';
+    alert('⚠️ ' + msg);
+    return true;
+}
+
 // Chamada uma vez no carregamento da página (js/main.js) — reconhece o
 // retorno pelo link de recuperação de senha e mostra o modal de definir
 // nova senha, mesmo com o app ainda não "logado" no sentido normal

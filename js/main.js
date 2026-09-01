@@ -48,8 +48,13 @@
 // só envia e-mail com link de auth pra recuperação de senha (nenhum outro
 // fluxo usa isso), então qualquer "?code=" na URL já é seguro tratar como
 // vindo desse link.
-const vindoDeLinkRecuperacaoSenha = window.location.hash.includes('type=recovery')
-    || new URLSearchParams(window.location.search).has('code');
+// NOVO (2026-09-01): link de recuperação inválido/expirado volta com
+// "#error=...&error_code=..." — mostra mensagem clara e segue pro login.
+const erroLinkRecuperacao = tratarErroLinkRecuperacaoSenha();
+
+const vindoDeLinkRecuperacaoSenha = !erroLinkRecuperacao && (
+    window.location.hash.includes('type=recovery')
+    || new URLSearchParams(window.location.search).has('code'));
 
 monitorarRecuperacaoSenha();
 

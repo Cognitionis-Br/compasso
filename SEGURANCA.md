@@ -90,7 +90,30 @@ sozinho. (Hoje todo PROPRIETARIO também tem `acesso_irrestrito = true`, mas
 o `OU` explícito garante o acesso mesmo que uma função PROPRIETARIO futura
 seja criada sem essa flag.)
 
-## Fase 4 — Habilitar RLS — *não iniciada*
+## Fase 4 — Habilitar RLS (2026-09-01) — **CONCLUÍDA**
+
+SQL rodado e verificado: as 5 tabelas retornam vazio para requisição anônima
+(`sb_publishable`), `usuario_atual_irrestrito()` responde `false` sem sessão.
+Usuário autenticado com função `acesso_irrestrito`/`eh_proprietario` passa nas
+escritas; `usuario_funcoes` restrito a linhas próprias fora disso.
+
+
+- Script: [`sql/2026-09-01_fase4_rls.sql`](sql/2026-09-01_fase4_rls.sql) — transação única.
+  - 2 funções `SECURITY DEFINER`: `usuario_atual_irrestrito()` (`acesso_irrestrito OR eh_proprietario`)
+    e `usuario_atual_proprietario()` (`eh_proprietario`), resolvendo `auth.uid()` contra
+    `usuario_funcoes` + `funcoes`. `SECURITY DEFINER` evita recursão de RLS.
+  - Por tabela: `INSERT/UPDATE/DELETE` guardados. `SELECT` livre p/ `authenticated`
+    em `funcoes` / `funcao_atividades` / `catalogo_atividades` / `licenca_modulos`;
+    em `usuario_funcoes` cada um só vê as próprias (`usuario_id = auth.uid()`)
+    e irrestrito/proprietário vê todas. Policies criadas ANTES do `ENABLE RLS`.
+  - Confirmado com o usuário: não há fluxo pré-login que toque nessas tabelas.
+  - `service_role` (SQL Editor, edge functions) ignora RLS — migrações e
+    `admin-create-user` seguem funcionando.
+  - Verificado: `usuario_funcoes.usuario_id` é uuid (= `auth.uid()`);
+    ADMINISTRADOR tem `acesso_irrestrito=true`, PROPRIETARIO tem os dois.
+- Sem mudança de front nesta fase (o app já só escreve nessas tabelas a
+  partir de telas de admin/proprietário logados).
+- **Pendente:** revisão do SQL de policy e execução.
 
 Leitura livre para qualquer usuário autenticado nas 5 tabelas.
 
