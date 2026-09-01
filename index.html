@@ -969,45 +969,53 @@
                                 </div>
                             </div>
 
-                            <!-- Área Solicitante e Pessoa Solicitante -->
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Área Solicitante *</label>
-                                    <select id="bcArea" onchange="onAreaChange(); popularPessoaSolicitantePorArea();" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
-                                        <option value="" selected disabled>-- SELECIONE --</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Pessoa Solicitante / Responsável *</label>
-                                    <select id="bcPessoaResp" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
-                                        <option value="" selected disabled>-- SELECIONE A ÁREA PRIMEIRO --</option>
-                                    </select>
-                                </div>
+                            <!-- Objetivo -->
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Objetivo *</label>
+                                <input type="text" id="bcObjetivo" required maxlength="200" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
                             </div>
 
-                            <!-- Tipo de Projeto, Produto e Qualificação da Demanda -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tipo de Projeto *</label>
-                                    <select id="bcTipoProjeto" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
-                                        <option value="" selected disabled>-- SELECIONE --</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Produto *</label>
-                                    <select id="bcProduto" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
-                                        <option value="" selected disabled>-- SELECIONE --</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Qualificação da Demanda *</label>
-                                    <select id="bcTipoQualificacao" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
-                                        <option value="" selected disabled>-- SELECIONE --</option>
-                                        <option value="GROW">GROW</option>
-                                        <option value="REG">REG</option>
-                                        <option value="RUN">RUN</option>
-                                    </select>
-                                </div>
+                            <!-- Produto -->
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Produto *</label>
+                                <select id="bcProduto" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
+                                    <option value="" selected disabled>-- SELECIONE --</option>
+                                </select>
+                            </div>
+
+                            <!-- Área Solicitante -->
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Área Solicitante *</label>
+                                <select id="bcArea" onchange="onAreaChange(); popularPessoaSolicitantePorArea();" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
+                                    <option value="" selected disabled>-- SELECIONE --</option>
+                                </select>
+                            </div>
+
+                            <!-- Pessoa Solicitante / Responsável -->
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Pessoa Solicitante / Responsável *</label>
+                                <select id="bcPessoaResp" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
+                                    <option value="" selected disabled>-- SELECIONE A ÁREA PRIMEIRO --</option>
+                                </select>
+                            </div>
+
+                            <!-- Tipo de Projeto -->
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tipo de Projeto *</label>
+                                <select id="bcTipoProjeto" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
+                                    <option value="" selected disabled>-- SELECIONE --</option>
+                                </select>
+                            </div>
+
+                            <!-- Qualificação da Demanda -->
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Qualificação da Demanda *</label>
+                                <select id="bcTipoQualificacao" required class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
+                                    <option value="" selected disabled>-- SELECIONE --</option>
+                                    <option value="GROW">GROW</option>
+                                    <option value="REG">REG</option>
+                                    <option value="RUN">RUN</option>
+                                </select>
                             </div>
 
                             <!-- Associação a Pilar/Iniciativa Estratégica -->
@@ -1031,18 +1039,6 @@
                                         </select>
                                     </div>
                                 </div>
-                            </div>
-
-                            <!-- Descrição sucinta do projeto -->
-                            <div class="mb-4">
-                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição Sucinta do Projeto *</label>
-                                <textarea id="bcDescricao" required rows="3" maxlength="1000" class="w-full p-2 border border-gray-300 rounded text-sm bg-white"></textarea>
-                            </div>
-
-                            <!-- Objetivo -->
-                            <div class="mb-4">
-                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Objetivo *</label>
-                                <input type="text" id="bcObjetivo" required maxlength="200" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
                             </div>
 
                             <!-- Key Results -->
@@ -1081,6 +1077,12 @@
                                     </tr></thead>
                                     <tbody id="bcBenefitTableBody"><tr><td colspan="4" class="p-2 text-center text-gray-400 italic">Nenhum Benefit Result adicionado</td></tr></tbody>
                                 </table>
+                            </div>
+
+                            <!-- Descrição sucinta do projeto -->
+                            <div class="mb-4">
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição Sucinta do Projeto *</label>
+                                <textarea id="bcDescricao" required rows="3" maxlength="1000" class="w-full p-2 border border-gray-300 rounded text-sm bg-white"></textarea>
                             </div>
 
                             <div class="flex items-center justify-end pt-2 border-t">
