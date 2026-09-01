@@ -26,20 +26,32 @@ Cada fase só começa depois da anterior aprovada.
 
 ---
 
-## Fase 1 — Reconciliação + colunas grupo/subgrupo (2026-09-01) — **CÓDIGO PRONTO, aguardando rodar o SQL**
+## Fase 1 — Reconciliação + colunas grupo/subgrupo (2026-09-01) — **CONCLUÍDA**
 
-- Script: [`sql/2026-09-01_reconciliacao_catalogo_fase1.sql`](sql/2026-09-01_reconciliacao_catalogo_fase1.sql)
-  - `ALTER TABLE catalogo_atividades RENAME COLUMN grupo_funcao → grupo`, `funcao → subgrupo` (idempotente).
-  - `UPDATE`s: R1, R2, R3, R4, R7, R8, M1, M2, M4 (atividade/subgrupo); G1, G2, G3 (grupo/subgrupo).
-  - **Zero `DELETE`, zero `INSERT`.** C1–C8 mantidos como estão.
-- Front: `js/config/funcoes.js` passa a ler `a.grupo ?? a.grupo_funcao` e
-  `a.subgrupo ?? a.funcao` (3 pontos) — sobrevive ao intervalo entre deploy e SQL,
-  em qualquer ordem. `index.html`: menu/`<h2>`/aviso "Usuários & Perfis" → "Usuários" (R3/R4).
+- Script [`sql/2026-09-01_reconciliacao_catalogo_fase1.sql`](sql/2026-09-01_reconciliacao_catalogo_fase1.sql) **rodado** — confirmado no banco:
+  colunas `grupo` / `subgrupo` no lugar de `grupo_funcao` / `funcao`; R1–R4, R7, R8, M1, M2, M4, G1–G3 aplicados.
+  Zero `DELETE`, zero `INSERT`.
+- Front: `js/config/funcoes.js` lê `a.grupo ?? a.grupo_funcao` / `a.subgrupo ?? a.funcao`.
+  `index.html`: "Usuários & Perfis" → "Usuários".
+
+## Fase 2 — Colunas CRUD em `funcao_atividades` (2026-09-01) — **CÓDIGO PRONTO, aguardando rodar o SQL**
+
+- Script: [`sql/2026-09-01_fase2_crud_funcao_atividades.sql`](sql/2026-09-01_fase2_crud_funcao_atividades.sql)
+  - `ADD COLUMN IF NOT EXISTS`: `pode_consultar BOOL NOT NULL DEFAULT true`,
+    `pode_incluir` / `pode_alterar` / `pode_deletar BOOL NOT NULL DEFAULT false`.
+  - O `DEFAULT true` já migra as 131 concessões atuais com `pode_consultar = true`,
+    demais `false`. Idempotente.
+- Front (`js/config/funcoes.js`):
+  - `renderMatrizPermissoesFormulario` — cada atividade vira uma linha com 4 checkboxes
+    (Consultar / Incluir / Alterar / Deletar). Aceita `Map<id,{c,i,a,d}>` (editar) ou `Set` (compat).
+  - `editFuncao` monta o `Map` a partir de `funcao_atividades.pode_*`.
+  - `saveFuncao` grava `{funcao_id, atividade_id, pode_consultar, pode_incluir, pode_alterar, pode_deletar}`;
+    Incluir/Alterar/Deletar forçam `pode_consultar = true`; "pelo menos uma atividade" = pelo menos um Consultar.
+  - `carregarPermissoesUsuarioAtual` carrega as flags → `crudUsuarioAtual` (Map, OR entre funções).
+  - Novos helpers `usuarioPodeIncluir/Alterar/Deletar(activityKey)` (admin/irrestrito = true).
+    **Ainda não plugados nos botões das telas** — `usuarioTemAtividade` (≥ Consultar) segue governando tudo.
+    Plugar os botões Incluir/Editar/Excluir de cada lista é etapa seguinte (Fase 2b), fora deste passo.
 - **Pendente:** rodar o SQL no Supabase.
-
-## Fase 2 — Colunas CRUD em `funcao_atividades` — *não iniciada*
-`pode_consultar`, `pode_incluir`, `pode_alterar`, `pode_deletar`.
-Migração das concessões existentes: `pode_consultar = true`, demais `false`.
 
 ## Fase 3 — Remover do catálogo comum os itens de administração — *não iniciada*
 

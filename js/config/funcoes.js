@@ -19,7 +19,10 @@
 // contorna isso — RLS de verdade é o próximo passo.
 // =========================================================================
 
-let atividadesUsuarioAtual = new Set(); // activity_key do catálogo -> usuário tem acesso
+let atividadesUsuarioAtual = new Set(); // activity_key do catálogo -> usuário tem acesso (>= Consultar)
+// NOVO (segurança Fase 2, 2026-09-01): CRUD por activity_key, OR entre todas
+// as funções do usuário. Usado por usuarioPodeIncluir/Alterar/Deletar.
+let crudUsuarioAtual = new Map(); // activity_key -> { c, i, a, d }
 let funcoesUsuarioAtual = []; // nomes das funções do usuário logado
 let ehAdministrador = false;
 // NOVO (papel Proprietário, 28/08/2026): mais privilegiado que
@@ -108,20 +111,27 @@ function renderFuncoesTable() {
 
 // AJUSTADO (Controle de acesso por atividade, Fase 2): a matriz
 // etapa×ação virou um checklist de atividades do catálogo
-// (catalogo_atividades), agrupado por Grupo de Funções → Função — mesmo
-// espírito (embutida no próprio formulário de criar/editar, valida "pelo
-// menos uma" no cadastro).
-function renderMatrizPermissoesFormulario(jaMarcadasIds) {
+// (catalogo_atividades), agrupado por Grupo de Funções → Função.
+// AJUSTADO (segurança Fase 2, 2026-09-01): cada atividade passa a ter 4
+// checkboxes — Consultar / Incluir / Alterar / Deletar — persistidos em
+// funcao_atividades.pode_*.
+// `jaMarcadas` aceita:
+//   Map<atividade_id, {c,i,a,d}>  (fluxo de editar função)
+//   Set<atividade_id>             (compat — presença = só Consultar)
+function renderMatrizPermissoesFormulario(jaMarcadas) {
     const container = document.getElementById('funcaoMatrizPermissoesContainer');
     if (!container) return;
 
-    const marcadasSet = jaMarcadasIds || new Set();
+    const permsDe = (id) => {
+        if (jaMarcadas instanceof Map) return jaMarcadas.get(id) || null;
+        if (jaMarcadas instanceof Set) return jaMarcadas.has(id) ? { c: true } : null;
+        return null;
+    };
 
     // Agrupa mantendo a ordem de chegada (já vem ordenado por `ordem` do
     // catálogo) — Map preserva ordem de inserção das chaves em JS.
-    // AJUSTADO (Fase 1 de segurança, 2026-09-01): colunas grupo_funcao/funcao
-    // renomeadas para grupo/subgrupo; lê as duas formas pra sobreviver ao
-    // intervalo entre o deploy do front e a migração SQL.
+    // (Fase 1 de segurança: colunas grupo_funcao/funcao renomeadas para
+    // grupo/subgrupo; lê as duas formas por segurança.)
     const porGrupo = new Map();
     atividadesData.forEach(a => {
         const g = a.grupo ?? a.grupo_funcao;
@@ -132,18 +142,31 @@ function renderMatrizPermissoesFormulario(jaMarcadasIds) {
         porFuncao.get(s).push(a);
     });
 
+    const cb = (aid, campo, on) =>
+        `<td class="text-center px-1"><input type="checkbox" class="funcao-form-ativ-checkbox" data-atividade-id="${aid}" data-campo="${campo}" ${on ? 'checked' : ''}></td>`;
+
     const blocosGrupo = Array.from(porGrupo.entries()).map(([grupo, porFuncao]) => {
         const blocosFuncao = Array.from(porFuncao.entries()).map(([funcaoNome, atividades]) => {
-            const checkboxes = atividades.map(a => `
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" class="funcao-form-ativ-checkbox" data-atividade-id="${a.id}" ${marcadasSet.has(a.id) ? 'checked' : ''}>
-                    <span>${a.atividade}</span>
-                </label>
-            `).join('');
+            const linhas = atividades.map(a => {
+                const p = permsDe(a.id) || {};
+                return `<tr class="border-t border-gray-100">
+                    <td class="py-1 pr-2">${a.atividade}</td>
+                    ${cb(a.id, 'pode_consultar', !!p.c)}
+                    ${cb(a.id, 'pode_incluir', !!p.i)}
+                    ${cb(a.id, 'pode_alterar', !!p.a)}
+                    ${cb(a.id, 'pode_deletar', !!p.d)}
+                </tr>`;
+            }).join('');
             return `
                 <div class="mb-2">
                     <div class="text-[11px] font-bold text-gray-600 uppercase mb-1">${funcaoNome}</div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-1 pl-2 text-xs">${checkboxes}</div>
+                    <table class="w-full text-xs">
+                        <thead><tr class="text-[9px] uppercase text-gray-400">
+                            <th class="text-left font-semibold pb-1">Atividade</th>
+                            <th class="px-1 pb-1">Consultar</th><th class="px-1 pb-1">Incluir</th><th class="px-1 pb-1">Alterar</th><th class="px-1 pb-1">Deletar</th>
+                        </tr></thead>
+                        <tbody>${linhas}</tbody>
+                    </table>
                 </div>
             `;
         }).join('');
@@ -170,9 +193,15 @@ function editFuncao(id) {
     const inputProprietario = document.getElementById('funcaoEhProprietarioInput');
     if (inputProprietario) inputProprietario.checked = funcao.eh_proprietario === true;
 
-    const marcadas = new Set(
-        funcaoAtividadesData.filter(fa => fa.funcao_id === id).map(fa => fa.atividade_id)
-    );
+    const marcadas = new Map();
+    funcaoAtividadesData.filter(fa => fa.funcao_id === id).forEach(fa => {
+        marcadas.set(fa.atividade_id, {
+            c: fa.pode_consultar !== false,
+            i: fa.pode_incluir === true,
+            a: fa.pode_alterar === true,
+            d: fa.pode_deletar === true
+        });
+    });
     renderMatrizPermissoesFormulario(marcadas);
 
     document.getElementById('btnSalvarFuncao').innerText = 'Atualizar Função';
@@ -210,15 +239,26 @@ async function saveFuncao(e) {
 
     if (!nome) return alert('Informe o nome da função!');
 
-    const checkboxes = document.querySelectorAll('.funcao-form-ativ-checkbox');
-    const atividadeIdsMarcadas = Array.from(checkboxes).filter(c => c.checked).map(c => Number(c.getAttribute('data-atividade-id')));
+    // AJUSTADO (segurança Fase 2): junta os 4 checkboxes por atividade.
+    const porAtiv = new Map(); // atividade_id -> {pode_consultar, pode_incluir, pode_alterar, pode_deletar}
+    document.querySelectorAll('.funcao-form-ativ-checkbox').forEach(c => {
+        if (!c.checked) return;
+        const aid = Number(c.getAttribute('data-atividade-id'));
+        if (!porAtiv.has(aid)) porAtiv.set(aid, { pode_consultar: false, pode_incluir: false, pode_alterar: false, pode_deletar: false });
+        porAtiv.get(aid)[c.getAttribute('data-campo')] = true;
+    });
+    // Incluir / Alterar / Deletar implicam Consultar.
+    for (const p of porAtiv.values()) {
+        if (p.pode_incluir || p.pode_alterar || p.pode_deletar) p.pode_consultar = true;
+    }
+    const atividadeIdsMarcadas = [...porAtiv.keys()];
 
     // Regra da especificação (seção 4.3): toda função precisa de pelo
     // menos uma permissão — bloqueia o cadastro/atualização até isso,
     // A NÃO SER que seja acesso irrestrito (ignora o catálogo por
     // definição, não faz sentido exigir atividades marcadas também).
     if (atividadeIdsMarcadas.length === 0 && !acessoIrrestrito) {
-        return alert('⚠️ Selecione pelo menos uma atividade para esta função antes de salvar (ou marque Acesso Irrestrito)!');
+        return alert('⚠️ Selecione pelo menos uma atividade (ao menos "Consultar") para esta função antes de salvar (ou marque Acesso Irrestrito)!');
     }
 
     let funcaoId = id ? Number(id) : null;
@@ -240,7 +280,7 @@ async function saveFuncao(e) {
     if (delError) return alert('Função salva, mas houve erro ao atualizar atividades: ' + delError.message);
 
     if (atividadeIdsMarcadas.length > 0) {
-        const paraInserir = atividadeIdsMarcadas.map(atividadeId => ({ funcao_id: funcaoId, atividade_id: atividadeId }));
+        const paraInserir = [...porAtiv.entries()].map(([atividade_id, p]) => ({ funcao_id: funcaoId, atividade_id, ...p }));
         const { error: insError } = await _supabase.from('funcao_atividades').insert(paraInserir);
         if (insError) return alert('Função salva, mas houve erro ao salvar atividades: ' + insError.message);
     }
@@ -371,6 +411,7 @@ async function salvarFuncoesUsuario(usuarioId) {
 // -------------------------------------------------------------------------
 async function carregarPermissoesUsuarioAtual() {
     atividadesUsuarioAtual = new Set();
+    crudUsuarioAtual = new Map();
     funcoesUsuarioAtual = [];
     ehAdministrador = false;
     ehProprietario = false;
@@ -409,16 +450,24 @@ async function carregarPermissoesUsuarioAtual() {
 
     // Catálogo de atividades da(s) função(ões) do usuário — usado por
     // usuarioTemAtividade e pela visibilidade de menu/sub-abas.
+    // AJUSTADO (segurança Fase 2): também traz as 4 flags CRUD e faz OR
+    // entre as funções do usuário em crudUsuarioAtual.
     const { data: minhasAtividades, error: errAtiv } = await _supabase
         .from('funcao_atividades')
-        .select('catalogo_atividades(activity_key)')
+        .select('pode_consultar, pode_incluir, pode_alterar, pode_deletar, catalogo_atividades(activity_key)')
         .in('funcao_id', funcaoIds);
 
     if (!errAtiv && minhasAtividades) {
         minhasAtividades.forEach(fa => {
-            if (fa.catalogo_atividades && fa.catalogo_atividades.activity_key) {
-                atividadesUsuarioAtual.add(fa.catalogo_atividades.activity_key);
-            }
+            const key = fa.catalogo_atividades && fa.catalogo_atividades.activity_key;
+            if (!key) return;
+            if (fa.pode_consultar !== false) atividadesUsuarioAtual.add(key);
+            const cur = crudUsuarioAtual.get(key) || { c: false, i: false, a: false, d: false };
+            cur.c = cur.c || fa.pode_consultar !== false;
+            cur.i = cur.i || fa.pode_incluir === true;
+            cur.a = cur.a || fa.pode_alterar === true;
+            cur.d = cur.d || fa.pode_deletar === true;
+            crudUsuarioAtual.set(key, cur);
         });
     }
 }
@@ -436,6 +485,26 @@ function usuarioTemAtividade(activityKey) {
 // usuário logado tiver a atividade pedida, senão retorna vazio.
 function botaoSeTemAtividade(activityKey, htmlBotao) {
     return usuarioTemAtividade(activityKey) ? htmlBotao : '';
+}
+
+// NOVO (segurança Fase 2): checagens CRUD por atividade. Admin/irrestrito
+// sempre true. Ainda NÃO plugadas nos botões das telas — os consumidores
+// (Incluir/Editar/Excluir de cada lista) migram numa etapa seguinte;
+// por ora `usuarioTemAtividade` (>= Consultar) continua governando tudo.
+function usuarioPodeIncluir(activityKey) {
+    if (ehAdministrador) return true;
+    const p = crudUsuarioAtual.get(activityKey);
+    return !!(p && p.i);
+}
+function usuarioPodeAlterar(activityKey) {
+    if (ehAdministrador) return true;
+    const p = crudUsuarioAtual.get(activityKey);
+    return !!(p && p.a);
+}
+function usuarioPodeDeletar(activityKey) {
+    if (ehAdministrador) return true;
+    const p = crudUsuarioAtual.get(activityKey);
+    return !!(p && p.d);
 }
 
 // -------------------------------------------------------------------------
