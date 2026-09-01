@@ -304,6 +304,7 @@ async function saveFuncao(e) {
 // Exclusão lógica (soft-delete): bloqueia se algum usuário ainda tiver a
 // função atribuída, senão inativa e loga quem/quando.
 async function deleteFuncao(id) {
+    if (!ehAdministrador && !ehProprietario) return alert('Apenas ADMINISTRADOR ou PROPRIETÁRIO podem inativar funções.');
     const emUsoPor = usuarioFuncoesData.filter(uf => uf.funcao_id === id);
     if (emUsoPor.length > 0) {
         return alert(
@@ -326,6 +327,7 @@ async function deleteFuncao(id) {
 }
 
 async function reativarFuncao(id) {
+    if (!ehAdministrador && !ehProprietario) return alert('Apenas ADMINISTRADOR ou PROPRIETÁRIO podem reativar funções.');
     if (!confirm('Deseja reativar esta função?')) return;
     const { error } = await _supabase.from('funcoes').update({
         ativo: true,
@@ -589,6 +591,7 @@ async function renderRestricaoAreaAtividadesView() {
 }
 
 async function alternarRestricaoAreaAtividade(atividadeId, valor) {
+    if (!ehAdministrador && !ehProprietario) { alert('Apenas ADMINISTRADOR ou PROPRIETÁRIO podem alterar a restrição de área.'); return renderRestricaoAreaAtividadesView(); }
     const { error } = await _supabase.from('catalogo_atividades').update({ restricao_area: valor }).eq('id', atividadeId);
     if (error) {
         alert('Erro ao atualizar a restrição de área: ' + error.message);

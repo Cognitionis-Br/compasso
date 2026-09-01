@@ -46,6 +46,7 @@ async function enviarEmailIndividual(emailPendente) {
 // erro de cada envio. Não interrompe no primeiro erro, pra não travar
 // os demais e-mails da fila por causa de um só com problema.
 async function processarFilaEmailPendente() {
+    if (!usuarioPodeAlterarTela('fila_email')) return alert('Você não tem permissão para processar a fila de e-mail.');
     // NOVO (chave geral de envio de e-mail): recusa processar a fila
     // enquanto a chave geral estiver desligada, mesmo que já existam
     // e-mails enfileirados de antes de ela ser desligada.

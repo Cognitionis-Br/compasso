@@ -70,10 +70,15 @@ o verbo vale se QUALQUER atividade da tela (`tabId`, `tabId:*`) tiver a flag.
   gestao_fluxo_email (+ chave geral de e-mail), workflow_etapas (Fases/Etapas + SLA),
   percentual_bloqueio_orcamento, ano_fiscal (abertura), carry_over, retomar_hold,
   mudanca_orcamento, governanca (cobrança), projetos_adhoc, aprov_comite, aprov_orcamento_af.
-- **Fora do gate de propósito:** `processarFilaEmailPendente` (compartilhada com o
-  disparo automático de e-mail — gatear travaria o fluxo). Telas operacionais de fase
-  (req_*/tech_*/fase_*) não entram nesta passada — são trabalho de workflow, não
-  configuração de base.
+- **Também gateados (revisão 2026-09-01):** `deleteFuncao` / `reativarFuncao` /
+  `alternarRestricaoAreaAtividade` (guarda `ehAdministrador || ehProprietario` — troca o
+  erro cru de RLS por mensagem clara); `processarFilaEmailPendente` (`fila_email` —
+  confirmado que só é chamada pelo botão manual "Enviar Fila", nunca pelo auto-envio).
+- **Fora do gate de propósito:** telas operacionais de fase (req_*/tech_*/fase_*) — são
+  trabalho de workflow, não configuração de base.
+- **Nota:** "aprovar" em `aprov_comite` / `aprov_orcamento_af` mapeia para o verbo
+  `alterar` (não existe verbo "aprovar") — funções aprovadoras precisam de `alterar`
+  marcado nessas atividades.
 - Admin / `acesso_irrestrito` / `eh_proprietario`: tudo liberado, sem mudança.
 
 **⚠️ Impacto:** como a Fase 2 migrou todas as concessões com só `consultar`, funções
