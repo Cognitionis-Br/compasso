@@ -227,6 +227,9 @@ function limparFormularioFuncao() {
 
 async function saveFuncao(e) {
     e.preventDefault();
+    if (!ehAdministrador && !ehProprietario) {
+        return alert('Apenas ADMINISTRADOR ou PROPRIETÁRIO podem criar ou alterar funções.');
+    }
     const id = document.getElementById('funcaoIdInput').value;
     const nome = document.getElementById('funcaoNomeInput').value.trim().toUpperCase();
     const descricao = document.getElementById('funcaoDescricaoInput').value.trim();
@@ -377,6 +380,12 @@ function renderUsuariosFuncoesTable() {
 }
 
 async function salvarFuncoesUsuario(usuarioId) {
+    // Só ADMINISTRADOR / PROPRIETÁRIO atribuem funções (RLS de usuario_funcoes
+    // também bloqueia no banco — isto aqui só troca o erro cru por uma
+    // mensagem clara, caso a tela seja alcançada por uma aba antiga).
+    if (!ehAdministrador && !ehProprietario) {
+        return alert('Apenas ADMINISTRADOR ou PROPRIETÁRIO podem atribuir funções aos usuários.');
+    }
     const checkboxes = document.querySelectorAll(`.usuario-funcao-checkbox[data-usuario="${usuarioId}"]`);
     const marcadas = Array.from(checkboxes).filter(c => c.checked).map(c => ({
         usuario_id: usuarioId,
