@@ -76,16 +76,41 @@ function funcoesAtivas() {
     return funcoesData.filter(f => f.ativo !== false);
 }
 
+// SEGURANÇA (2026-09-01, falha reportada): tudo que diz respeito à função
+// PROPRIETÁRIO — listá-la, editá-la, atribuí-la a um usuário, ou marcar
+// uma função como Proprietário — só aparece/funciona para quem já está
+// logado COMO Proprietário. Administrador (acesso irrestrito) não é
+// Proprietário e não pode ver nem mexer nisso (o RLS de usuario_funcoes /
+// funcoes já bloqueava no banco; isto tira a opção da tela e troca o erro
+// cru por bloqueio claro).
+function podeGerenciarProprietario() {
+    return ehProprietario === true;
+}
+function ehFuncaoProprietario(f) {
+    return !!(f && f.eh_proprietario === true);
+}
+
 function renderFuncoesTable() {
     const tbody = document.getElementById('tableFuncoesBody');
     if (!tbody) return;
 
-    if (funcoesData.length === 0) {
+    // SEGURANÇA: o box "É Proprietário" do formulário só existe pra quem é
+    // Proprietário.
+    const boxProp = document.getElementById('funcaoEhProprietarioBox');
+    if (boxProp) boxProp.classList.toggle('hidden', !podeGerenciarProprietario());
+
+    // SEGURANÇA: a própria função PROPRIETÁRIO some da lista pra quem não é
+    // Proprietário — não dá pra editar/excluir o que não se vê.
+    const listaFuncoes = podeGerenciarProprietario()
+        ? funcoesData
+        : funcoesData.filter(f => !ehFuncaoProprietario(f));
+
+    if (listaFuncoes.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-gray-400 font-bold">Nenhuma função cadastrada</td></tr>`;
         return;
     }
 
-    tbody.innerHTML = funcoesData.map(f => {
+    tbody.innerHTML = listaFuncoes.map(f => {
         const inativa = f.ativo === false;
         return `
             <tr class="${inativa ? 'bg-gray-50 text-gray-400' : ''}">
@@ -242,6 +267,14 @@ async function saveFuncao(e) {
 
     if (!nome) return alert('Informe o nome da função!');
 
+    // SEGURANÇA: só o Proprietário cria/edita a função PROPRIETÁRIO ou marca
+    // qualquer função com essa flag. Vale tanto pra marcar agora quanto pra
+    // editar uma função que já é Proprietário.
+    const funcaoOriginal = id ? funcoesData.find(f => f.id === Number(id)) : null;
+    if (!podeGerenciarProprietario() && (ehProprietarioForm || ehFuncaoProprietario(funcaoOriginal))) {
+        return alert('Apenas o PROPRIETÁRIO pode criar, alterar ou marcar uma função como Proprietário.');
+    }
+
     // AJUSTADO (segurança Fase 2): junta os 4 checkboxes por atividade.
     const porAtiv = new Map(); // atividade_id -> {pode_consultar, pode_incluir, pode_alterar, pode_deletar}
     document.querySelectorAll('.funcao-form-ativ-checkbox').forEach(c => {
@@ -305,6 +338,9 @@ async function saveFuncao(e) {
 // função atribuída, senão inativa e loga quem/quando.
 async function deleteFuncao(id) {
     if (!ehAdministrador && !ehProprietario) return alert('Apenas ADMINISTRADOR ou PROPRIETÁRIO podem inativar funções.');
+    if (!podeGerenciarProprietario() && ehFuncaoProprietario(funcoesData.find(f => f.id === id))) {
+        return alert('Apenas o PROPRIETÁRIO pode inativar a função de Proprietário.');
+    }
     const emUsoPor = usuarioFuncoesData.filter(uf => uf.funcao_id === id);
     if (emUsoPor.length > 0) {
         return alert(
@@ -328,6 +364,9 @@ async function deleteFuncao(id) {
 
 async function reativarFuncao(id) {
     if (!ehAdministrador && !ehProprietario) return alert('Apenas ADMINISTRADOR ou PROPRIETÁRIO podem reativar funções.');
+    if (!podeGerenciarProprietario() && ehFuncaoProprietario(funcoesData.find(f => f.id === id))) {
+        return alert('Apenas o PROPRIETÁRIO pode reativar a função de Proprietário.');
+    }
     if (!confirm('Deseja reativar esta função?')) return;
     const { error } = await _supabase.from('funcoes').update({
         ativo: true,
@@ -355,11 +394,17 @@ function renderUsuariosFuncoesTable() {
         return;
     }
 
+    // SEGURANÇA: a função PROPRIETÁRIO só é oferecida na atribuição pra
+    // quem já é Proprietário. Pra Administrador ela nem aparece como
+    // checkbox — evita a tentativa de atribuição que só resultava em erro
+    // cru de RLS.
+    const funcoesAtribuiveis = funcoesAtivas().filter(f => podeGerenciarProprietario() || !ehFuncaoProprietario(f));
+
     tbody.innerHTML = usuariosData.map(u => {
         const funcoesDoUsuario = new Set(
             usuarioFuncoesData.filter(uf => uf.usuario_id === u.id).map(uf => uf.funcao_id)
         );
-        const checkboxes = funcoesAtivas().map(f => `
+        const checkboxes = funcoesAtribuiveis.map(f => `
             <label class="inline-flex items-center gap-1 mr-3 mb-1 cursor-pointer">
                 <input type="checkbox" class="usuario-funcao-checkbox" data-usuario="${u.id}" data-funcao="${f.id}" ${funcoesDoUsuario.has(f.id) ? 'checked' : ''}>
                 <span class="text-[10px] font-bold uppercase">${escapeHtml(f.nome)}</span>
@@ -374,7 +419,7 @@ function renderUsuariosFuncoesTable() {
                 </td>
                 <td class="p-3">
                     <div class="flex flex-wrap items-center">${checkboxes || '<span class="text-gray-400 italic text-xs">Nenhuma função cadastrada ainda</span>'}</div>
-                    ${funcoesAtivas().length > 0 ? `<button onclick="salvarFuncoesUsuario('${u.id}')" class="mt-1 bg-gray-700 hover:bg-gray-900 text-white font-bold text-[10px] px-2 py-1 rounded">Salvar</button>` : ''}
+                    ${funcoesAtribuiveis.length > 0 ? `<button onclick="salvarFuncoesUsuario('${u.id}')" class="mt-1 bg-gray-700 hover:bg-gray-900 text-white font-bold text-[10px] px-2 py-1 rounded">Salvar</button>` : ''}
                 </td>
             </tr>
         `;
@@ -389,12 +434,30 @@ async function salvarFuncoesUsuario(usuarioId) {
         return alert('Apenas ADMINISTRADOR ou PROPRIETÁRIO podem atribuir funções aos usuários.');
     }
     const checkboxes = document.querySelectorAll(`.usuario-funcao-checkbox[data-usuario="${usuarioId}"]`);
-    const marcadas = Array.from(checkboxes).filter(c => c.checked).map(c => ({
+    let marcadas = Array.from(checkboxes).filter(c => c.checked).map(c => ({
         usuario_id: usuarioId,
         funcao_id: Number(c.getAttribute('data-funcao'))
     }));
 
-    const { error: delError } = await _supabase.from('usuario_funcoes').delete().eq('usuario_id', usuarioId);
+    // SEGURANÇA: quem não é Proprietário não adiciona NEM remove o vínculo
+    // da função PROPRIETÁRIO. Como a checkbox nem é renderizada pra esse
+    // caso, o delete abaixo é escopado pra não tocar nesses vínculos, e
+    // qualquer id de função Proprietário que apareça em `marcadas` (DOM
+    // adulterado) é descartado com aviso.
+    const idsFuncaoProprietario = funcoesData.filter(ehFuncaoProprietario).map(f => f.id);
+    if (!podeGerenciarProprietario()) {
+        const tentouProprietario = marcadas.some(m => idsFuncaoProprietario.includes(m.funcao_id));
+        if (tentouProprietario) {
+            marcadas = marcadas.filter(m => !idsFuncaoProprietario.includes(m.funcao_id));
+            alert('Apenas o PROPRIETÁRIO pode atribuir a função de Proprietário — esse item foi ignorado.');
+        }
+    }
+
+    let delQuery = _supabase.from('usuario_funcoes').delete().eq('usuario_id', usuarioId);
+    if (!podeGerenciarProprietario() && idsFuncaoProprietario.length > 0) {
+        delQuery = delQuery.not('funcao_id', 'in', `(${idsFuncaoProprietario.join(',')})`);
+    }
+    const { error: delError } = await delQuery;
     if (delError) return alert('Erro ao atualizar funções do usuário: ' + delError.message);
 
     if (marcadas.length > 0) {

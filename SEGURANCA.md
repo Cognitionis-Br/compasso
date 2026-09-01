@@ -199,3 +199,28 @@ A condição é avaliada via função SQL de apoio (`SECURITY DEFINER`) que
 resolve as funções do `auth.uid()` atual contra `usuario_funcoes` +
 `funcoes`. Mesma lógica de hierarquia da Fase 3: Proprietário escreve em
 tudo que Administrador escreve, e ainda em `licenca_modulos`.
+
+## Correção — função PROPRIETÁRIO só para Proprietário na tela de Funções (2026-09-01)
+
+Falha reportada: logado como **Administrador** (acesso irrestrito, sem
+`eh_proprietario`), a tela *Funções e Permissões* mostrava:
+- a checkbox da função **PROPRIETÁRIO** na *Atribuição de Funções aos
+  Usuários* — dava pra marcar, e só então vinha o erro cru de RLS;
+- a própria função PROPRIETÁRIO na lista de *Funções Cadastradas* (com
+  Editar/Excluir);
+- o box roxo **"É Proprietário"** no formulário de cadastro de função.
+
+Regra: nada relacionado a PROPRIETÁRIO aparece/funciona a não ser que o
+usuário logado **seja** Proprietário (`ehProprietario === true`). O RLS já
+bloqueava no banco; isto tira a opção da tela e troca o erro por bloqueio
+claro. `js/config/funcoes.js` (`podeGerenciarProprietario()` /
+`ehFuncaoProprietario()`):
+- `renderFuncoesTable`: filtra funções `eh_proprietario` da lista + esconde
+  `#funcaoEhProprietarioBox` (novo id no index.html, `hidden` por padrão).
+- `renderUsuariosFuncoesTable`: `funcoesAtribuiveis` sem as funções
+  Proprietário; botão Salvar idem.
+- `salvarFuncoesUsuario`: DELETE escopado com `.not('funcao_id','in',(...))`
+  pra **não remover** vínculo Proprietário existente de um usuário, e
+  descarta com aviso qualquer id Proprietário que chegue via DOM adulterado.
+- `saveFuncao` / `deleteFuncao` / `reativarFuncao`: bloqueiam criar/marcar/
+  editar/inativar/reativar função Proprietário quando não é Proprietário.
