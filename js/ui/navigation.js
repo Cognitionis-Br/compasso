@@ -152,6 +152,7 @@ function switchTab(tabId) {
     if (tabId === 'cronograma_evolucao') renderCronogramaEvolucaoView();
     if (tabId === 'usuarios') { mudarAbaUsuarios('criar'); renderUsuariosView(); }
     if (tabId === 'ano_fiscal') loadAnoFiscalConfig();
+    if (tabId === 'ajuste_orcamento') renderAjusteOrcamentoView();
     if (tabId === 'areas') { mudarAbaAreas('criar'); loadAreas(); }
     if (tabId === 'pessoas_solicitantes') { mudarAbaPessoasSolicitantes('criar'); loadPessoasSolicitantes(); }
     if (tabId === 'portes') { mudarAbaPortes('criar'); loadPortes(); }

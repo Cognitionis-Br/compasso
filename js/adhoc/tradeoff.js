@@ -42,6 +42,9 @@ function renderAdhocBadge(projeto) {
 }
 
 function renderAdhocView() {
+    // NOVO (item 7): pré-carrega as autorizações especiais de ajuste de
+    // orçamento pra o check de subgrupo no trade-off (alterarAcaoTradeoff).
+    if (typeof carregarAutorizacoesAjuste === 'function') carregarAutorizacoesAjuste();
     const infoAF = getInfoAnoFiscal();
 
     // CORRIGIDO 10/08/2026 (bug reportado pelo usuário): usava p.status
@@ -257,6 +260,22 @@ function renderTradeoffTable() {
 }
 
 function alterarAcaoTradeoff(codigoProjeto, acao) {
+    // NOVO (Agrupamento de Orçamento — item 7): compensação de orçamento
+    // só entre projetos do MESMO subgrupo (área ou produto, conforme o
+    // agrupamento ativo). Fora disso exige autorização especial
+    // (Ano Fiscal → Ajuste de Orçamento). Agrupamento em "Ano Fiscal" =
+    // sem restrição de subgrupo.
+    if (acao && acao !== 'MANTER' && projetoSimuladoAtual && typeof obterAgrupamentoOrcamento === 'function') {
+        const { modo } = obterAgrupamentoOrcamento();
+        const projComp = projectsData.find(p => p.codigo === codigoProjeto);
+        if (modo !== 'AF' && projComp
+            && !mesmoSubgrupoOrcamento(projComp, projetoSimuladoAtual, modo)
+            && !(typeof temAutorizacaoAjuste === 'function' && temAutorizacaoAjuste(codigoProjeto, projetoSimuladoAtual.codigo))) {
+            alert(`⛔ "${codigoProjeto}" pertence a outro ${modo === 'AREA' ? 'área' : 'produto'} do projeto da demanda extraordinária. Compensação de orçamento só é permitida dentro do mesmo subgrupo.\n\nPara mover orçamento entre subgrupos diferentes, registre a autorização especial em Ano Fiscal → Ajuste de Orçamento.`);
+            renderTradeoffTable();
+            return;
+        }
+    }
     alteracoesSimulacao[codigoProjeto] = acao;
     if (acao !== 'CEDER_PARTE') delete valoresParciaisSimulacao[codigoProjeto];
     // AJUSTADO (a pedido do usuário 24/08/2026): precisa re-renderizar a

@@ -54,6 +54,7 @@ const TAB_MODULO_MAP = {
     // Go-Live, Fiscal Year, Roadmap e Demandas Extraordinárias.
     ano_fiscal: 'WORKFLOW',
     carry_over: 'WORKFLOW',
+    ajuste_orcamento: 'WORKFLOW',
     f1_formalizacao: 'WORKFLOW',
     f1_orcamento: 'WORKFLOW',
     projetos_adhoc: 'WORKFLOW',

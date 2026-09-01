@@ -168,12 +168,24 @@ Depende da Fase 4 concluída; apoia-se no CRUD granular do catálogo. Doc de reg
     `produtos:criar` / `produtos:cadastrados` (GOVERNANÇA, CRUD completo) e
     `ajuste_orcamento` (FINANCEIRO + GOVERNANÇA, CRUD completo). Roda direto no SQL
     Editor (catalogo_atividades/funcao_atividades sob RLS).
-- **Código (a fazer):** tela Cadastro de Produtos (grupo Parâmetros); campo Produto
-  obrigatório em Formalizar Demanda (sem NAO_CLASSIFICADO na lista); módulo
-  `js/core/filtro-agrupamento-orcamento.js` (AF|AREA|PRODUTO); seletor + quadro novo
-  em Dashboard e Visão de Orçamento; regra de subgrupo em Carryover/Extraordinária;
-  tela Ajuste de Orçamento (menu ANO FISCAL) + relatório; rename "Execução -
-  Desenvolvimento" → "Execução".
+- **Código (feito):**
+  - Itens 2/3 (`b5dd702`): `js/config/produtos.js` (CRUD, grupo Parâmetros) + campo
+    **Produto \*** obrigatório em Formalizar Demanda (sem NAO_CLASSIFICADO).
+  - Item 4 (`f0b6ac1`): `js/core/filtro-agrupamento-orcamento.js` — estado isolado
+    `modoAgrupamentoOrcamento`/`valorAgrupamentoSelecionado`,
+    `filtrarProjetosPorAgrupamento`, `mesmoSubgrupoOrcamento`, `obterAgrupamentoOrcamento`
+    (fonte única — trocar aqui pra virar parâmetro persistido).
+  - Itens 5/6 (`1e43dd8`): seletor + quadro novo (7 linhas × Total/CAPEX/OPEX) no
+    Dashboard e Visão de Orçamento; agrupamento entra como 3º elo da cascata;
+    "Projeção Final" removida (linha morta `totR*1.15` também).
+  - Itens 7/8 + rename (este commit): check de subgrupo em `alterarAcaoTradeoff`
+    (Demanda Extraordinária); tela **Ajuste de Orçamento** (menu ANO FISCAL) +
+    relatório de autorizações; `ajuste_orcamento` em TAB_MODULO_MAP (WORKFLOW);
+    "Execução - Desenvolvimento" → "Execução" (index.html + `sql/2026-09-01_rename_execucao.sql`).
+  - **Carryover:** o fluxo atual (`marcarComoCarryover`) não usa outro projeto como
+    compensação — o check de subgrupo do item 7 fica ativo só no trade-off da
+    Extraordinária. Se houver mecânica de compensação em Carryover que eu não
+    localizei, apontar.
 
 | Tabela | Escrita (INSERT / UPDATE / DELETE) permitida quando |
 |---|---|

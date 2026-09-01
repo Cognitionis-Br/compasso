@@ -212,7 +212,7 @@ async function renderDashboardMetrics() {
 
     if (document.getElementById('kpiOrcAdhoc')) document.getElementById('kpiOrcAdhoc').innerText = `R$ ${totAdhoc.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
     if (document.getElementById('kpiOrcUtilizado')) document.getElementById('kpiOrcUtilizado').innerText = `R$ ${totR.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-    if (document.getElementById('kpiProjecao')) document.getElementById('kpiProjecao').innerText = `R$ ${(totR * 1.15).toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+    // 'Projeção Final' (totR * 1.15) removida — ver INVESTIGACAO_PROJECAO_FINAL.md / quadro novo (Orçamento a Realizar).
     if (document.getElementById('kpiSaldo')) document.getElementById('kpiSaldo').innerText = `R$ ${(displayOrcamento - totR).toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
 
     renderTabelaConsolidacaoPortfolio(displayOrcamento, projectsDataFiltrado, isFechadoParaAF);
