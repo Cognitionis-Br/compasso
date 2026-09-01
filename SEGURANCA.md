@@ -149,6 +149,32 @@ escritas; `usuario_funcoes` restrito a linhas próprias fora disso.
 
 Leitura livre para qualquer usuário autenticado nas 5 tabelas.
 
+---
+
+## Tarefa — Agrupamento de Orçamento por Área e Produto (2026-09-01) — **EM ANDAMENTO**
+
+Depende da Fase 4 concluída; apoia-se no CRUD granular do catálogo. Doc de regras:
+`docs/REGRAS DE TRATAMENTO DE ORÇAMENTO.docx`.
+
+- **Passo 0 (feito):** `INVESTIGACAO_PROJECAO_FINAL.md`. "Projeção Final" = `totR * 1.15`
+  (Realizado Total × 1,15), hardcoded, só no Dashboard. **Decisão do usuário: REMOVER**
+  (substituída por "Orçamento a Realizar" = Orçamento Atual − Realizado).
+- **SQL (escrito, aguardando rodar no SQL Editor):**
+  - `sql/2026-09-01_produtos_e_produto_id.sql` — tabela `produtos` (+ sentinela
+    `NAO_CLASSIFICADO`), `projetos.produto_id` FK, migração de todos os projetos ao sentinela.
+  - `sql/2026-09-01_ajuste_orcamento_autorizacoes.sql` — tabela de log das autorizações
+    especiais (item 8).
+  - `sql/2026-09-01_catalogo_produtos_ajuste_orcamento.sql` — INSERT das atividades
+    `produtos:criar` / `produtos:cadastrados` (GOVERNANÇA, CRUD completo) e
+    `ajuste_orcamento` (FINANCEIRO + GOVERNANÇA, CRUD completo). Roda direto no SQL
+    Editor (catalogo_atividades/funcao_atividades sob RLS).
+- **Código (a fazer):** tela Cadastro de Produtos (grupo Parâmetros); campo Produto
+  obrigatório em Formalizar Demanda (sem NAO_CLASSIFICADO na lista); módulo
+  `js/core/filtro-agrupamento-orcamento.js` (AF|AREA|PRODUTO); seletor + quadro novo
+  em Dashboard e Visão de Orçamento; regra de subgrupo em Carryover/Extraordinária;
+  tela Ajuste de Orçamento (menu ANO FISCAL) + relatório; rename "Execução -
+  Desenvolvimento" → "Execução".
+
 | Tabela | Escrita (INSERT / UPDATE / DELETE) permitida quando |
 |---|---|
 | `funcoes` | `acesso_irrestrito = true` **OU** `eh_proprietario = true` |
