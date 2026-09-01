@@ -69,6 +69,7 @@ async function renderMudancaOrcamentoView() {
 // workflow — Requerimentos bloqueado segue pra Technical, Technical
 // bloqueado segue pra Execution — dependendo de qual etapa o bloqueou.
 async function aprovarMudancaOrcamento(codigo) {
+    if (!usuarioPodeAlterarTela('mudanca_orcamento')) return alert('Você não tem permissão para aprovar mudança de orçamento.');
     const motivoInput = document.getElementById('mudancaOrcamentoMotivoInput');
     const motivo = (motivoInput ? motivoInput.value : '').trim();
     if (!motivo) return alert('Informe o motivo da aprovação!');

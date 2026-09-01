@@ -117,6 +117,7 @@ async function obterAFAbertoParaDemandas() {
 }
 
 async function abrirRecebimentoProximoAF() {
+    if (!usuarioPodeAlterarTela('ano_fiscal') && !usuarioPodeIncluirTela('ano_fiscal')) return alert('Você não tem permissão para abrir/gerir o Ano Fiscal.');
     const infoAF = getInfoAnoFiscal();
 
     // AJUSTADO (item 3, Fase 1): a regra de "só no Q4" deixou de

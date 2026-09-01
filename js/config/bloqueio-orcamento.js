@@ -26,6 +26,7 @@ async function renderPercentualBloqueioOrcamentoView() {
 }
 
 async function salvarPercentualBloqueioOrcamento() {
+    if (!usuarioPodeAlterarTela('percentual_bloqueio_orcamento')) return alert('Você não tem permissão para alterar o percentual de bloqueio.');
     const bruto = (document.getElementById('bloqueioPercentualVariacao').value || '').trim();
     const valor = bruto === '' ? null : Number(bruto);
     if (valor !== null && (isNaN(valor) || valor < 0)) {

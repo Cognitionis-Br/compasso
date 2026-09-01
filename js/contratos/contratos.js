@@ -130,13 +130,14 @@ async function renderContratosProjetoView() {
                 <td class="p-3 text-right font-mono">R$ ${Number(c.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                 <td class="p-3 text-right font-mono">R$ ${Number(c.valor_realizado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                 <td class="p-3 text-center">${ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
-                <td class="p-3 text-center"><button onclick="alternarStatusContrato(${c.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i></button></td>
+                <td class="p-3 text-center">${botaoSePodeAtivarInativar('contratos_projeto', `<button onclick="alternarStatusContrato(${c.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i></button>`)}</td>
             </tr>
         `;
     }).join('');
 }
 
 async function alternarStatusContrato(id) {
+    if (!usuarioPodeAlterarTela('contratos_projeto') && !usuarioPodeDeletarTela('contratos_projeto')) return alert('Você não tem permissão para alterar o status de contratos.');
     const c = contratosProjetoCache.find(x => x.id === id);
     if (!c) return;
     const novoStatus = (c.status || 'ATIVO') === 'ATIVO' ? 'INATIVO' : 'ATIVO';
@@ -324,6 +325,7 @@ async function renderHistoricoPagamentos(vinculoId) {
 }
 
 async function registrarValorRealizado() {
+    if (!usuarioPodeIncluirTela('registro_valores_contrato') && !usuarioPodeAlterarTela('registro_valores_contrato')) return alert('Você não tem permissão para registrar valores realizados.');
     if (!regValVinculoAtual) return alert('Selecione um vínculo (projeto + contrato) primeiro!');
 
     const valorPago = Number(document.getElementById('regValValorInput').value);

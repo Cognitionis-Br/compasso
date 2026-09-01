@@ -67,6 +67,7 @@ async function renderAprovOrcamentoAFView() {
 }
 
 async function executarAprovacaoGlobalOrcamentoAF() {
+    if (!usuarioPodeAlterarTela('aprov_orcamento_af')) return alert('Você não tem permissão para fechar o Orçamento do Ano Fiscal.');
     // CORRIGIDO 10/08/2026 (junto com G11): usa o AF que está de fato
     // aberto para demandas (mesma fonte de verdade do G10), não mais o
     // "próximo AF" calculado cegamente pela data — evita fechar o AF

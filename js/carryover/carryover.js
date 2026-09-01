@@ -182,6 +182,7 @@ async function renderCarryOverView() {
 }
 
 async function marcarComoCarryover(codigo) {
+    if (!usuarioPodeAlterarTela('carry_over')) return alert('Você não tem permissão para marcar projetos como Carry Over.');
     const p = projectsData.find(x => x.codigo === codigo);
     if (!p) return;
 
@@ -221,6 +222,7 @@ async function marcarComoCarryover(codigo) {
 }
 
 async function desmarcarCarryover(codigo) {
+    if (!usuarioPodeAlterarTela('carry_over')) return alert('Você não tem permissão para desmarcar Carry Over.');
     const p = projectsData.find(x => x.codigo === codigo);
     if (!p) return;
 

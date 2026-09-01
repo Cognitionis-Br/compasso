@@ -69,6 +69,7 @@ function fecharPainelRetomadaHold() {
 }
 
 async function confirmarRetomadaHold() {
+    if (!usuarioPodeAlterarTela('retomar_hold')) return alert('Você não tem permissão para retomar projetos em hold.');
     if (!projetoSelecionadoRetomada) return;
     const p = projetoSelecionadoRetomada;
 

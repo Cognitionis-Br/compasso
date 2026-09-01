@@ -158,6 +158,7 @@ function alternarSelecaoTodosGovernanca(marcado) {
 }
 
 async function enviarCobrancaGovernanca() {
+    if (!usuarioPodeAlterarTela('governanca')) return alert('Você não tem permissão para enviar cobrança de ajustes.');
     const templateId = document.getElementById('govTemplateSelect').value;
     if (!templateId) {
         return alert('Selecione um template de Governança antes de enviar!');

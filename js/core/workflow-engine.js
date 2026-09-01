@@ -118,10 +118,10 @@ function renderFasesEtapasTable() {
                 </td>
                 <td class="p-2 text-right space-x-2 whitespace-nowrap">
                     ${inativa
-                        ? `<button onclick="reativarEtapa(${e.id})" class="text-green-700 hover:text-green-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`
-                        : `<button onclick="editEtapa(${e.id})" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i></button>
-                           <button onclick="toggleSlaEtapa(${e.id})" class="text-amber-600 hover:text-amber-800 text-xs font-bold"><i class="fa-solid fa-clock"></i> SLA</button>
-                           <button onclick="deleteEtapa(${e.id})" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-trash"></i></button>`}
+                        ? botaoSePodeAlterar('workflow_etapas', `<button onclick="reativarEtapa(${e.id})" class="text-green-700 hover:text-green-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`)
+                        : botaoSePodeAlterar('workflow_etapas', `<button onclick="editEtapa(${e.id})" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i></button>
+                           <button onclick="toggleSlaEtapa(${e.id})" class="text-amber-600 hover:text-amber-800 text-xs font-bold"><i class="fa-solid fa-clock"></i> SLA</button>`)
+                          + botaoSePodeDeletar('workflow_etapas', `<button onclick="deleteEtapa(${e.id})" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-trash"></i></button>`)}
                 </td>
             </tr>
             <tr id="slaEtapa_${e.id}" class="hidden">
@@ -164,6 +164,7 @@ function toggleSlaEtapa(etapaId) {
 }
 
 async function salvarSlaEtapa(etapaId) {
+    if (!usuarioPodeAlterarTela('workflow_etapas')) return alert('Você não tem permissão para alterar o SLA das etapas.');
     const inputs = document.querySelectorAll(`.sla-etapa-input[data-etapa="${etapaId}"]`);
     const linhas = Array.from(inputs)
         .filter(i => i.value !== '')
@@ -204,6 +205,7 @@ function editEtapa(id) {
 
 async function saveEtapa(e) {
     e.preventDefault();
+    if (!usuarioPodeAlterarTela('workflow_etapas')) return alert('Você não tem permissão para alterar fases e etapas do workflow.');
     const id = document.getElementById('etapaIdInput').value;
 
     if (!id) {
@@ -239,6 +241,7 @@ async function saveEtapa(e) {
 }
 
 async function deleteEtapa(id) {
+    if (!usuarioPodeDeletarTela('workflow_etapas')) return alert('Você não tem permissão para inativar etapas do workflow.');
     if (!confirm('Deseja realmente inativar esta etapa? Ela sairá do encadeamento do workflow para novos projetos (o histórico de projetos que já passaram por ela não é afetado).')) return;
 
     const { error } = await _supabase.from('fases_etapas').update({
@@ -254,6 +257,7 @@ async function deleteEtapa(id) {
 }
 
 async function reativarEtapa(id) {
+    if (!usuarioPodeAlterarTela('workflow_etapas')) return alert('Você não tem permissão para reativar etapas do workflow.');
     if (!confirm('Deseja reativar esta etapa? Ela volta a fazer parte do encadeamento do workflow.')) return;
     const { error } = await _supabase.from('fases_etapas').update({
         ativo: true,

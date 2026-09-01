@@ -114,6 +114,7 @@ function fecharModalAprovComite() {
 }
 
 async function confirmarDecisaoComite() {
+    if (!usuarioPodeAlterarTela('aprov_comite')) return alert('Você não tem permissão para aprovar/reprovar orçamento por projeto.');
     const codigo = document.getElementById('aprovPrjCodigoHidden').value;
     const modo = document.getElementById('aprovPrjModoHidden').value;
     const dt = document.getElementById('aprovPrjDtAprov').value;

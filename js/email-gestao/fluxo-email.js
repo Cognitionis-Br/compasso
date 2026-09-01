@@ -20,6 +20,7 @@ async function carregarConfigEmailGeral() {
 }
 
 async function alternarEnvioEmailGeral(ativo) {
+    if (!usuarioPodeAlterarTela('gestao_fluxo_email')) { alert('Você não tem permissão para alterar o fluxo de e-mail.'); return renderGestaoFluxoEmailView(); }
     if (!confirm(ativo
         ? 'Confirma LIGAR o envio de e-mail no sistema inteiro? As linhas do Fluxo marcadas como ativas voltam a enfileirar e a Fila de E-mail volta a poder ser processada.'
         : '⛔ Confirma DESLIGAR o envio de e-mail no sistema inteiro? Nenhum e-mail novo será enfileirado e a Fila de E-mail deixa de poder ser processada, mesmo com linhas do Fluxo ativas.')) {
@@ -40,6 +41,7 @@ async function alternarEnvioEmailGeral(ativo) {
 
 async function renderGestaoFluxoEmailView() {
     await carregarConfigEmailGeral();
+    const podeAlterarFluxo = usuarioPodeAlterarTela('gestao_fluxo_email'); // Fase 2b
 
     const [{ data: fluxoData, error: errorFluxo }, { data: templatesData }] = await Promise.all([
         _supabase.from('email_fluxo').select('*').order('id'),
@@ -58,7 +60,7 @@ async function renderGestaoFluxoEmailView() {
                     <div class="text-xs text-gray-500 mt-0.5">Suplanta o "Ativo" de cada linha abaixo — desligada aqui, nada é enfileirado nem enviado, mesmo com linhas ativas.</div>
                 </div>
                 <label class="inline-flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" ${configEmailGeralAtivo ? 'checked' : ''} onchange="alternarEnvioEmailGeral(this.checked)">
+                    <input type="checkbox" ${configEmailGeralAtivo ? 'checked' : ''} ${podeAlterarFluxo ? '' : 'disabled'} onchange="alternarEnvioEmailGeral(this.checked)">
                     <span class="text-xs font-bold uppercase ${configEmailGeralAtivo ? 'text-green-700' : 'text-red-700'}">${configEmailGeralAtivo ? 'Ligada' : 'Desligada'}</span>
                 </label>
             </div>
@@ -102,10 +104,10 @@ async function renderGestaoFluxoEmailView() {
                 <td class="p-3 text-center">
                     <div class="flex flex-col items-center gap-1">
                         <label class="inline-flex items-center gap-1 cursor-pointer">
-                            <input type="checkbox" ${f.ativo ? 'checked' : ''} onchange="onToggleAtivoFluxo(${f.id}, this.checked)">
+                            <input type="checkbox" ${f.ativo ? 'checked' : ''} ${podeAlterarFluxo ? '' : 'disabled'} onchange="onToggleAtivoFluxo(${f.id}, this.checked)">
                             <span class="text-[9px] font-bold uppercase ${f.ativo ? 'text-green-700' : 'text-gray-400'}">${f.ativo ? 'Ativo' : 'Inativo'}</span>
                         </label>
-                        <button onclick="salvarConfigFluxo(${f.id})" class="text-indigo-600 hover:text-indigo-800 font-bold text-[9px] uppercase">Salvar dados</button>
+                        ${botaoSePodeAlterar('gestao_fluxo_email', `<button onclick="salvarConfigFluxo(${f.id})" class="text-indigo-600 hover:text-indigo-800 font-bold text-[9px] uppercase">Salvar dados</button>`)}
                     </div>
                 </td>
             </tr>
@@ -121,6 +123,7 @@ function onChangeTipoDestinatarioFluxo(id) {
 // Salva destinatário/remetente/template dessa linha (sem mexer no
 // ativo/inativo — isso é feito pelo checkbox, com sua própria validação).
 async function salvarConfigFluxo(id) {
+    if (!usuarioPodeAlterarTela('gestao_fluxo_email')) return alert('Você não tem permissão para alterar o fluxo de e-mail.');
     const tipoDestinatario = document.getElementById(`fluxoDestTipo_${id}`).value;
     const emailFixo = document.getElementById(`fluxoDestFixo_${id}`).value.trim();
     const remetente = document.getElementById(`fluxoRemetente_${id}`).value.trim();
@@ -151,6 +154,7 @@ async function salvarConfigFluxo(id) {
 // já estiverem cadastrados — regra central pedida no relatório de
 // melhorias.
 async function onToggleAtivoFluxo(id, marcarAtivo) {
+    if (!usuarioPodeAlterarTela('gestao_fluxo_email')) { alert('Você não tem permissão para alterar o fluxo de e-mail.'); return renderGestaoFluxoEmailView(); }
     const f = emailFluxoCache.find(x => x.id === id);
     if (!f) return;
 

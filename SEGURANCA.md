@@ -61,10 +61,19 @@ o verbo vale se QUALQUER atividade da tela (`tabId`, `tabId:*`) tiver a flag.
   helpers de template `botaoSePodeIncluir/Alterar/Deletar/AtivarInativar(tabId, html)`.
   `aplicarVisibilidadeSubAbas`: sub-aba `*:criar` só aparece se puder incluir OU alterar.
 - Botões por linha (Editar / Excluir / Inativar / Reativar) e handlers `salvar*` /
-  `alternarAtivo*` gateados em: **areas, pessoas_solicitantes, portes, cargos, tipos_projeto,
-  return_benefit, planejamento_estrategico, responsaveis, usuarios, empresas_terceirizadas,
-  contratos_projeto, contratos_vinculos, gestao_templates**. Guarda dupla: esconde o botão
-  E valida no `salvar`/`alternarAtivo` (novo → incluir; edição → alterar; inativar → deletar).
+  `alternarAtivo*` gateados. Guarda dupla: esconde o botão E valida no handler
+  (novo → incluir; edição → alterar; inativar → deletar).
+- **Telas cobertas** (2b + extensão 2026-09-01, todas as telas de gestão da base):
+  areas, pessoas_solicitantes, portes, cargos, tipos_projeto, return_benefit,
+  planejamento_estrategico, responsaveis, usuarios, empresas_terceirizadas,
+  contratos_projeto, contratos_vinculos, registro_valores_contrato, gestao_templates,
+  gestao_fluxo_email (+ chave geral de e-mail), workflow_etapas (Fases/Etapas + SLA),
+  percentual_bloqueio_orcamento, ano_fiscal (abertura), carry_over, retomar_hold,
+  mudanca_orcamento, governanca (cobrança), projetos_adhoc, aprov_comite, aprov_orcamento_af.
+- **Fora do gate de propósito:** `processarFilaEmailPendente` (compartilhada com o
+  disparo automático de e-mail — gatear travaria o fluxo). Telas operacionais de fase
+  (req_*/tech_*/fase_*) não entram nesta passada — são trabalho de workflow, não
+  configuração de base.
 - Admin / `acesso_irrestrito` / `eh_proprietario`: tudo liberado, sem mudança.
 
 **⚠️ Impacto:** como a Fase 2 migrou todas as concessões com só `consultar`, funções

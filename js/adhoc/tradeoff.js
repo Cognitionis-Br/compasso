@@ -365,6 +365,7 @@ function cancelarSimulacaoAdhoc() {
 }
 
 async function aprovarSimulacaoAdhoc() {
+    if (!usuarioPodeAlterarTela('projetos_adhoc')) return alert('Você não tem permissão para aprovar demandas extraordinárias.');
     if (!projetoSimuladoAtual) return;
 
     // CORRIGIDO 10/08/2026 (item 8 do relatório de testes): antes, saldo
