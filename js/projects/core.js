@@ -406,6 +406,18 @@ async function saveBusinessCase(e) {
     if (!descricaoProjeto) {
         return alert('Preencha a Descrição Sucinta do Projeto!');
     }
+    // NOVO (a pedido do usuário 2026-09-01): Objetivo, Key Results e ao
+    // menos um Benefit Result passam a ser obrigatórios na inclusão da
+    // demanda.
+    if (!objetivo) {
+        return alert('Preencha o Objetivo!');
+    }
+    if (!keyResults) {
+        return alert('Preencha os Key Results!');
+    }
+    if (beneficiosDemandaAtual.length === 0) {
+        return alert('Adicione pelo menos um Benefit Result!');
+    }
 
     // Pilar/Iniciativa Estratégica — obrigatórios só se "Sim" foi marcado.
     const radioAssocia = document.querySelector('input[name="bcAssociaPilar"]:checked');
