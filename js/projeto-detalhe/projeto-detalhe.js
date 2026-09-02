@@ -24,8 +24,8 @@ const PROJETO_DETALHE_ORIGENS = {
     // da lista de projetos bloqueados (js/governanca/mudanca-orcamento.js).
     mudanca_orcamento: { tab: 'mudanca_orcamento', texto: 'Voltar à Mudança de Orçamento' },
     // NOVO (Fechamento de Ano Fiscal, 2026-09-02): zoom a partir da tela de
-    // decisão de fechamento (js/ano-fiscal/fechamento-projetos.js).
-    fechamento_projetos: { tab: 'fechamento_projetos', texto: 'Voltar à Decisão de Fechamento' }
+    // Fechamento Ano Fiscal (js/ano-fiscal/fechamento-projetos.js).
+    fechamento_af: { tab: 'fechamento_af', texto: 'Voltar ao Fechamento Ano Fiscal' }
 };
 
 // NOVO (a pedido do usuário): linha "RÓTULO : valor" com rótulo em
@@ -690,7 +690,7 @@ function renderSecaoContratoDetalhe(etapasDoProjeto) {
 // fechamento registradas para o projeto (Continuar / Hold / Cancelar).
 function renderSecaoDecisoesFechamento(historico) {
     if (!historico || historico.length === 0) return '';
-    const rot = { CONTINUAR: 'Continuar (Carryover)', HOLD: 'Hold (Carryover)', CANCELAR: 'Cancelar' };
+    const rot = { CONTINUAR: 'Carryover Desenvolvimento', HOLD: 'Carryover Hold', CANCELAR: 'Cancelar', REVERTIDO: 'Revertido' };
     const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
     return `
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">

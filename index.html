@@ -110,9 +110,7 @@
                     </button>
                     <div id="menu-fy" class="submenu open pl-9 pr-2 mt-1 space-y-1">
                         <button onclick="switchTab('ano_fiscal')" id="link-ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Abertura Ano Fiscal</button>
-                        <button onclick="switchTab('carry_over')" id="link-carry_over" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Projetos Carry Over</button>
-                        <button onclick="switchTab('fechamento_projetos')" id="link-fechamento_projetos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Decisão de Fechamento de Projetos</button>
-                        <button onclick="switchTab('resultado_af')" id="link-resultado_af" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Resultado do Ano Fiscal</button>
+                        <button onclick="switchTab('fechamento_af')" id="link-fechamento_af" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fechamento Ano Fiscal</button>
                         <button onclick="switchTab('ajuste_orcamento')" id="link-ajuste_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Ajuste de Orçamento</button>
                     </div>
                 </div>
@@ -2052,24 +2050,45 @@
                     </div>
                 </div>
 
-                <!-- Fechamento de Ano Fiscal — História 1: decisão de fechamento de projetos -->
-                <div id="view-fechamento_projetos" class="tab-content hidden">
-                    <div class="mb-4 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Decisão de Fechamento de Projetos</h2>
-                        <p class="text-xs text-gray-500 mt-1">Ao encerrar o Ano Fiscal, defina o destino de cada projeto em curso: <b>Continuar</b> (segue ativo, saldo remanescente vai para o carryover do próximo AF), <b>Hold</b> (suspenso, também entra no pool e fica disponível para retomada) ou <b>Cancelar</b> (encerramento definitivo, sem continuidade orçamentária). Toda decisão fica registrada com usuário e data/hora. Clique no código para ver o histórico completo do projeto.</p>
+                <!-- Fechamento Ano Fiscal — tela única com 2 abas -->
+                <div id="view-fechamento_af" class="tab-content hidden">
+                    <div class="mb-3 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Fechamento Ano Fiscal</h2>
+                        <p class="text-xs text-gray-500 mt-1">Avaliação do resultado do Ano Fiscal e tratamento dos projetos ainda em andamento (Carryover Desenvolvimento, Carryover Hold ou Cancelar) antes de fechar o período. O fechamento do Ano Fiscal é pré-requisito para abrir o próximo.</p>
                     </div>
-                    <div id="fechamentoProjetosResumo" class="flex flex-wrap gap-2 mb-4"></div>
-                    <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse text-xs">
-                                <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b uppercase text-[10px]">
-                                    <th class="p-2">Código</th><th class="p-2">Projeto</th><th class="p-2">Ano Fiscal</th>
-                                    <th class="p-2">Área</th><th class="p-2">Produto</th><th class="p-2">Fase / Status</th>
-                                    <th class="p-2 text-right">Orçamento Atual</th><th class="p-2 text-right">Realizado</th>
-                                    <th class="p-2 text-right">Saldo Remanesc.</th><th class="p-2 text-center">Decisão</th><th class="p-2 text-center">Ações</th>
-                                </tr></thead>
-                                <tbody id="fechamentoProjetosTableBody" class="divide-y divide-gray-100"></tbody>
-                            </table>
+                    <div id="fechamentoAfContextoAF" class="mb-3 text-sm text-gray-700"></div>
+
+                    <div class="flex flex-wrap gap-2 mb-4">
+                        <button id="fechamentoAfBtn-avaliacao" onclick="mudarAbaFechamentoAf('avaliacao')" class="fechamento-af-btn px-4 py-2 rounded-md text-sm font-bold border-2 bg-red-700 text-white border-red-700">Avaliação e Fechamento Ano Fiscal</button>
+                        <button id="fechamentoAfBtn-projetos" onclick="mudarAbaFechamentoAf('projetos')" class="fechamento-af-btn px-4 py-2 rounded-md text-sm font-bold border-2 bg-white text-gray-600 border-gray-200 hover:border-gray-300">Avaliação Projetos Fechamento Ano Fiscal</button>
+                    </div>
+
+                    <div id="fechamentoAfPainel-avaliacao" class="fechamento-af-painel">
+                        <div id="fechamentoAfAcaoFechar" class="mb-4"></div>
+                        <div id="resultadoAfSeletorAgrupamento" class="mb-4"></div>
+                        <div id="resultadoAfConteudo">
+                            <div id="resultadoAfContagem" class="mb-6"></div>
+                            <div id="resultadoAfDestaques" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"></div>
+                            <div id="resultadoAfOrcFase" class="mb-6"></div>
+                            <div id="resultadoAfQuadroOrcamento" class="mb-6"></div>
+                        </div>
+                    </div>
+
+                    <div id="fechamentoAfPainel-projetos" class="fechamento-af-painel hidden">
+                        <div id="fechamentoProjetosResumo" class="flex flex-wrap gap-2 mb-4"></div>
+                        <div id="fechamentoProjetosPoolCard" class="mb-4"></div>
+                        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b uppercase text-[10px]">
+                                        <th class="p-2">Código</th><th class="p-2">Projeto</th><th class="p-2">Ano Fiscal</th>
+                                        <th class="p-2">Área</th><th class="p-2">Produto</th><th class="p-2">Fase / Status</th>
+                                        <th class="p-2 text-right">Orçamento Atual</th><th class="p-2 text-right">Realizado</th>
+                                        <th class="p-2 text-right">Saldo Remanesc.</th><th class="p-2 text-center">Situação</th><th class="p-2 text-center">Ações</th>
+                                    </tr></thead>
+                                    <tbody id="fechamentoProjetosTableBody" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
 
@@ -2086,25 +2105,18 @@
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Fechamento de Ano Fiscal — História 2: resultado consolidado -->
-                <div id="view-resultado_af" class="tab-content hidden">
-                    <div class="mb-4 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Resultado do Ano Fiscal</h2>
-                        <p class="text-xs text-gray-500 mt-1">Visão consolidada do período: contagem de projetos e totais orçamentários por fase (Total / CAPEX / OPEX), com quebra por Área e Produto e destaque para o orçamento de cancelados, hold e carryover.</p>
-                    </div>
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4 flex flex-wrap items-center gap-3">
-                        <label class="text-[10px] font-bold uppercase text-gray-600">Ano Fiscal</label>
-                        <select id="resultadoAfSelectAF" onchange="onMudarResultadoAfSelectAF()" class="p-2 border border-gray-300 rounded text-xs font-bold bg-white"></select>
-                        <span id="resultadoAfBadgeFechamento"></span>
-                    </div>
-                    <div id="resultadoAfSeletorAgrupamento" class="mb-4"></div>
-                    <div id="resultadoAfConteudo">
-                        <div id="resultadoAfContagem" class="mb-6"></div>
-                        <div id="resultadoAfDestaques" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6"></div>
-                        <div id="resultadoAfOrcFase" class="mb-6"></div>
-                        <div id="resultadoAfQuadroOrcamento" class="mb-6"></div>
+                    <div id="modalFecharAnoFiscal" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+                        <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-5">
+                            <h3 class="text-sm font-bold text-gray-800 mb-2">Fechar Ano Fiscal <span id="fecharAfAlvo" class="font-mono"></span></h3>
+                            <p class="text-xs text-gray-600 mb-3">Registra o fechamento do Ano Fiscal (quem, quando e o comentário abaixo). Essa ação passa a ser exigida para abrir o próximo Ano Fiscal.</p>
+                            <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Comentário</label>
+                            <textarea id="fecharAfObs" rows="3" class="w-full p-2 border border-gray-300 rounded text-xs mb-4"></textarea>
+                            <div class="flex justify-end gap-2">
+                                <button onclick="fecharModalFecharAnoFiscal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700">Cancelar</button>
+                                <button onclick="confirmarFecharAnoFiscal()" class="px-4 py-2 bg-red-700 hover:bg-red-800 text-white rounded text-xs font-bold">Confirmar Fechamento</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -4267,6 +4279,7 @@
     <script src="./js/core/workflow-engine.js"></script>
     <script src="./js/config/ano-fiscal.js"></script>
     <script src="./js/ano-fiscal/ajuste-orcamento.js"></script>
+    <script src="./js/ano-fiscal/fechamento-af.js"></script>
     <script src="./js/ano-fiscal/fechamento-projetos.js"></script>
     <script src="./js/ano-fiscal/resultado-af.js"></script>
     <script src="./js/utils/format.js"></script>

@@ -1,6 +1,8 @@
 // =========================================================================
 // ano-fiscal/resultado-af.js
-// Épico "Fechamento de Ano Fiscal" — História 2: Resultado consolidado.
+// Aba "Avaliação e Fechamento Ano Fiscal" (tela fechamento_af) — conteúdo
+// de resultado consolidado. O Ano Fiscal alvo vem de fechamentoAfTargetAF()
+// (js/ano-fiscal/fechamento-af.js), não há seletor de AF aqui.
 //
 // Visão consolidada de um Ano Fiscal (fechado ou em fechamento):
 //   Seção A — Contagem de projetos: concluídos e "em andamento" desmembrado
@@ -33,28 +35,10 @@ async function renderResultadoAfView() {
     const cont = document.getElementById('resultadoAfConteudo');
     if (!cont) return;
 
-    const { data: cfgs } = await _supabase
-        .from('anos_fiscais_config')
-        .select('*')
-        .order('ano_fiscal', { ascending: false });
-    const listaAnos = (cfgs || []).map(c => c.ano_fiscal);
-    const info = (typeof getInfoAnoFiscal === 'function') ? getInfoAnoFiscal() : { afAtualStr: null };
-    if (!resultadoAfSelecionado) resultadoAfSelecionado = info.afAtualStr || listaAnos[0] || null;
-    if (resultadoAfSelecionado && !listaAnos.includes(resultadoAfSelecionado)) listaAnos.unshift(resultadoAfSelecionado);
-
-    const selAF = document.getElementById('resultadoAfSelectAF');
-    if (selAF) {
-        selAF.innerHTML = listaAnos.length
-            ? listaAnos.map(a => `<option value="${a}" ${a === resultadoAfSelecionado ? 'selected' : ''}>${a}</option>`).join('')
-            : '<option value="">(nenhum Ano Fiscal configurado)</option>';
-    }
-    const cfgSel = (cfgs || []).find(c => c.ano_fiscal === resultadoAfSelecionado);
-    const elBadge = document.getElementById('resultadoAfBadgeFechamento');
-    if (elBadge) {
-        elBadge.innerHTML = cfgSel && cfgSel.orcamento_fechado
-            ? `<span class="bg-green-100 text-green-800 font-bold px-2 py-1 rounded text-[10px]">🔒 Orçamento fechado por ${escapeHtml(cfgSel.fechado_por) || '-'}${cfgSel.fechado_em ? ' em ' + new Date(cfgSel.fechado_em).toLocaleDateString('pt-BR') : ''}</span>`
-            : `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded text-[10px]">⏳ Em fechamento / orçamento aberto</span>`;
-    }
+    // AF alvo = o que está sendo encerrado (definido na tela pai fechamento_af).
+    resultadoAfSelecionado = (typeof fechamentoAfTargetAF === 'function')
+        ? fechamentoAfTargetAF()
+        : ((typeof getInfoAnoFiscal === 'function') ? getInfoAnoFiscal().afAtualStr : null);
 
     if (typeof renderSeletorAgrupamento === 'function') {
         await renderSeletorAgrupamento('resultadoAfSeletorAgrupamento', 'renderResultadoAfView');
@@ -77,12 +61,6 @@ async function renderResultadoAfView() {
     if (typeof renderQuadroOrcamentoAgrupado === 'function') {
         renderQuadroOrcamentoAgrupado('resultadoAf', lista);
     }
-}
-
-function onMudarResultadoAfSelectAF() {
-    const sel = document.getElementById('resultadoAfSelectAF');
-    if (sel) resultadoAfSelecionado = sel.value || resultadoAfSelecionado;
-    renderResultadoAfView();
 }
 
 // ---- Seção A — contagem de projetos ----

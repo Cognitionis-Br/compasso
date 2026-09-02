@@ -14,12 +14,19 @@
 // comportamento sem revisão própria.
 // =========================================================================
 
+// 'AF2027' -> 'AF2026'
+function afAnteriorDe(afStr) {
+    const n = parseInt(String(afStr || '').replace(/\D/g, ''), 10);
+    return isNaN(n) ? null : ('AF' + (n - 1));
+}
+
 async function loadAnoFiscalConfig() {
     const infoAF = getInfoAnoFiscal();
+    const afAnterior = afAnteriorDe(infoAF.afAtualStr);
     const { data, error } = await _supabase
         .from('anos_fiscais_config')
         .select('*')
-        .in('ano_fiscal', [infoAF.afAtualStr, infoAF.proximoAFStr]);
+        .in('ano_fiscal', [afAnterior, infoAF.afAtualStr, infoAF.proximoAFStr].filter(Boolean));
 
     anosFiscaisConfigData = error ? [] : (data || []);
     renderAnoFiscalPanel();
@@ -54,7 +61,14 @@ function renderAnoFiscalPanel() {
     // ainda está em construção).
     const configAtualAF = obterConfigAF(infoAF.afAtualStr);
     const afAtualFechado = configAtualAF ? configAtualAF.orcamento_fechado === true : false;
-    const podeAbrir = afAtualFechado && !proximoAberto;
+    // NOVO (Fechamento Ano Fiscal, 2026-09-02): só abre o próximo AF se o
+    // Ano Fiscal ANTERIOR (o "em andamento", com projetos em execução) já
+    // tiver sido FECHADO (ano_fiscal_fechado) — além do orçamento do
+    // corrente. Se não existe linha do AF anterior, trata como N/A (ok).
+    const afAnteriorStr = afAnteriorDe(infoAF.afAtualStr);
+    const configAnteriorAF = afAnteriorStr ? obterConfigAF(afAnteriorStr) : null;
+    const afAnteriorFechado = configAnteriorAF ? configAnteriorAF.ano_fiscal_fechado === true : true;
+    const podeAbrir = afAtualFechado && afAnteriorFechado && !proximoAberto;
 
     // BOOTSTRAP (2026-09-01): depois de "Limpar Base Completamente" a
     // tabela anos_fiscais_config fica vazia — não existe linha nem pro AF
@@ -80,8 +94,28 @@ function renderAnoFiscalPanel() {
         return;
     }
 
+    const afAnteriorBadge = !afAnteriorStr || !configAnteriorAF
+        ? '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded">— sem registro</span>'
+        : (afAnteriorFechado
+            ? `<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded">🔒 Fechado</span>`
+            : '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">⏳ Em andamento</span>');
+
+    const tituloBtn = !afAtualFechado
+        ? `O orçamento do ${infoAF.afAtualStr} precisa estar fechado antes de abrir o próximo AF`
+        : (!afAnteriorFechado
+            ? `O Ano Fiscal ${afAnteriorStr} (em andamento) precisa ser fechado em Ano Fiscal → Fechamento Ano Fiscal antes de abrir o próximo AF`
+            : (proximoAberto ? 'Já está aberto' : ''));
+
     container.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-sm">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 text-sm">
+            <div class="bg-gray-50 border border-gray-200 rounded p-3">
+                <div class="text-[10px] font-bold uppercase text-gray-500">Ano Fiscal em Andamento</div>
+                <div class="font-bold text-lg text-gray-800">${afAnteriorStr || '-'}</div>
+                <div class="text-xs mt-1">${afAnteriorBadge}</div>
+                ${afAnteriorStr && configAnteriorAF && afAnteriorFechado && configAnteriorAF.af_fechado_por
+                    ? `<div class="text-[10px] text-gray-500 mt-1">por <b>${configAnteriorAF.af_fechado_por}</b>${configAnteriorAF.af_fechado_em ? ' em ' + new Date(configAnteriorAF.af_fechado_em).toLocaleDateString('pt-BR') : ''}</div>`
+                    : ''}
+            </div>
             <div class="bg-gray-50 border border-gray-200 rounded p-3">
                 <div class="text-[10px] font-bold uppercase text-gray-500">Ano Fiscal Corrente</div>
                 <div class="font-bold text-lg text-gray-800">${infoAF.afAtualStr}</div>
@@ -103,14 +137,14 @@ function renderAnoFiscalPanel() {
                     onclick="abrirRecebimentoProximoAF()"
                     ${podeAbrir ? '' : 'disabled'}
                     class="w-full font-bold py-2 px-3 rounded text-xs transition ${podeAbrir ? 'bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer' : 'bg-gray-200 text-gray-400 cursor-not-allowed'}"
-                    title="${!afAtualFechado ? `O orçamento do ${infoAF.afAtualStr} precisa estar fechado antes de abrir o próximo AF` : (proximoAberto ? 'Já está aberto' : '')}"
+                    title="${tituloBtn}"
                 >
                     <i class="fa-solid fa-calendar-check"></i> Abrir Recebimento de Demandas para ${infoAF.proximoAFStr}
                 </button>
             </div>
         </div>
-        ${!afAtualFechado && !proximoAberto
-            ? `<p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2"><i class="fa-solid fa-circle-info"></i> A abertura do próximo Ano Fiscal só é permitida depois que o orçamento do ${infoAF.afAtualStr} estiver fechado — não é permitido ter dois Anos Fiscais abertos ao mesmo tempo.</p>`
+        ${!podeAbrir && !proximoAberto
+            ? `<p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2"><i class="fa-solid fa-circle-info"></i> A abertura do próximo Ano Fiscal exige: <b>(1)</b> o orçamento do ${infoAF.afAtualStr} fechado, e <b>(2)</b> o Ano Fiscal ${afAnteriorStr || 'anterior'} (em andamento) fechado em <b>Ano Fiscal → Fechamento Ano Fiscal</b>.</p>`
             : ''}
     `;
 }
@@ -176,6 +210,15 @@ async function abrirRecebimentoProximoAF() {
     const { data: configAtual } = await _supabase.from('anos_fiscais_config').select('orcamento_fechado').eq('ano_fiscal', infoAF.afAtualStr).maybeSingle();
     if (!configAtual || !configAtual.orcamento_fechado) {
         return alert(`⛔ O orçamento do ${infoAF.afAtualStr} precisa estar fechado antes de abrir o próximo Ano Fiscal — não é permitido ter dois Anos Fiscais abertos ao mesmo tempo.`);
+    }
+    // NOVO (Fechamento Ano Fiscal): o AF anterior (em andamento) precisa ter
+    // sido fechado. Se não existe linha dele, N/A (segue).
+    const afAnteriorStr = afAnteriorDe(infoAF.afAtualStr);
+    if (afAnteriorStr) {
+        const { data: configAnterior } = await _supabase.from('anos_fiscais_config').select('ano_fiscal_fechado').eq('ano_fiscal', afAnteriorStr).maybeSingle();
+        if (configAnterior && configAnterior.ano_fiscal_fechado !== true) {
+            return alert(`⛔ O Ano Fiscal ${afAnteriorStr} (em andamento) ainda não foi fechado. Feche-o em Ano Fiscal → Fechamento Ano Fiscal antes de abrir o ${infoAF.proximoAFStr}.`);
+        }
     }
     if (statusAnoFiscal(infoAF.proximoAFStr)) {
         return alert(`O ${infoAF.proximoAFStr} já está aberto para recebimento de demandas.`);

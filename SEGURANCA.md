@@ -318,3 +318,33 @@ estrutura paralela).
 - `js/projeto-detalhe/projeto-detalhe.js` — `fechamento_projetos` em
   `PROJETO_DETALHE_ORIGENS`; nova seção "Decisões de Fechamento de Ano Fiscal"
   lendo `fechamento_af_decisoes`.
+
+### Ajuste v2 (2026-09-02) — tela única "Fechamento Ano Fiscal" com 2 abas
+
+Reorganização a pedido do usuário:
+- "Decisão de Fechamento de Projetos" + "Resultado do Ano Fiscal" viram as
+  **2 abas** da tela única **`fechamento_af`**:
+  - `fechamento_af:avaliacao` — "Avaliação e Fechamento Ano Fiscal": o
+    resultado consolidado + o botão **"Fechar Ano Fiscal"**.
+  - `fechamento_af:projetos` — "Avaliação Projetos Fechamento Ano Fiscal":
+    a decisão por projeto (Carryover Desenvolvimento / Carryover Hold /
+    Cancelar / **Reverter**). Substitui a tela **"Projetos Carry Over"**,
+    que deixa de existir.
+- **AF alvo** (o que está sendo encerrado): Q4 → AF em curso; Q1/Q2/Q3 →
+  AF anterior ao em curso. `fechamentoAfTargetAF()` em `js/ano-fiscal/fechamento-af.js`.
+- **Fechamento do ANO FISCAL** (≠ fechamento do ORÇAMENTO):
+  `anos_fiscais_config.ano_fiscal_fechado` + `af_fechado_por/_em/_observacao`
+  + `log_fechamento_ano_fiscal` (RLS off). Pré-condição: nenhum projeto do
+  AF pode estar "em andamento" — todos HOLD, CANCELADO ou carryover.
+- **Abertura Ano Fiscal** (`js/config/ano-fiscal.js`): passa a exigir, além
+  do orçamento do AF corrente fechado, que o **AF anterior** esteja
+  `ano_fiscal_fechado`. `renderAnoFiscalPanel` ganhou o card "Ano Fiscal em
+  Andamento"; `abrirRecebimentoProximoAF` reconfere no clique.
+- SQL: `sql/2026-09-02_fechamento_ano_fiscal_v2.sql` — colunas em
+  `anos_fiscais_config`, `log_fechamento_ano_fiscal`, DELETE das atividades
+  `carry_over` / `fechamento_projetos` / `resultado_af` do catálogo, INSERT
+  de `fechamento_af:avaliacao` / `fechamento_af:projetos` + grants
+  (GOVERNANÇA / GESTOR TI alteram, FINANCEIRO consulta).
+- `TAB_MODULO_MAP`: `fechamento_af: 'WORKFLOW'` (removidos `carry_over`,
+  `fechamento_projetos`, `resultado_af`). `navigation.js`: 1 dispatch
+  (`fechamento_af`) no lugar de 3. `PROJETO_DETALHE_ORIGENS`: `fechamento_af`.

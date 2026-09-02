@@ -1,31 +1,34 @@
 // =========================================================================
 // ano-fiscal/fechamento-projetos.js
-// Épico "Fechamento de Ano Fiscal" — História 1: decisão de fechamento.
+// Aba "Avaliação Projetos Fechamento Ano Fiscal" (tela fechamento_af).
+// Substitui a antiga tela "Projetos Carry Over".
 //
-// Lista todos os projetos em curso (não concluídos) e registra, por
-// projeto, uma de três decisões, reaproveitando a base já usada por
-// Projetos Carry Over:
-//   CONTINUAR -> vira Carryover (mesma gravação de marcarComoCarryover):
-//                is_carryover=true + valor_carryover congelado; o projeto
-//                segue ativo e o saldo entra no pool do próximo AF.
-//   HOLD      -> Carryover + sub_status='HOLD' (também entra no pool,
-//                fica disponível para retomada em "Retomar Projetos em Hold").
-//   CANCELAR  -> cancelamento (sub_status/status='CANCELADO' + resp/dt/motivo),
-//                sem carryover.
-// Toda decisão é logada em fechamento_af_decisoes (usuário, data/hora).
+// Lista os projetos do Ano Fiscal sendo encerrado (fechamentoAfTargetAF())
+// e registra, por projeto, uma decisão de fechamento:
+//   CONTINUAR  -> Carryover Desenvolvimento — vira Carryover (gravação de
+//                 marcarComoCarryover): is_carryover=true + valor_carryover
+//                 congelado; o projeto segue ativo e o saldo entra no pool.
+//   HOLD       -> Carryover Hold — Carryover + sub_status='HOLD' (entra no
+//                 pool e fica retomável em "Retomar Projetos em Hold").
+//   CANCELAR   -> cancelamento (sub_status/status='CANCELADO' + resp/dt/motivo),
+//                 sem carryover.
+//   (Reverter) -> desfaz a decisão anterior enquanto o Ano Fiscal não foi
+//                 fechado.
+// Toda decisão / reversão é logada em fechamento_af_decisoes.
 //
-// Acesso: a tela aparece para quem tem a atividade 'fechamento_projetos'
-// (consulta). Os botões de decisão só para quem pode ALTERAR essa tela
-// (grants: GOVERNANÇA / GESTOR TI) ou Administrador / Proprietário.
+// Permissão de escrita: usuarioPodeAlterar('fechamento_af:projetos')
+// (grants: GOVERNANÇA / GESTOR TI) ou Administrador / Proprietário — e só
+// enquanto o Ano Fiscal alvo não estiver fechado.
 // =========================================================================
 
 let fechamentoDecisoesCache = [];
 let fechamentoAnosFiscaisCfgCache = [];
 
 const FECHAMENTO_DECISAO_LABEL = {
-    CONTINUAR: { txt: 'Continuar', cls: 'bg-emerald-100 text-emerald-800' },
-    HOLD:      { txt: 'Hold',      cls: 'bg-yellow-100 text-yellow-800' },
-    CANCELAR:  { txt: 'Cancelado', cls: 'bg-red-100 text-red-800' }
+    CONTINUAR: { txt: 'Carryover Desenv.', cls: 'bg-emerald-100 text-emerald-800' },
+    HOLD:      { txt: 'Carryover Hold',    cls: 'bg-yellow-100 text-yellow-800' },
+    CANCELAR:  { txt: 'Cancelado',         cls: 'bg-red-100 text-red-800' },
+    REVERTIDO: { txt: 'Revertido',         cls: 'bg-gray-100 text-gray-500' }
 };
 
 function fmtFech(v) {
@@ -51,12 +54,15 @@ async function carregarDecisoesFechamento() {
     fechamentoDecisoesCache = data || [];
 }
 
-function projetosEmCursoFechamento() {
+// Projetos do Ano Fiscal sendo encerrado (inclui os já tratados, para
+// exibir o badge e permitir Reverter).
+function projetosDoFechamentoAf() {
+    const alvo = (typeof fechamentoAfTargetAF === 'function') ? fechamentoAfTargetAF() : null;
     return (projectsData || []).filter(p => {
+        if (alvo && p.ano_fiscal !== alvo) return false;
         if (p.is_subprojeto === true) return false;
         if (p.projeto_concluido === true) return false;
-        const sub = (p.sub_status || '').toUpperCase();
-        if (['CANCELADO', 'REPROVADO'].includes(sub)) return false;
+        if ((p.sub_status || '').toUpperCase() === 'REPROVADO') return false;
         return true;
     });
 }
@@ -72,52 +78,83 @@ async function renderFechamentoProjetosView() {
     const { data: cfg } = await _supabase.from('anos_fiscais_config').select('*');
     fechamentoAnosFiscaisCfgCache = cfg || [];
 
-    let lista = projetosEmCursoFechamento();
+    const alvo = (typeof fechamentoAfTargetAF === 'function') ? fechamentoAfTargetAF() : null;
+    const afFechado = (typeof fechamentoAfJaFechado === 'function') && fechamentoAfJaFechado();
+
+    let lista = projetosDoFechamentoAf();
     if (typeof filtrarProjetosPorArea === 'function') {
-        lista = filtrarProjetosPorArea(lista, 'fechamento_projetos');
+        lista = filtrarProjetosPorArea(lista, 'fechamento_af:projetos');
     }
     lista.sort((a, b) => (a.codigo || '').localeCompare(b.codigo || '', 'pt-BR'));
 
-    // Resumo por decisão
+    // Card do pool de carryover do próximo AF.
+    const elPool = document.getElementById('fechamentoProjetosPoolCard');
+    if (elPool && typeof calcularPoolCarryover === 'function' && typeof proximoAnoFiscal === 'function') {
+        const destino = proximoAnoFiscal(alvo || '');
+        const pool = calcularPoolCarryover(destino);
+        elPool.innerHTML = `
+            <div class="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
+                <h4 class="text-xs font-bold text-orange-800 uppercase mb-2"><i class="fa-solid fa-flag"></i> Saldo do Orçamento Carryover — ${destino || '-'}</h4>
+                <div class="grid grid-cols-3 gap-3">
+                    <div><span class="text-[10px] font-bold text-orange-600 uppercase block">Total (${pool.qtd} projeto(s))</span><div class="text-lg font-extrabold text-orange-800">${fmtFech(pool.total)}</div></div>
+                    <div><span class="text-[10px] font-bold text-orange-600 uppercase block">CAPEX</span><div class="text-sm font-bold text-orange-800">${fmtFech(pool.capex)}</div></div>
+                    <div><span class="text-[10px] font-bold text-orange-600 uppercase block">OPEX</span><div class="text-sm font-bold text-orange-800">${fmtFech(pool.opex)}</div></div>
+                </div>
+            </div>`;
+    }
+
+    // Resumo por situação (estado real do projeto).
+    const est = p => {
+        const s = (p.sub_status || '').toUpperCase();
+        if (s === 'CANCELADO') return 'CANCELAR';
+        if (s === 'HOLD') return 'HOLD';
+        if (p.is_carryover === true) return 'CONTINUAR';
+        return 'SEM';
+    };
     const resumo = { CONTINUAR: 0, HOLD: 0, CANCELAR: 0, SEM: 0 };
-    lista.forEach(p => {
-        const d = decisaoAtualFechamento(p.codigo);
-        resumo[d ? d.decisao : 'SEM']++;
-    });
+    lista.forEach(p => { resumo[est(p)]++; });
     const elResumo = document.getElementById('fechamentoProjetosResumo');
     if (elResumo) {
         const chip = (rot, n, cls) => `<span class="px-3 py-1.5 rounded-lg text-xs font-bold ${cls}">${rot}: ${n}</span>`;
         elResumo.innerHTML =
-            chip('Em curso', lista.length, 'bg-slate-100 text-slate-700') +
-            chip('Continuar', resumo.CONTINUAR, 'bg-emerald-100 text-emerald-800') +
-            chip('Hold', resumo.HOLD, 'bg-yellow-100 text-yellow-800') +
-            chip('Cancelar', resumo.CANCELAR, 'bg-red-100 text-red-800') +
-            chip('Sem decisão', resumo.SEM, 'bg-gray-100 text-gray-500');
+            chip(`Projetos ${alvo || ''}`.trim(), lista.length, 'bg-slate-100 text-slate-700') +
+            chip('Carryover Desenv.', resumo.CONTINUAR, 'bg-emerald-100 text-emerald-800') +
+            chip('Carryover Hold', resumo.HOLD, 'bg-yellow-100 text-yellow-800') +
+            chip('Cancelados', resumo.CANCELAR, 'bg-red-100 text-red-800') +
+            chip('Em andamento (pendente)', resumo.SEM, 'bg-gray-100 text-gray-500');
     }
 
     if (lista.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-gray-400 font-bold">Nenhum projeto em curso para tratar.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="p-4 text-center text-gray-400 font-bold">Nenhum projeto do ${alvo || 'Ano Fiscal'} para tratar.</td></tr>`;
         return;
     }
 
-    const podeDecidir = (typeof usuarioPodeAlterarTela === 'function') && usuarioPodeAlterarTela('fechamento_projetos');
+    const podeDecidir = (typeof usuarioPodeAlterar === 'function') && usuarioPodeAlterar('fechamento_af:projetos') && !afFechado;
 
     tbody.innerHTML = lista.map(p => {
         const saldo = (typeof calcularValorCarryover === 'function') ? calcularValorCarryover(p) : 0;
         const orcAtual = Number(p.val_tech) || Number(p.val_req) || Number(p.val_bc) || Number(p.previsto) || 0;
-        const d = decisaoAtualFechamento(p.codigo);
-        const badge = d && FECHAMENTO_DECISAO_LABEL[d.decisao]
-            ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold ${FECHAMENTO_DECISAO_LABEL[d.decisao].cls}">${FECHAMENTO_DECISAO_LABEL[d.decisao].txt}</span>`
+        const situ = est(p);
+        const badge = FECHAMENTO_DECISAO_LABEL[situ]
+            ? `<span class="px-2 py-0.5 rounded text-[10px] font-bold ${FECHAMENTO_DECISAO_LABEL[situ].cls}">${FECHAMENTO_DECISAO_LABEL[situ].txt}</span>`
             : '<span class="text-gray-400 text-[10px] font-bold">—</span>';
         const prodTxt = (typeof nomeProdutoPorId === 'function' && p.produto_id) ? escapeHtml(nomeProdutoPorId(p.produto_id)) : '-';
-        const acoes = podeDecidir ? `
-            <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','CONTINUAR')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2 py-1 rounded">Continuar</button>
-            <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','HOLD')" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-[10px] px-2 py-1 rounded">Hold</button>
-            <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','CANCELAR')" class="bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] px-2 py-1 rounded">Cancelar</button>`
-            : '<span class="text-gray-400 text-[10px] italic">somente consulta</span>';
+        let acoes;
+        if (!podeDecidir) {
+            acoes = afFechado
+                ? '<span class="text-gray-400 text-[10px] italic">AF fechado</span>'
+                : '<span class="text-gray-400 text-[10px] italic">somente consulta</span>';
+        } else if (situ === 'SEM') {
+            acoes = `
+                <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','CONTINUAR')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2 py-1 rounded">Carryover Desenv.</button>
+                <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','HOLD')" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-[10px] px-2 py-1 rounded">Carryover Hold</button>
+                <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','CANCELAR')" class="bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] px-2 py-1 rounded">Cancelar</button>`;
+        } else {
+            acoes = `<button onclick="reverterDecisaoFechamento('${escapeJsAttr(p.codigo)}')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold text-[10px] px-2 py-1 rounded"><i class="fa-solid fa-rotate-left"></i> Reverter</button>`;
+        }
         return `
             <tr>
-                <td class="p-2"><button onclick="abrirDetalheProjeto('${escapeJsAttr(p.codigo)}','fechamento_projetos')" class="font-mono font-bold text-red-700 hover:underline">${escapeHtml(p.codigo)}</button></td>
+                <td class="p-2"><button onclick="abrirDetalheProjeto('${escapeJsAttr(p.codigo)}','fechamento_af')" class="font-mono font-bold text-red-700 hover:underline">${escapeHtml(p.codigo)}</button></td>
                 <td class="p-2 font-semibold">${escapeHtml(p.nome)}</td>
                 <td class="p-2 font-mono">${p.ano_fiscal || '-'}</td>
                 <td class="p-2">${escapeHtml(p.area) || '-'}</td>
@@ -138,8 +175,8 @@ function abrirModalDecisaoFechamento(codigo, tipo) {
     document.getElementById('fechDecisaoCodigo').value = codigo;
     document.getElementById('fechDecisaoTipo').value = tipo;
     const titulos = {
-        CONTINUAR: 'Continuar no próximo Ano Fiscal',
-        HOLD: 'Colocar em Hold (carryover)',
+        CONTINUAR: 'Carryover Desenvolvimento',
+        HOLD: 'Carryover Hold',
         CANCELAR: 'Cancelar projeto'
     };
     const saldo = (typeof calcularValorCarryover === 'function') ? calcularValorCarryover(p) : 0;
@@ -158,8 +195,11 @@ function fecharModalDecisaoFechamento() {
 }
 
 async function confirmarDecisaoFechamento() {
-    if (!(typeof usuarioPodeAlterarTela === 'function' && usuarioPodeAlterarTela('fechamento_projetos'))) {
+    if (!(typeof usuarioPodeAlterar === 'function' && usuarioPodeAlterar('fechamento_af:projetos'))) {
         return alert('Você não tem permissão para registrar decisões de fechamento.');
+    }
+    if (typeof fechamentoAfJaFechado === 'function' && fechamentoAfJaFechado()) {
+        return alert('O Ano Fiscal já foi fechado — não é possível registrar decisões.');
     }
     const codigo = document.getElementById('fechDecisaoCodigo').value;
     const tipo = document.getElementById('fechDecisaoTipo').value;
@@ -192,7 +232,7 @@ async function confirmarDecisaoFechamento() {
             payload.sub_status_antes_hold = p.sub_status || null;
             payload.tradeoff_por = quem;
             payload.tradeoff_em = agora;
-            payload.tradeoff_observacao = obs || 'Colocado em Hold no fechamento do Ano Fiscal.';
+            payload.tradeoff_observacao = obs || 'Colocado em Carryover Hold no fechamento do Ano Fiscal.';
         }
     } else {
         payload = {
@@ -211,16 +251,14 @@ async function confirmarDecisaoFechamento() {
     }
 
     const confirmMsg = {
-        CONTINUAR: `Confirmar CONTINUAR "${codigo}" no próximo Ano Fiscal?\n\nO projeto segue ativo e o saldo de ${fmtFech(saldo)} entra no pool de carryover.`,
-        HOLD: `Confirmar HOLD de "${codigo}"?\n\nO projeto é suspenso (some das telas operacionais, retomável em "Retomar Projetos em Hold") e o saldo de ${fmtFech(saldo)} entra no pool de carryover.`,
+        CONTINUAR: `Confirmar CARRYOVER DESENVOLVIMENTO de "${codigo}"?\n\nO projeto segue ativo e o saldo de ${fmtFech(saldo)} entra no pool de carryover do próximo Ano Fiscal.`,
+        HOLD: `Confirmar CARRYOVER HOLD de "${codigo}"?\n\nO projeto é suspenso (some das telas operacionais, retomável em "Retomar Projetos em Hold") e o saldo de ${fmtFech(saldo)} entra no pool de carryover.`,
         CANCELAR: `Confirmar CANCELAMENTO de "${codigo}"?\n\nEncerramento definitivo, sem continuidade orçamentária.`
     }[tipo];
     if (!confirm(confirmMsg)) return;
 
     const { error } = await _supabase.from('projetos').update(payload).eq('codigo', codigo);
     if (error) return alert('Erro ao aplicar a decisão: ' + error.message);
-
-    // espelha em memória
     Object.assign(p, payload);
 
     const { error: errLog } = await _supabase.from('fechamento_af_decisoes').insert([{
@@ -236,7 +274,73 @@ async function confirmarDecisaoFechamento() {
     fecharModalDecisaoFechamento();
     alert('✅ Decisão registrada.');
     if (typeof loadProjects === 'function') await loadProjects();
-    await renderFechamentoProjetosView();
+    if (typeof renderFechamentoAfView === 'function') await renderFechamentoAfView();
+    else await renderFechamentoProjetosView();
+}
+
+async function reverterDecisaoFechamento(codigo) {
+    if (!(typeof usuarioPodeAlterar === 'function' && usuarioPodeAlterar('fechamento_af:projetos'))) {
+        return alert('Você não tem permissão para reverter decisões de fechamento.');
+    }
+    if (typeof fechamentoAfJaFechado === 'function' && fechamentoAfJaFechado()) {
+        return alert('O Ano Fiscal já foi fechado — não é possível reverter decisões.');
+    }
+    const p = (projectsData || []).find(x => x.codigo === codigo);
+    if (!p) return;
+    const s = (p.sub_status || '').toUpperCase();
+    const eraCancelado = s === 'CANCELADO';
+    const eraHold = s === 'HOLD';
+    const eraCarryover = p.is_carryover === true;
+    if (!eraCancelado && !eraHold && !eraCarryover) return alert('Este projeto não tem decisão de fechamento para reverter.');
+
+    if (!confirm(`Reverter a decisão de fechamento de "${codigo}"?\n\nO projeto volta a contar como "em andamento" e precisará de nova decisão antes de fechar o Ano Fiscal.`)) return;
+
+    let payload = {
+        is_carryover: false,
+        valor_carryover: null,
+        carryover_marcado_por: null,
+        carryover_marcado_em: null,
+        carryover_etapa_marcacao: null,
+        carryover_sub_status_marcacao: null
+    };
+    let decisaoRevertida;
+    if (eraCancelado) {
+        decisaoRevertida = 'CANCELAR';
+        payload.sub_status = p.sub_status_antes_hold || 'A PLANEJAR';
+        payload.status = 'EM ANDAMENTO';
+        payload.resp_cancelamento = null;
+        payload.dt_cancelamento = null;
+        payload.motivo_cancelamento = null;
+    } else if (eraHold) {
+        decisaoRevertida = 'HOLD';
+        payload.sub_status = p.sub_status_antes_hold || 'A PLANEJAR';
+        payload.sub_status_antes_hold = null;
+        payload.tradeoff_por = null;
+        payload.tradeoff_em = null;
+        payload.tradeoff_observacao = null;
+    } else {
+        decisaoRevertida = 'CONTINUAR';
+    }
+
+    const { error } = await _supabase.from('projetos').update(payload).eq('codigo', codigo);
+    if (error) return alert('Erro ao reverter a decisão: ' + error.message);
+    Object.assign(p, payload);
+
+    const quem = currentUser ? currentUser.nome : 'desconhecido';
+    const { error: errLog } = await _supabase.from('fechamento_af_decisoes').insert([{
+        ano_fiscal: p.ano_fiscal || null,
+        projeto_codigo: codigo,
+        decisao: 'REVERTIDO',
+        valor_remanescente: 0,
+        observacao: `Revertida a decisão anterior: ${decisaoRevertida}`,
+        decidido_por: quem
+    }]);
+    if (errLog) console.error('Reversão aplicada, mas houve erro ao gravar o log:', errLog.message);
+
+    alert('✅ Decisão revertida.');
+    if (typeof loadProjects === 'function') await loadProjects();
+    if (typeof renderFechamentoAfView === 'function') await renderFechamentoAfView();
+    else await renderFechamentoProjetosView();
 }
 
 // Carrega só o cache do log (para a tela de Detalhe do Projeto).
