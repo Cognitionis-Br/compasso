@@ -6,6 +6,10 @@ _claude_test_*.html
 Thumbs.db
 *.swp
 
+# Ad-hoc exports from the Supabase SQL Editor ("Supabase Snippet ....csv") —
+# throwaway query dumps, not project data.
+Supabase Snippet*.csv
+
 # Local secrets, if ever introduced (none committed today — provider keys
 # live as Netlify environment variables, not files in this repo).
 .env
