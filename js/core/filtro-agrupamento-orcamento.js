@@ -181,6 +181,22 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
     const carry   = lista.filter(p => p.is_carryover === true);
     const oficial = ativos.filter(p => p.is_adhoc !== true && p.is_carryover !== true);
 
+    // NOVO (a pedido do usuário): a 1ª linha ("Total de Projetos para Gerar
+    // Orçamento") conta SÓ os projetos que efetivamente compõem o orçamento
+    // do Ano Fiscal em andamento — não as demandas ainda paradas em
+    // Business Case sem orçamento definido. Compõem: carryover; demandas
+    // Extraordinárias já incluídas (fora do BC); e projetos normais que já
+    // saíram do BC ou que já foram APROVADOS no comitê.
+    const compoeOrcamentoAF = p => {
+        if (inativo(p)) return false;
+        if (p.is_carryover === true) return true;
+        const etapa = (p.etapa_atual || 'BUSINESS CASE').toUpperCase();
+        if (etapa !== 'BUSINESS CASE') return true;
+        return (p.sub_status || '').toUpperCase() === 'APROVADO';
+    };
+    const projetosOrcamento = lista.filter(compoeOrcamentoAF);
+    const contarTipoEm = (arr, t) => arr.filter(p => (p.tipo_orcamento || '').toUpperCase() === t).length;
+
     const fechado   = calcularCapexOpex(oficial);
     const extra     = calcularCapexOpex(adhoc);
     const carryv    = calcularCapexOpex(carry, p => Number(p.valor_carryover) || 0);
@@ -232,7 +248,7 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
                     <th class="p-2 text-right text-purple-700">OPEX</th>
                 </tr></thead>
                 <tbody class="divide-y divide-gray-100">
-                    ${linha('Total de Projetos', lista.length, contarTipo('CAPEX'), contarTipo('OPEX'), { contagem: true, ac: 'border-l-gray-300' })}
+                    ${linha('Total de Projetos para Gerar Orçamento', projetosOrcamento.length, contarTipoEm(projetosOrcamento, 'CAPEX'), contarTipoEm(projetosOrcamento, 'OPEX'), { contagem: true, ac: 'border-l-gray-300' })}
                     ${linha('Orçamento Fechado', linhas.fechadoCx + linhas.fechadoOx, linhas.fechadoCx, linhas.fechadoOx, { ac: 'border-l-slate-400' })}
                     ${linha('Orçamento Projetos Extraordinário', linhas.extraCx + linhas.extraOx, linhas.extraCx, linhas.extraOx, { ac: 'border-l-amber-400' })}
                     ${linha('Orçamento Carry Over', linhas.carryCx + linhas.carryOx, linhas.carryCx, linhas.carryOx, { ac: 'border-l-orange-400' })}

@@ -25,6 +25,16 @@ const PROJETO_DETALHE_ORIGENS = {
     mudanca_orcamento: { tab: 'mudanca_orcamento', texto: 'Voltar à Mudança de Orçamento' }
 };
 
+// NOVO (a pedido do usuário): linha "RÓTULO : valor" com rótulo em
+// maiúsculas e largura fixa, para o cabeçalho do detalhamento ficar
+// alinhado (efeito de "dois-pontos alinhados" do mock enviado).
+function linhaDetalhe(rotulo, valor) {
+    return `<div class="flex gap-2">
+        <span class="font-bold text-gray-500 uppercase text-[11px] w-44 shrink-0">${rotulo}</span>
+        <span class="text-[12px] text-gray-800 break-words min-w-0">${valor}</span>
+    </div>`;
+}
+
 async function abrirDetalheProjeto(codigo, origem) {
     projetoDetalheOrigemTab = PROJETO_DETALHE_ORIGENS[origem] ? origem : 'dashboard';
     switchTab('projeto_detalhe');
@@ -93,6 +103,13 @@ async function renderDetalheProjeto(codigo) {
         const { data: ini } = await _supabase.from('iniciativas_estrategicas').select('*').eq('id', p.iniciativa_estrategica_id).maybeSingle();
         if (ini) iniciativaTexto = ini.nome;
     }
+    // NOVO (a pedido do usuário): Produto passa a ser exibido no cabeçalho
+    // do detalhamento — o projeto só guarda produto_id.
+    let produtoTexto = '-';
+    if (p.produto_id) {
+        const { data: prod } = await _supabase.from('produtos').select('codigo, nome').eq('id', p.produto_id).maybeSingle();
+        if (prod) produtoTexto = prod.nome || prod.codigo || '-';
+    }
 
     // NOVO (Key Results / Benefit Results): busca as linhas do quadro de
     // Benefit Results da demanda (Tabela 1: js/tipos-projeto/return-benefit.js)
@@ -150,33 +167,49 @@ async function renderDetalheProjeto(codigo) {
     container.innerHTML = `
         ${p.bloqueado_mudanca_orcamento ? renderSecaoMudancaOrcamentoDetalhe(p) : ''}
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <div class="flex justify-between items-start mb-4 border-b pb-4">
-                <div>
-                    <div class="flex items-center gap-2 mb-1">
+            <div class="flex justify-between items-start mb-4 border-b pb-4 gap-4">
+                <div class="flex-1 min-w-0 text-[12px] leading-relaxed">
+                    <div class="text-[11px] font-bold text-gray-500 uppercase">Ano Fiscal: <span class="text-gray-800">${p.ano_fiscal || '-'}</span></div>
+                    <div class="flex flex-wrap items-center gap-2 mt-0.5">
                         <span class="font-mono font-bold text-red-700 text-lg">${p.codigo}</span>
+                        <span class="text-lg font-bold text-gray-800 truncate">${escapeHtml(p.nome)}</span>
                         ${p.is_adhoc ? '<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Extraordinário</span>' : ''}
                         ${p.is_carryover ? '<span class="bg-orange-100 text-orange-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Carryover</span>' : ''}
                         ${p.qtd_reprovacoes > 0 ? `<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">${p.qtd_reprovacoes}x Reprovado</span>` : ''}
                         ${p.bloqueado_mudanca_orcamento ? `<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Mudança de Orçamento</span>` : ''}
                     </div>
-                    <h2 class="text-xl font-bold text-gray-800">${escapeHtml(p.nome)}</h2>
-                    <div class="text-xs text-gray-500 mt-1">Área: <b>${p.area || '-'}</b> · Porte: <b>${p.tamanho || '-'}</b> (${horasAtuaisDoProjeto(p)}h) · Qualificação: <b>${(p.tipo_qualificacao || '-').toUpperCase()}</b> · Ano Fiscal: <b>${p.ano_fiscal || '-'}</b></div>
-                    <div class="text-xs text-gray-500 mt-1">Solicitante: <b>${escapeHtml(p.pessoa_solicitante) || '-'}</b> · Formalizado em: <b>${p.data_solicitacao || '-'}</b></div>
-                    <div class="text-xs text-gray-500 mt-1">Tipo de Projeto: <b>${escapeHtml(tipoProjetoTexto)}</b></div>
-                    <div class="text-xs text-gray-500 mt-1">Pilar Estratégico: <b>${escapeHtml(pilarTexto)}</b> · Iniciativa Estratégica: <b>${escapeHtml(iniciativaTexto)}</b></div>
-                    <div class="text-xs text-gray-500 mt-1">Objetivo: <b>${escapeHtml(p.objetivo) || '-'}</b></div>
-                    <div class="text-xs text-gray-500 mt-1">Key Results: <b>${escapeHtml(p.key_results) || '-'}</b></div>
-                    <div class="text-xs text-gray-600 mt-2 bg-gray-50 rounded p-2 max-w-xl">
-                        <b class="text-gray-500 uppercase text-[10px] block mb-1">Benefit Results</b>
+                    <div class="text-[11px] font-bold text-gray-500 uppercase mt-0.5">Formalizado em: <span class="text-gray-800">${p.data_solicitacao || '-'}</span></div>
+                    ${linhaDetalhe('Objetivo', escapeHtml(p.objetivo) || '-')}
+
+                    <hr class="my-2 border-gray-200">
+                    ${linhaDetalhe('Produto', escapeHtml(produtoTexto))}
+                    ${linhaDetalhe('Área Solicitante', p.area || '-')}
+                    ${linhaDetalhe('Solicitante', escapeHtml(p.pessoa_solicitante) || '-')}
+                    ${linhaDetalhe('Pilar Estratégico', escapeHtml(pilarTexto))}
+                    ${linhaDetalhe('Iniciativa Estratégica', escapeHtml(iniciativaTexto))}
+
+                    <hr class="my-2 border-gray-200">
+                    <div class="flex flex-wrap gap-x-8">
+                        ${linhaDetalhe('Porte', `${p.tamanho || '-'} (${horasAtuaisDoProjeto(p)}h)`)}
+                        ${linhaDetalhe('Qualificação', (p.tipo_qualificacao || '-').toUpperCase())}
+                    </div>
+                    ${linhaDetalhe('Tipo de Projeto', escapeHtml(tipoProjetoTexto))}
+
+                    <hr class="my-2 border-gray-200">
+                    ${linhaDetalhe('Key Results', escapeHtml(p.key_results) || '-')}
+                    <div class="mt-1 text-[11px] font-bold text-gray-500 uppercase">Benefícios / Resultados:</div>
+                    <div class="text-[12px] text-gray-800 pl-1">
                         ${beneficiosDoProjeto.length === 0
-                            ? '<div class="italic text-gray-400">Nenhum Benefit Result cadastrado</div>'
+                            ? '<span class="italic text-gray-400">Nenhum benefício cadastrado</span>'
                             : beneficiosDoProjeto.map(b => `
-                                <div>${escapeHtml((b.tipos_return_benefit || {}).nome) || '-'}${b.metrica ? ` — <b>${escapeHtml(b.metrica)}</b>: R$ ${Number(b.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}</div>
+                                <div>${(escapeHtml((b.tipos_return_benefit || {}).nome) || '-').toUpperCase()}${b.metrica ? ` — ${escapeHtml(b.metrica)}: R$ ${Number(b.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}</div>
                             `).join('')}
                     </div>
-                    ${p.descricao_projeto ? `<div class="text-xs text-gray-600 mt-2 bg-gray-50 rounded p-2 max-w-xl"><b class="text-gray-500 uppercase text-[10px] block">Descrição do Projeto</b>${escapeHtml(p.descricao_projeto)}</div>` : ''}
+                    ${p.descricao_projeto ? `
+                    <div class="mt-2 text-[11px] font-bold text-gray-500 uppercase">Descrição do Projeto:</div>
+                    <div class="text-[12px] text-gray-700 whitespace-pre-line bg-gray-50 rounded p-2 mt-0.5 max-w-2xl">${escapeHtml(p.descricao_projeto)}</div>` : ''}
                 </div>
-                <div class="text-right">
+                <div class="text-right shrink-0">
                     <span class="text-[10px] font-bold text-gray-400 uppercase block">Fase / Status</span>
                     <span class="text-sm font-bold text-gray-800">${p.etapa_atual || 'BUSINESS CASE'}</span>
                     <span class="text-xs text-gray-500 block">${p.sub_status || '-'}</span>

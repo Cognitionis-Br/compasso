@@ -402,18 +402,22 @@ async function renderBlocosCriacaoEPortfolioFY(listaFiltrada) {
         const paraValidar = emBC.filter(p => p.sub_status === 'ORÇAMENTO REALIZADO');
         const aprovados = emBC.filter(p => p.sub_status === 'APROVADO');
         const reprovados = emBC.filter(p => p.sub_status === 'REPROVADO');
-        return { paraOrcar, paraValidar, aprovados, reprovados };
+        // NOVO (a pedido do usuário): demandas canceladas ainda na fase de
+        // Business Case — 5ª categoria, disjunta das outras 4.
+        const cancelados = emBC.filter(p => (p.sub_status || '').toUpperCase() === 'CANCELADO');
+        return { paraOrcar, paraValidar, aprovados, reprovados, cancelados };
     };
 
     // ---- Bloco 1 — demandas normais ----
     if (elBody1) {
         const f = calcularFunilBC(false);
-        const total1 = f.paraOrcar.length + f.paraValidar.length + f.aprovados.length + f.reprovados.length;
+        const total1 = f.paraOrcar.length + f.paraValidar.length + f.aprovados.length + f.reprovados.length + f.cancelados.length;
         elBody1.innerHTML =
             linha('Total de Projetos para gerar orçamento', f.paraOrcar.length, 'bg-blue-50 text-blue-800') +
             linha('Total de projetos para validar orçamento (aprovar/reprovar/reanalisar)', f.paraValidar.length, 'bg-amber-50 text-amber-800') +
             linha('Total de Projetos Aprovados', f.aprovados.length, 'bg-emerald-50 text-emerald-800') +
-            linha('Total de Projetos Reprovados', f.reprovados.length, 'bg-red-50 text-red-800');
+            linha('Total de Projetos Reprovados', f.reprovados.length, 'bg-red-50 text-red-800') +
+            linha('Total de Projetos Cancelados', f.cancelados.length, 'bg-gray-100 text-gray-600');
         const elTotal1 = document.getElementById('tableCriacaoFYTotal');
         if (elTotal1) elTotal1.innerHTML = linhaTotal(total1);
     }
