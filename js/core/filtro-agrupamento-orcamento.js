@@ -232,12 +232,12 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
         const dinheiro = opt.contagem !== true;
         const corValor = v => opt.sinal ? (v < 0 ? 'text-red-700' : 'text-emerald-700') : '';
         const tdV = (v, extra = '') => `<td class="p-2 text-right font-mono tabular-nums ${extra} ${dinheiro ? corValor(v) : 'text-gray-900'}">${dinheiro ? fmt(v) : v}</td>`;
+        const tdVazio = () => `<td class="p-2 text-right font-mono text-gray-300">—</td>`;
         return `
         <tr class="${opt.forte ? 'bg-slate-50 font-bold' : ''}">
             <td class="p-2 pl-3 uppercase text-[11px] tracking-wide font-bold text-gray-600 border-l-4 ${opt.ac || 'border-l-transparent'}">${rot}</td>
             ${tdV(tot, opt.forte ? 'font-extrabold text-gray-900' : 'font-bold')}
-            ${tdV(cx, 'text-blue-800')}
-            ${tdV(ox, 'text-purple-800')}
+            ${opt.semQuebra ? tdVazio() + tdVazio() : tdV(cx, 'text-blue-800') + tdV(ox, 'text-purple-800')}
         </tr>`;
     };
 
@@ -256,7 +256,7 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
                     <th class="p-2 text-right text-purple-700">OPEX</th>
                 </tr></thead>
                 <tbody class="divide-y divide-gray-100">
-                    ${linha('Total de Projetos para Gerar Orçamento', paraGerarOrcamento.length, contarTipoEm(paraGerarOrcamento, 'CAPEX'), contarTipoEm(paraGerarOrcamento, 'OPEX'), { contagem: true, ac: 'border-l-blue-300' })}
+                    ${linha('Total de Projetos para Gerar Orçamento', paraGerarOrcamento.length, 0, 0, { contagem: true, semQuebra: true, ac: 'border-l-blue-300' })}
                     ${linha('Total de Projetos com Orçamento', projetosOrcamento.length, contarTipoEm(projetosOrcamento, 'CAPEX'), contarTipoEm(projetosOrcamento, 'OPEX'), { contagem: true, ac: 'border-l-gray-300' })}
                     ${linha('Orçamento Fechado', linhas.fechadoCx + linhas.fechadoOx, linhas.fechadoCx, linhas.fechadoOx, { ac: 'border-l-slate-400' })}
                     ${linha('Orçamento Projetos Extraordinário', linhas.extraCx + linhas.extraOx, linhas.extraCx, linhas.extraOx, { ac: 'border-l-amber-400' })}

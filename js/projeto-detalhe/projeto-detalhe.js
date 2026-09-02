@@ -30,7 +30,7 @@ const PROJETO_DETALHE_ORIGENS = {
 // alinhado (efeito de "dois-pontos alinhados" do mock enviado).
 function linhaDetalhe(rotulo, valor) {
     return `<div class="flex gap-2">
-        <span class="font-bold text-gray-500 uppercase text-[11px] w-44 shrink-0">${rotulo}</span>
+        <span class="font-bold text-blue-700 uppercase text-[11px] w-44 shrink-0">${rotulo}</span>
         <span class="text-[12px] text-gray-800 break-words min-w-0">${valor}</span>
     </div>`;
 }
@@ -169,7 +169,7 @@ async function renderDetalheProjeto(codigo) {
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
             <div class="flex justify-between items-start mb-4 border-b pb-4 gap-4">
                 <div class="flex-1 min-w-0 text-[12px] leading-relaxed">
-                    <div class="text-[11px] font-bold text-gray-500 uppercase">Ano Fiscal: <span class="text-gray-800">${p.ano_fiscal || '-'}</span></div>
+                    <div class="text-[11px] font-bold text-blue-700 uppercase">Ano Fiscal: <span class="text-gray-800">${p.ano_fiscal || '-'}</span></div>
                     <div class="flex flex-wrap items-center gap-2 mt-0.5">
                         <span class="font-mono font-bold text-red-700 text-lg">${p.codigo}</span>
                         <span class="text-lg font-bold text-gray-800 truncate">${escapeHtml(p.nome)}</span>
@@ -178,7 +178,7 @@ async function renderDetalheProjeto(codigo) {
                         ${p.qtd_reprovacoes > 0 ? `<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">${p.qtd_reprovacoes}x Reprovado</span>` : ''}
                         ${p.bloqueado_mudanca_orcamento ? `<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Mudança de Orçamento</span>` : ''}
                     </div>
-                    <div class="text-[11px] font-bold text-gray-500 uppercase mt-0.5">Formalizado em: <span class="text-gray-800">${p.data_solicitacao || '-'}</span></div>
+                    <div class="text-[11px] font-bold text-blue-700 uppercase mt-0.5">Formalizado em: <span class="text-gray-800">${p.data_solicitacao || '-'}</span></div>
                     ${linhaDetalhe('Objetivo', escapeHtml(p.objetivo) || '-')}
 
                     <hr class="my-2 border-gray-200">
@@ -197,7 +197,7 @@ async function renderDetalheProjeto(codigo) {
 
                     <hr class="my-2 border-gray-200">
                     ${linhaDetalhe('Key Results', escapeHtml(p.key_results) || '-')}
-                    <div class="mt-1 text-[11px] font-bold text-gray-500 uppercase">Benefícios / Resultados:</div>
+                    <div class="mt-1 text-[11px] font-bold text-blue-700 uppercase">Benefícios / Resultados:</div>
                     <div class="text-[12px] text-gray-800 pl-1">
                         ${beneficiosDoProjeto.length === 0
                             ? '<span class="italic text-gray-400">Nenhum benefício cadastrado</span>'
@@ -206,7 +206,7 @@ async function renderDetalheProjeto(codigo) {
                             `).join('')}
                     </div>
                     ${p.descricao_projeto ? `
-                    <div class="mt-2 text-[11px] font-bold text-gray-500 uppercase">Descrição do Projeto:</div>
+                    <div class="mt-2 text-[11px] font-bold text-blue-700 uppercase">Descrição do Projeto:</div>
                     <div class="text-[12px] text-gray-700 whitespace-pre-line bg-gray-50 rounded p-2 mt-0.5 max-w-2xl">${escapeHtml(p.descricao_projeto)}</div>` : ''}
                 </div>
                 <div class="text-right shrink-0">
