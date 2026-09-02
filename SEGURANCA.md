@@ -348,3 +348,27 @@ Reorganização a pedido do usuário:
 - `TAB_MODULO_MAP`: `fechamento_af: 'WORKFLOW'` (removidos `carry_over`,
   `fechamento_projetos`, `resultado_af`). `navigation.js`: 1 dispatch
   (`fechamento_af`) no lugar de 3. `PROJETO_DETALHE_ORIGENS`: `fechamento_af`.
+
+---
+
+## Correção — Go-Live: Termo de Aceite obrigatório antes da Conclusão (2026-09-02)
+
+Bug reportado pelo usuário: um projeto no Go-Live, ao registrar 100% de
+evolução, migrava direto para a Conclusão **sem** Termo de Aceite; e a tela
+de Termo de Aceite oferecia a ação **antes** dos 100%.
+
+- **`js/phases/generic-workflow-ui.js`** (auto-avanço de fase): quando a
+  etapa concluída em 100% é a **última do fluxo** (Go-Live, sem próxima
+  etapa global), o projeto **não** vai mais para `etapa_atual='CONCLUIDO'` /
+  `sub_status='CONCLUIDO'`. Passa a ficar `etapa_atual='GOLIVE'` +
+  `sub_status='PENDENTE TERMO DE ACEITE'`. A baixa final continua sendo só
+  pela tela "Concluir Projeto/Subprojeto" (`js/conclusao/conclusao-projeto.js`),
+  que já exige Termo de Aceite registrado + zero ocorrências de erro abertas.
+- **`js/golive/golive-termo-aceite.js`**: novo helper `goliveEtapaConcluida(codigo)`
+  (etapa EXECUTAR (GO-LIVE) com `situacao='EXECUCAO_CONCLUIDO'`).
+  `abrirModalGoliveTermoAceite` inclui `!goliveConcluido` em `bloqueado`
+  (campos + botão Salvar escondidos) e mostra o aviso
+  `#termoAceiteAvisoEvolucao`. `salvarGoliveTermoAceite` reconfere (defesa em
+  profundidade). `renderListaGoliveTermoAceite` troca o botão "Abrir Termo"
+  por "Aguardando 100%" enquanto a evolução não fechar.
+- **`index.html`**: novo aviso `#termoAceiteAvisoEvolucao` no modal do Termo.

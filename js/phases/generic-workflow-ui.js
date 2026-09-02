@@ -1153,25 +1153,34 @@ async function confirmarEvolucaoGenerica() {
             const idxAtual = ativasGlobal.findIndex(e => e.id === etapa.id);
             const proximaEtapaGlobal = (idxAtual >= 0 && idxAtual < ativasGlobal.length - 1) ? ativasGlobal[idxAtual + 1] : null;
 
-            const novoEtapaAtual = proximaEtapaGlobal ? proximaEtapaGlobal.fase : 'CONCLUIDO';
-
-            // NOVO (a pedido do usuário 25/08/2026): ao entrar em UAT ou
-            // Go-Live, o plano já pode existir (herdado de "Planejar
-            // Execução") — nesse caso o projeto não está "a planejar", está
-            // "a ratificar". Consulta pontual porque o cache
-            // projetoEtapasData está carregado pra etapa ATUAL aqui, não
-            // pra próxima (ver obterProjetoEtapa/loadProjetoEtapasPorNomeEtapa
-            // logo acima neste arquivo).
-            let subStatusAvanco = proximaEtapaGlobal ? 'A PLANEJAR' : 'CONCLUIDO';
-            if (proximaEtapaGlobal && (proximaEtapaGlobal.fase === 'UAT' || proximaEtapaGlobal.fase === 'GOLIVE')) {
-                const { data: planoHerdado } = await _supabase.from('projeto_etapas').select('id').eq('projeto_codigo', codigoProjeto).eq('etapa_id', proximaEtapaGlobal.id).maybeSingle();
-                if (planoHerdado) subStatusAvanco = 'A RATIFICAR';
+            let payloadAvanco;
+            if (!proximaEtapaGlobal) {
+                // CORRIGIDO (a pedido do usuário 02/09/2026 — bug reportado):
+                // a ÚLTIMA fase do fluxo (Go-Live) concluída em 100% NÃO
+                // migra sozinha para "Concluído". O projeto fica PENDENTE
+                // DE TERMO DE ACEITE (etapa_atual continua 'GOLIVE') e só
+                // vai para a Conclusão pela tela "Concluir Projeto/
+                // Subprojeto", que exige o Termo de Aceite registrado +
+                // zero ocorrências de erro abertas.
+                payloadAvanco = { sub_status: 'PENDENTE TERMO DE ACEITE' };
+            } else {
+                // NOVO (a pedido do usuário 25/08/2026): ao entrar em UAT ou
+                // Go-Live, o plano já pode existir (herdado de "Planejar
+                // Execução") — nesse caso o projeto não está "a planejar",
+                // está "a ratificar". Consulta pontual porque o cache
+                // projetoEtapasData está carregado pra etapa ATUAL aqui, não
+                // pra próxima (ver obterProjetoEtapa/loadProjetoEtapasPorNomeEtapa
+                // logo acima neste arquivo).
+                let subStatusAvanco = 'A PLANEJAR';
+                if (proximaEtapaGlobal.fase === 'UAT' || proximaEtapaGlobal.fase === 'GOLIVE') {
+                    const { data: planoHerdado } = await _supabase.from('projeto_etapas').select('id').eq('projeto_codigo', codigoProjeto).eq('etapa_id', proximaEtapaGlobal.id).maybeSingle();
+                    if (planoHerdado) subStatusAvanco = 'A RATIFICAR';
+                }
+                payloadAvanco = {
+                    etapa_atual: proximaEtapaGlobal.fase,
+                    sub_status: subStatusAvanco
+                };
             }
-
-            const payloadAvanco = {
-                etapa_atual: novoEtapaAtual,
-                sub_status: subStatusAvanco
-            };
             const { error: errorAvanco } = await _supabase.from('projetos').update(payloadAvanco).eq('codigo', codigoProjeto);
             if (errorAvanco) {
                 console.error('Erro ao avançar o projeto para a próxima fase:', errorAvanco.message);
