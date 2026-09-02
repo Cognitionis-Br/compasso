@@ -372,3 +372,30 @@ de Termo de Aceite oferecia a ação **antes** dos 100%.
   profundidade). `renderListaGoliveTermoAceite` troca o botão "Abrir Termo"
   por "Aguardando 100%" enquanto a evolução não fechar.
 - **`index.html`**: novo aviso `#termoAceiteAvisoEvolucao` no modal do Termo.
+
+---
+
+## Correção — 2 gaps após a mudança do Go-Live/Termo de Aceite (2026-09-02)
+
+Reportados pelo usuário logo após a correção anterior:
+
+1. **Projeto concluído continuava "PENDENTE TERMO DE ACEITE"** (ex.:
+   `PRJ-FY26-912-CRD`). `confirmarConclusaoProjeto`
+   (`js/conclusao/conclusao-projeto.js`) gravava `projeto_concluido=true`
+   mas não mexia em `etapa_atual`/`sub_status` — que ficavam em `'GOLIVE'` /
+   `'PENDENTE TERMO DE ACEITE'` (o auto-avanço que antes fazia isso não roda
+   mais nesse ponto). Payload da conclusão passou a incluir
+   `etapa_atual='CONCLUIDO'` + `sub_status='CONCLUIDO'`. Reparo de dados das
+   linhas já concluídas no estado antigo:
+   `sql/2026-09-02_fix_conclusao_pendente_termo_aceite.sql`.
+
+2. **Dashboard — Consolidação por Fase contava o projeto CANCELADO duas
+   vezes** (na linha da fase real + na linha "Projetos Cancelados"),
+   inflando o TOTAL GERAL em relação ao quadro "Portfolio de Projetos do
+   Fiscal Year". Só a fase `BC` excluía CANCELADO/REPROVADO
+   (`subStatusExclude`); as fases REQ/TECH/EXEC/UAT/GOLIVE não. Em
+   `renderTabelaConsolidacaoPortfolio` (`js/dashboards/dashboard.js`) o
+   filtro das linhas de fase passou a excluir globalmente
+   `sub_status ∈ (CANCELADO, REPROVADO)` e `status = CANCELADO`. Aparece
+   agora com o Fechamento Ano Fiscal, que cancela projetos em fases
+   avançadas.

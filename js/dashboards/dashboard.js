@@ -485,6 +485,14 @@ function renderTabelaConsolidacaoPortfolio(totOrcamentoGeral, listaFiltrada, isF
             const etapa = (p.etapa_atual || 'BUSINESS CASE').toUpperCase();
             const sub = (p.sub_status || '').toUpperCase();
             if (sub === 'HOLD') return false; // item 1 (relatório de testes): segregado pro quadro próprio também
+            // CORRIGIDO 02/09/2026 (bug reportado): CANCELADO/REPROVADO têm
+            // linha própria abaixo — não podem contar também na linha da
+            // fase real. Antes só a fase 'BC' os excluía (via
+            // subStatusExclude); um projeto cancelado numa fase avançada
+            // (ex.: "Cancelar" do Fechamento Ano Fiscal) era contado duas
+            // vezes no TOTAL GERAL.
+            if (sub === 'CANCELADO' || sub === 'REPROVADO') return false;
+            if ((p.status || '').toUpperCase() === 'CANCELADO') return false;
             // NOVO (item 2 — subprojetos/conclusão): subprojeto não conta
             // como demanda própria aqui (o pai já representa a demanda);
             // projeto já concluído sai da contagem "ativa" por fase.

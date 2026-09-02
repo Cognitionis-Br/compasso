@@ -144,6 +144,13 @@ async function confirmarConclusaoProjeto() {
 
     const payload = {
         projeto_concluido: true,
+        // CORRIGIDO 02/09/2026 (bug reportado): a baixa final também
+        // encerra a fase — sem isso o projeto ficava com etapa_atual
+        // 'GOLIVE' e sub_status 'PENDENTE TERMO DE ACEITE' mesmo já
+        // concluído (o auto-avanço não roda mais nesse ponto, ver
+        // js/phases/generic-workflow-ui.js).
+        etapa_atual: 'CONCLUIDO',
+        sub_status: 'CONCLUIDO',
         data_conclusao_final: data,
         observacao_conclusao_final: observacao,
         concluido_final_por: currentUser ? currentUser.nome : 'desconhecido'
