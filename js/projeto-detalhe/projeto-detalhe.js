@@ -22,7 +22,10 @@ const PROJETO_DETALHE_ORIGENS = {
     consultas: { tab: 'consultas', texto: 'Voltar às Consultas' },
     // NOVO (Mudança de Orçamento, 27/08/2026): zoom reaproveitado a partir
     // da lista de projetos bloqueados (js/governanca/mudanca-orcamento.js).
-    mudanca_orcamento: { tab: 'mudanca_orcamento', texto: 'Voltar à Mudança de Orçamento' }
+    mudanca_orcamento: { tab: 'mudanca_orcamento', texto: 'Voltar à Mudança de Orçamento' },
+    // NOVO (Fechamento de Ano Fiscal, 2026-09-02): zoom a partir da tela de
+    // decisão de fechamento (js/ano-fiscal/fechamento-projetos.js).
+    fechamento_projetos: { tab: 'fechamento_projetos', texto: 'Voltar à Decisão de Fechamento' }
 };
 
 // NOVO (a pedido do usuário): linha "RÓTULO : valor" com rótulo em
@@ -164,6 +167,11 @@ async function renderDetalheProjeto(codigo) {
     const { data: logMudancaOrcamentoData } = await _supabase.from('log_aprovacao_mudanca_orcamento').select('*').eq('projeto_codigo', codigo).order('aprovado_em', { ascending: false });
     const historicoMudancaOrcamento = logMudancaOrcamentoData || [];
 
+    // NOVO (Fechamento de Ano Fiscal, 2026-09-02): decisões de fechamento
+    // registradas para este projeto (js/ano-fiscal/fechamento-projetos.js).
+    const { data: logDecisoesFechamentoData } = await _supabase.from('fechamento_af_decisoes').select('*').eq('projeto_codigo', codigo).order('decidido_em', { ascending: false });
+    const historicoDecisoesFechamento = logDecisoesFechamentoData || [];
+
     container.innerHTML = `
         ${p.bloqueado_mudanca_orcamento ? renderSecaoMudancaOrcamentoDetalhe(p) : ''}
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -289,6 +297,7 @@ async function renderDetalheProjeto(codigo) {
             </div>
         </div>
 
+        ${renderSecaoDecisoesFechamento(historicoDecisoesFechamento)}
         ${renderSecaoHistoricoAprovacaoMudancaOrcamento(historicoMudancaOrcamento)}
         ${renderSecaoHistoricoHorasDetalhe(historicoHoras)}
         ${renderSecaoHistoricoRatificacao(historicoRatificacao)}
@@ -673,6 +682,37 @@ function renderSecaoContratoDetalhe(etapasDoProjeto) {
                     orçado: ${fmt(etapaComContrato.valor_gasto_divergente_valor_orcado)}, gasto: ${fmt(etapaComContrato.valor_gasto_execucao)}.
                 </div>
             ` : ''}
+        </div>
+    `;
+}
+
+// NOVO (Fechamento de Ano Fiscal, 2026-09-02): histórico das decisões de
+// fechamento registradas para o projeto (Continuar / Hold / Cancelar).
+function renderSecaoDecisoesFechamento(historico) {
+    if (!historico || historico.length === 0) return '';
+    const rot = { CONTINUAR: 'Continuar (Carryover)', HOLD: 'Hold (Carryover)', CANCELAR: 'Cancelar' };
+    const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    return `
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <h3 class="text-sm font-bold text-indigo-700 mb-3 uppercase tracking-wider">Decisões de Fechamento de Ano Fiscal</h3>
+            <table class="w-full text-left border-collapse text-xs">
+                <thead><tr class="bg-gray-50 text-[10px] uppercase border-b">
+                    <th class="p-2">Quando</th><th class="p-2">Ano Fiscal</th><th class="p-2">Decisão</th>
+                    <th class="p-2 text-right">Saldo Remanesc.</th><th class="p-2">Por</th><th class="p-2">Observação</th>
+                </tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    ${historico.map(d => `
+                        <tr>
+                            <td class="p-2 whitespace-nowrap">${d.decidido_em ? new Date(d.decidido_em).toLocaleString('pt-BR') : '-'}</td>
+                            <td class="p-2 font-mono">${d.ano_fiscal || '-'}</td>
+                            <td class="p-2 font-bold">${rot[d.decisao] || d.decisao}</td>
+                            <td class="p-2 text-right font-mono">${fmt(d.valor_remanescente)}</td>
+                            <td class="p-2 uppercase font-bold">${escapeHtml(d.decidido_por) || '-'}</td>
+                            <td class="p-2 text-gray-500">${escapeHtml(d.observacao) || '-'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
         </div>
     `;
 }

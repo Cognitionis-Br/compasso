@@ -55,6 +55,7 @@ const TAB_MODULO_MAP = {
     ano_fiscal: 'WORKFLOW',
     carry_over: 'WORKFLOW',
     ajuste_orcamento: 'WORKFLOW',
+    fechamento_projetos: 'WORKFLOW',
     f1_formalizacao: 'WORKFLOW',
     f1_orcamento: 'WORKFLOW',
     projetos_adhoc: 'WORKFLOW',
@@ -91,6 +92,7 @@ const TAB_MODULO_MAP = {
     alertas_orcamento: 'FINANCEIRO',
     aprov_comite: 'FINANCEIRO',
     aprov_orcamento_af: 'FINANCEIRO',
+    resultado_af: 'FINANCEIRO',
     percentual_bloqueio_orcamento: 'FINANCEIRO',
     mudanca_orcamento: 'FINANCEIRO',
 

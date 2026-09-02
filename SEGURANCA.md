@@ -267,3 +267,54 @@ fechamento do AF corrente.
    - `js/config/funcoes.js` `renderUsuariosFuncoesTable`: mesma lista de
      ids (via `usuarioFuncoesData` + `funcoesData`), `usuariosVisiveis`
      exclui os usuários-Proprietário para não-Proprietário.
+
+## Tarefa — Fechamento de Ano Fiscal e Resultado Consolidado (2026-09-02)
+
+Épico "Fechamento de Ano Fiscal e Carryover de Projetos" — 2 telas novas no
+grupo **ANO FISCAL**, reaproveitando a base de Projetos Carry Over (sem
+estrutura paralela).
+
+**SQL — `sql/2026-09-02_fechamento_af.sql`:**
+- `CREATE TABLE fechamento_af_decisoes` (id, ano_fiscal, projeto_codigo, decisao
+  'CONTINUAR'|'HOLD'|'CANCELAR', valor_remanescente, observacao, decidido_por,
+  decidido_em). **RLS OFF** (mesmo tratamento de `ajuste_orcamento_autorizacoes`
+  — o app grava com a publishable key).
+- `catalogo_atividades` (+ `funcao_atividades`, sob RLS — roda no SQL Editor):
+  atividades `fechamento_projetos` (grupo ANO FISCAL, ordem 4) e `resultado_af`
+  (ordem 5).
+- Grants: `fechamento_projetos` → GOVERNANÇA e GESTOR TI com incluir/alterar
+  (decisão = verbo "alterar"); `resultado_af` → GOVERNANÇA, GESTOR TI, FINANCEIRO
+  só consultar. Administrador/Proprietário por bypass de papel.
+
+**Telas / código:**
+- `js/ano-fiscal/fechamento-projetos.js` — História 1. Lista projetos em curso
+  (`!is_subprojeto && !projeto_concluido && sub_status ∉ CANCELADO/REPROVADO`,
+  qualquer AF), botões **Continuar / Hold / Cancelar** embrulhados por
+  `botaoSePodeAlterar('fechamento_projetos', …)`; handler reconfere
+  `usuarioPodeAlterarTela`. Gravação:
+  - CONTINUAR = payload de `marcarComoCarryover` (is_carryover + valor_carryover
+    congelado + snapshot).
+  - HOLD = idem + `sub_status='HOLD'` + `sub_status_antes_hold` + `tradeoff_*`
+    (entra no pool, some das telas operacionais, retomável em "Retomar Projetos
+    em Hold").
+  - CANCELAR = `sub_status/status='CANCELADO'` + `resp/dt/motivo_cancelamento`,
+    limpa `is_carryover`/`carryover_*`.
+  - Todas gravam em `fechamento_af_decisoes` (log). CONTINUAR/HOLD reconferem
+    `verificarElegibilidadeCarryover` (próximo AF precisa existir aberto/fechado).
+- `js/ano-fiscal/resultado-af.js` — História 2. Só consulta. Seletor de AF
+  (`anos_fiscais_config`) + seletor de agrupamento compartilhado
+  (`modoAgrupamentoOrcamento`/`valorAgrupamentoSelecionado`). Seções: contagem de
+  projetos (concluído / em andamento subdividido em carryover-andamento / hold /
+  cancelado / reprovado / sem decisão), destaques (orçamento total de Cancelados
+  / Hold / Carry Over), orçamento por fase (Aprovado=Σval_bc, Após Req=Σval_req,
+  Após Espec=Σval_tech, Realizado, Saldo Final=Aprovado−Realizado) via
+  `calcularCapexOpex`, e o quadro consolidado (`renderQuadroOrcamentoAgrupado`).
+- `js/core/filtro-agrupamento-orcamento.js` — a linha "Orçamento Carry Over" do
+  `renderQuadroOrcamentoAgrupado` virou **duas**: "Carry Over — Em Andamento" e
+  "Carry Over — Em Hold". Reflete automaticamente no Dashboard e no Financeiro.
+- Wiring: 2 links em `#menu-fy`, 2 `view-*` + modal em `index.html`, 2 `<script>`
+  após `ajuste-orcamento.js`, 2 dispatch em `navigation.js`, `TAB_MODULO_MAP`
+  (`fechamento_projetos: WORKFLOW`, `resultado_af: FINANCEIRO`).
+- `js/projeto-detalhe/projeto-detalhe.js` — `fechamento_projetos` em
+  `PROJETO_DETALHE_ORIGENS`; nova seção "Decisões de Fechamento de Ano Fiscal"
+  lendo `fechamento_af_decisoes`.

@@ -180,6 +180,12 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
     const adhoc   = ativos.filter(p => p.is_adhoc === true);
     const carry   = lista.filter(p => p.is_carryover === true);
     const oficial = ativos.filter(p => p.is_adhoc !== true && p.is_carryover !== true);
+    // NOVO (Fechamento de Ano Fiscal): a linha "Orçamento Carry Over" vira
+    // duas — carryover que segue em andamento vs. carryover que foi para
+    // Hold (a decisão "Hold" no fechamento também entra no pool).
+    const emHold        = p => (p.sub_status || '').toUpperCase() === 'HOLD';
+    const carryAndamento = carry.filter(p => !emHold(p));
+    const carryHold      = carry.filter(p => emHold(p));
 
     // NOVO (a pedido do usuário): duas linhas de CONTAGEM no topo do quadro.
     // Linha A - "Total de Projetos para Gerar Orçamento": réplica da linha
@@ -205,21 +211,24 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
     const projetosOrcamento = lista.filter(compoeOrcamentoAF);
     const contarTipoEm = (arr, t) => arr.filter(p => (p.tipo_orcamento || '').toUpperCase() === t).length;
 
-    const fechado   = calcularCapexOpex(oficial);
-    const extra     = calcularCapexOpex(adhoc);
-    const carryv    = calcularCapexOpex(carry, p => Number(p.valor_carryover) || 0);
-    const realizado = calcularCapexOpex(ativos);
+    const extractorCarry = p => Number(p.valor_carryover) || 0;
+    const fechado    = calcularCapexOpex(oficial);
+    const extra      = calcularCapexOpex(adhoc);
+    const carryAnd   = calcularCapexOpex(carryAndamento, extractorCarry);
+    const carryHld   = calcularCapexOpex(carryHold, extractorCarry);
+    const realizado  = calcularCapexOpex(ativos);
 
     const g = (o, k) => o[k].orcado;
     const r = (o, k) => o[k].realizado;
     const linhas = {
         fechadoCx: g(fechado, 'capex'),  fechadoOx: g(fechado, 'opex'),
         extraCx:   g(extra, 'capex'),    extraOx:   g(extra, 'opex'),
-        carryCx:   g(carryv, 'capex'),   carryOx:   g(carryv, 'opex'),
+        carryAndCx:  g(carryAnd, 'capex'),  carryAndOx:  g(carryAnd, 'opex'),
+        carryHoldCx: g(carryHld, 'capex'),  carryHoldOx: g(carryHld, 'opex'),
         realCx:    r(realizado, 'capex'), realOx:   r(realizado, 'opex'),
     };
-    linhas.atualCx = linhas.fechadoCx + linhas.extraCx + linhas.carryCx;
-    linhas.atualOx = linhas.fechadoOx + linhas.extraOx + linhas.carryOx;
+    linhas.atualCx = linhas.fechadoCx + linhas.extraCx + linhas.carryAndCx + linhas.carryHoldCx;
+    linhas.atualOx = linhas.fechadoOx + linhas.extraOx + linhas.carryAndOx + linhas.carryHoldOx;
     linhas.aRealizarCx = linhas.atualCx - linhas.realCx;
     linhas.aRealizarOx = linhas.atualOx - linhas.realOx;
 
@@ -260,7 +269,8 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
                     ${linha('Total de Projetos com Orçamento', projetosOrcamento.length, contarTipoEm(projetosOrcamento, 'CAPEX'), contarTipoEm(projetosOrcamento, 'OPEX'), { contagem: true, ac: 'border-l-gray-300' })}
                     ${linha('Orçamento Fechado', linhas.fechadoCx + linhas.fechadoOx, linhas.fechadoCx, linhas.fechadoOx, { ac: 'border-l-slate-400' })}
                     ${linha('Orçamento Projetos Extraordinário', linhas.extraCx + linhas.extraOx, linhas.extraCx, linhas.extraOx, { ac: 'border-l-amber-400' })}
-                    ${linha('Orçamento Carry Over', linhas.carryCx + linhas.carryOx, linhas.carryCx, linhas.carryOx, { ac: 'border-l-orange-400' })}
+                    ${linha('Orçamento Carry Over — Em Andamento', linhas.carryAndCx + linhas.carryAndOx, linhas.carryAndCx, linhas.carryAndOx, { ac: 'border-l-orange-400' })}
+                    ${linha('Orçamento Carry Over — Em Hold', linhas.carryHoldCx + linhas.carryHoldOx, linhas.carryHoldCx, linhas.carryHoldOx, { ac: 'border-l-yellow-500' })}
                     ${linha('Orçamento Atual', linhas.atualCx + linhas.atualOx, linhas.atualCx, linhas.atualOx, { ac: 'border-l-indigo-500', forte: true })}
                     ${linha('Valores Já Realizados', linhas.realCx + linhas.realOx, linhas.realCx, linhas.realOx, { ac: 'border-l-red-400' })}
                     ${linha('Orçamento a Realizar', linhas.aRealizarCx + linhas.aRealizarOx, linhas.aRealizarCx, linhas.aRealizarOx, { ac: 'border-l-emerald-500', forte: true, sinal: true })}

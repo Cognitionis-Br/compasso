@@ -153,6 +153,8 @@ function switchTab(tabId) {
     if (tabId === 'usuarios') { mudarAbaUsuarios('criar'); renderUsuariosView(); }
     if (tabId === 'ano_fiscal') loadAnoFiscalConfig();
     if (tabId === 'ajuste_orcamento') renderAjusteOrcamentoView();
+    if (tabId === 'fechamento_projetos') renderFechamentoProjetosView();
+    if (tabId === 'resultado_af') renderResultadoAfView();
     if (tabId === 'areas') { mudarAbaAreas('criar'); loadAreas(); }
     if (tabId === 'pessoas_solicitantes') { mudarAbaPessoasSolicitantes('criar'); loadPessoasSolicitantes(); }
     if (tabId === 'portes') { mudarAbaPortes('criar'); loadPortes(); }
