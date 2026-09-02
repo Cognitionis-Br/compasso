@@ -424,3 +424,35 @@ Correção:
   `ano_fiscal_fechado ≠ true`. Um AF formalmente encerrado não aparece.
 - `saveBusinessCase` passou a rejeitar Extraordinária para AF com
   `ano_fiscal_fechado = true` (antes só checava `orcamento_fechado`).
+
+---
+
+## Correção — Demanda Extraordinária ficava órfã após "Orçamentar Demanda" (2026-09-02)
+
+Reportado: `PRJ-FY26-001-RHU` entrou como Extraordinária de AF2026, teve
+"Orçamentar Demanda" concluída (100%) e não apareceu em "Aprovar Demanda
+Extraordinária".
+
+Duas causas em `js/adhoc/tradeoff.js`:
+1. **AF errado** — a tela mirava `getInfoAnoFiscal().afAtualStr` (AF pela
+   data = AF2027). Extraordinárias são registradas contra o **AF em
+   andamento** (orçamento fechado = AF2026). Novo helper
+   `afAlvoExtraordinaria()` = `afEmAndamentoStr()` com a data só de
+   fallback; aplicado em `renderAdhocView`, `carregarSimulacaoAdhoc`,
+   `renderTradeoffTable`, `recalcularSaldoSimulado`.
+2. **sub_status** — a lista de "aguardando trade-off" exigia
+   `sub_status = 'APROVADO'`. Desde o `d1ebf06` a Extraordinária não passa
+   mais pelo Comitê, então ela fica em `'ORÇAMENTO REALIZADO'` depois de
+   orçada e nunca chegava a `'APROVADO'`. Novo helper
+   `subStatusAguardandoTradeoff()` aceita `ORÇAMENTO REALIZADO` **ou**
+   `APROVADO`. `renderAdhocView` virou `async` para carregar
+   `anosFiscaisListaCache` antes de resolver o AF.
+
+Fluxo correto: Formalizar (Extraordinária) → Orçamentar Demanda (100%,
+`ORÇAMENTO REALIZADO`) → **Aprovar Demanda Extraordinária** (trade-off) →
+Requerimentos. Não passa por Comitê nem pelo fechamento do AF.
+
+Reparo de dados (só se o projeto tiver sido empurrado a CONCLUIDO por
+engano): `sql/2026-09-02_fix_extraordinaria_pos_orcamento.sql` — inclui o
+SELECT de diagnóstico. Na maioria dos casos não é necessário: o projeto
+volta a aparecer sozinho após o deploy.

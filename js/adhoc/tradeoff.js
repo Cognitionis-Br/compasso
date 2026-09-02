@@ -41,11 +41,35 @@ function renderAdhocBadge(projeto) {
     return '';
 }
 
-function renderAdhocView() {
+// CORRIGIDO (bug reportado 02/09/2026): as Demandas Extraordinárias são
+// registradas contra o Ano Fiscal EM ANDAMENTO (orçamento já fechado),
+// não contra o AF calculado pela data do dia. Todo este fluxo passa a
+// mirar afEmAndamentoStr() (js/core/filtro-af-visao.js), com a data só
+// como último recurso — antes o trade-off ficava vazio porque filtrava
+// pelo AF errado.
+function afAlvoExtraordinaria() {
+    const s = (typeof afEmAndamentoStr === 'function') ? afEmAndamentoStr() : null;
+    if (s) return s;
+    const info = (typeof getInfoAnoFiscal === 'function') ? getInfoAnoFiscal() : null;
+    return info ? info.afAtualStr : null;
+}
+
+// CORRIGIDO (bug reportado 02/09/2026): a Demanda Extraordinária não passa
+// mais pelo Comitê (ver js/approvals/comite.js), então depois de
+// "Orçamentar Demanda" ela fica em 'ORÇAMENTO REALIZADO' — e não em
+// 'APROVADO'. Este fluxo passa a aceitar as duas situações como
+// "aguardando inclusão via trade-off".
+function subStatusAguardandoTradeoff(sub) {
+    const s = (sub || '').toUpperCase();
+    return s === 'ORÇAMENTO REALIZADO' || s === 'APROVADO';
+}
+
+async function renderAdhocView() {
     // NOVO (item 7): pré-carrega as autorizações especiais de ajuste de
     // orçamento pra o check de subgrupo no trade-off (alterarAcaoTradeoff).
     if (typeof carregarAutorizacoesAjuste === 'function') carregarAutorizacoesAjuste();
-    const infoAF = getInfoAnoFiscal();
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
+    const afAlvo = afAlvoExtraordinaria();
 
     // CORRIGIDO 10/08/2026 (bug reportado pelo usuário): usava p.status
     // (campo errado — quase sempre 'EM ANDAMENTO', nunca refletia
@@ -57,7 +81,7 @@ function renderAdhocView() {
     // incluídas.
     const projetosAF = projectsData.filter(p => {
         const sub = (p.sub_status || '').toUpperCase();
-        if (p.ano_fiscal !== infoAF.afAtualStr) return false;
+        if (p.ano_fiscal !== afAlvo) return false;
         if (sub === 'CANCELADO' || sub === 'REPROVADO') return false;
         if (p.is_adhoc && p.etapa_atual === 'BUSINESS CASE') return false; // ainda não incluído via trade-off
         return true;
@@ -75,13 +99,13 @@ function renderAdhocView() {
         }
     });
 
-    // NOVO: valor de demandas Extraordinárias já aprovadas individualmente pelo
-    // Comitê, mas ainda aguardando inclusão via trade-off — mostrado
-    // separado do orçamento pré-existente (item 3b do relatado).
+    // Valor das demandas Extraordinárias já com orçamento realizado e
+    // aguardando inclusão via trade-off — mostrado separado do orçamento
+    // pré-existente (item 3b do relatado).
     const projsAdhocPendenteInclusao = projectsData.filter(p =>
         p.is_adhoc && p.etapa_atual === 'BUSINESS CASE' &&
-        (p.sub_status || '').toUpperCase() === 'APROVADO' &&
-        p.ano_fiscal === infoAF.afAtualStr
+        subStatusAguardandoTradeoff(p.sub_status) &&
+        p.ano_fiscal === afAlvo
     );
     const totalAdhocPendente = projsAdhocPendenteInclusao.reduce((acc, p) => acc + Number(p.val_bc || p.previsto || 0), 0);
 
@@ -156,11 +180,10 @@ function carregarSimulacaoAdhoc(codigo) {
     // Reconstrói a mesma lista de pendentes só pra atualizar o destaque
     // visual de "Selecionado" — sem chamar renderAdhocView() inteiro,
     // que resetaria projetoSimuladoAtual de volta pra null.
-    const infoAFAtual = getInfoAnoFiscal();
     const pendentesAtualizados = projectsData.filter(p =>
         p.is_adhoc && p.etapa_atual === 'BUSINESS CASE' &&
-        (p.sub_status || '').toUpperCase() === 'APROVADO' &&
-        p.ano_fiscal === infoAFAtual.afAtualStr
+        subStatusAguardandoTradeoff(p.sub_status) &&
+        p.ano_fiscal === afAlvoExtraordinaria()
     );
     renderListaAdhocPendentes(pendentesAtualizados);
 
@@ -188,7 +211,7 @@ function renderTradeoffTable() {
     if (!tbody) return;
     tbody.innerHTML = '';
 
-    const infoAF = getInfoAnoFiscal();
+    const afAlvo = afAlvoExtraordinaria();
     // CORRIGIDO 10/08/2026 (bug reportado, item 8): trazia TODOS os
     // projetos, inclusive quem ainda estava em Business Case sem
     // orçamento aprovado (inclusive outros Extraordinário pendentes). Só devem
@@ -196,7 +219,7 @@ function renderTradeoffTable() {
     // aprovado — mesma regra usada na Visão de Orçamento.
     const projetosTradeoff = projectsData
         .filter(p => {
-            if (p.ano_fiscal !== infoAF.afAtualStr) return false;
+            if (p.ano_fiscal !== afAlvo) return false;
             if (p.codigo === projetoSimuladoAtual.codigo) return false;
             const sub = (p.sub_status || '').toUpperCase();
             if (sub === 'CANCELADO' || sub === 'REPROVADO') return false;
@@ -300,13 +323,13 @@ function alterarValorParcialTradeoff(codigoProjeto, valor) {
 // verdade se a regra não for satisfeita (antes era só um alerta
 // contornável — agora é uma regra de negócio explícita e obrigatória).
 function recalcularSaldoSimulado() {
-    const infoAF = getInfoAnoFiscal();
+    const afAlvo = afAlvoExtraordinaria();
 
     // 1. Valor do orçamento do ano fiscal (o total já aprovado,
     // pré-existente — mesmo valor mostrado no KPI principal da tela).
     const projetosAF = projectsData.filter(p => {
         const sub = (p.sub_status || '').toUpperCase();
-        if (p.ano_fiscal !== infoAF.afAtualStr) return false;
+        if (p.ano_fiscal !== afAlvo) return false;
         if (sub === 'CANCELADO' || sub === 'REPROVADO') return false;
         if (p.is_adhoc && p.etapa_atual === 'BUSINESS CASE') return false;
         return true;
