@@ -181,12 +181,20 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
     const carry   = lista.filter(p => p.is_carryover === true);
     const oficial = ativos.filter(p => p.is_adhoc !== true && p.is_carryover !== true);
 
-    // NOVO (a pedido do usuário): a 1ª linha ("Total de Projetos para Gerar
-    // Orçamento") conta SÓ os projetos que efetivamente compõem o orçamento
-    // do Ano Fiscal em andamento — não as demandas ainda paradas em
-    // Business Case sem orçamento definido. Compõem: carryover; demandas
-    // Extraordinárias já incluídas (fora do BC); e projetos normais que já
-    // saíram do BC ou que já foram APROVADOS no comitê.
+    // NOVO (a pedido do usuário): duas linhas de CONTAGEM no topo do quadro.
+    // Linha A - "Total de Projetos para Gerar Orçamento": réplica da linha
+    //   do quadro "Projetos na Criação do Ano Fiscal" - demandas normais
+    //   ainda em Business Case, sem orçamento definido: A PLANEJAR/PLANEJADO.
+    // Linha B - "Total de Projetos com Orçamento": os que efetivamente
+    //   compõem o orçamento do AF em andamento - carryover; Extraordinárias
+    //   já incluídas, fora do BC; e projetos normais que já saíram do BC ou
+    //   que já foram APROVADOS no comitê. Cancelado/Reprovado/Hold ficam de
+    //   fora das duas.
+    const paraGerarOrcamento = lista.filter(p =>
+        p.is_adhoc !== true && p.is_carryover !== true &&
+        (p.etapa_atual || 'BUSINESS CASE').toUpperCase() === 'BUSINESS CASE' &&
+        ['A PLANEJAR', 'PLANEJADO', '', null, undefined].includes(p.sub_status)
+    );
     const compoeOrcamentoAF = p => {
         if (inativo(p)) return false;
         if (p.is_carryover === true) return true;
@@ -248,7 +256,8 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
                     <th class="p-2 text-right text-purple-700">OPEX</th>
                 </tr></thead>
                 <tbody class="divide-y divide-gray-100">
-                    ${linha('Total de Projetos para Gerar Orçamento', projetosOrcamento.length, contarTipoEm(projetosOrcamento, 'CAPEX'), contarTipoEm(projetosOrcamento, 'OPEX'), { contagem: true, ac: 'border-l-gray-300' })}
+                    ${linha('Total de Projetos para Gerar Orçamento', paraGerarOrcamento.length, contarTipoEm(paraGerarOrcamento, 'CAPEX'), contarTipoEm(paraGerarOrcamento, 'OPEX'), { contagem: true, ac: 'border-l-blue-300' })}
+                    ${linha('Total de Projetos com Orçamento', projetosOrcamento.length, contarTipoEm(projetosOrcamento, 'CAPEX'), contarTipoEm(projetosOrcamento, 'OPEX'), { contagem: true, ac: 'border-l-gray-300' })}
                     ${linha('Orçamento Fechado', linhas.fechadoCx + linhas.fechadoOx, linhas.fechadoCx, linhas.fechadoOx, { ac: 'border-l-slate-400' })}
                     ${linha('Orçamento Projetos Extraordinário', linhas.extraCx + linhas.extraOx, linhas.extraCx, linhas.extraOx, { ac: 'border-l-amber-400' })}
                     ${linha('Orçamento Carry Over', linhas.carryCx + linhas.carryOx, linhas.carryCx, linhas.carryOx, { ac: 'border-l-orange-400' })}
