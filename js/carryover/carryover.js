@@ -97,6 +97,24 @@ function elegivelComoNovoCandidatoCarryover(p, afAtualStr) {
     return true;
 }
 
+// NOVO (a pedido do usuário 2026-09-02): projeto de um Ano Fiscal ANTERIOR
+// ao corrente que ainda não terminou é candidato natural a Carryover — o AF
+// dele já virou, então ou o saldo é levado pro próximo AF, ou o projeto é
+// cancelado. Não tem trava de Q4 (o Q4 só faz sentido pra "descobrir" novos
+// candidatos do AF que ainda está correndo). Go-Live aqui NÃO exclui — um
+// projeto de AF passado ainda em Go-Live é exatamente o caso a tratar.
+function elegivelComoCandidatoCarryoverAFAnterior(p, afAtualStr) {
+    if (p.is_carryover === true) return false;
+    if (p.is_subprojeto === true) return false;
+    if (p.projeto_concluido === true) return false;
+    const sub = (p.sub_status || '').toUpperCase();
+    if (['CANCELADO', 'REPROVADO', 'HOLD'].includes(sub)) return false;
+    if (!p.ano_fiscal || String(p.ano_fiscal) >= String(afAtualStr)) return false; // só AF anterior
+    const etapa = (p.etapa_atual || 'BUSINESS CASE').toUpperCase();
+    if (['BUSINESS CASE', 'CONCLUIDO'].includes(etapa)) return false;
+    return true;
+}
+
 async function renderCarryOverView() {
     const tbody = document.getElementById('carryOverTableBody');
     if (!tbody) return;
@@ -112,8 +130,11 @@ async function renderCarryOverView() {
 
     const jaMarcados = projectsData.filter(p => p.is_carryover === true);
     const candidatosNovos = emQ4 ? projectsData.filter(p => elegivelComoNovoCandidatoCarryover(p, infoAF.afAtualStr)) : [];
+    // NOVO (2026-09-02): candidatos de AF anterior ainda em andamento —
+    // sempre listados, sem gate de Q4.
+    const candidatosAFAnterior = projectsData.filter(p => elegivelComoCandidatoCarryoverAFAnterior(p, infoAF.afAtualStr));
     // NOVO (Controle de acesso por atividade, Fase 5): restrição de área.
-    const elegiveis = filtrarProjetosPorArea([...jaMarcados, ...candidatosNovos], 'carry_over');
+    const elegiveis = filtrarProjetosPorArea([...jaMarcados, ...candidatosNovos, ...candidatosAFAnterior], 'carry_over');
 
     // Card de resumo do pool do próximo AF — sempre visível, reflete o
     // que já está marcado independente do Q4.
@@ -134,13 +155,13 @@ async function renderCarryOverView() {
         `;
     }
 
-    if (!emQ4 && jaMarcados.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-400 font-bold">Candidatos a Carryover só aparecem a partir do último quarter (Q4) do Ano Fiscal — hoje estamos no ${infoAF.quarterAtual}.</td></tr>`;
+    if (!emQ4 && jaMarcados.length === 0 && candidatosAFAnterior.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-400 font-bold">Candidatos a Carryover do Ano Fiscal corrente só aparecem a partir do último quarter (Q4) — hoje estamos no ${infoAF.quarterAtual}. (Projetos de Ano Fiscal anterior ainda em andamento apareceriam aqui a qualquer momento.)</td></tr>`;
         return;
     }
 
     if (elegiveis.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-400 font-bold">${emQ4 ? 'Nenhum projeto elegível a Carryover no momento' : `Nenhum projeto já marcado — candidatos novos só aparecem a partir do Q4 (hoje: ${infoAF.quarterAtual})`}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-400 font-bold">${emQ4 ? 'Nenhum projeto elegível a Carryover no momento' : `Nenhum projeto elegível — candidatos novos do AF corrente só aparecem a partir do Q4 (hoje: ${infoAF.quarterAtual})`}</td></tr>`;
         return;
     }
 

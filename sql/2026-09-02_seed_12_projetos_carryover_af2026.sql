@@ -2,8 +2,15 @@
 -- 2026-09-02_seed_12_projetos_carryover_af2026.sql
 -- Compasso — projeto Supabase fytynjjvzecljmgbtwec. NÃO roda contra o Compasso.
 --
--- Carga de 12 projetos do Ano Fiscal 2026, TODOS marcados como Carryover,
--- para testar o tratamento de carryover ao virar o AF.
+-- Carga de 12 projetos do Ano Fiscal 2026, AINDA EM ANDAMENTO e NÃO
+-- marcados como Carryover — para exercitar o próprio processo: marcar como
+-- Carryover e/ou cancelar, e ver o tratamento na virada do AF.
+--
+-- NOTA (código): a tela Projetos Carry Over foi ajustada para também listar
+-- como candidatos os projetos de um Ano Fiscal ANTERIOR ao corrente ainda
+-- em andamento (sem trava de Q4) — ver js/carryover/carryover.js
+-- (elegivelComoCandidatoCarryoverAFAnterior). Sem esse ajuste, estes 12
+-- projetos de AF2026 não apareceriam na tela enquanto o AF corrente é AF2027.
 --
 -- Distribuição de fases (soma 12):
 --   03  -> REQUERIMENTOS, "A PLANEJAR"          (sem planejamento de fase)
@@ -23,7 +30,7 @@
 -- colide com a numeração que a RPC gera para demandas reais de AF2026).
 --
 -- Datas encadeadas de abr/2026 a dez/2026, seguindo a ordem normal do
--- workflow. Projetos Carryover são isentos da trava de "data dentro do AF".
+-- workflow.
 --
 -- Idempotente (guardas NOT EXISTS / ON CONFLICT DO NOTHING). Rode no
 -- Supabase -> SQL Editor.
@@ -79,8 +86,7 @@ INSERT INTO projetos (
     descricao_projeto, objetivo, key_results,
     pilar_estrategico_id, iniciativa_estrategica_id,
     is_adhoc, is_subprojeto, projeto_concluido,
-    is_carry_over, is_carryover, valor_carryover,
-    carryover_marcado_por, carryover_marcado_em, carryover_etapa_marcacao, carryover_sub_status_marcacao,
+    is_carry_over, is_carryover,
     data_solicitacao_req, dt_limite_req, req_concluido_por, req_concluido_em,
     tech_concluido_por, tech_concluido_em
 )
@@ -99,10 +105,9 @@ SELECT
        WHERE pilar_id = (SELECT id FROM pilares_estrategicos WHERE ano_fiscal = 'AF2026' AND nome = v.pilar_nome)
        ORDER BY id LIMIT 1 OFFSET v.ini_offset),
     false, false, false,
-    true, true, GREATEST(0, COALESCE(NULLIF(v.val_tech,0), NULLIF(v.val_req,0), v.val_bc) - v.realizado),
-    'CARGA CARRYOVER 2026', now(), v.etapa_atual, v.sub_status,
-    CASE WHEN v.etapa_atual = 'REQUIREMENTS' THEN DATE '2026-04-11' ELSE DATE '2026-04-11' END,
-    CASE WHEN v.etapa_atual = 'REQUIREMENTS' THEN DATE '2026-05-05' ELSE DATE '2026-05-05' END,
+    false, false,
+    DATE '2026-04-11',
+    DATE '2026-05-05',
     CASE WHEN v.etapa_atual = 'REQUIREMENTS' THEN NULL ELSE 'CARGA CARRYOVER 2026' END,
     CASE WHEN v.etapa_atual = 'REQUIREMENTS' THEN NULL ELSE DATE '2026-05-15' END,
     CASE WHEN v.etapa_atual = 'REQUIREMENTS' THEN NULL ELSE 'CARGA CARRYOVER 2026' END,
@@ -157,7 +162,7 @@ BEGIN
                END AS perfil,
                pessoa_solicitante AS resp_nome
         FROM projetos
-        WHERE codigo LIKE 'PRJ-FY26-9%' AND is_carryover = true
+        WHERE codigo LIKE 'PRJ-FY26-9%' AND aprovador_nome = 'CARGA CARRYOVER 2026'
     LOOP
         -- ---- REQUERIMENTOS + ESPECIFICAÇÃO concluídas (todos, exceto os 3 "REQ A PLANEJAR") ----
         IF r.perfil <> 'REQ_PLAN' THEN
