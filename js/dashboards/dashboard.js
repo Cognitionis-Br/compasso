@@ -129,6 +129,8 @@ async function renderDashboardMetrics() {
     // Ano Fiscal → restrição de área → agrupamento (AF/Área/Produto).
     // Aplicado ANTES de tudo pra a tela inteira (quadro, listas, gráficos)
     // refletir o subgrupo escolhido.
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
+    if (typeof montarSeletorAF === 'function') modoAFDashboard = montarSeletorAF('dashSeletorAF', modoAFDashboard);
     const projectsDataFiltrado = filtrarProjetosPorAgrupamento(
         filtrarProjetosPorArea(filtrarProjetosPorAnoFiscalSelecionado(projectsData, modoAFDashboard), 'dashboard'),
         modoAgrupamentoOrcamento, valorAgrupamentoSelecionado);

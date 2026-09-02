@@ -197,6 +197,7 @@ async function inicializarAnoFiscalCorrente() {
 
     alert(`✅ ${infoAF.afAtualStr} inicializado e aberto para demandas.`);
     await loadAnoFiscalConfig();
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
 }
 
 async function abrirRecebimentoProximoAF() {
@@ -239,4 +240,5 @@ async function abrirRecebimentoProximoAF() {
 
     alert(`✅ ${infoAF.proximoAFStr} aberto para recebimento de demandas!`);
     await loadAnoFiscalConfig();
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
 }

@@ -178,5 +178,6 @@ async function confirmarFecharAnoFiscal() {
     alert(`✅ Ano Fiscal ${alvo} fechado.`);
     if (typeof loadProjects === 'function') await loadProjects();
     if (typeof loadAnoFiscalConfig === 'function') await loadAnoFiscalConfig();
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
     await renderFechamentoAfView();
 }

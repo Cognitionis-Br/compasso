@@ -119,6 +119,7 @@ function renderRoadmap() {
 
     // NOVO (a pedido do usuário): filtro de Ano Fiscal selecionado,
     // aplicado antes do filtro de acesso por área/perfil.
+    if (typeof montarSeletorAF === 'function') modoAFRoadmap = montarSeletorAF('roadmapSeletorAF', modoAFRoadmap);
     renderFaixaAFSelecionado('roadmapFaixaAFSelecionado', modoAFRoadmap);
     const baseAF = filtrarProjetosPorAnoFiscalSelecionado(projectsData || [], modoAFRoadmap);
     const baseFiltrada = filtrarProjetosPorAcessoRoadmap(baseAF);
@@ -379,9 +380,10 @@ function renderCabecalhoQuartisEMeses(extensaoMeses) {
     const estiloGradeMeses = `grid-template-columns: repeat(${totalMeses}, minmax(0, 1fr));`;
     const rotulosMeses = gerarRotulosMesesGantt(extensaoMeses);
     const infoAF = getInfoAnoFiscal();
-    const rotuloFY = modoAFRoadmap === 'proximo' ? infoAF.proximoAFStr
-        : modoAFRoadmap === 'todos' ? 'Todos os AFs'
-        : infoAF.afAtualStr;
+    const rotuloFY = modoAFRoadmap === 'todos' ? 'Todos os AFs'
+        : (modoAFRoadmap === 'pipeline' || modoAFRoadmap === 'proximo')
+            ? (typeof afPipelineStr === 'function' ? afPipelineStr() : infoAF.proximoAFStr)
+            : (modoAFRoadmap || (typeof afEmAndamentoStr === 'function' ? afEmAndamentoStr() : infoAF.afAtualStr));
 
     return `
         <div class="shadow-md rounded-lg overflow-hidden border border-red-900">

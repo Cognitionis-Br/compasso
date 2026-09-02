@@ -46,6 +46,8 @@ async function renderConsultaProjetos() {
     const tbody = document.getElementById('consultaTableBody');
     if (!tbody) return;
 
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
+    if (typeof montarSeletorAF === 'function') modoAFConsulta = montarSeletorAF('consultaSeletorAF', modoAFConsulta);
     renderFaixaAFSelecionado('consultaFaixaAFSelecionado', modoAFConsulta);
     // NOVO (Controle de acesso por atividade, Fase 5): restrição de área.
     const projectsDataFiltrado = filtrarProjetosPorArea(filtrarProjetosPorAnoFiscalSelecionado(projectsData, modoAFConsulta), 'consultas');

@@ -346,6 +346,7 @@ async function entrarNoSistema() {
 
     await carregarPermissoesUsuarioAtual();
     await carregarLicenca(); // NOVO (Licenciamento de Módulos, 28/08/2026): precisa estar pronto antes de aplicarVisibilidadeMenu(), que já consulta moduloAtivo()
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista(); // NOVO (2026-09-02): seletor de AF (Dashboard/Roadmap/Financeiro/Consulta) vem da tabela anos_fiscais_config, não da data
     aplicarVisibilidadeMenu();
     await carregarConfigEmailGeral();
     atualizarCabecalhoUsuario(); // CORRIGIDO 10/08/2026 (bug reportado): nome/perfil do cabeçalho vinham fixos ("Administrador"/"ADM"), nunca refletiam o usuário logado de verdade

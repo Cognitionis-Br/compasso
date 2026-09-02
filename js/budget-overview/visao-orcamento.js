@@ -19,6 +19,8 @@ async function renderVisaoOrcamentoView() {
     // tela sempre olhava só pro AF corrente e ignorava Carryover com
     // ano_fiscal diferente, mesmo modo antigo do bug já corrigido no
     // Dashboard e Roadmap.
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
+    if (typeof montarSeletorAF === 'function') modoAFVisaoOrcamento = montarSeletorAF('visaoOrcSeletorAF', modoAFVisaoOrcamento);
     renderFaixaAFSelecionado('visaoOrcFaixaAFSelecionado', modoAFVisaoOrcamento);
     // NOVO (Controle de acesso por atividade, Fase 5): restrição de área.
     // NOVO (Agrupamento de Orçamento — item 5): 3º elo — agrupamento AF/Área/Produto.
