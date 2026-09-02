@@ -112,7 +112,7 @@ function renderFechamentoAfAcaoFechar() {
                 <div class="text-xs text-gray-600">
                     Fechar o Ano Fiscal <b>${alvo}</b> registra quem/quando fechou (com comentário) e libera a abertura do próximo Ano Fiscal.
                     ${bloqueado
-                        ? `<div class="mt-2 text-red-700 font-bold">⛔ ${pendentes.length} projeto(s) ainda em andamento sem tratamento: ${pendentes.slice(0, 8).map(p => escapeHtml(p.codigo)).join(', ')}${pendentes.length > 8 ? '…' : ''}. Trate todos (Carryover Desenvolvimento, Carryover Hold ou Cancelar) na aba ao lado antes de fechar.</div>`
+                        ? `<div class="mt-2 text-red-700 font-bold">⛔ EXISTEM PROJETOS EM ANDAMENTO. TRATE TODOS NA ABA DE AVALIAÇÃO</div>`
                         : `<div class="mt-2 text-emerald-700 font-bold">✅ Todos os projetos do ${alvo} já estão tratados.</div>`}
                 </div>
                 <button onclick="abrirModalFecharAnoFiscal()" ${(!podeFechar || bloqueado) ? 'disabled' : ''}
@@ -129,7 +129,7 @@ function abrirModalFecharAnoFiscal() {
         return alert('Você não tem permissão para fechar o Ano Fiscal.');
     }
     if (fechamentoAfProjetosPendentes().length > 0) {
-        return alert('⛔ Ainda existem projetos em andamento sem tratamento. Coloque cada um em Carryover Desenvolvimento, Carryover Hold ou Cancelar antes de fechar o Ano Fiscal.');
+        return alert('⛔ EXISTEM PROJETOS EM ANDAMENTO. TRATE TODOS NA ABA DE AVALIAÇÃO');
     }
     document.getElementById('fecharAfAlvo').innerText = fechamentoAfTargetAF();
     document.getElementById('fecharAfObs').value = '';
@@ -150,7 +150,7 @@ async function confirmarFecharAnoFiscal() {
     // Reconfere a pré-condição no clique.
     const pendentes = fechamentoAfProjetosPendentes();
     if (pendentes.length > 0) {
-        return alert(`⛔ ${pendentes.length} projeto(s) ainda em andamento sem tratamento — não é possível fechar o ${alvo}.`);
+        return alert('⛔ EXISTEM PROJETOS EM ANDAMENTO. TRATE TODOS NA ABA DE AVALIAÇÃO');
     }
     if (!confirm(`Confirmar o FECHAMENTO do Ano Fiscal ${alvo}?\n\nEssa ação registra o fechamento (quem/quando/comentário) e passa a ser exigida para abrir o próximo Ano Fiscal.`)) return;
 
