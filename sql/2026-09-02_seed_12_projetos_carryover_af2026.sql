@@ -130,6 +130,16 @@ FROM (VALUES
        val_bc, val_req, val_tech, realizado, pilar_nome, ini_offset, horas_bc, horas_req, horas_tech)
 WHERE NOT EXISTS (SELECT 1 FROM projetos p WHERE p.codigo = v.codigo);
 
+-- Normaliza (também se uma versão ANTERIOR deste script já rodou marcando
+-- os 12 como carryover): eles devem estar EM ANDAMENTO e NÃO marcados,
+-- para o fluxo de "Marcar Carryover" poder ser exercitado na tela.
+UPDATE projetos
+SET is_carryover = false, is_carry_over = false, valor_carryover = NULL,
+    carryover_marcado_por = NULL, carryover_marcado_em = NULL,
+    carryover_etapa_marcacao = NULL, carryover_sub_status_marcacao = NULL
+WHERE codigo LIKE 'PRJ-FY26-9%' AND aprovador_nome = 'CARGA CARRYOVER 2026'
+  AND is_carryover = true;
+
 
 -- =========================================================================
 -- SEÇÃO 3 — Planejamento de fase (projeto_etapas)
