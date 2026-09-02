@@ -399,3 +399,28 @@ Reportados pelo usuário logo após a correção anterior:
    `sub_status ∈ (CANCELADO, REPROVADO)` e `status = CANCELADO`. Aparece
    agora com o Fechamento Ano Fiscal, que cancela projetos em fases
    avançadas.
+
+---
+
+## Correção — Formalizar Demanda oferecia o Ano Fiscal errado (2026-09-02)
+
+Reportado pelo usuário: a Formalização de Demanda mostrava só o AF do
+pipeline (AF2027) e não deixava incluir demanda para o AF em andamento
+(AF2026) como Extraordinária.
+
+Causa: `popularOpcoesAFDemanda` (`js/projects/core.js`) montava a opção
+"Extraordinária" a partir de `getInfoAnoFiscal().afAtualStr` — cálculo pela
+DATA do dia — em vez de ler `anos_fiscais_config`. Como a data de hoje
+resolve para AF2027 (que é o pipeline, orçamento não fechado), a condição
+nunca era satisfeita e o AF2026 (orçamento fechado, ano ainda não
+encerrado) nunca era considerado. Tela não migrada junto com o resto do
+app no `de33281`.
+
+Correção:
+- Opção **Normal** = AF em orçamentação (`obterAFAbertoParaDemandas()`,
+  já com blindagem contra AF de orçamento fechado).
+- Opção **Extraordinária** = AF em andamento, via `afEmAndamentoStr()`
+  (`js/core/filtro-af-visao.js`): `orcamento_fechado = true` **e**
+  `ano_fiscal_fechado ≠ true`. Um AF formalmente encerrado não aparece.
+- `saveBusinessCase` passou a rejeitar Extraordinária para AF com
+  `ano_fiscal_fechado = true` (antes só checava `orcamento_fechado`).

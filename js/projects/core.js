@@ -32,27 +32,34 @@ async function popularOpcoesAFDemanda() {
     const select = document.getElementById('bcAnoFiscalSelect');
     if (!select) return;
 
-    const infoAF = getInfoAnoFiscal();
-    const { data: configAtual } = await _supabase.from('anos_fiscais_config').select('orcamento_fechado').eq('ano_fiscal', infoAF.afAtualStr).maybeSingle();
-    const afAtualFechado = configAtual ? configAtual.orcamento_fechado === true : false;
-    let afAberto = await obterAFAbertoParaDemandas();
+    // CORRIGIDO (bug reportado 02/09/2026): as opções de Ano Fiscal vinham
+    // de cálculo por DATA (getInfoAnoFiscal().afAtualStr), e não da
+    // configuração de Anos Fiscais — então o AF "em andamento" real
+    // (orçamento fechado, ano ainda não encerrado) nunca era oferecido
+    // como opção de Demanda Extraordinária, e o AF em orçamentação só
+    // aparecia por coincidir com a data. Agora usa a mesma fonte do
+    // seletor de AF do resto do app (js/core/filtro-af-visao.js):
+    //   - Normal        -> AF em orçamentação (obterAFAbertoParaDemandas / pipeline)
+    //   - Extraordinária -> AF em andamento (orcamento_fechado=true e ano_fiscal_fechado!=true)
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
+    const listaAF = (typeof anosFiscaisListaCache !== 'undefined' && anosFiscaisListaCache) ? anosFiscaisListaCache : [];
 
-    // CORRIGIDO (bug reportado pelo usuário: sistema deixou passar
-    // demanda comum pra um AF com orçamento já fechado): blindagem
-    // extra — mesmo que "recebimento_demandas_aberto" esteja
-    // (indevidamente) true pra um AF que já tem orcamento_fechado=true,
-    // nunca oferece esse AF como opção "normal". Confere de novo direto
-    // no banco, não confia só no resultado de obterAFAbertoParaDemandas.
+    let afAberto = await obterAFAbertoParaDemandas();
+    // Blindagem: nunca oferecer como "normal" um AF já com o orçamento fechado.
     if (afAberto) {
-        const { data: configAberto } = await _supabase.from('anos_fiscais_config').select('orcamento_fechado').eq('ano_fiscal', afAberto).maybeSingle();
-        if (configAberto && configAberto.orcamento_fechado === true) {
-            afAberto = null;
-        }
+        const cfgN = listaAF.find(c => c.ano_fiscal === afAberto);
+        if (cfgN && cfgN.orcamento_fechado === true) afAberto = null;
     }
+
+    // AF em andamento (orçamento fechado, ano fiscal ainda NÃO encerrado)
+    // -> aceita apenas Demanda Extraordinária.
+    const afExtra = (typeof afEmAndamentoStr === 'function') ? afEmAndamentoStr() : null;
+    const cfgExtra = afExtra ? listaAF.find(c => c.ano_fiscal === afExtra) : null;
+    const afExtraValido = !!(cfgExtra && cfgExtra.orcamento_fechado === true && cfgExtra.ano_fiscal_fechado !== true);
 
     const opcoes = [];
     if (afAberto) opcoes.push({ af: afAberto, tipo: 'normal' });
-    if (afAtualFechado && infoAF.afAtualStr !== afAberto) opcoes.push({ af: infoAF.afAtualStr, tipo: 'extraordinaria' });
+    if (afExtraValido && afExtra !== afAberto) opcoes.push({ af: afExtra, tipo: 'extraordinaria' });
 
     if (opcoes.length === 0) {
         select.innerHTML = '<option value="">Nenhum AF disponível no momento</option>';
@@ -361,9 +368,12 @@ async function saveBusinessCase(e) {
         }
         // Reconfere de novo contra o banco — evita salvar Extraordinária
         // se algo mudou nesse meio tempo (AF reaberto, etc.).
-        const { data: configAtual } = await _supabase.from('anos_fiscais_config').select('orcamento_fechado').eq('ano_fiscal', anoFiscal).maybeSingle();
+        const { data: configAtual } = await _supabase.from('anos_fiscais_config').select('orcamento_fechado, ano_fiscal_fechado').eq('ano_fiscal', anoFiscal).maybeSingle();
         if (!configAtual || !configAtual.orcamento_fechado) {
             return alert(`⛔ Só é possível registrar uma demanda Extraordinária depois que o orçamento do ${anoFiscal} estiver fechado.`);
+        }
+        if (configAtual.ano_fiscal_fechado === true) {
+            return alert(`⛔ O Ano Fiscal ${anoFiscal} já foi formalmente encerrado (Fechamento Ano Fiscal) — não aceita mais demandas Extraordinárias.`);
         }
     } else {
         // Reconfere que o AF normal ainda está mesmo aberto — e que ele
