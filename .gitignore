@@ -23,3 +23,6 @@ Supabase Snippet*.csv
 # checked in.
 .temp/
 supabase/.temp/
+
+# Local backups from the origin-reference purge — never commit.
+*.pre-expurgo.bak
