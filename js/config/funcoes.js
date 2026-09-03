@@ -766,6 +766,12 @@ function aplicarVisibilidadeMenu() {
         if (link) link.classList.toggle('hidden', !admOuProprietario);
     });
 
+    // Ferramentas de Dev: exclusivo do PROPRIETÁRIO (não basta ser
+    // Administrador / ter acesso irrestrito, e não segue o catálogo). O
+    // switchTab e cada ação em js/dev-tools/*.js re-checam ehProprietario.
+    const linkDevTools = document.getElementById('link-dev_tools');
+    if (linkDevTools) linkDevTools.classList.toggle('hidden', !ehProprietario);
+
     // NOVO (2026-09-01): esconde o CABEÇALHO do grupo lateral inteiro
     // quando nenhum item dele ficou visível para o perfil logado — senão
     // sobra o título do grupo ("ANO FISCAL", "BUSINESS CASE", "PERFIS DE

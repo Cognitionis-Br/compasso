@@ -30,9 +30,9 @@
 // não existir, exatamente como antes de terem sido criados).
 async function resetarBaseParaFase1() {
     // Checagem client-side (UX apenas — ver nota no topo de js/config/funcoes.js).
-    // Restrito a ADMINISTRADOR por ser uma ação destrutiva.
-    if (!ehAdministrador) {
-        return alert('⛔ Esta ferramenta é restrita a usuários com a função ADMINISTRADOR.');
+    // Restrito ao PROPRIETÁRIO por ser uma ação destrutiva.
+    if (!ehProprietario) {
+        return alert('⛔ Esta ferramenta é restrita ao PROPRIETÁRIO do sistema.');
     }
 
     if (!projectsData || projectsData.length === 0) {

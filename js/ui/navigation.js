@@ -230,18 +230,19 @@ function switchTab(tabId) {
             if (conteudo) conteudo.classList.add('hidden');
         }
     }
-    // MANTIDO deliberadamente admin-only (não segue o catálogo, mesmo que
-    // uma função tenha "dev_tools" atribuído): ferramentas destrutivas
-    // (limpar base, reset, criar projeto de teste) — camada extra de
-    // segurança, tanto aqui (visibilidade) quanto dentro de cada ação em
-    // js/dev-tools/*.js (que já re-checam ehAdministrador de novo).
+    // MANTIDO deliberadamente exclusivo do PROPRIETÁRIO (não segue o
+    // catálogo, mesmo que uma função tenha "dev_tools" atribuído, e não
+    // basta ser Administrador / ter acesso irrestrito): ferramentas
+    // destrutivas (limpar base, reset, criar projeto de teste) — camada
+    // extra de segurança, tanto aqui (visibilidade) quanto dentro de cada
+    // ação em js/dev-tools/*.js (que já re-checam ehProprietario de novo).
     if (tabId === 'dev_tools') {
         const restrito = document.getElementById('devToolsRestrito');
         const conteudo = document.getElementById('devToolsConteudo');
         const conteudoLimpeza = document.getElementById('devToolsLimpezaConteudo');
         const conteudoLimpezaTotal = document.getElementById('devToolsLimpezaTotalConteudo');
         const conteudoCriarTeste = document.getElementById('devToolsCriarTesteConteudo');
-        if (ehAdministrador) {
+        if (ehProprietario) {
             if (restrito) restrito.classList.add('hidden');
             if (conteudo) conteudo.classList.remove('hidden');
             if (conteudoLimpeza) conteudoLimpeza.classList.remove('hidden');

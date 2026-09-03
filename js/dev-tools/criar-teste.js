@@ -111,8 +111,8 @@ function onDevTesteAdhocChange() {
 }
 
 async function criarProjetoTeste() {
-    if (!ehAdministrador) {
-        return alert('⛔ Esta ferramenta é restrita a usuários com a função ADMINISTRADOR.');
+    if (!ehProprietario) {
+        return alert('⛔ Esta ferramenta é restrita ao PROPRIETÁRIO do sistema.');
     }
 
     const nome = (document.getElementById('devTesteNome').value || '').trim();

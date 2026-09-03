@@ -17,8 +17,8 @@
 let devToolsProjetosSelecionados = new Set();
 
 async function limparBaseSomenteAF2027() {
-    if (!ehAdministrador) {
-        return alert('⛔ Esta ferramenta é restrita a usuários com a função ADMINISTRADOR.');
+    if (!ehProprietario) {
+        return alert('⛔ Esta ferramenta é restrita ao PROPRIETÁRIO do sistema.');
     }
 
     const AF_MANTIDO = 'AF2027';
@@ -160,8 +160,8 @@ async function limparBaseSomenteAF2027() {
 // aqui não sobra nenhum Ano Fiscal configurado, é preciso reabrir do zero
 // em Fiscal Year → Abertura Fiscal Year depois.
 async function limparBaseCompletamente() {
-    if (!ehAdministrador) {
-        return alert('⛔ Esta ferramenta é restrita a usuários com a função ADMINISTRADOR.');
+    if (!ehProprietario) {
+        return alert('⛔ Esta ferramenta é restrita ao PROPRIETÁRIO do sistema.');
     }
 
     const codigosParaApagar = (projectsData || []).map(p => p.codigo);
@@ -298,8 +298,8 @@ function toggleSelecaoProjetoDevTools(codigo, marcado) {
 }
 
 async function excluirFisicamenteSelecionados() {
-    if (!ehAdministrador) {
-        return alert('⛔ Esta ferramenta é restrita a usuários com a função ADMINISTRADOR.');
+    if (!ehProprietario) {
+        return alert('⛔ Esta ferramenta é restrita ao PROPRIETÁRIO do sistema.');
     }
     if (devToolsProjetosSelecionados.size === 0) {
         return alert('Selecione pelo menos um projeto pra excluir!');
