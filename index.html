@@ -2674,9 +2674,8 @@
                                     <option value="PRODUTO">Produto (só projetos do mesmo produto do extraordinário)</option>
                                 </select>
                             </div>
-                            <div class="mb-4">
-                                <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Vigência a partir de</label>
-                                <input type="date" id="controleOrcamentoVigencia" class="w-full p-2 border border-gray-300 rounded text-sm">
+                            <div class="mb-4 text-[11px] text-gray-500">
+                                Vigência a partir de <b id="controleOrcamentoVigenciaInfo" class="text-gray-800">—</b> (1º dia do mês corrente, automático).
                             </div>
                             <button onclick="salvarControleOrcamento()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition text-sm">
                                 <i class="fa-solid fa-floppy-disk"></i> Salvar Modo de Controle
@@ -2721,9 +2720,8 @@
                                     <div class="w-full p-2 border border-gray-200 bg-gray-50 rounded text-sm font-bold text-gray-600"><span id="periodoAnoFiscalMesFim">—</span></div>
                                 </div>
                             </div>
-                            <div class="mb-4">
-                                <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Vigência a partir de</label>
-                                <input type="date" id="periodoAnoFiscalVigencia" class="w-full p-2 border border-gray-300 rounded text-sm">
+                            <div class="mb-4 text-[11px] text-gray-500">
+                                Vigência a partir de <b id="periodoAnoFiscalVigenciaInfo" class="text-gray-800">—</b> (1º dia do mês corrente, automático). O período anterior encerra no último dia do mês anterior a esta data.
                             </div>
                             <button onclick="salvarPeriodoAnoFiscal()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition text-sm">
                                 <i class="fa-solid fa-floppy-disk"></i> Salvar Período

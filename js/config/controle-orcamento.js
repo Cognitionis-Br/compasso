@@ -39,6 +39,13 @@ function modoControleOrcamentoAtivo() {
 
 const CONTROLE_ORCAMENTO_LABEL = { AF: 'Ano Fiscal', AREA: 'Área', PRODUTO: 'Produto' };
 
+// A vigência começa SEMPRE no 1º dia do mês corrente — o usuário não
+// informa data. (Append-only: o fim de cada faixa é implícito.)
+function _coPrimeiroDiaMesAtualISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+}
+
 function _podeVerControleOrcamento() {
     return (typeof ehAdministrador !== 'undefined' && ehAdministrador) ||
            (typeof ehProprietario !== 'undefined' && ehProprietario) ||
@@ -59,8 +66,8 @@ async function renderControleOrcamentoView() {
 
     const sel = document.getElementById('controleOrcamentoModo');
     if (sel) sel.value = modoAtual;
-    const elVig = document.getElementById('controleOrcamentoVigencia');
-    if (elVig && !elVig.value) elVig.value = new Date().toISOString().split('T')[0];
+    const elVig = document.getElementById('controleOrcamentoVigenciaInfo');
+    if (elVig) elVig.innerText = new Date(_coPrimeiroDiaMesAtualISO() + 'T00:00:00').toLocaleDateString('pt-BR');
 
     const elLog = document.getElementById('controleOrcamentoLog');
     if (elLog) {
@@ -75,13 +82,16 @@ async function renderControleOrcamentoView() {
 async function _renderHistoricoControleOrcamento() {
     const tbody = document.getElementById('controleOrcamentoHistorico');
     if (!tbody) return;
-    const { data } = await _supabase.from('config_controle_orcamento').select('*').order('alterado_em', { ascending: false });
-    const linhas = data || [];
+    const { data } = await _supabase.from('config_controle_orcamento').select('*');
+    const asc = (data || []).slice().sort((a, b) => String(a.vigencia_de).localeCompare(String(b.vigencia_de)) || String(a.alterado_em).localeCompare(String(b.alterado_em)));
+    const fmtD = iso => iso ? new Date(String(iso).split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+    const fmtDMenos1 = iso => { if (!iso) return '-'; const d = new Date(String(iso).split('T')[0] + 'T00:00:00'); d.setDate(d.getDate() - 1); return d.toLocaleDateString('pt-BR'); };
+    const linhas = asc.map((l, i) => ({ l, ini: fmtD(l.vigencia_de), fim: (i < asc.length - 1) ? fmtDMenos1(asc[i + 1].vigencia_de) : 'atual' })).reverse();
     tbody.innerHTML = linhas.length === 0
         ? `<tr><td colspan="4" class="p-3 text-center text-gray-400 font-bold">Sem alterações registradas.</td></tr>`
-        : linhas.map(l => `
+        : linhas.map(({ l, ini, fim }) => `
             <tr>
-                <td class="p-2">${l.vigencia_de ? new Date(l.vigencia_de).toLocaleDateString('pt-BR') : '-'}</td>
+                <td class="p-2">${ini} <span class="text-gray-400">→</span> ${fim}</td>
                 <td class="p-2 font-bold">${CONTROLE_ORCAMENTO_LABEL[l.modo] || l.modo}</td>
                 <td class="p-2">${l.modo_anterior ? (CONTROLE_ORCAMENTO_LABEL[l.modo_anterior] || l.modo_anterior) : '-'}</td>
                 <td class="p-2 uppercase font-bold">${escapeHtml(l.alterado_por || '-')}<span class="block text-[9px] text-gray-400">${l.alterado_em ? new Date(l.alterado_em).toLocaleString('pt-BR') : ''}</span></td>
@@ -98,12 +108,12 @@ async function salvarControleOrcamento() {
     const novoModo = sel ? sel.value : '';
     if (!['AF', 'AREA', 'PRODUTO'].includes(novoModo)) return alert('Selecione um modo válido.');
 
-    const vigencia = (document.getElementById('controleOrcamentoVigencia') || {}).value || new Date().toISOString().split('T')[0];
+    const vigencia = _coPrimeiroDiaMesAtualISO(); // sempre o 1º dia do mês corrente
     const modoAnterior = modoControleOrcamentoAtivo();
     if (novoModo === modoAnterior && configControleOrcamentoCache) {
         return alert('O modo selecionado já é o vigente — nada a salvar.');
     }
-    if (!confirm(`Confirmar: o controle orçamentário do trade-off passa a ser por "${CONTROLE_ORCAMENTO_LABEL[novoModo]}" a partir de ${new Date(vigencia).toLocaleDateString('pt-BR')}?\n\nIsto muda quais projetos ficam elegíveis no trade-off da Demanda Extraordinária. Não afeta o seletor de agrupamento do Dashboard/Financeiro, nem trade-offs já aprovados.`)) return;
+    if (!confirm(`Confirmar: o controle orçamentário do trade-off passa a ser por "${CONTROLE_ORCAMENTO_LABEL[novoModo]}" a partir de ${new Date(vigencia + 'T00:00:00').toLocaleDateString('pt-BR')}?\n\nIsto muda quais projetos ficam elegíveis no trade-off da Demanda Extraordinária. Não afeta o seletor de agrupamento do Dashboard/Financeiro, nem trade-offs já aprovados.`)) return;
 
     const payload = {
         modo: novoModo,

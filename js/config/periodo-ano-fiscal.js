@@ -51,6 +51,20 @@ function mesEncerramentoAnoFiscal(mesInicio) {
 const NOMES_MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
+// A vigência de um período começa SEMPRE no 1º dia de um mês e termina no
+// último dia do mês anterior à próxima vigência — o usuário não digita
+// data nenhuma. Ao salvar, a vigência é o 1º dia do mês corrente.
+function _primeiroDiaMesAtualISO() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`;
+}
+function _fmtDataMenos1(iso) {
+    if (!iso) return '-';
+    const d = new Date(String(iso).split('T')[0] + 'T00:00:00');
+    d.setDate(d.getDate() - 1);
+    return d.toLocaleDateString('pt-BR');
+}
+
 async function renderPeriodoAnoFiscalView() {
     // Gate hardcoded — a tela nunca depende do catálogo.
     const restrito = document.getElementById('periodoAnoFiscalRestrito');
@@ -72,14 +86,25 @@ async function renderPeriodoAnoFiscalView() {
     const elFim = document.getElementById('periodoAnoFiscalMesFim');
     if (elFim) elFim.innerText = NOMES_MESES_PT[mesEncerramentoAnoFiscal(mesAtual) - 1];
 
+    const elVig = document.getElementById('periodoAnoFiscalVigenciaInfo');
+    if (elVig) elVig.innerText = new Date(_primeiroDiaMesAtualISO() + 'T00:00:00').toLocaleDateString('pt-BR');
+
     const elHist = document.getElementById('periodoAnoFiscalHistorico');
     if (elHist) {
-        const linhas = (configPeriodoAFCache || []).slice().reverse();
+        // Ordena por vigência asc para poder calcular o fim de cada faixa
+        // (= dia anterior à vigência seguinte). Exibe do mais recente p/ o
+        // mais antigo.
+        const asc = (configPeriodoAFCache || []).slice().sort((a, b) => String(a.vigencia_de).localeCompare(String(b.vigencia_de)));
+        const linhas = asc.map((l, i) => {
+            const ini = l.vigencia_de ? new Date(String(l.vigencia_de).split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+            const fim = (i < asc.length - 1) ? _fmtDataMenos1(asc[i + 1].vigencia_de) : 'atual';
+            return { l, ini, fim };
+        }).reverse();
         elHist.innerHTML = linhas.length === 0
             ? `<tr><td colspan="4" class="p-3 text-center text-gray-400 font-bold">Nenhum período cadastrado — o sistema usa Abril–Março (padrão).</td></tr>`
-            : linhas.map(l => `
+            : linhas.map(({ l, ini, fim }) => `
                 <tr>
-                    <td class="p-2">${l.vigencia_de ? new Date(l.vigencia_de).toLocaleDateString('pt-BR') : '-'}</td>
+                    <td class="p-2">${ini} <span class="text-gray-400">→</span> ${fim}</td>
                     <td class="p-2 font-bold">${NOMES_MESES_PT[(Number(l.mes_inicio) || 4) - 1]}</td>
                     <td class="p-2">${l.mes_inicio_anterior ? NOMES_MESES_PT[(Number(l.mes_inicio_anterior)) - 1] : '-'}</td>
                     <td class="p-2 uppercase font-bold">${escapeHtml(l.alterado_por || '-')}<span class="block text-[9px] text-gray-400">${l.alterado_em ? new Date(l.alterado_em).toLocaleString('pt-BR') : ''}</span></td>
@@ -103,13 +128,19 @@ async function salvarPeriodoAnoFiscal() {
     const novoMes = sel ? Number(sel.value) : NaN;
     if (!(novoMes >= 1 && novoMes <= 12)) return alert('Selecione um mês de início válido.');
 
-    const vigencia = (document.getElementById('periodoAnoFiscalVigencia') || {}).value || new Date().toISOString().split('T')[0];
+    // Vigência automática: sempre o 1º dia do mês corrente. O usuário não
+    // informa data — o fim de cada faixa é o dia anterior à vigência
+    // seguinte (calculado na exibição).
+    const vigencia = _primeiroDiaMesAtualISO();
     const mesAnterior = mesInicioAnoFiscal();
 
     if (novoMes === mesAnterior && configPeriodoAFCache.length > 0) {
         return alert('O mês de início selecionado é o mesmo que já vigora — nada a salvar.');
     }
-    if (!confirm(`Confirmar: o Ano Fiscal passa a começar em ${NOMES_MESES_PT[novoMes - 1]} a partir de ${new Date(vigencia).toLocaleDateString('pt-BR')}?\n\nDatas anteriores a essa vigência continuam apuradas no período antigo. Quarters e rótulos "AFxxxx" das telas passam a refletir o novo período.`)) return;
+    if ((configPeriodoAFCache || []).some(l => String(l.vigencia_de).split('T')[0] === vigencia)) {
+        return alert('Já existe um período com vigência neste mês. Só é possível registrar uma alteração por mês.');
+    }
+    if (!confirm(`Confirmar: o Ano Fiscal passa a começar em ${NOMES_MESES_PT[novoMes - 1]} a partir de ${new Date(vigencia + 'T00:00:00').toLocaleDateString('pt-BR')}?\n\nDatas anteriores a essa vigência continuam apuradas no período antigo. Quarters e rótulos "AFxxxx" das telas passam a refletir o novo período.`)) return;
 
     const payload = {
         mes_inicio: novoMes,
