@@ -2,12 +2,16 @@
 -- 2026-09-03_expurgo_referencias_origem.sql
 -- Compasso — projeto Supabase fytynjjvzecljmgbtwec.
 --
--- FASE 2 do expurgo de referências ao cliente/sistema de origem
--- (cliente de origem / Compasso / Compasso). O código e a documentação já foram limpos no
--- repositório; este script trata o BANCO.
+-- FASE 2 do expurgo de referências ao cliente / sistema de origem no BANCO.
+-- Código e documentação já foram limpos no repositório.
 --
 -- Abordagem (spec §2.2): NÃO apagar linhas de log/auditoria — substituir o
 -- texto nos campos livres, preservando a rastreabilidade do restante.
+--
+-- Os PADRÕES de busca e as SUBSTITUIÇÕES não ficam escritos aqui de
+-- propósito (para o script não reintroduzir os termos no repositório).
+-- Pegue os valores de `p_padrao` e `p_trocas` no material entregue à parte
+-- (com a equipe) e cole nos dois DO-blocks abaixo antes de rodar.
 --
 -- Rode em DUAS ETAPAS, no Supabase → SQL Editor:
 --   ETAPA 1 (só leitura) — descobre onde há ocorrência.
@@ -17,16 +21,20 @@
 
 -- =========================================================================
 -- ETAPA 1 — DIAGNÓSTICO (não altera nada). Lista tabela.coluna + nº de
--- linhas que contêm 'cliente de origem', 'Compasso' ou 'compasso' (case-insensitive, palavra
--- inteira para 'compasso'/'btb' para não pegar substring aleatória).
+-- linhas que casam com o padrão, varrendo todas as colunas de texto de
+-- public.*.
 -- =========================================================================
 DO $$
 DECLARE
     r        RECORD;
     v_count  BIGINT;
-    v_regex  TEXT := '(cliente de origem|Compasso|one[ _-]?btb|\yotb\y|\ybtb\y)';
+    -- >>> COLE AQUI o padrão POSIX (ex.: '(term1|term2|\yterm3\y)') <<<
+    v_regex  TEXT := '<<<PADRAO_ORIGEM>>>';
 BEGIN
-    RAISE NOTICE '=== Ocorrências de referências de origem por tabela.coluna ===';
+    IF v_regex = '<<<PADRAO_ORIGEM>>>' THEN
+        RAISE EXCEPTION 'Cole o padrão de busca em v_regex antes de rodar.';
+    END IF;
+    RAISE NOTICE '=== Ocorrências por tabela.coluna ===';
     FOR r IN
         SELECT c.table_schema, c.table_name, c.column_name
         FROM information_schema.columns c
@@ -51,57 +59,53 @@ END $$;
 
 -- =========================================================================
 -- ETAPA 2 — SUBSTITUIÇÃO (escrita). Preencha p_alvos com os pares
--- tabela.coluna que a Etapa 1 listou e rode. Idempotente (rodar de novo
--- não muda mais nada). Registra o resumo da operação em
--- log_expurgo_referencias_origem.
---
--- Regras de troca:
---   'Compasso'  -> 'Compasso'      (case-insensitive)
---   'Compasso'     -> 'Compasso'      (palavra inteira)
---   'cliente de origem' / 'cliente de origem' -> 'cliente de origem'
+-- tabela.coluna que a Etapa 1 listou, cole v_regex e a expressão de troca
+-- v_troca (regexp_replace aninhado, do material entregue à parte), e rode.
+-- Idempotente. Registra o resumo em log_expurgo_referencias_origem.
 -- =========================================================================
 
 CREATE TABLE IF NOT EXISTS log_expurgo_referencias_origem (
-    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    executado_em  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    executado_por TEXT,
-    tabela        TEXT,
-    coluna        TEXT,
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    executado_em    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    executado_por   TEXT,
+    tabela          TEXT,
+    coluna          TEXT,
     linhas_afetadas BIGINT
 );
 ALTER TABLE log_expurgo_referencias_origem DISABLE ROW LEVEL SECURITY;
 
 DO $$
 DECLARE
-    -- >>> EDITE AQUI com o resultado da Etapa 1 (formato 'tabela.coluna') <<<
-    p_alvos   TEXT[] := ARRAY[
+    -- >>> EDITE: pares 'tabela.coluna' da Etapa 1 <<<
+    p_alvos  TEXT[] := ARRAY[
         -- 'adhoc_aprovacoes.observacao',
-        -- 'log_decisoes_etapa.motivo',
         -- 'projetos.observacao'
-    ];
-    p_quem    TEXT := 'EXPURGO ORIGEM 2026-09-03';
-    par       TEXT;
-    v_tab     TEXT;
-    v_col     TEXT;
-    v_regex   TEXT := '(cliente de origem|Compasso|one[ _-]?btb|\yotb\y|\ybtb\y)';
-    v_rows    BIGINT;
+    ]::TEXT[];
+    p_quem   TEXT := 'EXPURGO ORIGEM 2026-09-03';
+    -- >>> COLE o mesmo padrão da Etapa 1 <<<
+    v_regex  TEXT := '<<<PADRAO_ORIGEM>>>';
+    par      TEXT;
+    v_tab    TEXT;
+    v_col    TEXT;
+    v_rows   BIGINT;
 BEGIN
+    IF v_regex = '<<<PADRAO_ORIGEM>>>' THEN
+        RAISE EXCEPTION 'Cole o padrão de busca em v_regex antes de rodar.';
+    END IF;
     IF array_length(p_alvos, 1) IS NULL THEN
-        RAISE NOTICE 'Nenhum alvo informado — preencha p_alvos com o resultado da Etapa 1.';
+        RAISE NOTICE 'Nenhum alvo — preencha p_alvos com o resultado da Etapa 1.';
         RETURN;
     END IF;
     FOREACH par IN ARRAY p_alvos LOOP
         v_tab := split_part(par, '.', 1);
         v_col := split_part(par, '.', 2);
+        -- A expressão de troca (regexp_replace aninhado) vem no material à
+        -- parte; cole-a no lugar de <<<TROCA(%1$I)>>>, usando %1$I como o
+        -- nome da coluna.
         EXECUTE format($f$
-            UPDATE %I SET %I =
-                regexp_replace(
-                  regexp_replace(
-                    regexp_replace(%I, '(banco[ ]+)?cliente de origem([ ]+do[ ]+brasil)?', 'cliente de origem', 'gi'),
-                  '(Compasso|one[ _-]?btb)', 'Compasso', 'gi'),
-                '\yotb\y', 'Compasso', 'gi')
-            WHERE %I ~* %L
-        $f$, v_tab, v_col, v_col, v_col, v_regex);
+            UPDATE %1$I SET %2$I = <<<TROCA(%2$I)>>>
+            WHERE %2$I ~* %3$L
+        $f$, v_tab, v_col, v_regex);
         GET DIAGNOSTICS v_rows = ROW_COUNT;
         INSERT INTO log_expurgo_referencias_origem (executado_por, tabela, coluna, linhas_afetadas)
             VALUES (p_quem, v_tab, v_col, v_rows);
