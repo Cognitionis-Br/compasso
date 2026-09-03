@@ -43,13 +43,13 @@ DECLARE
         'projetos',
         -- ciclo / numeração
         'anos_fiscais_config','contadores_codigo_projeto',
-        -- cadastros operacionais
-        'areas_solicitantes','pessoas_solicitantes','portes','tipos_projeto',
-        'tipos_return_benefit','iniciativas_estrategicas','pilares_estrategicos','cargos',
+        -- cadastros operacionais (pessoas antes de áreas por causa de FK)
+        'pessoas_solicitantes','areas_solicitantes','portes','tipos_projeto',
+        'tipos_return_benefit','iniciativas_estrategicas','pilares_estrategicos',
         -- contratos / empresas terceirizadas
         'contratos_projeto','empresas_terceirizadas',
-        -- e-mail (o produto instala vazio; o admin cadastra)
-        'email_templates','email_fluxo',
+        -- e-mail: só os templates (o fluxo é lista fixa do produto — fica)
+        'email_templates',
         -- parâmetros que nascem sem valor
         'config_bloqueio_orcamento','config_periodo_ano_fiscal','config_controle_orcamento',
         -- empresa licenciada + logs de licença
@@ -86,6 +86,15 @@ BEGIN
     -- usuários e vínculos de função: mantém só o(s) PROPRIETÁRIO
     DELETE FROM usuario_funcoes WHERE usuario_id <> ALL (v_prop);
     DELETE FROM usuarios        WHERE id         <> ALL (v_prop);
+
+    -- cargos: apaga os que não são mais usados por nenhum usuário mantido
+    -- (o PROPRIETÁRIO tem cargo obrigatório — não pode virar FK órfã)
+    BEGIN
+        DELETE FROM cargos
+         WHERE id NOT IN (SELECT cargo_id FROM usuarios WHERE cargo_id IS NOT NULL);
+        RAISE NOTICE 'cargos: mantidos só os do(s) usuário(s) preservado(s)';
+    EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): cargos';
+    END;
 
     RAISE NOTICE 'Carga zero concluída. Usuários mantidos (PROPRIETÁRIO): %', v_prop;
 END $$;
