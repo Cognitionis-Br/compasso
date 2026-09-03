@@ -33,6 +33,16 @@ There is no build/test/lint tooling in this repo (no `package.json`). This is a 
 - There are no automated tests. Verify changes by loading the app in a browser and exercising the affected
   tab/flow directly.
 
+## Versionamento (Fase 4, 03/09/2026)
+
+- Fonte única: `COMPASSO_VERSAO` em `js/core/version.js` (`{numero, release, data}`), SemVer
+  MAJOR.MINOR.PATCH. "Release N" é o rótulo comercial do ciclo (sobe em marcos, não a cada PATCH).
+- Exibida no rodapé do login, no rodapé do menu lateral e na tela inicial, via elementos
+  `[data-compasso-versao]` (`"curta"` → `v1.0.0`; `"longa"` → `Versão 1.0.0 · Release 0`), carimbados por
+  `aplicarVersaoCompasso()` (chamado em `js/main.js`).
+- **Para lançar**: (1) editar `COMPASSO_VERSAO`; (2) mover os itens de "Não lançado" para uma nova seção
+  datada em `CHANGELOG.md` (raiz); (3) commit. O deploy é o push para `main`.
+
 ## Architecture
 
 ### Everything is one global scope — classic scripts, not ES modules

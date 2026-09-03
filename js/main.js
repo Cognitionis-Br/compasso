@@ -58,6 +58,10 @@ const vindoDeLinkRecuperacaoSenha = !erroLinkRecuperacao && (
 
 monitorarRecuperacaoSenha();
 
+// FASE 4 (03/09/2026): carimba a versão do sistema em todo elemento
+// [data-compasso-versao] (rodapé do login, rodapé do menu, tela inicial).
+if (typeof aplicarVersaoCompasso === 'function') aplicarVersaoCompasso();
+
 // FASE 3 (03/09/2026): identidade da empresa licenciada (nome/logo/cor) na
 // TELA DE LOGIN — carrega antes de qualquer login. Depois do login,
 // entrarNoSistema() reaplica para o menu lateral e a tela inicial.

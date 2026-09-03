@@ -80,6 +80,7 @@
                 <button type="button" onclick="abrirModalEsqueciSenha()" class="text-xs text-gray-400 hover:text-red-600 font-semibold transition-colors">Esqueci minha senha</button>
             </div>
             <p class="text-[10px] text-gray-400 text-center mt-6">Compasso — um produto Cognitionis. Todos os direitos reservados</p>
+            <p class="text-[10px] text-gray-300 text-center mt-1" data-compasso-versao="longa">Versão 1.0.0 · Release 0</p>
         </div>
     </div>
 
@@ -376,6 +377,7 @@
                 <div class="font-bold uppercase mb-1 text-[10px] text-red-700">Status do Ciclo</div>
                 <div id="sidebarInfoAF" class="font-mono font-black text-red-700 text-sm tracking-wide">FY Atual: Calculando...</div>
             </div>
+            <div class="px-4 pb-3 text-center text-[10px] text-gray-400" data-compasso-versao="curta">v1.0.0</div>
         </aside>
 
         <!-- Fundo escurecido, só aparece no celular quando o menu está aberto (some sozinho em telas md+) -->
@@ -456,6 +458,7 @@
                         <img id="empresaLogoHome" class="hidden mx-auto max-h-12 object-contain mb-1" alt="">
                         <p id="empresaMarcaHome" class="hidden text-xs font-bold uppercase tracking-wider"></p>
                         <h2 class="text-2xl font-bold text-gray-900">Workspace de Governança</h2>
+                        <p class="text-[11px] text-gray-400" data-compasso-versao="longa">Versão 1.0.0 · Release 0</p>
                         <p class="text-sm text-gray-500 max-w-lg mx-auto">
                             Selecione um módulo no menu lateral para atuar na esteira de projetos, ou utilize as visões no topo para acessar relatórios gerenciais e roadmaps.
                         </p>
@@ -4478,6 +4481,7 @@
 
     <!-- SCRIPT CONTROLADOR -->
     <script src="./js/core/supabase-client.js"></script>
+    <script src="./js/core/version.js"></script>
     <script src="./js/core/state.js"></script>
     <script src="./js/core/licenca.js"></script>
     <script src="./js/core/fiscal-year.js"></script>
