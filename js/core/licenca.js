@@ -18,6 +18,12 @@
 
 let modulosLicenciados = {};
 
+// NOVO (Fase 1 licenciamento — 03/09/2026): fonte única de verdade
+// "tela -> módulo", carregada de modulo_funcao no boot. Enquanto a tabela
+// não existir / não carregar, moduloDoTab() cai no TAB_MODULO_MAP
+// hardcoded abaixo (que já reflete as mesmas decisões).
+let moduloPorTab = {};
+
 const NOME_EXIBICAO_MODULO = {
     WORKFLOW: 'Workflow de Projetos',
     EMAIL: 'Notificações por E-mail',
@@ -34,6 +40,15 @@ async function carregarLicenca() {
     if (!error && data) {
         data.forEach(m => { modulosLicenciados[m.modulo_codigo] = m.ativo === true; });
     }
+
+    // NOVO (Fase 1 licenciamento): mapa tela -> módulo vindo do banco
+    // (modulo_funcao). Se a tabela não existir ainda, moduloPorTab fica {}
+    // e moduloDoTab() usa o TAB_MODULO_MAP hardcoded como fallback.
+    const { data: mf, error: errMf } = await _supabase.from('modulo_funcao').select('activity_key, modulo');
+    moduloPorTab = {};
+    if (!errMf && mf) {
+        mf.forEach(r => { moduloPorTab[r.activity_key] = r.modulo; });
+    }
 }
 
 // codigo === null/undefined/'NUCLEO' -> sempre ativo (tela núcleo, sem
@@ -45,20 +60,23 @@ function moduloAtivo(codigo) {
     return modulosLicenciados[codigo] === true;
 }
 
-// Fonte única de verdade tabId -> módulo responsável. Usado por
-// aplicarVisibilidadeMenu() (esconde link-<tabId>/view-btn-<tabId>) e por
-// switchTab() (bloqueia o carregamento da view). Um tabId ausente daqui é
-// NÚCLEO — sempre disponível.
+// Fallback / documentação do mapa tela -> módulo. A VERDADE em runtime é a
+// tabela modulo_funcao (carregada em moduloPorTab por carregarLicenca);
+// este objeto só é consultado quando a tela não está lá (tabela ausente,
+// primeiro boot antes do SQL, ou tabId novo ainda não seedado).
+// Mantido em sincronia com sql/2026-09-03_modulo_funcao.sql.
+// Um tabId ausente deste mapa E de modulo_funcao é NÚCLEO — sempre disponível.
 const TAB_MODULO_MAP = {
-    // WORKFLOW — Business Case, Requerimentos, Technical, Execution/UAT/
-    // Go-Live, Fiscal Year, Roadmap e Demandas Extraordinárias.
-    ano_fiscal: 'WORKFLOW',
-    ajuste_orcamento: 'WORKFLOW',
-    validacao_tradeoff: 'WORKFLOW', // NOVO (Feature 1.1 — 03/09/2026): fila de validação de trade-off fora de escopo (grupo Ano Fiscal)
+    // NÚCLEO = ausente daqui de propósito: ano_fiscal, periodo_ano_fiscal,
+    // usuarios, funcoes_permissoes, atribuicao_funcoes,
+    // restricao_area_atividades, responsaveis, licenciamento_modulos,
+    // dev_tools, areas, produtos, pessoas_solicitantes, portes,
+    // tipos_projeto, return_benefit, cargos, dashboard, consultas.
+
+    // WORKFLOW — esteira de projetos + config do motor de fases.
     fechamento_af: 'WORKFLOW',
     f1_formalizacao: 'WORKFLOW',
     f1_orcamento: 'WORKFLOW',
-    projetos_adhoc: 'WORKFLOW',
     req_planejamento: 'WORKFLOW',
     req_aprov_negocio: 'WORKFLOW',
     req_aprov_ti: 'WORKFLOW',
@@ -73,16 +91,22 @@ const TAB_MODULO_MAP = {
     retomar_hold: 'WORKFLOW',
     roadmap: 'WORKFLOW',
     cronograma_evolucao: 'WORKFLOW',
+    workflow_etapas: 'WORKFLOW',      // realocado de NÚCLEO (Fase 1)
+    prazos: 'WORKFLOW',              // realocado de NÚCLEO (Fase 1)
 
-    // EMAIL — templates, fluxo, fila, e a régua de cobrança de ajustes
-    // (que funciona disparando e-mail).
+    // EMAIL — templates, fluxo, fila, e a régua de cobrança de ajustes.
     gestao_templates: 'EMAIL',
     gestao_fluxo_email: 'EMAIL',
     fila_email: 'EMAIL',
     governanca: 'EMAIL',
 
-    // FINANCEIRO — Contratos & Terceiros inteiro, Visão de Orçamento,
-    // Aprovar Orçamento por Projeto/Fiscal Year, e a Mudança de Orçamento.
+    // FINANCEIRO — Contratos & Terceiros, Visão de Orçamento, aprovações
+    // de orçamento, e TODAS as funções de orçamento (Ajuste, Controle,
+    // Validação de Trade-off, Autorização de Demanda Extraordinária).
+    ajuste_orcamento: 'FINANCEIRO',       // realocado de WORKFLOW (Fase 1)
+    validacao_tradeoff: 'FINANCEIRO',     // realocado de WORKFLOW (Fase 1)
+    controle_orcamento: 'FINANCEIRO',     // realocado de NÚCLEO (Fase 1)
+    projetos_adhoc: 'FINANCEIRO',         // realocado de WORKFLOW (Fase 1)
     empresas_terceirizadas: 'FINANCEIRO',
     contratos_projeto: 'FINANCEIRO',
     contratos_vinculos: 'FINANCEIRO',
@@ -100,6 +124,12 @@ const TAB_MODULO_MAP = {
 };
 
 function moduloDoTab(tabId) {
+    // 1) tabela modulo_funcao (verdade em runtime); 'NUCLEO' -> null (sem gate).
+    if (tabId in moduloPorTab) {
+        const m = moduloPorTab[tabId];
+        return (!m || m === 'NUCLEO') ? null : m;
+    }
+    // 2) fallback hardcoded; ausente = NÚCLEO.
     return TAB_MODULO_MAP[tabId] || null;
 }
 

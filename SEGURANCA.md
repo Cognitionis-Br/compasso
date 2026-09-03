@@ -514,3 +514,35 @@ Duas telas novas no módulo ADMINISTRAÇÃO + uma no grupo ANO FISCAL.
   (datas anteriores à 1ª vigência = abril). Cache carregado em `auth.js`
   antes do 1º `getInfoAnoFiscal()`; a função continua síncrona. Config vazia
   ⇒ comportamento idêntico ao de hoje (abril–março).
+
+---
+
+## Fase 1 — Licenciamento por módulo: fonte única `modulo_funcao` (2026-09-03)
+
+Ver `docs/AUDITORIA_MODULOS_LICENCIAMENTO.md` (mapa completo tela × módulo + as
+3 listas de inconsistência).
+
+- **Nova tabela `modulo_funcao`** (`activity_key` PK = tabId, `modulo`, `tipo`
+  ∈ {NUCLEO, LICENCIAVEL}, `observacao`), RLS off — SQL
+  `sql/2026-09-03_modulo_funcao.sql` (idempotente, `ON CONFLICT DO UPDATE` para
+  reconciliar bases antigas).
+- **`js/core/licenca.js`:** `carregarLicenca()` agora carrega `modulo_funcao`
+  para o cache `moduloPorTab`. `moduloDoTab(tabId)` lê o cache primeiro
+  (`NUCLEO` → sem gate) e cai no `TAB_MODULO_MAP` hardcoded só se a tela não
+  estiver na tabela (primeiro boot / tabId novo). O `TAB_MODULO_MAP` deixa de
+  ser a verdade — vira default de emergência + documentação, mantido em sincronia
+  com o SQL.
+- **Realocações (decididas com o usuário):**
+  - `ano_fiscal` (Abertura Ano Fiscal): WORKFLOW → **NÚCLEO** (pré-requisito
+    estrutural). `periodo_ano_fiscal` idem, explícito.
+  - `ajuste_orcamento`, `validacao_tradeoff`, `controle_orcamento`,
+    `projetos_adhoc` (Aprovar Demanda Extraordinária): → **FINANCEIRO** (todas
+    as funções de orçamento no mesmo módulo pago).
+  - `workflow_etapas` (Fases e Etapas), `prazos` (SLA): órfãos (núcleo por
+    omissão) → **WORKFLOW** (config do motor de fases; era vazamento).
+  - Cadastros mestres (`produtos`, `areas`, …), perfis de acesso, `dashboard`,
+    `consultas`: NÚCLEO explícito. Produto/Área ficam no NÚCLEO de propósito —
+    desacopla FINANCEIRO de PLANEJAMENTO_ESTRATÉGICO (spec 1.3).
+- **Fora do escopo da Fase 1:** modelagem de SKU (Essencial/Comunicação/
+  Financeiro/Enterprise) no banco — o sistema segue só com os 4 flags
+  liga/desliga de `licenca_modulos`.
