@@ -16,7 +16,8 @@
 --   sla_etapa_porte, produtos.NAO_CLASSIFICADO, as LINHAS de email_fluxo
 --   (lista fixa de gatilhos — mas com destinatário/remetente/template
 --   zerados e todas inativas), config_email_geral (com envio desligado),
---   a função PROPRIETARIO, e o(s) usuário(s) PROPRIETÁRIO (+ vínculo).
+--   a função PROPRIETARIO, o cargo 'ANALISTA DE TECNOLOGIA' (exigido pelo
+--   trigger handle_new_user), e o(s) usuário(s) PROPRIETÁRIO (+ vínculo).
 --
 -- APAGA (todas as linhas):
 --   projetos e todos os itens/logs de projeto; anos_fiscais_config;
@@ -152,12 +153,19 @@ BEGIN
     EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): funcoes';
     END;
 
-    -- cargos: apaga os que não são mais usados por nenhum usuário mantido
-    -- (o PROPRIETÁRIO tem cargo obrigatório — não pode virar FK órfã)
+    -- cargos: apaga os não usados por nenhum usuário mantido, MAS preserva
+    -- 'ANALISTA DE TECNOLOGIA' — é o cargo que o trigger handle_new_user
+    -- grava em todo usuário novo (perfis_usuarios.cargo_id é NOT NULL); sem
+    -- ele, criar usuário falha com "Database error creating new user".
     BEGIN
+        INSERT INTO cargos (nome, criado_por)
+        SELECT 'ANALISTA DE TECNOLOGIA', 'CARGA ZERO'
+        WHERE NOT EXISTS (SELECT 1 FROM cargos WHERE upper(trim(nome)) = 'ANALISTA DE TECNOLOGIA');
+
         DELETE FROM cargos
-         WHERE id NOT IN (SELECT cargo_id FROM perfis_usuarios WHERE cargo_id IS NOT NULL);
-        RAISE NOTICE 'cargos: mantidos só os do(s) usuário(s) preservado(s)';
+         WHERE id NOT IN (SELECT cargo_id FROM perfis_usuarios WHERE cargo_id IS NOT NULL)
+           AND upper(trim(nome)) <> 'ANALISTA DE TECNOLOGIA';
+        RAISE NOTICE 'cargos: mantidos o(s) do usuário preservado + ANALISTA DE TECNOLOGIA (trigger de novo usuário)';
     EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): cargos';
     END;
 
