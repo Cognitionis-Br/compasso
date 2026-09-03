@@ -334,7 +334,23 @@ function atualizarCabecalhoUsuario() {
 
 async function entrarNoSistema() {
     document.getElementById('loginScreen').classList.add('hidden');
+
+    // Permissões primeiro — o gate de licença (Fase 3) precisa de ehProprietario.
+    await carregarPermissoesUsuarioAtual();
+
+    // FASE 3 (03/09/2026) — GATE DE LICENÇA. Nenhuma tela do sistema
+    // renderiza antes desta checagem: sem cadastro completo da empresa
+    // licenciada -> tela de setup; fora da vigência -> tela "Licença
+    // Expirada". Só o Proprietário age nas duas.
+    if (typeof carregarEmpresaLicenciada === 'function') {
+        await carregarEmpresaLicenciada();
+        const gate = await verificarGateLicenca();
+        if (gate === 'SETUP') { mostrarTelaSetupLicenca(); return; }
+        if (gate === 'EXPIRADA') { mostrarTelaLicencaExpirada(); return; }
+    }
+
     document.getElementById('appContainer').classList.remove('hidden');
+    if (typeof aplicarIdentidadeEmpresa === 'function') aplicarIdentidadeEmpresa();
 
     // NOVO (Feature 1.2 — 03/09/2026): o período do Ano Fiscal (mês de
     // início) é parametrizável — carrega o cache ANTES do primeiro
@@ -351,10 +367,11 @@ async function entrarNoSistema() {
     // sem mudança nenhuma, só a etiqueta visual muda.
     if (sidebarInfo) sidebarInfo.innerText = `FY Atual: ${infoAF.afAtualStr.replace('AF', 'FY')} (${infoAF.quarterAtual})`;
 
-    await carregarPermissoesUsuarioAtual();
+    // carregarPermissoesUsuarioAtual() já rodou no topo (antes do gate de licença).
     await carregarLicenca(); // NOVO (Licenciamento de Módulos, 28/08/2026): precisa estar pronto antes de aplicarVisibilidadeMenu(), que já consulta moduloAtivo()
     if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista(); // NOVO (2026-09-02): seletor de AF (Dashboard/Roadmap/Financeiro/Consulta) vem da tabela anos_fiscais_config, não da data
     aplicarVisibilidadeMenu();
+    if (typeof aplicarBannerVencimentoLicenca === 'function') aplicarBannerVencimentoLicenca(); // FASE 3: aviso N dias antes do vencimento
     await carregarConfigEmailGeral();
     atualizarCabecalhoUsuario(); // CORRIGIDO 10/08/2026 (bug reportado): nome/perfil do cabeçalho vinham fixos ("Administrador"/"ADM"), nunca refletiam o usuário logado de verdade
     await loadAreas();
@@ -401,6 +418,9 @@ async function handleLogout() {
     await _supabase.auth.signOut();
     currentUser = null;
     document.getElementById('appContainer').classList.add('hidden');
+    ['setupLicencaScreen', 'licencaExpiradaScreen'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.classList.add('hidden');
+    });
     document.getElementById('loginScreen').classList.remove('hidden');
 
     const loginForm = document.getElementById('loginEmail');

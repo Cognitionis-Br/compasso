@@ -568,3 +568,34 @@ Ver `docs/EXPURGO_ORIGEM.md`.
   clone espelho validado (0 ocorrências de texto restantes, binários intactos).
   O `push --force` (irreversível, dispara rebuild Netlify, invalida clones)
   exige confirmação explícita e é feito com a equipe.
+
+---
+
+## Fase 3 — Empresa Licenciada + vigência da licença (2026-09-03)
+
+Ver `docs/LICENCA_EMPRESA.md`.
+
+- **`sql/2026-09-03_empresa_licenciada.sql`** (RLS off): `empresa_licenciada`
+  (linha única id=1 — CNPJ, razão/fantasia, vigência início/término, nome de
+  cabeçalho, cor, logo data-URI, aviso N dias), `log_licenca_verificacao`
+  (negações de acesso: SEM_CADASTRO / EXPIRADA) e `log_renovacao_licenca`
+  (toda tentativa de renovação).
+- **Gate no boot** (`js/auth/auth.js` → `entrarNoSistema`, antes de renderizar
+  qualquer tela): `verificarGateLicenca()` (`js/core/empresa-licenciada.js`).
+  Cache null (tabela não provisionada) ⇒ NÃO bloqueia. Config incompleta ⇒
+  tela de setup bloqueante (só Proprietário preenche). `hoje > vigencia_termino`
+  ⇒ tela "Licença Expirada" (só Proprietário tem o campo de renovação). Banner
+  preventivo N dias antes (Proprietário/Administrador).
+- **`carregarPermissoesUsuarioAtual()` movido para o topo** de `entrarNoSistema`
+  (o gate precisa de `ehProprietario`); a chamada duplicada mais abaixo foi
+  removida.
+- **Aba "Dados da Empresa Licenciada"** — menu Proprietário, `dados_empresa`
+  (NÚCLEO em `modulo_funcao`). Validação de CNPJ (dígitos verificadores),
+  início < término, aviso de baixo contraste da cor. Logo PNG/SVG ≤ 2 MB
+  guardada como data-URI.
+- **Renovação:** `netlify/functions/validar-renovacao.js` — valida a
+  assinatura **HMAC-SHA256 no servidor** (`LICENSE_HMAC_SECRET`, nunca no
+  front), confere o CNPJ contra o cadastro, grava a nova vigência e loga.
+  Env vars da Netlify + o gerador do código (utilitário da Cognitionis) e o
+  segredo **fora do repositório**. Sem o endpoint (ambiente sem Functions),
+  o front degrada com aviso e não altera nada.

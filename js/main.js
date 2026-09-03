@@ -58,6 +58,15 @@ const vindoDeLinkRecuperacaoSenha = !erroLinkRecuperacao && (
 
 monitorarRecuperacaoSenha();
 
+// FASE 3 (03/09/2026): identidade da empresa licenciada (nome/logo/cor) na
+// TELA DE LOGIN — carrega antes de qualquer login. Depois do login,
+// entrarNoSistema() reaplica para o menu lateral e a tela inicial.
+if (typeof carregarEmpresaLicenciada === 'function') {
+    carregarEmpresaLicenciada().then(() => {
+        if (typeof aplicarIdentidadeEmpresa === 'function') aplicarIdentidadeEmpresa();
+    }).catch(() => {});
+}
+
 if (!vindoDeLinkRecuperacaoSenha) {
     checarSessaoAtiva();
 }

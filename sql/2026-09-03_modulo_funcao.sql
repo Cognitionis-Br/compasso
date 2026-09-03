@@ -54,6 +54,7 @@ INSERT INTO modulo_funcao (activity_key, modulo, tipo, observacao) VALUES
   ('restricao_area_atividades',   'NUCLEO',     'NUCLEO', 'Perfis de acesso (role-gated hardcoded)'),
   ('responsaveis',                'NUCLEO',     'NUCLEO', 'Responsáveis por atividade'),
   ('licenciamento_modulos',       'NUCLEO',     'NUCLEO', 'Controle do próprio licenciamento (só Proprietário)'),
+  ('dados_empresa',               'NUCLEO',     'NUCLEO', 'Cadastro da empresa licenciada + vigência (só Proprietário)'),
   ('dev_tools',                   'NUCLEO',     'NUCLEO', 'Ferramentas de Dev (role-gated hardcoded)'),
   ('areas',                       'NUCLEO',     'NUCLEO', 'Cadastro mestre'),
   ('produtos',                    'NUCLEO',     'NUCLEO', 'Cadastro mestre (spec 1.3 — desacopla FINANCEIRO de PLANEJ_ESTRAT)'),

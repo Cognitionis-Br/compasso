@@ -60,6 +60,8 @@
             <div class="text-center mb-6">
                 <img src="img/compasso-logo-principal.png" alt="Compasso" class="mx-auto max-h-16 max-w-[85%] object-contain">
                 <p class="text-[11px] text-gray-500 font-semibold uppercase tracking-wider mt-2">Cloud Governance</p>
+                <img id="empresaLogoLogin" class="hidden mx-auto max-h-10 max-w-[70%] object-contain mt-3" alt="">
+                <p id="empresaMarcaLogin" class="hidden text-[11px] font-bold uppercase tracking-wider mt-1"></p>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
@@ -81,14 +83,55 @@
         </div>
     </div>
 
+    <!-- FASE 3 — SETUP BLOQUEANTE: empresa licenciada / vigência não configuradas -->
+    <div id="setupLicencaScreen" class="hidden fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-8 border-t-4 border-indigo-600 my-8">
+            <div class="text-center mb-6">
+                <img src="img/compasso-logo-principal.png" alt="Compasso" class="mx-auto max-h-12 object-contain">
+                <h2 class="text-lg font-bold text-gray-900 mt-3">Configuração inicial</h2>
+                <p class="text-xs text-gray-500 mt-1">O sistema só é liberado depois do cadastro da empresa licenciada e da vigência da licença.</p>
+            </div>
+            <div id="setupLicencaSemPermissao" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-4 text-sm text-amber-800 text-center">
+                <i class="fa-solid fa-lock"></i> Sistema em configuração. Contate o <b>PROPRIETÁRIO</b> do sistema para concluir o cadastro da empresa licenciada.
+                <button onclick="handleLogout()" class="block mx-auto mt-4 text-xs text-gray-500 hover:text-red-600 font-semibold">Sair</button>
+            </div>
+            <div id="setupLicencaForm" class="hidden">
+                <!-- os campos do formulário são compartilhados com a aba "Dados da Empresa" (mesmos ids) -->
+                <div id="empresaFormCampos"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- FASE 3 — LICENÇA EXPIRADA -->
+    <div id="licencaExpiradaScreen" class="hidden fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 border-t-4 border-red-600 my-8">
+            <div class="text-center mb-4">
+                <i class="fa-solid fa-triangle-exclamation text-4xl text-red-600"></i>
+                <h2 class="text-lg font-bold text-gray-900 mt-3">Licença Expirada</h2>
+                <p id="licencaExpiradaInfo" class="text-xs text-gray-500 mt-1"></p>
+            </div>
+            <div id="licencaExpiradaSemPermissao" class="hidden bg-gray-50 border border-gray-300 rounded-lg p-4 text-sm text-gray-700 text-center">
+                A licença do Compasso expirou. Contate o <b>PROPRIETÁRIO</b> do sistema ou a <b>Cognitionis</b> para renovar.
+            </div>
+            <div id="licencaExpiradaRenovacao" class="hidden">
+                <p class="text-xs text-gray-600 mb-2">Cole o <b>Código de Renovação</b> fornecido pela Cognitionis:</p>
+                <textarea id="licencaCodigoRenovacao" rows="3" class="w-full p-2 border border-gray-300 rounded text-xs font-mono" placeholder="cole aqui o código"></textarea>
+                <button onclick="enviarCodigoRenovacao()" class="w-full mt-2 bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 rounded text-sm">Validar e Renovar</button>
+                <p id="licencaRenovacaoMsg" class="text-xs text-gray-500 mt-2"></p>
+            </div>
+            <button onclick="handleLogout()" class="block mx-auto mt-5 text-xs text-gray-500 hover:text-red-600 font-semibold">Sair</button>
+        </div>
+    </div>
+
     <!-- SHELL DO SISTEMA (ESCONDIDO ATÉ O LOGIN) -->
     <div id="appContainer" class="hidden flex h-screen w-full bg-gray-100 overflow-hidden">
         
         <!-- SIDEBAR (MENU LATERAL) -->
         <aside id="sidebarMenu" class="w-64 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 shadow-sm fixed md:static inset-y-0 left-0 z-30 transform -translate-x-full md:translate-x-0 transition-transform duration-200 ease-in-out">
             <!-- Logo Area -->
-            <div class="h-16 flex items-center px-6 border-b border-gray-100">
-                <div class="text-xl font-extrabold text-gray-900 tracking-tight">COM<span class="brand-red-text">PASSO</span></div>
+            <div class="h-16 flex flex-col justify-center px-6 border-b border-gray-100">
+                <div class="text-xl font-extrabold text-gray-900 tracking-tight leading-none">COM<span class="brand-red-text">PASSO</span></div>
+                <div id="empresaMarcaSidebar" class="hidden text-[10px] font-bold uppercase tracking-wider leading-tight mt-0.5 truncate"></div>
             </div>
 
             <!-- Navegação Principal -->
@@ -321,6 +364,7 @@
                         <i id="icon-proprietario" class="fa-solid fa-chevron-down text-[10px] text-purple-400 chevron"></i>
                     </button>
                     <div id="menu-proprietario" class="submenu pl-9 pr-2 mt-1 space-y-1">
+                        <button onclick="switchTab('dados_empresa')" id="link-dados_empresa" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Dados da Empresa Licenciada</button>
                         <button onclick="switchTab('licenciamento_modulos')" id="link-licenciamento_modulos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Licenciamento de Módulos</button>
                     </div>
                 </div>
@@ -392,7 +436,13 @@
 
             <!-- CONTEÚDO DINÂMICO (Área de Trabalho) -->
             <main class="flex-1 overflow-y-auto p-4 md:p-6 relative">
-                
+
+                <!-- FASE 3 — banner preventivo de vencimento da licença -->
+                <div id="bannerVencimentoLicenca" class="hidden mb-4 bg-amber-50 border border-amber-300 rounded-lg px-4 py-2 flex items-center justify-between gap-3">
+                    <span class="text-xs font-semibold text-amber-800"><i class="fa-solid fa-clock"></i> <span id="bannerVencimentoLicencaTexto"></span></span>
+                    <button onclick="dispensarBannerVencimentoLicenca()" class="text-amber-600 hover:text-amber-900 text-xs font-bold">dispensar</button>
+                </div>
+
                 <!-- TELA HOME / BEM-VINDO -->
                 <div id="view-home" class="tab-content max-w-4xl mx-auto mt-10">
                     <div class="text-center space-y-4 mb-10">
@@ -403,6 +453,8 @@
                              pequeno; em tamanho maior acima do título ela funciona
                              como uma tela de abertura de verdade. -->
                         <img src="img/compasso-logo-principal.png" alt="Compasso" class="mx-auto max-h-14 object-contain mb-2">
+                        <img id="empresaLogoHome" class="hidden mx-auto max-h-12 object-contain mb-1" alt="">
+                        <p id="empresaMarcaHome" class="hidden text-xs font-bold uppercase tracking-wider"></p>
                         <h2 class="text-2xl font-bold text-gray-900">Workspace de Governança</h2>
                         <p class="text-sm text-gray-500 max-w-lg mx-auto">
                             Selecione um módulo no menu lateral para atuar na esteira de projetos, ou utilize as visões no topo para acessar relatórios gerenciais e roadmaps.
@@ -2792,6 +2844,18 @@
                      ADMINISTRADOR (mesma camada dupla de Ferramentas de Dev —
                      catálogo de atividades + checagem extra de ehAdministrador
                      dentro da própria view, ver switchTab em js/ui/navigation.js). -->
+                <!-- FASE 3 — Dados da Empresa Licenciada (menu Proprietário) -->
+                <div id="view-dados_empresa" class="tab-content hidden">
+                    <div class="mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Dados da Empresa Licenciada</h2>
+                        <p class="text-xs text-gray-500 mt-1">Identidade da empresa (nome, logo, cor) exibida no login, na tela inicial e no cabeçalho, e a vigência da licença do Compasso.</p>
+                    </div>
+                    <div id="dadosEmpresaRestrito" class="hidden bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm p-4 rounded-lg">
+                        <i class="fa-solid fa-lock"></i> Tela restrita ao Proprietário do sistema.
+                    </div>
+                    <div id="dadosEmpresaConteudo" class="hidden max-w-lg bg-white p-6 rounded-lg border border-gray-200 shadow-sm"></div>
+                </div>
+
                 <div id="view-licenciamento_modulos" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Licenciamento de Módulos</h2></div>
                     <div id="licenciamentoModulosRestrito" class="hidden bg-yellow-50 border border-yellow-300 text-yellow-800 text-sm p-4 rounded-lg">
@@ -4419,6 +4483,7 @@
     <script src="./js/core/fiscal-year.js"></script>
     <script src="./js/core/filtro-af-visao.js"></script>
     <script src="./js/core/filtro-agrupamento-orcamento.js"></script>
+    <script src="./js/core/empresa-licenciada.js"></script>
     <script src="./js/core/workflow-engine.js"></script>
     <script src="./js/config/ano-fiscal.js"></script>
     <script src="./js/ano-fiscal/ajuste-orcamento.js"></script>

@@ -148,6 +148,17 @@ function switchTab(tabId) {
     // extra aqui pro conteúdo de verdade), só que com o papel mais
     // privilegiado. Um Administrador comum (sem eh_proprietario) cai no
     // "restrito" mesmo tendo acesso_irrestrito a tudo mais.
+    if (tabId === 'dados_empresa') {
+        const restrito = document.getElementById('dadosEmpresaRestrito');
+        const conteudo = document.getElementById('dadosEmpresaConteudo');
+        if (ehProprietario) {
+            if (restrito) restrito.classList.add('hidden');
+            renderDadosEmpresaView();
+        } else {
+            if (restrito) restrito.classList.remove('hidden');
+            if (conteudo) conteudo.classList.add('hidden');
+        }
+    }
     if (tabId === 'licenciamento_modulos') {
         const restrito = document.getElementById('licenciamentoModulosRestrito');
         const conteudo = document.getElementById('licenciamentoModulosConteudo');
