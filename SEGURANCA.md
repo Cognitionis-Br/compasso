@@ -456,3 +456,61 @@ Reparo de dados (só se o projeto tiver sido empurrado a CONCLUIDO por
 engano): `sql/2026-09-02_fix_extraordinaria_pos_orcamento.sql` — inclui o
 SELECT de diagnóstico. Na maioria dos casos não é necessário: o projeto
 volta a aparecer sozinho após o deploy.
+
+---
+
+## Feature — Controle Orçamentário + Período do Ano Fiscal (2026-09-03)
+
+Duas telas novas no módulo ADMINISTRAÇÃO + uma no grupo ANO FISCAL.
+
+### 1.1 — Controle Orçamentário (`controle_orcamento`)
+
+- Tela `menu Administração > Controle Orçamentário`. Parâmetro persistido
+  `config_controle_orcamento` (RLS off, append-only): `modo` ∈
+  {AF (default), AREA, PRODUTO} + `vigencia_de` + log
+  (`alterado_por/_em/modo_anterior`). SQL:
+  `sql/2026-09-03_config_controle_orcamento.sql`.
+- **Atividade DELEGÁVEL**: entra no catálogo comum
+  (`sql/2026-09-03_catalogo_admin_orcamento.sql`, sem grant inicial). Runtime:
+  `ehAdministrador || ehProprietario || usuarioTemAtividade('controle_orcamento')`.
+  Um Administrador pode conceder a atividade a outro perfil em Funções e
+  Permissões.
+- Efeito: **só** a elegibilidade de projetos no trade-off da Demanda
+  Extraordinária (`js/adhoc/tradeoff.js` → `modoTradeoff()` lê
+  `modoControleOrcamentoAtivo()`, não mais `obterAgrupamentoOrcamento()`). O
+  seletor "Agrupar orçamento por" do Dashboard/Financeiro **não muda**.
+- Trade-off que cruza subgrupo (modo AREA/PRODUTO): não é mais bloqueado na
+  tela. Ao aprovar, se `simulacaoForaDeEscopo`, grava
+  `tradeoff_validacao_pendencias` (RLS off — `sql/2026-09-03_tradeoff_validacao_pendencias.sql`)
+  com a simulação serializada; **nada é aplicado aos projetos**. Trade-off
+  dentro do subgrupo (ou modo AF) segue aprovando direto.
+
+### 1.1.d — Validação de Trade-off Extraordinário (`validacao_tradeoff`)
+
+- Tela `menu Ano Fiscal > Validação de Trade-off Extraordinário`
+  (`js/ano-fiscal/validacao-tradeoff.js`). **NÃO** altera a tela "Ajuste de
+  Orçamento" (`js/ano-fiscal/ajuste-orcamento.js`).
+- Catálogo: grants CRUD (consultar+alterar) a GOVERNANÇA e GESTOR TI, além do
+  bypass Admin/Proprietário. `TAB_MODULO_MAP.validacao_tradeoff = 'WORKFLOW'`.
+- Lista pendências `PENDENTE`; Detalhar mostra os projetos do trade-off + 3
+  painéis de situação orçamentária (AF / subgrupo do extraordinário / por
+  subgrupo envolvido). **Aprovar** (motivo obrigatório) roda
+  `aplicarTradeoffAprovado()` (extraído de `aprovarSimulacaoAdhoc`) e marca
+  `APROVADA`; **Rejeitar** (motivo) marca `REJEITADA` sem aplicar nada.
+
+### 1.2 — Período do Ano Fiscal (`periodo_ano_fiscal`)
+
+- Tela `menu Administração > Período do Ano Fiscal`. **Item crítico
+  role-gated hardcoded** (`ehAdministrador || ehProprietario`), **fora do
+  catálogo** (como Licenciamento de Módulos) — special-case em
+  `aplicarVisibilidadeMenu` e em `switchTab`.
+- Parâmetro `config_periodo_ano_fiscal` (RLS off, append-only, SEM seed):
+  `mes_inicio` (1–12) + `vigencia_de` + log. SQL:
+  `sql/2026-09-03_config_periodo_ano_fiscal.sql`.
+- `getInfoAnoFiscal()` (`js/core/fiscal-year.js`) e o Gantt do Roadmap
+  (`js/roadmap/roadmap.js`), além de `obterLimitesAnoFiscal()`
+  (`js/phases/generic-workflow-ui.js`), derivam quarters/rótulos do mês de
+  início via `mesInicioAnoFiscal(dataRef)` — que escolhe a linha por vigência
+  (datas anteriores à 1ª vigência = abril). Cache carregado em `auth.js`
+  antes do 1º `getInfoAnoFiscal()`; a função continua síncrona. Config vazia
+  ⇒ comportamento idêntico ao de hoje (abril–março).
