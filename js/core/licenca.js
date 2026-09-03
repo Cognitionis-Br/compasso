@@ -9,7 +9,7 @@
 // as duas pontas usam o mesmo TAB_MODULO_MAP daqui, pra nunca ficar uma
 // sem a outra.
 //
-// Só Compasso — este arquivo não existe/não é usado no Compasso.
+// Recurso exclusivo do Compasso.
 //
 // Telas/abas que não aparecem no mapa abaixo são NÚCLEO (autenticação,
 // perfis de acesso, cadastros base, dashboard) e nunca são bloqueadas —

@@ -546,3 +546,24 @@ Ver `docs/AUDITORIA_MODULOS_LICENCIAMENTO.md` (mapa completo tela × módulo + a
 - **Fora do escopo da Fase 1:** modelagem de SKU (Essencial/Comunicação/
   Financeiro/Enterprise) no banco — o sistema segue só com os 4 flags
   liga/desliga de `licenca_modulos`.
+
+---
+
+## Fase 2 — Expurgo de referências ao cliente/sistema de origem (2026-09-03)
+
+Ver `docs/EXPURGO_ORIGEM.md` (levantamento completo + plano de reescrita do Git).
+
+- **Código / docs (working tree):** 0 ocorrências de cliente de origem/Compasso/Compasso após a
+  limpeza — comentários reescritos, chave localStorage `Compasso_recuperacao_senha_ativa`
+  → `compasso_recuperacao_senha_ativa`, cabeçalhos de SQL, `CLAUDE.md`,
+  `docs/README.md`, `MATRIZ_PERMISSOES.md`, e os manuais `.docx` regenerados.
+- **Pendências binárias:** `docs/DEPARA.xlsx` (1 ocorrência) e
+  `docs/CONTROLE DE ACESSO - FUNÇÕES.xlsx` (bloqueado na leitura) — revisar no Excel.
+- **Banco:** `sql/2026-09-03_expurgo_referencias_origem.sql` — Etapa 1
+  (diagnóstico dinâmico de todas as colunas de texto) + Etapa 2 (substituição
+  de texto nos campos livres, sem apagar linhas de log), com
+  `log_expurgo_referencias_origem`.
+- **Histórico do Git:** reescrita com `git filter-repo` (recipe em
+  `docs/EXPURGO_ORIGEM.md` §3) — autorizada, a executar após código+banco;
+  o `push --force` (irreversível, dispara rebuild Netlify) exige confirmação
+  explícita.

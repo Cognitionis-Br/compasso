@@ -1,6 +1,6 @@
 -- =========================================================================
 -- 2026-08-31_reorg_menus_cargos_responsaveis.sql
--- Compasso — SÓ Compasso, não roda contra a base do Compasso.
+-- Compasso — SÓ Compasso (projeto Supabase fytynjjvzecljmgbtwec).
 --
 -- NOVO (a pedido do usuário): reorganização de menus.
 --   * "Cargos" sai do grupo ADMINISTRAÇÃO e vai pra PARÂMETROS E CADASTRO.

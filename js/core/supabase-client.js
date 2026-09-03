@@ -7,8 +7,8 @@
 // As constantes abaixo ficam visíveis para os scripts carregados na
 // sequência, pois compartilham o mesmo escopo léxico de topo de página.
 //
-// Projeto Supabase próprio do Compasso — separado do projeto usado pelo
-// Compasso (cliente original). Nunca aponte isto de volta pro projeto do Compasso.
+// Projeto Supabase próprio do Compasso — separado de qualquer outro
+// ambiente. Nunca aponte isto para outro projeto Supabase.
 // =========================================================================
 const SUPABASE_URL = "https://fytynjjvzecljmgbtwec.supabase.co";
 const SUPABASE_KEY = "sb_publishable_RQCJQjbqePcwl7qO-D7sxg_e1_KQstp";

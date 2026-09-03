@@ -1,6 +1,6 @@
 -- =========================================================================
 -- 2026-08-31_split_parametros_cadastros_2abas.sql
--- Compasso — SÓ Compasso, não roda contra a base do Compasso.
+-- Compasso — SÓ Compasso (projeto Supabase fytynjjvzecljmgbtwec).
 --
 -- NOVO (a pedido do usuário): padroniza 5 telas de "Parâmetros e Cadastros"
 -- no mesmo modelo de 2 abas das demais telas (Usuários, Funções, Cargos,

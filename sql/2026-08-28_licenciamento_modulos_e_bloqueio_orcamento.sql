@@ -1,6 +1,6 @@
 -- =========================================================================
 -- 2026-08-28_licenciamento_modulos_e_bloqueio_orcamento.sql
--- Compasso — SÓ Compasso, não roda contra a base do Compasso.
+-- Compasso — SÓ Compasso (projeto Supabase fytynjjvzecljmgbtwec).
 --
 -- Parte 1: Licenciamento de Módulos — tabela de flags liga/desliga por
 -- módulo comercial (WORKFLOW, EMAIL, FINANCEIRO, PLANEJAMENTO_ESTRATEGICO),

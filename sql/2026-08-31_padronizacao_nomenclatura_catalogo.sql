@@ -1,6 +1,6 @@
 -- =========================================================================
 -- 2026-08-31_padronizacao_nomenclatura_catalogo.sql
--- Compasso — SÓ Compasso, não roda contra a base do Compasso.
+-- Compasso — SÓ Compasso (projeto Supabase fytynjjvzecljmgbtwec).
 --
 -- Padronização de nomenclatura de telas/menus (de-para fornecido pelo
 -- usuário). SÓ texto visível — colunas grupo_funcao / funcao / atividade

@@ -9,11 +9,11 @@ requirements → technical → execution → UAT → go-live → carryover), in 
 Cognitionis. Frontend is a static site (no build step, no bundler, no package.json) backed by Supabase
 (Postgres + Auth + Edge Functions) and a couple of Netlify Functions for outbound email.
 
-**Origin note**: Compasso started as a fork of a bespoke governance system built for a single client
-("Compasso", kept as a separate codebase/deployment). Compasso is the productized version — same engine, own
-Supabase project, own Netlify site, own branding. When reading old code comments that mention dates,
-"item N do pedido", or a specific past decision, treat them as accurate history of the shared engine, not
-as anything client-specific — the two codebases diverge from here forward.
+**Origin note**: Compasso started as a fork of a bespoke governance engine, kept upstream as a separate
+codebase/deployment. Compasso is the productized version — same engine, own Supabase project, own Netlify
+site, own branding. When reading old code comments that mention dates, "item N do pedido", or a specific
+past decision, treat them as accurate history of the shared engine, not as anything specific to any prior
+engagement — the two codebases diverge from here forward.
 
 ## Running it
 
@@ -23,13 +23,13 @@ There is no build/test/lint tooling in this repo (no `package.json`). This is a 
   Server" extension) and open `index.html`. Opening `index.html` directly via `file://` will break Supabase
   calls in some browsers — serve it over `http://localhost`.
 - **Deploy**: this repo is connected to Netlify via GitHub (`Cognitionis-Br/compasso`) — pushing to the
-  connected branch triggers an automatic deploy. Unlike the Compasso codebase this was forked from, there is no
-  manual drag-and-drop step; if a fix doesn't show up live, check whether it was actually pushed/merged and
-  whether the Netlify deploy succeeded, before assuming the code itself is wrong.
+  connected branch triggers an automatic deploy. Unlike the upstream codebase this was forked from, there
+  is no manual drag-and-drop step; if a fix doesn't show up live, check whether it was actually
+  pushed/merged and whether the Netlify deploy succeeded, before assuming the code itself is wrong.
 - **Supabase Edge Function** (`supabase/functions/admin-create-user`): deployed manually via the Supabase
   CLI (`supabase login && supabase link --project-ref <ref> && supabase functions deploy admin-create-user`).
   Not deployed by Netlify or any CI. The project ref is Compasso's own Supabase project — never link this
-  to the Compasso project.
+  to any other project.
 - There are no automated tests. Verify changes by loading the app in a browser and exercising the affected
   tab/flow directly.
 
@@ -114,7 +114,7 @@ Two independent layers, don't confuse them:
   change the single `require()` in `enviar-email.js` — no other file needs to change. Provider credentials
   are Netlify environment variables (e.g. `EMAILJS_PUBLIC_KEY`), configured per-deployment, never committed.
 
-### Licenciamento de Módulos (28/08/2026, Compasso-only — doesn't exist in Compasso)
+### Licenciamento de Módulos (28/08/2026, Compasso-only — not in the upstream engine)
 
 `js/core/licenca.js` gates whole blocks of the system behind a per-module on/off flag
 (`licenca_modulos` table: `WORKFLOW`, `EMAIL`, `FINANCEIRO`, `PLANEJAMENTO_ESTRATEGICO`), meant to reflect
@@ -164,10 +164,10 @@ the *service role* client, and only then performs the privileged action (`auth.a
 - Comments throughout the codebase reference external docs (`ARQUITETURA_ALVO.md`, `GAPS_FUNCIONAIS.md`,
   `Auditoria_Tecnica.md`, `Especificacao_Workflow_v2.md`/`v4.md`, `schema_motor_workflow.sql`,
   `schema_perfis_usuarios.sql`). **None of these files exist in this repository** — they're either kept
-  outside version control, specific to the original Compasso engagement, or lost. Don't spend time searching for
+  outside version control, predate the fork, or lost. Don't spend time searching for
   them; treat in-code comments as the primary source of truth for *why* something is the way it is.
 - Comments dated `dd/mm/2026` (e.g. "CORRIGIDO 10/08/2026", "AJUSTADO 10/08/2026") are a deliberate in-repo
-  changelog convention inherited from the Compasso engine — when editing a function that has one, check whether
+  changelog convention inherited from the upstream engine — when editing a function that has one, check whether
   your change would re-break the specific bug/decision the comment documents.
 - `resetarBaseParaFase1` (`js/dev-tools/reset.js`) and other dev-tools writes directly to production
   Supabase with no access control beyond `ehAdministrador`-gated tab visibility — treat as dangerous/manual

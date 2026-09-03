@@ -1,6 +1,6 @@
 -- =========================================================================
 -- 2026-08-31_split_planejamento_estrategico_4abas.sql
--- Compasso — SÓ Compasso, não roda contra a base do Compasso.
+-- Compasso — SÓ Compasso (projeto Supabase fytynjjvzecljmgbtwec).
 --
 -- NOVO (a pedido do usuário): a tela Planejamento Estratégico deixa de ter
 -- 2 sub-abas (Pilares / Iniciativas) e passa a ter 4 — Cadastrar +

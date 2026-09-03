@@ -1,7 +1,7 @@
 # Matriz de Permissões — Auditoria (Etapa 1)
 
 **Data:** 28/08/2026
-**Escopo:** Compasso (Cognitionis) — não cobre Compasso, que é um codebase separado.
+**Escopo:** Compasso (Cognitionis) — não cobre o motor de origem, que é um codebase separado.
 **Natureza deste documento:** levantamento e organização. Nenhum comportamento do sistema foi alterado
 pra produzir este documento. Toda inconsistência listada na Seção 3 é sinalização para decisão humana,
 não uma correção já aplicada. A coluna "Função(ões) autorizada(s) hoje" reflete o conteúdo real de

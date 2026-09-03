@@ -1,6 +1,6 @@
 -- =========================================================================
 -- 2026-08-28_papel_proprietario.sql
--- Compasso — SÓ Compasso, não roda contra a base do Compasso.
+-- Compasso — SÓ Compasso (projeto Supabase fytynjjvzecljmgbtwec).
 --
 -- NOVO (a pedido do usuário): a figura de PROPRIETÁRIO — o único com
 -- acesso total ao sistema, incluindo Licenciamento de Módulos.

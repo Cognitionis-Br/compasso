@@ -117,7 +117,7 @@ async function enviarLinkRecuperacaoSenha(e) {
 // independente de qual aba processa o link primeiro: enquanto ela
 // estiver marcada, NENHUMA aba entra no sistema — mesmo a que carregou
 // sem o parâmetro na própria URL.
-const CHAVE_RECUPERACAO_SENHA_ATIVA = 'Compasso_recuperacao_senha_ativa';
+const CHAVE_RECUPERACAO_SENHA_ATIVA = 'compasso_recuperacao_senha_ativa';
 // CORRIGIDO 27/08/2026 (bug reportado — incidente em produção: a flag
 // gravava só "1", sem expiração; uma recuperação abandonada no meio
 // (aba fechada sem concluir nem cancelar) deixava a flag presa pra

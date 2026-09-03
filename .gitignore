@@ -18,7 +18,7 @@ Supabase Snippet*.csv
 # Supabase CLI local link/cache state (machine-specific — records which
 # Supabase project `supabase` commands target). Never commit this: it's
 # not portable between machines, and a stale copy here once accidentally
-# pointed at the wrong (Compasso) project. Run `supabase link --project-ref
+# pointed at the wrong project. Run `supabase link --project-ref
 # <compasso-ref>` locally whenever you need it; don't rely on it being
 # checked in.
 .temp/

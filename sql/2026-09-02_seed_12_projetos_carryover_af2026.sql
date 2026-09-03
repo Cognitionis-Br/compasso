@@ -1,6 +1,6 @@
 -- =========================================================================
 -- 2026-09-02_seed_12_projetos_carryover_af2026.sql
--- Compasso — projeto Supabase fytynjjvzecljmgbtwec. NÃO roda contra o Compasso.
+-- Compasso — projeto Supabase fytynjjvzecljmgbtwec.
 --
 -- Carga de 12 projetos do Ano Fiscal 2026, AINDA EM ANDAMENTO e NÃO
 -- marcados como Carryover — para exercitar o próprio processo: marcar como
