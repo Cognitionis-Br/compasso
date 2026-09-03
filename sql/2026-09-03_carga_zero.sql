@@ -31,7 +31,9 @@
 -- RESETA (mantém a linha, limpa o conteúdo):
 --   email_fluxo (destinatário/remetente/template -> nulo; ativo -> false);
 --   config_email_geral (envio_ativo -> false);
---   catalogo_atividades.restricao_area -> false em todas.
+--   catalogo_atividades.restricao_area -> false em todas;
+--   perfis_usuarios.area do(s) PROPRIETÁRIO -> 'COGNITIONIS' (área
+--   reservada, hardcode — não existe em areas_solicitantes).
 --
 -- Roda no Supabase → SQL Editor. Cada DELETE é tolerante a tabela
 -- inexistente (DO block com EXCEPTION undefined_table).
@@ -128,6 +130,11 @@ BEGIN
     --  a mesma coluna que usuario_funcoes.usuario_id referencia)
     DELETE FROM usuario_funcoes  WHERE usuario_id <> ALL (v_prop);
     DELETE FROM perfis_usuarios  WHERE id         <> ALL (v_prop);
+
+    -- o(s) PROPRIETÁRIO(s) preservado(s) ficam na área reservada da
+    -- Cognitionis (não existe em areas_solicitantes — é hardcode, só para
+    -- o cadastro de proprietário; ninguém mais pode escolhê-la).
+    UPDATE perfis_usuarios SET area = 'COGNITIONIS' WHERE id = ANY (v_prop);
 
     -- funções e a matriz de permissões: mantém só PROPRIETARIO (e qualquer
     -- função que ainda esteja vinculada ao usuário preservado). Roda DEPOIS

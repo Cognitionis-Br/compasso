@@ -22,21 +22,17 @@ function mudarAbaAreas(aba) {
     aplicarVisibilidadeSubAbas('areas', 'areasBtn');
 }
 
+// Área reservada da Cognitionis — usada só no cadastro do PROPRIETÁRIO
+// (feito fora da tela, por SQL / carga zero). Nunca é gravada em
+// areas_solicitantes, então não aparece em nenhum seletor de área e
+// ninguém pode escolhê-la; o cadastro de Áreas também recusa esse nome.
+const AREA_RESERVADA_PROPRIETARIO = 'COGNITIONIS';
+
 async function loadAreas() {
     const { data } = await _supabase.from('areas_solicitantes').select('*').order('nome');
-    if (data && data.length > 0) {
-        areasData = data;
-    } else {
-        areasData = [
-            { id: 3, nome: 'COMERCIAL', mnemonico: 'COM', ativo: true },
-            { id: 2, nome: 'FINANCEIRO', mnemonico: 'FIN', ativo: true },
-            { id: 5, nome: 'GESTÃO DE RISCOS', mnemonico: 'RIS', ativo: true },
-            { id: 6, nome: 'INOVAÇÃO', mnemonico: 'INO', ativo: true },
-            { id: 7, nome: 'JURÍDICO', mnemonico: 'JUR', ativo: true },
-            { id: 4, nome: 'OPERAÇÕES', mnemonico: 'OPE', ativo: true },
-            { id: 1, nome: 'TECNOLOGIA DA INFORMAÇÃO', mnemonico: 'TII', ativo: true }
-        ];
-    }
+    // Sem fallback hardcoded: instalação nova começa sem nenhuma área — a
+    // lista só tem o que o cliente cadastrar.
+    areasData = data || [];
     areasData.sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'));
     renderAreasTable();
     populateAreasSelect();
@@ -106,6 +102,9 @@ async function saveAreaSolicitante(e) {
     if (!id && !usuarioPodeIncluirTela('areas')) return alert('Você não tem permissão para incluir áreas.');
     if (id && !usuarioPodeAlterarTela('areas')) return alert('Você não tem permissão para alterar áreas.');
     const nome = document.getElementById('areaNomeInput').value.trim().toUpperCase();
+    if (nome === AREA_RESERVADA_PROPRIETARIO) {
+        return alert(`⛔ "${AREA_RESERVADA_PROPRIETARIO}" é uma área reservada do sistema e não pode ser cadastrada.`);
+    }
     let mnemonico = document.getElementById('areaMnemonicoInput').value.trim().toUpperCase();
     if (!mnemonico || mnemonico.length < 3) mnemonico = nome.substring(0, 3).toUpperCase();
 
