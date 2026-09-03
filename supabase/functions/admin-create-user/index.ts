@@ -78,18 +78,28 @@ Deno.serve(async (req: Request) => {
 
         const { data: funcoesDoChamador, error: errorFuncoes } = await supabaseAdmin
             .from('usuario_funcoes')
-            .select('funcoes(nome)')
+            .select('funcoes(nome, acesso_irrestrito, eh_proprietario)')
             .eq('usuario_id', callerUser.id);
 
         if (errorFuncoes) {
             return jsonResponse({ error: 'Erro ao verificar permissões: ' + errorFuncoes.message }, 500);
         }
 
-        const ehAdministrador = (funcoesDoChamador || []).some(
-            (f: any) => f.funcoes && f.funcoes.nome === 'ADMINISTRADOR'
-        );
-        if (!ehAdministrador) {
-            return jsonResponse({ error: 'Apenas usuários com a função ADMINISTRADOR podem criar novos usuários.' }, 403);
+        // Pode criar usuário quem for ADMINISTRADOR, PROPRIETARIO, ou tiver
+        // uma função com acesso irrestrito / marcada como proprietário
+        // (mesmo critério de "acesso total" usado no front — ehProprietario
+        // / acesso_irrestrito em js/config/funcoes.js).
+        const podeCriarUsuario = (funcoesDoChamador || []).some((f: any) => {
+            const fn = f.funcoes;
+            if (!fn) return false;
+            const nome = String(fn.nome || '').toUpperCase();
+            return nome === 'ADMINISTRADOR'
+                || nome === 'PROPRIETARIO'
+                || fn.acesso_irrestrito === true
+                || fn.eh_proprietario === true;
+        });
+        if (!podeCriarUsuario) {
+            return jsonResponse({ error: 'Apenas ADMINISTRADOR ou PROPRIETÁRIO podem criar novos usuários.' }, 403);
         }
 
         // Cria o usuário de verdade no Supabase Auth, com a senha provisória.
