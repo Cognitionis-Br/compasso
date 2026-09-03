@@ -158,13 +158,15 @@ BEGIN
     -- grava em todo usuário novo (perfis_usuarios.cargo_id é NOT NULL); sem
     -- ele, criar usuário falha com "Database error creating new user".
     BEGIN
+        -- nome EXATO — o trigger faz `WHERE nome = 'ANALISTA DE TECNOLOGIA'`,
+        -- sem upper()/trim(); uma variante de grafia não serve.
         INSERT INTO cargos (nome, criado_por)
         SELECT 'ANALISTA DE TECNOLOGIA', 'CARGA ZERO'
-        WHERE NOT EXISTS (SELECT 1 FROM cargos WHERE upper(trim(nome)) = 'ANALISTA DE TECNOLOGIA');
+        WHERE NOT EXISTS (SELECT 1 FROM cargos WHERE nome = 'ANALISTA DE TECNOLOGIA');
 
         DELETE FROM cargos
          WHERE id NOT IN (SELECT cargo_id FROM perfis_usuarios WHERE cargo_id IS NOT NULL)
-           AND upper(trim(nome)) <> 'ANALISTA DE TECNOLOGIA';
+           AND nome <> 'ANALISTA DE TECNOLOGIA';
         RAISE NOTICE 'cargos: mantidos o(s) do usuário preservado + ANALISTA DE TECNOLOGIA (trigger de novo usuário)';
     EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): cargos';
     END;
