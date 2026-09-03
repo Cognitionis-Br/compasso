@@ -11,18 +11,26 @@
 -- licenciamento de módulos) e UM usuário PROPRIETÁRIO para logar e
 -- cadastrar o resto.
 --
--- MANTÉM:
---   funcoes, catalogo_atividades, funcao_atividades, modulo_funcao,
---   licenca_modulos, config_email_geral, fases_etapas, sla_etapa_porte,
---   e o(s) usuário(s) PROPRIETÁRIO (+ o vínculo de função dele).
+-- MANTÉM (estrutura do produto):
+--   catalogo_atividades, modulo_funcao, licenca_modulos, fases_etapas,
+--   sla_etapa_porte, produtos.NAO_CLASSIFICADO, as LINHAS de email_fluxo
+--   (lista fixa de gatilhos — mas com destinatário/remetente/template
+--   zerados e todas inativas), config_email_geral (com envio desligado),
+--   a função PROPRIETARIO, e o(s) usuário(s) PROPRIETÁRIO (+ vínculo).
 --
 -- APAGA (todas as linhas):
 --   projetos e todos os itens/logs de projeto; anos_fiscais_config;
 --   contadores_codigo_projeto; áreas / pessoas / portes / tipos de projeto /
 --   return-benefit / pilares / iniciativas / cargos; empresas terceirizadas
---   e contratos; templates e fluxo de e-mail; config de bloqueio / período /
+--   e contratos; templates de e-mail; config de bloqueio / período /
 --   controle de orçamento; empresa_licenciada e seus logs; responsáveis por
---   atividade; e todos os usuários que NÃO são PROPRIETÁRIO.
+--   atividade; todos os usuários que NÃO são PROPRIETÁRIO; e todas as
+--   funções que não a PROPRIETARIO (+ a matriz funcao_atividades delas).
+--
+-- RESETA (mantém a linha, limpa o conteúdo):
+--   email_fluxo (destinatário/remetente/template -> nulo; ativo -> false);
+--   config_email_geral (envio_ativo -> false);
+--   catalogo_atividades.restricao_area -> false em todas.
 --
 -- Roda no Supabase → SQL Editor. Cada DELETE é tolerante a tabela
 -- inexistente (DO block com EXCEPTION undefined_table).
@@ -83,11 +91,66 @@ BEGIN
     EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): produtos';
     END;
 
+    -- email_fluxo: a lista de gatilhos é fixa (fica), mas o que o cliente
+    -- preenche na tela "Envio de E-mail - Gestão do Fluxo" (destinatário,
+    -- remetente, template, ativo) volta ao estado de instalação nova.
+    BEGIN
+        UPDATE email_fluxo SET
+            tipo_destinatario       = 'RESPONSAVEL_TAREFA',
+            email_destinatario_fixo = NULL,
+            remetente               = NULL,
+            template_id             = NULL,
+            ativo                   = false,
+            atualizado_por          = NULL,
+            atualizado_em           = NULL;
+        RAISE NOTICE 'email_fluxo: destinatário/remetente/template zerados; todas inativas';
+    EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): email_fluxo';
+    END;
+
+    -- chave geral de e-mail: desligada numa instalação nova
+    BEGIN
+        UPDATE config_email_geral SET envio_ativo = false, atualizado_por = NULL, atualizado_em = NULL WHERE id = 1;
+        RAISE NOTICE 'config_email_geral: envio desligado';
+    EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): config_email_geral';
+    END;
+
+    -- restrição de área por atividade: desmarca tudo (o catálogo em si fica)
+    BEGIN
+        UPDATE catalogo_atividades SET restricao_area = false
+         WHERE restricao_area IS DISTINCT FROM false;
+        RAISE NOTICE 'catalogo_atividades: restrição de área desmarcada em todas';
+    EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): catalogo_atividades';
+    END;
+
     -- usuários e vínculos de função: mantém só o(s) PROPRIETÁRIO
     -- (o cadastro de usuário é perfis_usuarios.id = id do auth, um UUID —
     --  a mesma coluna que usuario_funcoes.usuario_id referencia)
     DELETE FROM usuario_funcoes  WHERE usuario_id <> ALL (v_prop);
     DELETE FROM perfis_usuarios  WHERE id         <> ALL (v_prop);
+
+    -- funções e a matriz de permissões: mantém só PROPRIETARIO (e qualquer
+    -- função que ainda esteja vinculada ao usuário preservado). Roda DEPOIS
+    -- da limpeza de usuario_funcoes acima, então "in use" já só tem o prop.
+    BEGIN
+        DELETE FROM funcao_atividades
+         WHERE funcao_id NOT IN (
+             SELECT id FROM funcoes
+              WHERE eh_proprietario = true
+                 OR upper(nome) = 'PROPRIETARIO'
+                 OR id IN (SELECT funcao_id FROM usuario_funcoes)
+         );
+        RAISE NOTICE 'funcao_atividades: mantida só a matriz da(s) função(ões) preservada(s)';
+    EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): funcao_atividades';
+    END;
+
+    BEGIN
+        DELETE FROM funcoes
+         WHERE eh_proprietario IS DISTINCT FROM true
+           AND upper(nome) <> 'PROPRIETARIO'
+           AND id NOT IN (SELECT funcao_id FROM usuario_funcoes);
+        RAISE NOTICE 'funcoes: mantida só PROPRIETARIO (+ vínculos do usuário preservado)';
+    EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): funcoes';
+    END;
 
     -- cargos: apaga os que não são mais usados por nenhum usuário mantido
     -- (o PROPRIETÁRIO tem cargo obrigatório — não pode virar FK órfã)
