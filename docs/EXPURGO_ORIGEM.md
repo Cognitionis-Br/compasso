@@ -46,29 +46,38 @@ binários) → **0 ocorrências**.
 
 ## 3. Histórico do Git — reescrita
 
-**Autorizada.** Executar depois dos itens 1 e 2. O procedimento (ferramenta,
-backup espelho, arquivo de regras com os termos, comandos exatos e
-validação) foi **entregue à parte** (não versionado, para não recolocar os
-termos no histórico).
+O procedimento (ferramenta, arquivo de regras com os termos, comandos exatos)
+foi **entregue à parte** (não versionado, para não recolocar os termos no
+histórico).
 
-Pontos-chave já validados num *dry-run* sobre uma cópia espelho:
+### Status (03/09/2026)
 
-- `git filter-repo` (instalado como script standalone) reescreve texto em
-  todos os *blobs* e mensagens de commit de todo o histórico; **arquivos
-  binários (`.docx`/`.xlsx`) são ignorados pela substituição de texto** —
-  confirmado: 48 *blobs* de planilha checados, 0 corrompidos.
-- `--invert-paths` remove por completo os dois `.docx` da marca antiga de toda
-  a história.
-- Depois do *dry-run*, restaram **0 ocorrências** em código/texto (fora o
-  próprio arquivo de regras, que é transitório e não entra no repo).
+- **Reescrita local FEITA.** `git filter-repo` (2 passadas) rodou sobre o repo
+  local: substituição de texto em todos os *blobs* e mensagens de commit +
+  remoção dos dois `.docx` da marca antiga de toda a história (`--invert-paths`).
+- **Validação local OK:** 0 ocorrências de texto em todo o histórico
+  (`git grep` sobre `git rev-list --all`); 0 mensagens de commit com os termos;
+  **102 *blobs* Office checados em toda a história, 0 corrompidos** (a troca de
+  texto ignora binário); `git fsck` limpo (só *dangling commits* da história
+  antiga, que o GC remove).
+- **Remote `origin` re-adicionado**, mas **nada foi enviado** — o HEAD local e
+  o `origin/main` divergem por completo (é o esperado: todos os SHAs mudaram).
 
-> ⚠️ O passo final — `git push --force` para `Cognitionis-Br/compasso` — é
-> **irreversível**, invalida todos os clones existentes e **dispara um rebuild
-> completo no Netlify**. Exige confirmação explícita e deve ser feito com a
-> equipe ciente (ninguém dando `push` durante a janela).
+### Falta (passo do responsável — NÃO automatizado)
+
+```
+git push --force --all origin
+git push --force --tags origin
+```
+
+> ⚠️ **Irreversível.** Invalida todos os clones/forks existentes e **dispara um
+> rebuild completo no Netlify**. Fazer com a equipe ciente (ninguém dando
+> `push` durante a janela) e, depois, conferir no GitHub que a UI não mostra
+> mais os commits antigos (o provedor pode manter cache de refs órfãs por
+> alguns dias).
 
 ### Backup
 
 `C:/Users/sergi/OneDrive/Documents/Compasso-backup-pre-expurgo.git` (clone
-`--mirror` de 03/09/2026, antes da reescrita). Guardar fora do repo ativo até
-a validação final no GitHub.
+`--mirror`, antes da reescrita). Manter fora do repo ativo até a validação
+final no GitHub.
