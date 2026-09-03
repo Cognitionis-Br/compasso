@@ -757,7 +757,11 @@ function aplicarVisibilidadeMenu() {
     // hardcoded por papel: Administrador OU Proprietário. (Licenciamento de
     // Módulos fica dentro de #grupo-proprietario, já tratado acima.)
     const admOuProprietario = ehAdministrador || ehProprietario;
-    ['funcoes_permissoes', 'atribuicao_funcoes', 'restricao_area_atividades'].forEach(tabId => {
+    // NOVO (Feature 1.2 — 03/09/2026): 'periodo_ano_fiscal' também fica fora
+    // do catálogo comum, role-gated por Administrador OU Proprietário.
+    // ('controle_orcamento' e 'validacao_tradeoff' seguem o catálogo — não
+    // entram aqui.)
+    ['funcoes_permissoes', 'atribuicao_funcoes', 'restricao_area_atividades', 'periodo_ano_fiscal'].forEach(tabId => {
         const link = document.getElementById(`link-${tabId}`);
         if (link) link.classList.toggle('hidden', !admOuProprietario);
     });

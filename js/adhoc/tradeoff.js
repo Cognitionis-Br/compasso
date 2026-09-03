@@ -31,6 +31,52 @@ let ultimoSaldoSimulado = 0; // guarda o último saldo calculado, para aprovarSi
 let ultimoVal1OrcamentoAF = 0; // item 1 da validação — guardado pra usar no log de aprovação
 let simulacaoValida = false; // item 8: situação (item5) <= orçamento do AF (item1)?
 
+// NOVO (Feature 1.1 — 03/09/2026): true quando o modo de controle
+// orçamentário é AREA/PRODUTO e a simulação atual inclui pelo menos um
+// projeto (ação != MANTER) de OUTRO subgrupo que o do projeto
+// extraordinário. Nesse caso, aprovar NÃO aplica na hora — grava uma
+// pendência em tradeoff_validacao_pendencias, validada na tela
+// "Validação de Trade-off Extraordinário" (js/ano-fiscal/validacao-tradeoff.js).
+let simulacaoForaDeEscopo = false;
+
+// Modo que rege a elegibilidade do trade-off — vem do parâmetro persistido
+// "Controle Orçamentário" (js/config/controle-orcamento.js), NÃO do seletor
+// de agrupamento das telas de Dashboard/Financeiro.
+function modoTradeoff() {
+    return (typeof modoControleOrcamentoAtivo === 'function') ? modoControleOrcamentoAtivo() : 'AF';
+}
+
+// Um projeto candidato está no mesmo subgrupo do projeto extraordinário
+// simulado? (modo 'AF' => sempre true.)
+function tradeoffMesmoSubgrupo(projCandidato) {
+    const modo = modoTradeoff();
+    if (modo === 'AF' || !projetoSimuladoAtual || !projCandidato) return true;
+    return (typeof mesmoSubgrupoOrcamento === 'function')
+        ? mesmoSubgrupoOrcamento(projCandidato, projetoSimuladoAtual, modo)
+        : true;
+}
+
+// Recalcula simulacaoForaDeEscopo a partir do estado atual da simulação e
+// atualiza o aviso não-bloqueante na tela.
+function recomputarForaDeEscopoTradeoff() {
+    simulacaoForaDeEscopo = false;
+    if (modoTradeoff() !== 'AF') {
+        simulacaoForaDeEscopo = Object.keys(alteracoesSimulacao).some(codigo => {
+            if (alteracoesSimulacao[codigo] === 'MANTER') return false;
+            const proj = projectsData.find(p => p.codigo === codigo);
+            return proj && !tradeoffMesmoSubgrupo(proj);
+        });
+    }
+    const aviso = document.getElementById('adhocAvisoForaEscopo');
+    if (aviso) {
+        aviso.classList.toggle('hidden', !simulacaoForaDeEscopo);
+        if (simulacaoForaDeEscopo) {
+            const rot = modoTradeoff() === 'AREA' ? 'área' : 'produto';
+            aviso.innerHTML = `⚠️ Esta simulação inclui projeto(s) de <b>outro ${rot}</b> que o do projeto extraordinário. Ao aprovar, a simulação vai para a fila de <b>Validação de Trade-off Extraordinário</b> (menu Ano Fiscal) e só produz efeito depois de aprovada lá.`;
+        }
+    }
+}
+
 // CORRIGIDO (higiene de nomenclatura): rótulo "AD-HOC" era resíduo do
 // nome antigo da funcionalidade — o resto do sistema chama de
 // "Extraordinário" desde a padronização de telas.
@@ -129,6 +175,9 @@ async function renderAdhocView() {
     projetoSimuladoAtual = null;
     alteracoesSimulacao = {};
     valoresParciaisSimulacao = {};
+    simulacaoForaDeEscopo = false;
+    const avisoFE = document.getElementById('adhocAvisoForaEscopo');
+    if (avisoFE) avisoFE.classList.add('hidden');
 }
 
 // Renderiza só a lista clicável de demandas Extraordinárias, sem mexer no resto
@@ -248,57 +297,68 @@ function renderTradeoffTable() {
         return;
     }
 
-    projetosTradeoff.forEach(p => {
-        const tr = document.createElement('tr');
+    const linhaTradeoffHtml = (p) => {
         const acaoAtual = alteracoesSimulacao[p.codigo] || 'MANTER';
         const valorOrc = Number(p.val_tech || p.val_req || p.val_bc || p.previsto || 0);
         const saldoDisponivel = calcularValorCarryover(p); // mesma fórmula: orçado - realizado
         const valorParcialAtual = valoresParciaisSimulacao[p.codigo] || '';
+        return `
+            <tr>
+                <td class="p-3 font-mono font-bold">${p.codigo}</td>
+                <td class="p-3 font-semibold text-gray-800">${escapeHtml(p.nome)} ${renderAdhocBadge(p)}</td>
+                <td class="p-3">${p.etapa_atual || 'BUSINESS CASE'}</td>
+                <td class="p-3 text-right font-mono">${formatCurrency(valorOrc)}</td>
+                <td class="p-3 text-right font-mono text-green-700">${formatCurrency(saldoDisponivel)}</td>
+                <td class="p-3 text-center">
+                    <select onchange="alterarAcaoTradeoff('${p.codigo}', this.value)" class="p-1 border border-gray-300 rounded text-xs bg-white font-bold">
+                        <option value="MANTER" ${acaoAtual === 'MANTER' ? 'selected' : ''}>Manter no Portfólio</option>
+                        <option value="HOLD" ${acaoAtual === 'HOLD' ? 'selected' : ''}>Colocar em HOLD (- Verba)</option>
+                        <option value="CANCELAR" ${acaoAtual === 'CANCELAR' ? 'selected' : ''}>Cancelar (- Verba)</option>
+                        <option value="CEDER_PARTE" ${acaoAtual === 'CEDER_PARTE' ? 'selected' : ''}>Ceder Parte do Saldo</option>
+                    </select>
+                    ${acaoAtual === 'CEDER_PARTE' ? `
+                        <div class="mt-1">
+                            <input type="number" step="0.01" min="0.01" max="${saldoDisponivel}" value="${valorParcialAtual}"
+                                   placeholder="Valor a ceder (máx. ${formatCurrency(saldoDisponivel)})"
+                                   oninput="alterarValorParcialTradeoff('${p.codigo}', this.value)"
+                                   class="w-full p-1 border border-amber-300 rounded text-xs">
+                        </div>
+                    ` : ''}
+                </td>
+            </tr>`;
+    };
 
-        tr.innerHTML = `
-            <td class="p-3 font-mono font-bold">${p.codigo}</td>
-            <td class="p-3 font-semibold text-gray-800">${escapeHtml(p.nome)} ${renderAdhocBadge(p)}</td>
-            <td class="p-3">${p.etapa_atual || 'BUSINESS CASE'}</td>
-            <td class="p-3 text-right font-mono">${formatCurrency(valorOrc)}</td>
-            <td class="p-3 text-right font-mono text-green-700">${formatCurrency(saldoDisponivel)}</td>
-            <td class="p-3 text-center">
-                <select onchange="alterarAcaoTradeoff('${p.codigo}', this.value)" class="p-1 border border-gray-300 rounded text-xs bg-white font-bold">
-                    <option value="MANTER" ${acaoAtual === 'MANTER' ? 'selected' : ''}>Manter no Portfólio</option>
-                    <option value="HOLD" ${acaoAtual === 'HOLD' ? 'selected' : ''}>Colocar em HOLD (- Verba)</option>
-                    <option value="CANCELAR" ${acaoAtual === 'CANCELAR' ? 'selected' : ''}>Cancelar (- Verba)</option>
-                    <option value="CEDER_PARTE" ${acaoAtual === 'CEDER_PARTE' ? 'selected' : ''}>Ceder Parte do Saldo</option>
-                </select>
-                ${acaoAtual === 'CEDER_PARTE' ? `
-                    <div class="mt-1">
-                        <input type="number" step="0.01" min="0.01" max="${saldoDisponivel}" value="${valorParcialAtual}"
-                               placeholder="Valor a ceder (máx. ${formatCurrency(saldoDisponivel)})"
-                               oninput="alterarValorParcialTradeoff('${p.codigo}', this.value)"
-                               class="w-full p-1 border border-amber-300 rounded text-xs">
-                    </div>
-                ` : ''}
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
+    // NOVO (Feature 1.1): com o modo de controle = Área/Produto, separa os
+    // candidatos em "mesmo subgrupo" e "outro subgrupo (requer validação)".
+    // Não remove os de fora — só sinaliza; escolher uma ação num deles manda
+    // a simulação para a fila de Validação de Trade-off Extraordinário.
+    const modo = modoTradeoff();
+    if (modo === 'AF') {
+        tbody.innerHTML = projetosTradeoff.map(linhaTradeoffHtml).join('');
+    } else {
+        const rot = modo === 'AREA' ? 'área' : 'produto';
+        const dentro = projetosTradeoff.filter(p => tradeoffMesmoSubgrupo(p));
+        const fora = projetosTradeoff.filter(p => !tradeoffMesmoSubgrupo(p));
+        const divisor = (txt, cls) => `<tr class="${cls}"><td colspan="6" class="p-2 text-[10px] font-bold uppercase tracking-wider">${txt}</td></tr>`;
+        let html = '';
+        html += divisor(`Mesmo ${rot} do projeto extraordinário`, 'bg-emerald-50 text-emerald-800');
+        html += dentro.length ? dentro.map(linhaTradeoffHtml).join('') : `<tr><td colspan="6" class="p-3 text-center text-gray-400 text-xs">Nenhum projeto no mesmo ${rot}.</td></tr>`;
+        if (fora.length) {
+            html += divisor(`Outro ${rot} — ao usar, a simulação vai para validação`, 'bg-amber-50 text-amber-800');
+            html += fora.map(linhaTradeoffHtml).join('');
+        }
+        tbody.innerHTML = html;
+    }
 }
 
 function alterarAcaoTradeoff(codigoProjeto, acao) {
-    // NOVO (Agrupamento de Orçamento — item 7): compensação de orçamento
-    // só entre projetos do MESMO subgrupo (área ou produto, conforme o
-    // agrupamento ativo). Fora disso exige autorização especial
-    // (Ano Fiscal → Ajuste de Orçamento). Agrupamento em "Ano Fiscal" =
-    // sem restrição de subgrupo.
-    if (acao && acao !== 'MANTER' && projetoSimuladoAtual && typeof obterAgrupamentoOrcamento === 'function') {
-        const { modo } = obterAgrupamentoOrcamento();
-        const projComp = projectsData.find(p => p.codigo === codigoProjeto);
-        if (modo !== 'AF' && projComp
-            && !mesmoSubgrupoOrcamento(projComp, projetoSimuladoAtual, modo)
-            && !(typeof temAutorizacaoAjuste === 'function' && temAutorizacaoAjuste(codigoProjeto, projetoSimuladoAtual.codigo))) {
-            alert(`⛔ "${codigoProjeto}" pertence a outro ${modo === 'AREA' ? 'área' : 'produto'} do projeto da demanda extraordinária. Compensação de orçamento só é permitida dentro do mesmo subgrupo.\n\nPara mover orçamento entre subgrupos diferentes, registre a autorização especial em Ano Fiscal → Ajuste de Orçamento.`);
-            renderTradeoffTable();
-            return;
-        }
-    }
+    // AJUSTADO (Feature 1.1 — 03/09/2026): o bloqueio "só mesmo subgrupo"
+    // deixou de ser um alerta que impedia a escolha. Agora escolher uma
+    // ação num projeto de OUTRO subgrupo é permitido — a simulação inteira
+    // passa a exigir aprovação em "Validação de Trade-off Extraordinário"
+    // (sinalizado por recomputarForaDeEscopoTradeoff, chamado dentro de
+    // recalcularSaldoSimulado). O modo vem do parâmetro persistido
+    // "Controle Orçamentário", não mais do seletor de agrupamento das telas.
     alteracoesSimulacao[codigoProjeto] = acao;
     if (acao !== 'CEDER_PARTE') delete valoresParciaisSimulacao[codigoProjeto];
     // AJUSTADO (a pedido do usuário 24/08/2026): precisa re-renderizar a
@@ -397,6 +457,10 @@ function recalcularSaldoSimulado() {
             ? 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold shadow-sm transition'
             : 'px-4 py-2 bg-gray-300 text-gray-500 rounded text-xs font-bold shadow-sm cursor-not-allowed';
     }
+
+    // NOVO (Feature 1.1): re-avalia se a simulação cruza subgrupos e
+    // atualiza o aviso não-bloqueante.
+    recomputarForaDeEscopoTradeoff();
 }
 
 function cancelarSimulacaoAdhoc() {
@@ -404,143 +468,146 @@ function cancelarSimulacaoAdhoc() {
     projetoSimuladoAtual = null;
     alteracoesSimulacao = {};
     valoresParciaisSimulacao = {};
+    simulacaoForaDeEscopo = false;
+    const avisoFE = document.getElementById('adhocAvisoForaEscopo');
+    if (avisoFE) avisoFE.classList.add('hidden');
 }
 
-async function aprovarSimulacaoAdhoc() {
-    if (!usuarioPodeAlterarTela('projetos_adhoc')) return alert('Você não tem permissão para aprovar demandas extraordinárias.');
-    if (!projetoSimuladoAtual) return;
+// Serializa o estado atual da simulação em [{codigo, acao, valorParcial}]
+// (só as linhas com ação != MANTER) — usado tanto pela aprovação direta
+// quanto pela gravação de pendência de validação.
+function _serializarDecisoesTradeoff() {
+    return Object.keys(alteracoesSimulacao)
+        .filter(codigo => alteracoesSimulacao[codigo] !== 'MANTER')
+        .map(codigo => ({
+            codigo,
+            acao: alteracoesSimulacao[codigo],
+            valorParcial: alteracoesSimulacao[codigo] === 'CEDER_PARTE' ? (Number(valoresParciaisSimulacao[codigo]) || 0) : null
+        }));
+}
 
-    // CORRIGIDO 10/08/2026 (item 8 do relatório de testes): antes, saldo
-    // negativo era só um alerta contornável. Agora é uma regra de
-    // negócio explícita e obrigatória — item 5 (situação do AF) precisa
-    // ser menor ou igual ao item 1 (orçamento original do AF). Sem
-    // isso, a simulação não pode ser aprovada de jeito nenhum.
-    if (!simulacaoValida) {
-        return alert(`⛔ Esta simulação não pode ser aprovada: a situação do orçamento do AF (${formatCurrency(ultimoSaldoSimulado)}) excede o orçamento aprovado (${formatCurrency(ultimoVal1OrcamentoAF)}).\n\nMarque mais projetos em HOLD/Cancelar pra liberar saldo suficiente antes de tentar de novo.`);
-    }
-
-    if (!confirm(`Confirma a aprovação do projeto Extraordinário ${projetoSimuladoAtual.codigo} e a aplicação dos trade-offs selecionados?`)) {
-        return;
-    }
-
+// NOVO (Feature 1.1 — 03/09/2026): aplica de fato uma rodada de trade-off
+// já aprovada. Extraído do corpo de aprovarSimulacaoAdhoc pra ser
+// reaproveitado pela tela "Validação de Trade-off Extraordinário"
+// (js/ano-fiscal/validacao-tradeoff.js). `decisoes` = [{codigo, acao,
+// valorParcial}]. `opts` = { saldoResultante, aprovadoPor }.
+// Retorna true em caso de sucesso; false (após alert) em erro de gravação.
+async function aplicarTradeoffAprovado(projetoAdhoc, decisoes, opts) {
+    opts = opts || {};
     const agora = new Date().toISOString();
-    const responsavel = currentUser ? currentUser.nome : 'desconhecido';
-    const codigosAfetados = Object.keys(alteracoesSimulacao).filter(codigo => alteracoesSimulacao[codigo] !== 'MANTER');
+    const responsavel = opts.aprovadoPor || (currentUser ? currentUser.nome : 'desconhecido');
     const projetosAfetadosLog = [];
     let valorLiberadoTotal = 0;
 
-    // Persiste cada projeto afetado pelo trade-off (HOLD, Cancelado, ou
-    // — NOVO 24/08/2026, item 3 do pedido — Cessão Parcial), com log de
-    // quem/quando/observação — a observação identifica qual projeto
-    // Extraordinário está substituindo/recebendo. O saldo registrado é o
-    // SALDO (orçado - realizado), não o valor orçado total — é isso que
-    // efetivamente foi liberado pro Extraordinário.
-    for (const codigo of codigosAfetados) {
-        const acao = alteracoesSimulacao[codigo];
-        const proj = projectsData.find(p => p.codigo === codigo);
-        if (!proj) continue;
+    for (const d of (decisoes || [])) {
+        const acao = d.acao;
+        const proj = projectsData.find(p => p.codigo === d.codigo);
+        if (!proj || acao === 'MANTER') continue;
 
         if (acao === 'CEDER_PARTE') {
-            // AJUSTADO (a pedido do usuário 24/08/2026): projeto continua
-            // ativo (sub_status intocado) — só o campo de orçamento
-            // "atual" (a mesma prioridade de calcularValorCarryover)
-            // diminui pelo valor cedido. Reconfere o valor aqui (não só
-            // confia no que a tela já validou) e no teto de saldo — evita
-            // persistir uma cessão inválida se o estado mudou entre a
-            // simulação e o clique em aprovar.
+            // Reconfere valor e teto de saldo (o estado pode ter mudado
+            // entre a simulação e a aplicação).
             const saldoMax = calcularValorCarryover(proj);
-            const valorCedido = Number(valoresParciaisSimulacao[codigo]) || 0;
+            const valorCedido = Number(d.valorParcial) || 0;
             if (valorCedido <= 0 || valorCedido > saldoMax) {
-                console.warn(`Cessão parcial de ${codigo} ignorada na aprovação: valor inválido (${valorCedido}), teto ${saldoMax}.`);
-                continue; // não grava nada pra esse projeto — nenhuma cessão de fato ocorreu
+                console.warn(`Cessão parcial de ${d.codigo} ignorada: valor inválido (${valorCedido}), teto ${saldoMax}.`);
+                continue;
             }
-
             const campoOrcamento = proj.val_tech ? 'val_tech' : proj.val_req ? 'val_req' : proj.val_bc ? 'val_bc' : 'previsto';
             const valorAntes = Number(proj[campoOrcamento]) || 0;
             const valorDepois = valorAntes - valorCedido;
-
             const observacao = `Cedeu ${formatCurrency(valorCedido)} (parcial) via trade-off Extraordinário, ` +
-                `para: ${projetoSimuladoAtual.codigo} - ${projetoSimuladoAtual.nome}`;
-
-            const payload = {
-                [campoOrcamento]: valorDepois,
-                tradeoff_por: responsavel,
-                tradeoff_em: agora,
-                tradeoff_observacao: observacao
-            };
-
-            const { error } = await _supabase.from('projetos').update(payload).eq('codigo', codigo);
-            if (error) return alert(`Erro ao gravar a cessão parcial do projeto ${codigo}: ` + error.message);
-
+                `para: ${projetoAdhoc.codigo} - ${projetoAdhoc.nome}`;
+            const payload = { [campoOrcamento]: valorDepois, tradeoff_por: responsavel, tradeoff_em: agora, tradeoff_observacao: observacao };
+            const { error } = await _supabase.from('projetos').update(payload).eq('codigo', d.codigo);
+            if (error) { alert(`Erro ao gravar a cessão parcial do projeto ${d.codigo}: ` + error.message); return false; }
             Object.assign(proj, payload);
             valorLiberadoTotal += valorCedido;
-            projetosAfetadosLog.push({
-                codigo, nome: proj.nome, acao: 'CEDER_PARTE', saldo_liberado: valorCedido,
-                campo_orcamento: campoOrcamento, valor_antes: valorAntes, valor_depois: valorDepois
-            });
+            projetosAfetadosLog.push({ codigo: d.codigo, nome: proj.nome, acao: 'CEDER_PARTE', saldo_liberado: valorCedido, campo_orcamento: campoOrcamento, valor_antes: valorAntes, valor_depois: valorDepois });
             continue;
         }
 
         const novoSubStatus = acao === 'CANCELAR' ? 'CANCELADO' : 'HOLD';
         const saldoLiberadoProjeto = calcularValorCarryover(proj);
         valorLiberadoTotal += saldoLiberadoProjeto;
-
         const observacao = `${acao === 'CANCELAR' ? 'Cancelado' : 'Colocado em HOLD'} via trade-off Extraordinário, ` +
-            `substituído por: ${projetoSimuladoAtual.codigo} - ${projetoSimuladoAtual.nome}`;
-
+            `substituído por: ${projetoAdhoc.codigo} - ${projetoAdhoc.nome}`;
         const payload = {
             sub_status: novoSubStatus,
-            // NOVO (a pedido do usuário 24/08/2026): guarda de onde veio,
-            // pra "Retomar Projetos em Hold" mostrar a situação anterior
-            // (informativo — a retomada sempre volta pra "A PLANEJAR",
-            // não restaura este valor literalmente).
             sub_status_antes_hold: acao === 'HOLD' ? proj.sub_status : proj.sub_status_antes_hold,
             tradeoff_por: responsavel,
             tradeoff_em: agora,
             tradeoff_observacao: observacao
         };
-
-        const { error } = await _supabase.from('projetos').update(payload).eq('codigo', codigo);
-        if (error) return alert(`Erro ao gravar o trade-off do projeto ${codigo}: ` + error.message);
-
+        const { error } = await _supabase.from('projetos').update(payload).eq('codigo', d.codigo);
+        if (error) { alert(`Erro ao gravar o trade-off do projeto ${d.codigo}: ` + error.message); return false; }
         Object.assign(proj, payload);
-        projetosAfetadosLog.push({ codigo, nome: proj.nome, acao: novoSubStatus, saldo_liberado: saldoLiberadoProjeto });
+        projetosAfetadosLog.push({ codigo: d.codigo, nome: proj.nome, acao: novoSubStatus, saldo_liberado: saldoLiberadoProjeto });
     }
 
-    // Persiste a promoção do projeto Extraordinário para Requerimentos.
+    // Promoção do projeto Extraordinário para Requerimentos.
     const dtInicioReq = new Date().toISOString().split('T')[0];
     const dtTerminoReq = somarDiasUteis(dtInicioReq, 10);
-    const custoAdhoc = Number(projetoSimuladoAtual.val_bc || projetoSimuladoAtual.previsto || 0);
+    const custoAdhoc = Number(projetoAdhoc.val_bc || projetoAdhoc.previsto || 0);
+    const payloadAdhoc = { sub_status: 'APROVADO', etapa_atual: 'REQUIREMENTS', data_solicitacao_req: dtInicioReq, dt_limite_req: dtTerminoReq };
+    const { error: errorAdhoc } = await _supabase.from('projetos').update(payloadAdhoc).eq('codigo', projetoAdhoc.codigo);
+    if (errorAdhoc) { alert('Erro ao aprovar o projeto Extraordinário: ' + errorAdhoc.message); return false; }
+    Object.assign(projetoAdhoc, payloadAdhoc);
 
-    const payloadAdhoc = {
-        sub_status: 'APROVADO',
-        etapa_atual: 'REQUIREMENTS',
-        data_solicitacao_req: dtInicioReq,
-        dt_limite_req: dtTerminoReq
-    };
-
-    const { error: errorAdhoc } = await _supabase.from('projetos').update(payloadAdhoc).eq('codigo', projetoSimuladoAtual.codigo);
-    if (errorAdhoc) return alert('Erro ao aprovar o projeto Extraordinário: ' + errorAdhoc.message);
-
-    Object.assign(projetoSimuladoAtual, payloadAdhoc);
-
-    // Registro de auditoria da rodada de aprovação inteira.
     const { error: errorLog } = await _supabase.from('adhoc_aprovacoes').insert([{
-        projeto_adhoc_codigo: projetoSimuladoAtual.codigo,
+        projeto_adhoc_codigo: projetoAdhoc.codigo,
         valor_aprovado: custoAdhoc,
         valor_liberado_tradeoff: valorLiberadoTotal,
-        saldo_resultante: ultimoSaldoSimulado,
+        saldo_resultante: (opts.saldoResultante !== undefined && opts.saldoResultante !== null) ? opts.saldoResultante : null,
         aprovado_por: responsavel,
         projetos_afetados: projetosAfetadosLog
     }]);
-    if (errorLog) {
-        console.error('Aprovação Extraordinário concluída, mas houve erro ao gravar o log de auditoria:', errorLog.message);
+    if (errorLog) console.error('Aprovação Extraordinário concluída, mas houve erro ao gravar o log de auditoria:', errorLog.message);
+
+    await dispararEmailFluxo('BUSINESS CASE', 'APROVAR DEMANDA EXTRAORDINÁRIA', 'Quando aprovar simulação e efetivar demanda', projetoAdhoc, {});
+    return true;
+}
+
+async function aprovarSimulacaoAdhoc() {
+    if (!usuarioPodeAlterarTela('projetos_adhoc')) return alert('Você não tem permissão para aprovar demandas extraordinárias.');
+    if (!projetoSimuladoAtual) return;
+
+    // CORRIGIDO 10/08/2026 (item 8 do relatório de testes): item 5 (situação
+    // do AF) precisa ser <= item 1 (orçamento original do AF). Sem isso, a
+    // simulação não pode ser aprovada.
+    if (!simulacaoValida) {
+        return alert(`⛔ Esta simulação não pode ser aprovada: a situação do orçamento do AF (${formatCurrency(ultimoSaldoSimulado)}) excede o orçamento aprovado (${formatCurrency(ultimoVal1OrcamentoAF)}).\n\nMarque mais projetos em HOLD/Cancelar pra liberar saldo suficiente antes de tentar de novo.`);
     }
 
-    // NOVO (a pedido do usuário): disparo de e-mail — Business Case /
-    // Aprovar Demanda Extraordinária / "Quando aprovar simulação e
-    // efetivar demanda".
-    await dispararEmailFluxo('BUSINESS CASE', 'APROVAR DEMANDA EXTRAORDINÁRIA', 'Quando aprovar simulação e efetivar demanda', projetoSimuladoAtual, {});
+    const decisoes = _serializarDecisoesTradeoff();
+    const responsavel = currentUser ? currentUser.nome : 'desconhecido';
+    recomputarForaDeEscopoTradeoff();
+
+    // NOVO (Feature 1.1): se a simulação cruza subgrupos (modo Área/Produto),
+    // NÃO aplica agora — grava uma pendência de validação. Trade-off 100%
+    // dentro do subgrupo (ou modo Ano Fiscal) segue aprovando direto.
+    if (simulacaoForaDeEscopo) {
+        if (!confirm(`Esta simulação inclui projeto(s) de outro ${modoTradeoff() === 'AREA' ? 'área' : 'produto'}.\n\nAo confirmar, ela vai para a fila de "Validação de Trade-off Extraordinário" (menu Ano Fiscal) e só produz efeito depois de aprovada lá. Continuar?`)) return;
+        const { error } = await _supabase.from('tradeoff_validacao_pendencias').insert([{
+            projeto_adhoc_codigo: projetoSimuladoAtual.codigo,
+            ano_fiscal: projetoSimuladoAtual.ano_fiscal || null,
+            modo_controle: modoTradeoff(),
+            valor_adhoc: Number(projetoSimuladoAtual.val_bc || projetoSimuladoAtual.previsto || 0),
+            saldo_resultante: ultimoSaldoSimulado,
+            simulacao: decisoes,
+            criado_por: responsavel
+        }]);
+        if (error) return alert('Erro ao enviar a simulação para validação: ' + error.message);
+        alert('✅ Simulação enviada para "Validação de Trade-off Extraordinário" (menu Ano Fiscal). Nada foi aplicado ainda — os efeitos só valem após a aprovação lá.');
+        await loadProjects();
+        renderAdhocView();
+        return;
+    }
+
+    if (!confirm(`Confirma a aprovação do projeto Extraordinário ${projetoSimuladoAtual.codigo} e a aplicação dos trade-offs selecionados?`)) return;
+
+    const ok = await aplicarTradeoffAprovado(projetoSimuladoAtual, decisoes, { saldoResultante: ultimoSaldoSimulado, aprovadoPor: responsavel });
+    if (!ok) return;
 
     alert('✅ Simulação aprovada e gravada com sucesso! O projeto Extraordinário foi promovido para a etapa de Planejamento de Requisitos.');
     await loadProjects();

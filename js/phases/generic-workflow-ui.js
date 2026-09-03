@@ -62,7 +62,20 @@ let etapaModalRequerDefinicaoOrcamento = false; // G5: guarda se a conclusão de
 function obterLimitesAnoFiscal(anoFiscalStr) {
     const anoNum = parseInt((anoFiscalStr || '').replace('AF', ''), 10);
     if (!anoNum) return null;
-    return { inicio: `${anoNum - 1}-04-01`, fim: `${anoNum}-03-31` };
+    // Feature 1.2 (03/09/2026): o mês de início do Ano Fiscal é
+    // parametrizável (config_periodo_ano_fiscal). Com mês de início = 4
+    // (abril) isto devolve exatamente o intervalo antigo (AFnnnn =
+    // abr/nnnn-1 até mar/nnnn). Usa o período vigente hoje — suficiente
+    // para o Roadmap e as validações de data do AF em curso.
+    const mesInicio = (typeof mesInicioAnoFiscal === 'function') ? mesInicioAnoFiscal() : 4;
+    const mesFim = ((mesInicio + 10) % 12) + 1;
+    const anoInicio = (mesInicio === 1) ? anoNum : anoNum - 1;
+    const p2 = n => String(n).padStart(2, '0');
+    const ultimoDiaFim = new Date(anoNum, mesFim, 0).getDate();
+    return {
+        inicio: `${anoInicio}-${p2(mesInicio)}-01`,
+        fim: `${anoNum}-${p2(mesFim)}-${p2(ultimoDiaFim)}`
+    };
 }
 
 function validarDataDentroDoAF(dataStr, projeto) {

@@ -112,6 +112,7 @@
                         <button onclick="switchTab('ano_fiscal')" id="link-ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Abertura Ano Fiscal</button>
                         <button onclick="switchTab('fechamento_af')" id="link-fechamento_af" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fechamento Ano Fiscal</button>
                         <button onclick="switchTab('ajuste_orcamento')" id="link-ajuste_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Ajuste de Orçamento</button>
+                        <button onclick="switchTab('validacao_tradeoff')" id="link-validacao_tradeoff" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Validação de Trade-off Extraordinário</button>
                     </div>
                 </div>
 
@@ -284,6 +285,8 @@
                         <button onclick="switchTab('gestao_fluxo_email')" id="link-gestao_fluxo_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Envio de E-mail - Gestão do Fluxo</button>
                         <button onclick="switchTab('fila_email')" id="link-fila_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Envio de E-mail - Gestão de Fila de Envio</button>
                         <button onclick="switchTab('percentual_bloqueio_orcamento')" id="link-percentual_bloqueio_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Percentual de Bloqueio de Orçamento</button>
+                        <button onclick="switchTab('controle_orcamento')" id="link-controle_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Controle Orçamentário</button>
+                        <button onclick="switchTab('periodo_ano_fiscal')" id="link-periodo_ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Período do Ano Fiscal</button>
                     </div>
                 </div>
 
@@ -1822,6 +1825,7 @@
 
                     <!-- Bloco de Simulação Ativa -->
                     <div id="adhocSimulacaoPanel" class="hidden space-y-6">
+                        <div id="adhocAvisoForaEscopo" class="hidden bg-amber-100 border border-amber-400 rounded-lg p-3 text-xs text-amber-800 font-semibold"></div>
                         <div class="bg-amber-50 border border-amber-200 p-4 rounded-lg">
                             <div class="flex justify-between items-center mb-4">
                                 <h4 class="font-bold text-amber-900 text-sm">Simulação Ativa para: <span id="simulandoProjetoNome" class="text-red-600 font-mono"></span></h4>
@@ -2645,6 +2649,144 @@
                         <button onclick="salvarPercentualBloqueioOrcamento()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition text-sm">
                             <i class="fa-solid fa-floppy-disk"></i> Salvar Percentual
                         </button>
+                    </div>
+                </div>
+
+                <!-- NOVO (Feature 1.1, 03/09/2026): Controle Orçamentário — modo que
+                     rege a elegibilidade de projetos no trade-off da Demanda
+                     Extraordinária. Admin/Proprietário por bypass; atividade
+                     'controle_orcamento' é DELEGÁVEL via Funções e Permissões. -->
+                <div id="view-controle_orcamento" class="tab-content hidden">
+                    <div class="mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Controle Orçamentário</h2>
+                        <p class="text-xs text-gray-500 mt-1">Define o nível de controle orçamentário que rege as regras de trade-off entre projetos na Aprovação de Demanda Extraordinária. Não altera o seletor "Agrupar orçamento por" do Dashboard/Financeiro.</p>
+                    </div>
+                    <div id="controleOrcamentoRestrito" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-6 text-amber-800 text-sm font-bold">
+                        <i class="fa-solid fa-lock"></i> Acesso restrito — sua função não tem esta atividade.
+                    </div>
+                    <div id="controleOrcamentoConteudo" class="hidden">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-lg">
+                            <div class="mb-4">
+                                <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Modo de controle orçamentário</label>
+                                <select id="controleOrcamentoModo" class="w-full p-2 border border-gray-300 rounded text-sm bg-white font-bold">
+                                    <option value="AF">Ano Fiscal (todos os projetos do AF) — padrão</option>
+                                    <option value="AREA">Área (só projetos da mesma área do extraordinário)</option>
+                                    <option value="PRODUTO">Produto (só projetos do mesmo produto do extraordinário)</option>
+                                </select>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Vigência a partir de</label>
+                                <input type="date" id="controleOrcamentoVigencia" class="w-full p-2 border border-gray-300 rounded text-sm">
+                            </div>
+                            <button onclick="salvarControleOrcamento()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition text-sm">
+                                <i class="fa-solid fa-floppy-disk"></i> Salvar Modo de Controle
+                            </button>
+                            <div id="controleOrcamentoLog" class="mt-4 text-[11px] text-gray-500"></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mt-6">
+                            <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Histórico de alterações</h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b uppercase">
+                                        <th class="p-2">Vigência</th><th class="p-2">Modo</th><th class="p-2">Modo anterior</th><th class="p-2">Alterado por</th>
+                                    </tr></thead>
+                                    <tbody id="controleOrcamentoHistorico" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOVO (Feature 1.2, 03/09/2026): Período do Ano Fiscal —
+                     mês de início parametrizável (era abril fixo no código).
+                     Role-gated hardcoded (Administrador/Proprietário), fora do
+                     catálogo comum. -->
+                <div id="view-periodo_ano_fiscal" class="tab-content hidden">
+                    <div class="mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Período do Ano Fiscal</h2>
+                        <p class="text-xs text-gray-500 mt-1">Mês em que o Ano Fiscal começa (12 meses corridos). A alteração vale a partir da vigência informada — datas anteriores continuam apuradas no período antigo. Quarters (Q1–Q4) e rótulos "AFxxxx" das telas passam a refletir o novo período.</p>
+                    </div>
+                    <div id="periodoAnoFiscalRestrito" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-6 text-amber-800 text-sm font-bold">
+                        <i class="fa-solid fa-lock"></i> Acesso restrito a ADMINISTRADOR ou PROPRIETÁRIO.
+                    </div>
+                    <div id="periodoAnoFiscalConteudo" class="hidden">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-lg">
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Mês de início</label>
+                                    <select id="periodoAnoFiscalMesInicio" onchange="onMudarMesInicioAnoFiscal()" class="w-full p-2 border border-gray-300 rounded text-sm bg-white font-bold"></select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Mês de encerramento</label>
+                                    <div class="w-full p-2 border border-gray-200 bg-gray-50 rounded text-sm font-bold text-gray-600"><span id="periodoAnoFiscalMesFim">—</span></div>
+                                </div>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Vigência a partir de</label>
+                                <input type="date" id="periodoAnoFiscalVigencia" class="w-full p-2 border border-gray-300 rounded text-sm">
+                            </div>
+                            <button onclick="salvarPeriodoAnoFiscal()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition text-sm">
+                                <i class="fa-solid fa-floppy-disk"></i> Salvar Período
+                            </button>
+                        </div>
+                        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mt-6">
+                            <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Vigências cadastradas</h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b uppercase">
+                                        <th class="p-2">Vigência</th><th class="p-2">Mês de início</th><th class="p-2">Início anterior</th><th class="p-2">Alterado por</th>
+                                    </tr></thead>
+                                    <tbody id="periodoAnoFiscalHistorico" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOVO (Feature 1.1, 03/09/2026): Validação de Trade-off
+                     Extraordinário — fila de simulações de trade-off que
+                     envolvem projetos de outro produto/área (quando o modo de
+                     controle é AREA/PRODUTO). NÃO altera a aba "Ajuste de
+                     Orçamento". -->
+                <div id="view-validacao_tradeoff" class="tab-content hidden">
+                    <div class="mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Validação de Trade-off Extraordinário</h2>
+                        <p class="text-xs text-gray-500 mt-1">Quando o modo de controle orçamentário é Área ou Produto e a simulação de trade-off da Demanda Extraordinária inclui projetos de outro subgrupo, a aprovação fica aqui aguardando validação. Aprovar (com motivo) aplica os efeitos; Rejeitar descarta a simulação.</p>
+                    </div>
+                    <div id="validacaoTradeoffRestrito" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-6 text-amber-800 text-sm font-bold">
+                        <i class="fa-solid fa-lock"></i> Acesso restrito — sua função não tem esta atividade.
+                    </div>
+                    <div id="validacaoTradeoffConteudo" class="hidden">
+                        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                            <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Pendências de validação</h4>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-xs">
+                                    <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b uppercase">
+                                        <th class="p-2">Quando</th><th class="p-2">Projeto Extraordinário</th><th class="p-2">Modo</th>
+                                        <th class="p-2 text-right">Valor</th><th class="p-2 text-right">Situação AF resultante</th><th class="p-2 text-center">Ações</th>
+                                    </tr></thead>
+                                    <tbody id="validacaoTradeoffTableBody" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <div id="validacaoTradeoffDetalhe" class="mt-6"></div>
+                    </div>
+                    <div id="modalDecisaoValidacaoTradeoff" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+                        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4">
+                            <div class="flex justify-between items-center border-b pb-2">
+                                <h3 class="font-bold text-gray-800 text-base" id="valTradeoffModalTitulo">Decisão</h3>
+                                <button onclick="fecharModalDecisaoValidacaoTradeoff()" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
+                            </div>
+                            <p class="text-xs text-gray-600" id="valTradeoffModalTexto"></p>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Motivo / Justificativa *</label>
+                                <textarea id="valTradeoffModalMotivo" rows="3" class="w-full p-2 border border-gray-300 rounded text-xs"></textarea>
+                            </div>
+                            <div class="flex justify-end gap-2 pt-2">
+                                <button onclick="fecharModalDecisaoValidacaoTradeoff()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700">Cancelar</button>
+                                <button id="valTradeoffModalConfirmar" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold">Confirmar</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -4285,6 +4427,9 @@
     <script src="./js/ano-fiscal/fechamento-af.js"></script>
     <script src="./js/ano-fiscal/fechamento-projetos.js"></script>
     <script src="./js/ano-fiscal/resultado-af.js"></script>
+    <script src="./js/config/periodo-ano-fiscal.js"></script>
+    <script src="./js/config/controle-orcamento.js"></script>
+    <script src="./js/ano-fiscal/validacao-tradeoff.js"></script>
     <script src="./js/utils/format.js"></script>
     <script src="./js/utils/dates.js"></script>
     <script src="./js/utils/health.js"></script>

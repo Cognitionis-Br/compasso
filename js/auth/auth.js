@@ -336,6 +336,13 @@ async function entrarNoSistema() {
     document.getElementById('loginScreen').classList.add('hidden');
     document.getElementById('appContainer').classList.remove('hidden');
 
+    // NOVO (Feature 1.2 — 03/09/2026): o período do Ano Fiscal (mês de
+    // início) é parametrizável — carrega o cache ANTES do primeiro
+    // getInfoAnoFiscal(), que passou a consultá-lo. Feature 1.1: cache do
+    // modo de controle orçamentário (usado no trade-off da Extraordinária).
+    if (typeof carregarConfigPeriodoAF === 'function') await carregarConfigPeriodoAF();
+    if (typeof carregarConfigControleOrcamento === 'function') await carregarConfigControleOrcamento();
+
     const infoAF = getInfoAnoFiscal();
     const sidebarInfo = document.getElementById('sidebarInfoAF');
     // CORRIGIDO 10/08/2026 (a pedido do usuário): rótulo "AF" trocado por

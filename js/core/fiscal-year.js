@@ -1,21 +1,23 @@
 // =========================================================================
 // core/fiscal-year.js
 // Informações do Ano Fiscal vigente/próximo, calculadas a partir da data
-// real (não mais fixas) — ver Especificacao_Workflow_v2.md, seção 5.
+// real — ver Especificacao_Workflow_v2.md, seção 5.
 //
-// CORRIGIDO 10/08/2026 — convenção de nomeação do AF: o Ano Fiscal leva o
-// nome do ano-calendário em que cai o seu ÚLTIMO quarter (Q4), não o ano
-// em que ele começa. Confirmado pelo usuário com o exemplo: abril/2026
-// inicia o AF2027 (termina em março/2027, daí o nome); abril/2027 inicia
-// o AF2028.
+// CONVENÇÃO DE NOMEAÇÃO: o Ano Fiscal leva o nome do ano-calendário em que
+// cai o seu ÚLTIMO quarter (Q4). Ex. (período abril–março): abril/2026
+// inicia o AF2027 (termina em março/2027, daí o nome).
 //
-// Regra dos quarters:
-//   Q1 = abril, maio, junho        -> pertence ao AF do ano-calendário SEGUINTE
-//   Q2 = julho, agosto, setembro   -> pertence ao AF do ano-calendário SEGUINTE
-//   Q3 = outubro, novembro, dez.   -> pertence ao AF do ano-calendário SEGUINTE
-//   Q4 = janeiro, fevereiro, março -> pertence ao AF do PRÓPRIO ano-calendário
-//        (ex.: AF2027 vai de abr/2026 até mar/2027; jan-mar/2027 = Q4 do AF2027,
-//        e é esse ano de 2027 que dá nome ao AF inteiro)
+// PERÍODO PARAMETRIZÁVEL (Feature 1.2 — 03/09/2026): o mês de início do Ano
+// Fiscal NÃO é mais fixo em abril — vem de config_periodo_ano_fiscal, via
+// mesInicioAnoFiscal(dataRef) (js/config/periodo-ano-fiscal.js), COM
+// VIGÊNCIA (datas anteriores à 1ª vigência continuam em abril). Com o mês
+// de início = 4 esta função reproduz exatamente a regra antiga:
+//   Q1 = mês de início + 0/1/2      -> (abr,mai,jun)
+//   Q2 = mês de início + 3/4/5      -> (jul,ago,set)
+//   Q3 = mês de início + 6/7/8      -> (out,nov,dez)
+//   Q4 = mês de início + 9/10/11    -> (jan,fev,mar)
+// O cache do período é carregado no login (js/auth/auth.js), então esta
+// função continua SÍNCRONA.
 //
 // isOrcamentoGlobalFechado (mantida como estava) verifica se o orçamento
 // do AF já foi fechado para novas demandas — ver
@@ -27,22 +29,18 @@ function getInfoAnoFiscal(dataRef) {
     const mes = hoje.getMonth() + 1; // getMonth() é 0-indexado
     const ano = hoje.getFullYear();
 
-    let quarterAtual, anoFiscalCorrente;
+    const mesInicio = (typeof mesInicioAnoFiscal === 'function') ? mesInicioAnoFiscal(dataRef) : 4;
 
-    if (mes >= 4 && mes <= 6) {
-        quarterAtual = 'Q1';
-        anoFiscalCorrente = ano + 1;
-    } else if (mes >= 7 && mes <= 9) {
-        quarterAtual = 'Q2';
-        anoFiscalCorrente = ano + 1;
-    } else if (mes >= 10 && mes <= 12) {
-        quarterAtual = 'Q3';
-        anoFiscalCorrente = ano + 1;
-    } else {
-        // mes 1, 2 ou 3 — Q4, já no ano-calendário que dá nome ao AF
-        quarterAtual = 'Q4';
-        anoFiscalCorrente = ano;
-    }
+    // Offset 0..11 desde o início do Ano Fiscal -> quarter.
+    const offset = ((mes - mesInicio) % 12 + 12) % 12;
+    const quarterAtual = 'Q' + (Math.floor(offset / 3) + 1);
+
+    // Ano-calendário em que o AF começou. Se ainda não chegamos ao mês de
+    // início neste ano-calendário, o AF em curso começou no ano anterior.
+    const startYear = (mes >= mesInicio) ? ano : ano - 1;
+    // Nome = ano-calendário do último quarter. Só coincide com startYear
+    // quando o AF não cruza a virada de ano (mês de início = janeiro).
+    const anoFiscalCorrente = (mesInicio === 1) ? startYear : startYear + 1;
 
     return {
         quarterAtual,

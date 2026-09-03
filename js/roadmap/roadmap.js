@@ -161,7 +161,15 @@ const FASES_TIMELINE = [
     { key: 'UAT', label: 'UAT', labelCurto: 'UAT', cor: 'bg-blue-500' },
     { key: 'GOLIVE', label: 'Go-Live', labelCurto: 'GL', cor: 'bg-emerald-600' }
 ];
-const MESES_FY = ['ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ', 'JAN', 'FEV', 'MAR'];
+// Feature 1.2 (03/09/2026): a grade de meses do Gantt começa no mês de
+// início do Ano Fiscal CONFIGURADO (config_periodo_ano_fiscal). Com mês de
+// início = abril devolve ['ABR','MAI',...,'MAR'], idêntico ao de antes.
+function mesesFyRotulos() {
+    const inicio0 = (((typeof mesInicioAnoFiscal === 'function') ? mesInicioAnoFiscal() : 4) - 1 + 12) % 12;
+    const out = [];
+    for (let i = 0; i < 12; i++) out.push(MESES_CALENDARIO[(inicio0 + i) % 12]);
+    return out;
+}
 
 // NOVO (a pedido do usuário 24/08/2026): a grade do Gantt era sempre fixa
 // em 12 meses (Abr-Mar do AF exibido) — atividades que começaram ANTES do
@@ -178,12 +186,13 @@ const MESES_CALENDARIO = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO'
 const EXTENSAO_GANTT_MAX_MESES = 12; // teto de segurança — evita grade absurdamente larga se alguma data estiver muito errada
 
 function gerarRotulosMesesGantt(extensaoMeses) {
+    const idxInicio = (((typeof mesInicioAnoFiscal === 'function') ? mesInicioAnoFiscal() : 4) - 1 + 12) % 12; // índice do mês de início do AF em MESES_CALENDARIO
     const prefixo = [];
     for (let i = extensaoMeses; i >= 1; i--) {
-        const idx = ((3 - i) % 12 + 12) % 12; // 3 = índice de ABR em MESES_CALENDARIO
+        const idx = ((idxInicio - i) % 12 + 12) % 12;
         prefixo.push(MESES_CALENDARIO[idx]);
     }
-    return [...prefixo, ...MESES_FY];
+    return [...prefixo, ...mesesFyRotulos()];
 }
 
 // Quantos meses ANTES do início do AF do projeto uma data cai (0 se a
@@ -289,7 +298,7 @@ function mesIndexNoAF(dataStr, anoFiscalStr, extensaoMeses) {
     const limites = obterLimitesAnoFiscal(anoFiscalStr);
     if (!limites) return null;
     const anoInicioAF = Number(limites.inicio.split('-')[0]);
-    const mesInicioAF = Number(limites.inicio.split('-')[1]); // sempre 4 (abril)
+    const mesInicioAF = Number(limites.inicio.split('-')[1]); // mês de início do AF configurado (Feature 1.2); 4 = abril, o padrão
     const [anoData, mesData] = dataStr.split('-').map(Number);
     const idx = (anoData - anoInicioAF) * 12 + (mesData - mesInicioAF) + extensaoMeses;
     if (idx < 0) return null; // data anterior à janela exibida (mesmo já esticada) — não mostra

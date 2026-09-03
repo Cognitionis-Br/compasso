@@ -124,6 +124,24 @@ function switchTab(tabId) {
     if (tabId === 'cargos') { mudarAbaCargos('criar'); renderCargosView(); }
     if (tabId === 'percentual_bloqueio_orcamento') renderPercentualBloqueioOrcamentoView();
     if (tabId === 'mudanca_orcamento') renderMudancaOrcamentoView();
+    // NOVO (Feature 1.1/1.2 — 03/09/2026). controle_orcamento e
+    // validacao_tradeoff se auto-restringem dentro da própria view
+    // (restrito/conteudo). periodo_ano_fiscal segue o padrão hardcoded
+    // por papel (Administrador OU Proprietário), como licenciamento_modulos.
+    if (tabId === 'controle_orcamento') renderControleOrcamentoView();
+    if (tabId === 'validacao_tradeoff') renderValidacaoTradeoffView();
+    if (tabId === 'periodo_ano_fiscal') {
+        const restrito = document.getElementById('periodoAnoFiscalRestrito');
+        const conteudo = document.getElementById('periodoAnoFiscalConteudo');
+        if (ehAdministrador || ehProprietario) {
+            if (restrito) restrito.classList.add('hidden');
+            if (conteudo) conteudo.classList.remove('hidden');
+            renderPeriodoAnoFiscalView();
+        } else {
+            if (restrito) restrito.classList.remove('hidden');
+            if (conteudo) conteudo.classList.add('hidden');
+        }
+    }
     // AJUSTADO (papel Proprietário, 28/08/2026): restrita a ehProprietario
     // (mais forte que ehAdministrador) — mesma camada dupla de Ferramentas
     // de Dev (catálogo de atividades pra visibilidade do link + checagem

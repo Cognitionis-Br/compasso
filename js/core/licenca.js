@@ -54,6 +54,7 @@ const TAB_MODULO_MAP = {
     // Go-Live, Fiscal Year, Roadmap e Demandas Extraordinárias.
     ano_fiscal: 'WORKFLOW',
     ajuste_orcamento: 'WORKFLOW',
+    validacao_tradeoff: 'WORKFLOW', // NOVO (Feature 1.1 — 03/09/2026): fila de validação de trade-off fora de escopo (grupo Ano Fiscal)
     fechamento_af: 'WORKFLOW',
     f1_formalizacao: 'WORKFLOW',
     f1_orcamento: 'WORKFLOW',
