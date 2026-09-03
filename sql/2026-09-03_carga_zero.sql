@@ -84,14 +84,16 @@ BEGIN
     END;
 
     -- usuários e vínculos de função: mantém só o(s) PROPRIETÁRIO
-    DELETE FROM usuario_funcoes WHERE usuario_id <> ALL (v_prop);
-    DELETE FROM usuarios        WHERE id         <> ALL (v_prop);
+    -- (o cadastro de usuário é perfis_usuarios.id = id do auth, um UUID —
+    --  a mesma coluna que usuario_funcoes.usuario_id referencia)
+    DELETE FROM usuario_funcoes  WHERE usuario_id <> ALL (v_prop);
+    DELETE FROM perfis_usuarios  WHERE id         <> ALL (v_prop);
 
     -- cargos: apaga os que não são mais usados por nenhum usuário mantido
     -- (o PROPRIETÁRIO tem cargo obrigatório — não pode virar FK órfã)
     BEGIN
         DELETE FROM cargos
-         WHERE id NOT IN (SELECT cargo_id FROM usuarios WHERE cargo_id IS NOT NULL);
+         WHERE id NOT IN (SELECT cargo_id FROM perfis_usuarios WHERE cargo_id IS NOT NULL);
         RAISE NOTICE 'cargos: mantidos só os do(s) usuário(s) preservado(s)';
     EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): cargos';
     END;
