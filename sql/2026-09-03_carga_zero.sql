@@ -31,7 +31,7 @@
 DO $$
 DECLARE
     t         TEXT;
-    v_prop    BIGINT[];
+    v_prop    UUID[];
     tabelas   TEXT[] := ARRAY[
         -- itens / logs de projeto
         'projeto_etapas','projeto_benefit_results','log_decisoes_etapa',
