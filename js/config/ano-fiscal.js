@@ -70,20 +70,19 @@ function renderAnoFiscalPanel() {
     const afAnteriorFechado = configAnteriorAF ? configAnteriorAF.ano_fiscal_fechado === true : true;
     const podeAbrir = afAtualFechado && afAnteriorFechado && !proximoAberto;
 
-    // BOOTSTRAP (2026-09-01): depois de "Limpar Base Completamente" a
-    // tabela anos_fiscais_config fica vazia — não existe linha nem pro AF
-    // corrente. Sem isso, nenhuma tela que lê AF (Formalizar Demanda,
-    // Pilar Estratégico, etc.) tem o que listar, e o botão de "abrir
-    // próximo AF" fica travado (exige o corrente fechado). Aqui a tela
-    // deixa inicializar o AF corrente do zero.
+    // BOOTSTRAP: numa base sem nenhum Ano Fiscal configurado (instalação
+    // nova ou logo após uma limpeza total), nenhuma tela que lê AF
+    // (Formalizar Demanda, Pilar Estratégico, etc.) tem o que listar, e o
+    // botão de "abrir próximo AF" fica travado (exige o corrente fechado).
+    // Aqui a tela deixa inicializar o AF corrente do zero.
     if (!configAtualAF) {
         container.innerHTML = `
             <div class="bg-amber-50 border-2 border-amber-300 rounded-lg p-4">
-                <h4 class="text-sm font-bold text-amber-800 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Nenhum Ano Fiscal configurado</h4>
+                <h4 class="text-sm font-bold text-amber-800 mb-1"><i class="fa-solid fa-triangle-exclamation"></i> Ano Fiscal ainda não inicializado</h4>
                 <p class="text-xs text-amber-700 mb-3">
-                    O Ano Fiscal corrente (<b>${infoAF.afAtualStr}</b>) ainda não existe em <code>anos_fiscais_config</code>
-                    — normal logo após uma limpeza total de base. Inicialize-o para liberar o recebimento de demandas
-                    e as telas que dependem de Ano Fiscal (Formalizar Demanda, Pilar Estratégico, etc.).
+                    O Ano Fiscal corrente (<b>${infoAF.afAtualStr}</b>) ainda não foi inicializado. Numa instalação nova,
+                    este é o primeiro passo do ciclo: inicialize-o para abrir o recebimento de demandas e liberar as
+                    telas que dependem de Ano Fiscal (Formalizar Demanda, Pilar Estratégico, etc.).
                 </p>
                 <button onclick="inicializarAnoFiscalCorrente()"
                     class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded text-xs transition">
