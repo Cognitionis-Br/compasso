@@ -32,6 +32,12 @@ let ehAdministrador = false;
 // contrário não vale: Administrador comum segue com as mesmas funções de
 // sempre, MENOS licenciamento de módulos.
 let ehProprietario = false;
+// NOVO (a pedido do usuário): exceção pontual só pra Restrição de Área
+// (2.5/13.5) — concedida por função, igual acesso_irrestrito/eh_proprietario,
+// mas SEM dar acesso irrestrito ao sistema: a função continua limitada
+// pelo catálogo de atividades normal, só passa a enxergar todas as áreas
+// nas telas com Restrição de Área ligada (ver filtrarProjetosPorArea).
+let ignoraRestricaoArea = false;
 
 // NOVO: alterna entre as 2 abas de Funções e Permissões.
 function mudarAbaFuncoes(aba) {
@@ -122,6 +128,7 @@ function renderFuncoesTable() {
                         : `<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px]">ATIVA</span>`}
                     ${f.acesso_irrestrito ? `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px] ml-1">ACESSO IRRESTRITO</span>` : ''}
                     ${f.eh_proprietario ? `<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[10px] ml-1">PROPRIETÁRIO</span>` : ''}
+                    ${(f.ignora_restricao_area && !f.acesso_irrestrito) ? `<span class="bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded text-[10px] ml-1">IGNORA RESTRIÇÃO DE ÁREA</span>` : ''}
                 </td>
                 <td class="p-3 text-right space-x-2 whitespace-nowrap">
                     ${inativa
@@ -215,6 +222,8 @@ function editFuncao(id) {
     document.getElementById('funcaoDescricaoInput').value = funcao.descricao || '';
     const inputIrrestrito = document.getElementById('funcaoAcessoIrrestritoInput');
     if (inputIrrestrito) inputIrrestrito.checked = funcao.acesso_irrestrito === true;
+    const inputIgnoraRestricaoArea = document.getElementById('funcaoIgnoraRestricaoAreaInput');
+    if (inputIgnoraRestricaoArea) inputIgnoraRestricaoArea.checked = funcao.ignora_restricao_area === true;
     const inputProprietario = document.getElementById('funcaoEhProprietarioInput');
     if (inputProprietario) inputProprietario.checked = funcao.eh_proprietario === true;
 
@@ -244,6 +253,8 @@ function limparFormularioFuncao() {
     document.getElementById('funcaoDescricaoInput').value = '';
     const inputIrrestrito = document.getElementById('funcaoAcessoIrrestritoInput');
     if (inputIrrestrito) inputIrrestrito.checked = false;
+    const inputIgnoraRestricaoArea = document.getElementById('funcaoIgnoraRestricaoAreaInput');
+    if (inputIgnoraRestricaoArea) inputIgnoraRestricaoArea.checked = false;
     const inputProprietario = document.getElementById('funcaoEhProprietarioInput');
     if (inputProprietario) inputProprietario.checked = false;
     document.getElementById('btnSalvarFuncao').innerText = 'Salvar Função';
@@ -259,6 +270,8 @@ async function saveFuncao(e) {
     const nome = document.getElementById('funcaoNomeInput').value.trim().toUpperCase();
     const descricao = document.getElementById('funcaoDescricaoInput').value.trim();
     const inputIrrestrito = document.getElementById('funcaoAcessoIrrestritoInput');
+    const inputIgnoraRestricaoArea = document.getElementById('funcaoIgnoraRestricaoAreaInput');
+    const ignoraRestricaoAreaForm = inputIgnoraRestricaoArea ? inputIgnoraRestricaoArea.checked : false;
     const inputProprietario = document.getElementById('funcaoEhProprietarioInput');
     const ehProprietarioForm = inputProprietario ? inputProprietario.checked : false;
     // Proprietário sempre implica Acesso Irrestrito — reforçado aqui (não só
@@ -300,10 +313,10 @@ async function saveFuncao(e) {
     let funcaoId = id ? Number(id) : null;
 
     if (funcaoId) {
-        const { error } = await _supabase.from('funcoes').update({ nome, descricao, acesso_irrestrito: acessoIrrestrito, eh_proprietario: ehProprietarioForm }).eq('id', funcaoId);
+        const { error } = await _supabase.from('funcoes').update({ nome, descricao, acesso_irrestrito: acessoIrrestrito, eh_proprietario: ehProprietarioForm, ignora_restricao_area: ignoraRestricaoAreaForm }).eq('id', funcaoId);
         if (error) return alert('Erro ao atualizar função: ' + error.message);
     } else {
-        const { data, error } = await _supabase.from('funcoes').insert([{ nome, descricao, acesso_irrestrito: acessoIrrestrito, eh_proprietario: ehProprietarioForm }]).select();
+        const { data, error } = await _supabase.from('funcoes').insert([{ nome, descricao, acesso_irrestrito: acessoIrrestrito, eh_proprietario: ehProprietarioForm, ignora_restricao_area: ignoraRestricaoAreaForm }]).select();
         if (error) return alert('Erro ao cadastrar função: ' + error.message);
         funcaoId = data && data[0] ? data[0].id : null;
         if (!funcaoId) return alert('Função criada, mas não foi possível obter o ID para salvar as atividades. Recarregue e edite a função para ajustar as atividades.');
@@ -508,6 +521,7 @@ async function carregarPermissoesUsuarioAtual() {
     funcoesUsuarioAtual = [];
     ehAdministrador = false;
     ehProprietario = false;
+    ignoraRestricaoArea = false;
 
     // NOVO (Fase 4): garante que atividadesData (o catálogo inteiro) esteja
     // carregado pra qualquer usuário logado, não só quando visita a tela
@@ -522,7 +536,7 @@ async function carregarPermissoesUsuarioAtual() {
 
     const { data: minhasFuncoes, error: errFuncoes } = await _supabase
         .from('usuario_funcoes')
-        .select('funcao_id, funcoes(nome, acesso_irrestrito, eh_proprietario)')
+        .select('funcao_id, funcoes(nome, acesso_irrestrito, eh_proprietario, ignora_restricao_area)')
         .eq('usuario_id', currentUser.id);
 
     if (errFuncoes || !minhasFuncoes) return;
@@ -538,6 +552,10 @@ async function carregarPermissoesUsuarioAtual() {
     // eh_proprietario — nome 'PROPRIETARIO' como fallback de segurança,
     // igual já valia pra ADMINISTRADOR.
     ehProprietario = minhasFuncoes.some(mf => mf.funcoes && mf.funcoes.eh_proprietario === true) || funcoesUsuarioAtual.includes('PROPRIETARIO');
+    // NOVO (a pedido do usuário): exceção pontual de Restrição de Área,
+    // por função — não precisa de nome fallback (é feature nova, sem
+    // função "de sempre" associada a ela).
+    ignoraRestricaoArea = minhasFuncoes.some(mf => mf.funcoes && mf.funcoes.ignora_restricao_area === true);
 
     if (funcaoIds.length === 0) return;
 
@@ -689,12 +707,15 @@ async function alternarRestricaoAreaAtividade(atividadeId, valor) {
 // Restrição de área nos dados (Controle de acesso por atividade, Fase 5) —
 // generaliza filtrarProjetosPorAcessoRoadmap (js/roadmap/roadmap.js, único
 // lugar que já fazia isso) pra qualquer tela de manutenção/consulta.
-// Bypassa admin/irrestrito e usuários da área Tecnologia da Informação
-// (nunca sofrem restrição, em nenhuma atividade); pra todo o resto, só
-// filtra de fato se a atividade em questão tiver restricao_area = true no
-// catálogo — com o valor padrão (false) em tudo, isso não muda nada até
-// um admin marcar alguma atividade como restrita (tela "Restrição de Área
-// por Atividade").
+// Bypassa admin/irrestrito, usuários da área Tecnologia da Informação, e
+// (NOVO, a pedido do usuário) qualquer função marcada com
+// ignora_restricao_area — exceção concedida por função sem dar acesso
+// irrestrito ao sistema (continua limitada pelo catálogo de atividades
+// normal, só não sofre o filtro de área). Pra todo o resto, só filtra de
+// fato se a atividade em questão tiver restricao_area = true no catálogo
+// — com o valor padrão (false) em tudo, isso não muda nada até um admin
+// marcar alguma atividade como restrita (tela "Restrição de Área por
+// Atividade").
 // -------------------------------------------------------------------------
 const AREA_TI_NOME = 'TECNOLOGIA DA INFORMAÇÃO';
 
@@ -703,7 +724,7 @@ function usuarioEhDaAreaTI() {
 }
 
 function filtrarProjetosPorArea(lista, activityKey) {
-    if (ehAdministrador || usuarioEhDaAreaTI()) return lista;
+    if (ehAdministrador || usuarioEhDaAreaTI() || ignoraRestricaoArea) return lista;
     const atividade = atividadesData.find(a => a.activity_key === activityKey);
     if (!atividade || !atividade.restricao_area) return lista;
     if (!currentUser || !currentUser.area) return []; // sem área definida, sem bypass -> não vê nada, por segurança

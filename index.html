@@ -2466,6 +2466,17 @@
                                         Acesso Irrestrito (ignora o catálogo de atividades abaixo e a restrição de área — acesso total ao sistema, como ADMINISTRADOR)
                                     </label>
                                 </div>
+                                <!-- NOVO (a pedido do usuário): exceção pontual só pra
+                                     Restrição de Área (13.5/2.5) — a função continua limitada
+                                     pelo catálogo normal de atividades, mas enxerga todas as
+                                     áreas nas telas com restrição ligada. Redundante (mas
+                                     inofensivo) se Acesso Irrestrito já estiver marcado. -->
+                                <div class="mb-4 bg-sky-50 border border-sky-200 rounded p-3">
+                                    <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-sky-800">
+                                        <input type="checkbox" id="funcaoIgnoraRestricaoAreaInput">
+                                        Ignora Restrição de Área (enxerga todas as áreas nas telas com "Restrição de Área" ligada — mesmo sem Acesso Irrestrito, continua limitada pelas atividades marcadas abaixo)
+                                    </label>
+                                </div>
                                 <!-- NOVO (papel Proprietário, 28/08/2026): separado do Acesso
                                      Irrestrito de propósito — mesmo uma função com acesso
                                      irrestrito (Administrador) NÃO enxerga Licenciamento de
