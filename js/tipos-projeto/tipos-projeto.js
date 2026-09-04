@@ -2,9 +2,14 @@
 // tipos-projeto/tipos-projeto.js
 // Item 0 (Fase 1): Cadastro de Tipo de Projeto. Código de 5 letras,
 // descrição de até 80 caracteres, auditoria de criação (quem/quando).
-// NÃO permite edição depois de criado — só ativar/inativar. Inativar só
-// bloqueia uso NOVO; projetos que já usam o tipo continuam intactos
-// (confirmado com o usuário).
+// Inativar só bloqueia uso NOVO; projetos que já usam o tipo continuam
+// intactos (confirmado com o usuário).
+//
+// AJUSTADO (a pedido do usuário): a descrição pode ser alterada enquanto
+// o tipo ainda não estiver em uso por nenhum projeto (mesmo critério de
+// "em uso" de Cadastro de Porte/Produtos). Uma vez usado por pelo menos
+// um projeto, fica travado — só ativar/inativar. O código nunca muda
+// depois de criado, em uso ou não.
 // =========================================================================
 
 let tiposProjetoCache = [];
@@ -40,14 +45,51 @@ async function renderTiposProjetoView() {
             <td class="p-3 text-[10px] text-gray-400">${escapeHtml(t.criado_por) || '-'} · ${t.criado_em ? new Date(t.criado_em).toLocaleString('pt-BR') : '-'}</td>
             <td class="p-3 text-center">${t.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
             <td class="p-3 text-center">
+                ${botaoSePodeAlterar('tipos_projeto', `<button onclick="editarTipoProjeto(${t.id})" class="text-indigo-600 hover:text-indigo-800 font-bold text-xs mr-2"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`)}
                 ${botaoSePodeAtivarInativar('tipos_projeto', `<button onclick="alternarAtivoTipoProjeto(${t.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i> ${t.ativo ? 'Inativar' : 'Reativar'}</button>`)}
             </td>
         </tr>
     `).join('');
 }
 
+// Em uso = pelo menos um projeto já aponta pro tipo (projetos.tipo_projeto_id).
+async function tipoProjetoEstaEmUso(id) {
+    const { count, error } = await _supabase.from('projetos').select('id', { count: 'exact', head: true }).eq('tipo_projeto_id', id);
+    if (error) return true; // se a checagem falhar, bloqueia por segurança
+    return (count || 0) > 0;
+}
+
+async function editarTipoProjeto(id) {
+    const t = tiposProjetoCache.find(x => x.id === id);
+    if (!t) return;
+    if (!usuarioPodeAlterarTela('tipos_projeto')) return alert('Você não tem permissão para alterar tipos de projeto.');
+
+    if (await tipoProjetoEstaEmUso(id)) {
+        return alert('⛔ Este Tipo de Projeto já está em uso por pelo menos um projeto e não pode mais ser alterado. Só é possível editar tipos que ainda não foram usados em nenhuma demanda — use Inativar se quiser tirá-lo de circulação.');
+    }
+
+    mudarAbaTiposProjeto('criar');
+    document.getElementById('tipoProjetoIdInput').value = t.id;
+    document.getElementById('tipoProjetoCodigoInput').value = t.codigo;
+    document.getElementById('tipoProjetoCodigoInput').disabled = true; // código nunca muda depois de criado
+    document.getElementById('tipoProjetoDescricaoInput').value = t.descricao;
+    document.getElementById('btnSalvarTipoProjeto').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Atualizar Tipo';
+    document.getElementById('tipoProjetoDescricaoInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function limparFormularioTipoProjeto() {
+    document.getElementById('tipoProjetoIdInput').value = '';
+    document.getElementById('tipoProjetoCodigoInput').value = '';
+    document.getElementById('tipoProjetoCodigoInput').disabled = false;
+    document.getElementById('tipoProjetoDescricaoInput').value = '';
+    document.getElementById('btnSalvarTipoProjeto').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Criar Tipo';
+}
+
 async function salvarTipoProjeto() {
-    if (!usuarioPodeIncluirTela('tipos_projeto')) return alert('Você não tem permissão para incluir tipos de projeto.');
+    const id = document.getElementById('tipoProjetoIdInput').value;
+    if (!id && !usuarioPodeIncluirTela('tipos_projeto')) return alert('Você não tem permissão para incluir tipos de projeto.');
+    if (id && !usuarioPodeAlterarTela('tipos_projeto')) return alert('Você não tem permissão para alterar tipos de projeto.');
+
     const codigo = document.getElementById('tipoProjetoCodigoInput').value.trim().toUpperCase();
     const descricao = document.getElementById('tipoProjetoDescricaoInput').value.trim();
 
@@ -60,22 +102,33 @@ async function salvarTipoProjeto() {
     if (descricao.length > 80) {
         return alert('A descrição precisa ter no máximo 80 caracteres!');
     }
-    if (tiposProjetoCache.some(t => t.codigo === codigo)) {
-        return alert(`⛔ Já existe um Tipo de Projeto com o código "${codigo}".`);
+
+    if (id) {
+        // Reconfere no momento de salvar — pode ter entrado em uso enquanto
+        // o formulário estava aberto.
+        if (await tipoProjetoEstaEmUso(Number(id))) {
+            limparFormularioTipoProjeto();
+            await renderTiposProjetoView();
+            return alert('⛔ Este Tipo de Projeto passou a ser usado por um projeto enquanto você editava e não pode mais ser alterado.');
+        }
+        const { error } = await _supabase.from('tipos_projeto').update({ descricao }).eq('id', Number(id));
+        if (error) return alert('Erro ao atualizar o Tipo de Projeto: ' + error.message);
+        alert('✅ Tipo de Projeto atualizado com sucesso!');
+    } else {
+        if (tiposProjetoCache.some(t => t.codigo === codigo)) {
+            return alert(`⛔ Já existe um Tipo de Projeto com o código "${codigo}".`);
+        }
+        const payload = {
+            codigo, descricao,
+            criado_por: currentUser ? currentUser.nome : 'desconhecido',
+            criado_em: new Date().toISOString()
+        };
+        const { error } = await _supabase.from('tipos_projeto').insert([payload]);
+        if (error) return alert('Erro ao criar o Tipo de Projeto: ' + error.message);
+        alert('✅ Tipo de Projeto criado com sucesso!');
     }
 
-    const payload = {
-        codigo, descricao,
-        criado_por: currentUser ? currentUser.nome : 'desconhecido',
-        criado_em: new Date().toISOString()
-    };
-
-    const { error } = await _supabase.from('tipos_projeto').insert([payload]);
-    if (error) return alert('Erro ao criar o Tipo de Projeto: ' + error.message);
-
-    alert('✅ Tipo de Projeto criado com sucesso!');
-    document.getElementById('tipoProjetoCodigoInput').value = '';
-    document.getElementById('tipoProjetoDescricaoInput').value = '';
+    limparFormularioTipoProjeto();
     await renderTiposProjetoView();
     mudarAbaTiposProjeto('cadastrados');
 }

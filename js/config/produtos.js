@@ -2,13 +2,19 @@
 // config/produtos.js
 // Cadastro de Produtos (Agrupamento de Orçamento por Produto — item 3).
 // Mesmo padrão CRUD simples de Tipos de Projeto: Código + Nome +
-// Ativo/Inativo. Não editável depois de criado — só ativar/inativar.
-// Inativar só bloqueia uso NOVO; projetos que já usam o produto continuam.
+// Ativo/Inativo. Inativar só bloqueia uso NOVO; projetos que já usam o
+// produto continuam.
+//
+// AJUSTADO (a pedido do usuário): o nome pode ser alterado enquanto o
+// produto ainda não estiver em uso por nenhum projeto (mesmo critério de
+// "em uso" de Cadastro de Porte — js/config/portes.js). Uma vez usado por
+// pelo menos um projeto, fica travado — só ativar/inativar. O código
+// nunca muda depois de criado, em uso ou não.
 //
 // O produto sentinela NAO_CLASSIFICADO ("Não Classificado") é valor
 // histórico dos projetos antigos — aparece na lista aqui (pra visibilidade)
 // mas NÃO é oferecido no formulário de Formalizar Demanda
-// (ver produtosSelecionaveis()).
+// (ver produtosSelecionaveis()) nem pode ser editado.
 // =========================================================================
 
 let produtosCache = [];
@@ -56,36 +62,87 @@ async function renderProdutosView() {
             <td class="p-3 text-[10px] text-gray-400">${escapeHtml(p.criado_por) || '-'} · ${p.criado_em ? new Date(p.criado_em).toLocaleString('pt-BR') : '-'}</td>
             <td class="p-3 text-center">${p.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
             <td class="p-3 text-center">
-                ${sentinela ? '<span class="text-gray-300 text-[10px]">—</span>' : botaoSePodeAtivarInativar('produtos', `<button onclick="alternarAtivoProduto(${p.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i> ${p.ativo ? 'Inativar' : 'Reativar'}</button>`)}
+                ${sentinela ? '<span class="text-gray-300 text-[10px]">—</span>'
+                    : botaoSePodeAlterar('produtos', `<button onclick="editarProduto(${p.id})" class="text-indigo-600 hover:text-indigo-800 font-bold text-xs mr-2"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`)
+                      + botaoSePodeAtivarInativar('produtos', `<button onclick="alternarAtivoProduto(${p.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i> ${p.ativo ? 'Inativar' : 'Reativar'}</button>`)}
             </td>
         </tr>`;
     }).join('');
 }
 
+// Em uso = pelo menos um projeto já aponta pro produto (projetos.produto_id).
+async function produtoEstaEmUso(id) {
+    const { count, error } = await _supabase.from('projetos').select('id', { count: 'exact', head: true }).eq('produto_id', id);
+    if (error) return true; // se a checagem falhar, bloqueia por segurança (diferente de porte: aqui não há campo travável parcial)
+    return (count || 0) > 0;
+}
+
+async function editarProduto(id) {
+    const p = produtosCache.find(x => x.id === id);
+    if (!p) return;
+    if (p.codigo === 'NAO_CLASSIFICADO') return alert('O produto sentinela não pode ser alterado.');
+    if (!usuarioPodeAlterarTela('produtos')) return alert('Você não tem permissão para alterar produtos.');
+
+    if (await produtoEstaEmUso(id)) {
+        return alert('⛔ Este produto já está em uso por pelo menos um projeto e não pode mais ser alterado. Só é possível editar produtos que ainda não foram usados em nenhuma demanda — use Inativar se quiser tirá-lo de circulação.');
+    }
+
+    mudarAbaProdutos('criar');
+    document.getElementById('produtoIdInput').value = p.id;
+    document.getElementById('produtoCodigoInput').value = p.codigo;
+    document.getElementById('produtoCodigoInput').disabled = true; // código nunca muda depois de criado
+    document.getElementById('produtoNomeInput').value = p.nome;
+    document.getElementById('btnSalvarProduto').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Atualizar Produto';
+    document.getElementById('produtoNomeInput').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function limparFormularioProduto() {
+    document.getElementById('produtoIdInput').value = '';
+    document.getElementById('produtoCodigoInput').value = '';
+    document.getElementById('produtoCodigoInput').disabled = false;
+    document.getElementById('produtoNomeInput').value = '';
+    document.getElementById('btnSalvarProduto').innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Criar Produto';
+}
+
 async function salvarProduto() {
-    if (!usuarioPodeIncluirTela('produtos')) return alert('Você não tem permissão para incluir produtos.');
+    const id = document.getElementById('produtoIdInput').value;
+    if (!id && !usuarioPodeIncluirTela('produtos')) return alert('Você não tem permissão para incluir produtos.');
+    if (id && !usuarioPodeAlterarTela('produtos')) return alert('Você não tem permissão para alterar produtos.');
+
     const codigo = document.getElementById('produtoCodigoInput').value.trim().toUpperCase();
     const nome = document.getElementById('produtoNomeInput').value.trim();
 
     if (!codigo || !nome) return alert('Preencha o código e o nome do produto!');
     if (codigo.length > 20) return alert('O código precisa ter no máximo 20 caracteres!');
     if (nome.length > 80) return alert('O nome precisa ter no máximo 80 caracteres!');
-    if (codigo === 'NAO_CLASSIFICADO') return alert('Código reservado pelo sistema.');
-    if (produtosCache.some(p => p.codigo === codigo)) {
-        return alert(`⛔ Já existe um produto com o código "${codigo}".`);
+
+    if (id) {
+        // Reconfere no momento de salvar — pode ter entrado em uso enquanto
+        // o formulário estava aberto.
+        if (await produtoEstaEmUso(Number(id))) {
+            limparFormularioProduto();
+            await renderProdutosView();
+            return alert('⛔ Este produto passou a ser usado por um projeto enquanto você editava e não pode mais ser alterado.');
+        }
+        const { error } = await _supabase.from('produtos').update({ nome }).eq('id', Number(id));
+        if (error) return alert('Erro ao atualizar o produto: ' + error.message);
+        alert('✅ Produto atualizado com sucesso!');
+    } else {
+        if (codigo === 'NAO_CLASSIFICADO') return alert('Código reservado pelo sistema.');
+        if (produtosCache.some(p => p.codigo === codigo)) {
+            return alert(`⛔ Já existe um produto com o código "${codigo}".`);
+        }
+        const payload = {
+            codigo, nome,
+            criado_por: currentUser ? currentUser.nome : 'desconhecido',
+            criado_em: new Date().toISOString()
+        };
+        const { error } = await _supabase.from('produtos').insert([payload]);
+        if (error) return alert('Erro ao criar o produto: ' + error.message);
+        alert('✅ Produto criado com sucesso!');
     }
 
-    const payload = {
-        codigo, nome,
-        criado_por: currentUser ? currentUser.nome : 'desconhecido',
-        criado_em: new Date().toISOString()
-    };
-    const { error } = await _supabase.from('produtos').insert([payload]);
-    if (error) return alert('Erro ao criar o produto: ' + error.message);
-
-    alert('✅ Produto criado com sucesso!');
-    document.getElementById('produtoCodigoInput').value = '';
-    document.getElementById('produtoNomeInput').value = '';
+    limparFormularioProduto();
     await renderProdutosView();
     mudarAbaProdutos('cadastrados');
 }

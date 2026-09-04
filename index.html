@@ -3363,7 +3363,7 @@
                 <div id="view-tipos_projeto" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800">Tipos de Projeto</h2>
-                        <p class="text-xs text-gray-500 mt-1">Código (5 letras) e descrição (até 80 caracteres). Depois de criado, não pode ser editado — só ativado ou inativado.</p>
+                        <p class="text-xs text-gray-500 mt-1">Código (5 letras) e descrição (até 80 caracteres). A descrição pode ser alterada enquanto o tipo ainda não estiver em uso por nenhum projeto; depois disso, e o código a qualquer momento, só ativar ou inativar.</p>
                     </div>
 
                     <div class="flex gap-2 mb-4 flex-wrap">
@@ -3374,17 +3374,18 @@
                     <div id="tiposProjetoPainel-criar" class="tipos-projeto-painel">
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mb-6">
                         <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Novo Tipo de Projeto</h4>
+                        <input type="hidden" id="tipoProjetoIdInput">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Código * (5 letras)</label>
-                                <input type="text" id="tipoProjetoCodigoInput" maxlength="5" class="w-full p-2 border border-gray-300 rounded text-xs uppercase font-mono">
+                                <input type="text" id="tipoProjetoCodigoInput" maxlength="5" class="w-full p-2 border border-gray-300 rounded text-xs uppercase font-mono disabled:bg-gray-100 disabled:text-gray-400">
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Descrição * (até 80 caracteres)</label>
                                 <input type="text" id="tipoProjetoDescricaoInput" maxlength="80" class="w-full p-2 border border-gray-300 rounded text-xs">
                             </div>
                             <div>
-                                <button onclick="salvarTipoProjeto()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded text-xs transition"><i class="fa-solid fa-floppy-disk"></i> Criar Tipo</button>
+                                <button id="btnSalvarTipoProjeto" onclick="salvarTipoProjeto()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded text-xs transition"><i class="fa-solid fa-floppy-disk"></i> Criar Tipo</button>
                             </div>
                         </div>
                     </div>
@@ -3409,7 +3410,7 @@
                 <div id="view-produtos" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800">Cadastro de Produtos</h2>
-                        <p class="text-xs text-gray-500 mt-1">Código e nome. Todo projeto pertence a um produto (escolhido na Formalização da Demanda) — é a base do agrupamento de orçamento por produto. Depois de criado não é editável, só ativado/inativado.</p>
+                        <p class="text-xs text-gray-500 mt-1">Código e nome. Todo projeto pertence a um produto (escolhido na Formalização da Demanda) — é a base do agrupamento de orçamento por produto. O nome pode ser alterado enquanto o produto ainda não estiver em uso por nenhum projeto; o código nunca muda.</p>
                     </div>
 
                     <div class="flex gap-2 mb-4 flex-wrap">
@@ -3420,17 +3421,18 @@
                     <div id="produtosPainel-criar" class="produtos-painel">
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mb-6">
                         <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Novo Produto</h4>
+                        <input type="hidden" id="produtoIdInput">
                         <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Código * (até 20)</label>
-                                <input type="text" id="produtoCodigoInput" maxlength="20" class="w-full p-2 border border-gray-300 rounded text-xs uppercase font-mono">
+                                <input type="text" id="produtoCodigoInput" maxlength="20" class="w-full p-2 border border-gray-300 rounded text-xs uppercase font-mono disabled:bg-gray-100 disabled:text-gray-400">
                             </div>
                             <div class="md:col-span-2">
                                 <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Nome * (até 80)</label>
                                 <input type="text" id="produtoNomeInput" maxlength="80" class="w-full p-2 border border-gray-300 rounded text-xs">
                             </div>
                             <div>
-                                <button onclick="salvarProduto()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded text-xs transition"><i class="fa-solid fa-floppy-disk"></i> Criar Produto</button>
+                                <button id="btnSalvarProduto" onclick="salvarProduto()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded text-xs transition"><i class="fa-solid fa-floppy-disk"></i> Criar Produto</button>
                             </div>
                         </div>
                     </div>
