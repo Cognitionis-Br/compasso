@@ -13,23 +13,27 @@
 --
 -- MANTÉM (estrutura do produto):
 --   catalogo_atividades, modulo_funcao, licenca_modulos, fases_etapas,
---   sla_etapa_porte, produtos.NAO_CLASSIFICADO, as LINHAS de email_fluxo
---   (lista fixa de gatilhos — mas com destinatário/remetente/template
---   zerados e todas inativas), config_email_geral (com envio desligado),
+--   sla_etapa_porte, produtos.NAO_CLASSIFICADO, email_templates (os
+--   modelos cadastrados), as LINHAS de email_fluxo com a ASSOCIAÇÃO de
+--   template preservada (destinatário/remetente zerados e todas
+--   inativas — ver RESETA), config_email_geral (com envio desligado),
 --   a função PROPRIETARIO, o cargo 'ANALISTA DE TECNOLOGIA' (exigido pelo
 --   trigger handle_new_user), e o(s) usuário(s) PROPRIETÁRIO (+ vínculo).
+--   Templates e associações ficam DE PROPÓSITO: servem de exemplo pronto
+--   pro cliente usar/ajustar na instalação nova, em vez de partir do zero.
 --
 -- APAGA (todas as linhas):
 --   projetos e todos os itens/logs de projeto; anos_fiscais_config;
 --   contadores_codigo_projeto; áreas / pessoas / portes / tipos de projeto /
 --   return-benefit / pilares / iniciativas / cargos; empresas terceirizadas
---   e contratos; templates de e-mail; config de bloqueio / período /
---   controle de orçamento; empresa_licenciada e seus logs; responsáveis por
---   atividade; todos os usuários que NÃO são PROPRIETÁRIO; e todas as
---   funções que não a PROPRIETARIO (+ a matriz funcao_atividades delas).
+--   e contratos; config de bloqueio / período / controle de orçamento;
+--   empresa_licenciada e seus logs; responsáveis por atividade; todos os
+--   usuários que NÃO são PROPRIETÁRIO; e todas as funções que não a
+--   PROPRIETARIO (+ a matriz funcao_atividades delas).
 --
 -- RESETA (mantém a linha, limpa o conteúdo):
---   email_fluxo (destinatário/remetente/template -> nulo; ativo -> false);
+--   email_fluxo (destinatário/remetente -> nulo; ativo -> false — o
+--   template associado NÃO é zerado, ver acima);
 --   config_email_geral (envio_ativo -> false);
 --   catalogo_atividades.restricao_area -> false em todas;
 --   perfis_usuarios.area do(s) PROPRIETÁRIO -> 'COGNITIONIS' (área
@@ -59,8 +63,8 @@ DECLARE
         'tipos_return_benefit','iniciativas_estrategicas','pilares_estrategicos',
         -- contratos / empresas terceirizadas
         'contratos_projeto','empresas_terceirizadas',
-        -- e-mail: só os templates (o fluxo é lista fixa do produto — fica)
-        'email_templates',
+        -- e-mail: email_templates e a associação template<->fluxo NÃO
+        -- entram aqui de propósito — ver cabeçalho (ficam como exemplo).
         -- parâmetros que nascem sem valor
         'config_bloqueio_orcamento','config_periodo_ano_fiscal','config_controle_orcamento',
         -- empresa licenciada + logs de licença
@@ -94,19 +98,22 @@ BEGIN
     EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): produtos';
     END;
 
-    -- email_fluxo: a lista de gatilhos é fixa (fica), mas o que o cliente
-    -- preenche na tela "Envio de E-mail - Gestão do Fluxo" (destinatário,
-    -- remetente, template, ativo) volta ao estado de instalação nova.
+    -- email_fluxo: a lista de gatilhos é fixa (fica), e a ASSOCIAÇÃO com o
+    -- template (template_id) fica de propósito — serve de exemplo pronto
+    -- na instalação nova. Só destinatário/remetente (dados específicos do
+    -- cliente anterior) e o ativo/inativo voltam ao estado de instalação
+    -- nova; sem remetente cadastrado a linha não pode realmente disparar,
+    -- então mantê-la "ativa" seria um estado inconsistente — por isso
+    -- ativo sempre volta a false, mesmo com o template já associado.
     BEGIN
         UPDATE email_fluxo SET
             tipo_destinatario       = 'RESPONSAVEL_TAREFA',
             email_destinatario_fixo = NULL,
             remetente               = NULL,
-            template_id             = NULL,
             ativo                   = false,
             atualizado_por          = NULL,
             atualizado_em           = NULL;
-        RAISE NOTICE 'email_fluxo: destinatário/remetente/template zerados; todas inativas';
+        RAISE NOTICE 'email_fluxo: destinatário/remetente zerados e todas inativas (template associado preservado)';
     EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): email_fluxo';
     END;
 
