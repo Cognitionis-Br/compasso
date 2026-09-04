@@ -87,9 +87,23 @@ async function renderGestaoFluxoEmailView() {
         const APELIDOS_ETAPA_EXIBICAO = { 'REALIZAR ORÇAMENTO': 'REALIZAR ORÇAMENTO (tela: Orçamentar Demanda)' };
         const etapaExibicao = APELIDOS_ETAPA_EXIBICAO[f.etapa] || f.etapa;
 
+        // AJUSTADO (a pedido do usuário): a coluna Fase mostrava o nome
+        // interno do motor de workflow (REQUERIMENTS/TECHNICAL/EXECUTION —
+        // ver faseFluxoEmail em js/requirements/requirements.js e
+        // js/technical/technical.js), que ficou pra trás da padronização de
+        // nomenclatura das telas. Só um apelido de exibição — não muda o
+        // valor gravado em email_fluxo.fase nem o que dispararEmailFluxo()
+        // usa pra casar a fase.
+        const APELIDOS_FASE_EXIBICAO = {
+            'REQUERIMENTS': 'REQUERIMENTOS',
+            'TECHNICAL': 'ESPECIFICAÇÃO',
+            'EXECUTION': 'EXECUÇÃO'
+        };
+        const faseExibicao = APELIDOS_FASE_EXIBICAO[f.fase] || f.fase;
+
         return `
             <tr class="${!f.ativo ? 'opacity-60' : ''}">
-                <td class="p-3 font-mono text-xs font-bold">${f.fase}</td>
+                <td class="p-3 font-mono text-xs font-bold">${faseExibicao}</td>
                 <td class="p-3 text-xs">${etapaExibicao}</td>
                 <td class="p-3 text-xs">${f.quando_dispara}</td>
                 <td class="p-3">
