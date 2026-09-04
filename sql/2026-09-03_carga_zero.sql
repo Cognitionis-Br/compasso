@@ -65,8 +65,9 @@ DECLARE
         'contratos_projeto','empresas_terceirizadas',
         -- e-mail: email_templates e a associação template<->fluxo NÃO
         -- entram aqui de propósito — ver cabeçalho (ficam como exemplo).
-        -- parâmetros que nascem sem valor
-        'config_bloqueio_orcamento','config_periodo_ano_fiscal','config_controle_orcamento',
+        -- parâmetros que nascem sem valor (+ histórico de bloqueio de orçamento)
+        'config_bloqueio_orcamento','log_percentual_bloqueio_orcamento',
+        'config_periodo_ano_fiscal','config_controle_orcamento',
         -- empresa licenciada + logs de licença
         'empresa_licenciada','log_licenca_verificacao','log_renovacao_licenca',
         -- responsáveis por atividade
