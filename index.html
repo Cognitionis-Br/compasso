@@ -2664,13 +2664,14 @@
                     <div id="cargosPainel-criar" class="cargos-painel">
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
                         <h3 class="text-sm font-bold text-gray-800 mb-1 uppercase tracking-wider">Cadastrar Cargo</h3>
-                        <p class="text-xs text-gray-500 mb-4">Usado como campo obrigatório no cadastro/edição de perfil de usuário — base para o controle hierárquico de dados.</p>
+                        <p class="text-xs text-gray-500 mb-4">Usado como campo obrigatório no cadastro/edição de perfil de usuário — base para o controle hierárquico de dados. O nome pode ser alterado enquanto o cargo ainda não estiver em uso por nenhum usuário.</p>
+                        <input type="hidden" id="cargoIdInput">
                         <div class="flex gap-3 items-end bg-gray-50 p-4 rounded border border-gray-200">
                             <div class="flex-1">
                                 <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Nome do Cargo *</label>
                                 <input type="text" id="cargoNomeInput" class="w-full p-2 border border-gray-300 rounded uppercase font-semibold text-sm">
                             </div>
-                            <button onclick="salvarCargo()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded transition text-sm whitespace-nowrap">
+                            <button id="btnSalvarCargo" onclick="salvarCargo()" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded transition text-sm whitespace-nowrap">
                                 <i class="fa-solid fa-plus"></i> Criar Cargo
                             </button>
                         </div>
