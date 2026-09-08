@@ -534,13 +534,23 @@ function _pendNumero(v) {
     const n = Number(String(v).replace(/\./g, '').replace(',', '.').replace(/[^\d.\-]/g, ''));
     return isNaN(n) ? null : n;
 }
+function _pendDataValida(iso) {
+    // iso = 'AAAA-MM-DD' — confere se é uma data-calendário real (rejeita
+    // 31/02, 32/01, etc.) antes de mandar pro banco (senão o INSERT em
+    // lote da planilha inteira falha por causa de uma linha).
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || '');
+    if (!m) return null;
+    const [y, mo, d] = [+m[1], +m[2], +m[3]];
+    const dt = new Date(Date.UTC(y, mo - 1, d));
+    return (dt.getUTCFullYear() === y && dt.getUTCMonth() === mo - 1 && dt.getUTCDate() === d) ? iso : null;
+}
 function _pendData(v) {
     if (!v) return null;
-    if (v instanceof Date) return v.toISOString().split('T')[0];
+    if (v instanceof Date && !isNaN(v)) return v.toISOString().split('T')[0];
     const m = String(v).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
-    if (m) return `${m[3]}-${m[2]}-${m[1]}`;
+    if (m) return _pendDataValida(`${m[3]}-${m[2]}-${m[1]}`);
     const iso = String(v).match(/^(\d{4})-(\d{2})-(\d{2})/);
-    return iso ? iso[0] : null;
+    return iso ? _pendDataValida(iso[0]) : null;
 }
 
 async function processarPlanilhaContratos(input) {
