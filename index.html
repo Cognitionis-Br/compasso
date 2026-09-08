@@ -40,6 +40,8 @@
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- SheetJS (leitura de planilha Excel — Pendências de Contratos, Release 1) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <!-- Stylesheet customizado -->
     <link rel="stylesheet" href="css/styles.css">
     <style>
@@ -263,6 +265,7 @@
                         <button onclick="switchTab('contratos_vinculos')" id="link-contratos_vinculos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Contratos por Projeto</button>
                         <button onclick="switchTab('registro_valores_contrato')" id="link-registro_valores_contrato" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Registro de Valores Realizados</button>
                         <button onclick="switchTab('relatorio_projetos_contratos')" id="link-relatorio_projetos_contratos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Relatório de Projetos</button>
+                        <button onclick="switchTab('contratos_pendencias')" id="link-contratos_pendencias" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pendências de Contratos</button>
                     </div>
                 </div>
 
@@ -3178,6 +3181,95 @@
                     </div>
                 </div>
 
+                <!-- Release 1 — Pendências de Contratos e Terceiros (staging + aprovação).
+                     Tudo no módulo FINANCEIRO. Ver spec-contratos-terceiros.md / js/contratos/pendencias.js -->
+                <div id="view-contratos_pendencias" class="tab-content hidden">
+                    <div class="mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Pendências de Contratos</h2>
+                        <p class="text-xs text-gray-500 mt-1">Todo lançamento (manual ou por planilha Excel) entra aqui como pendente e só vai para a base oficial de Contratos e Terceiros depois de aprovado. Anexo de Nota Fiscal obrigatório para aprovar (dispensa exige justificativa).</p>
+                    </div>
+                    <div id="pendContratosRestrito" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-6 text-amber-800 text-sm font-bold">
+                        <i class="fa-solid fa-lock"></i> Acesso restrito — sua função não tem esta atividade.
+                    </div>
+                    <div id="pendContratosConteudo" class="hidden">
+                        <div class="flex gap-2 mb-3 flex-wrap">
+                            <button onclick="mudarAbaPendencias('lista')" id="pendContratosBtn-lista" class="pend-contratos-btn px-4 py-2 rounded-md text-sm font-bold border-2 bg-red-700 text-white border-red-700">Pendências</button>
+                            <button onclick="mudarAbaPendencias('importar')" id="pendContratosBtn-importar" class="pend-contratos-btn px-4 py-2 rounded-md text-sm font-bold border-2 bg-white text-gray-600 border-gray-200">Importar / Lançar</button>
+                        </div>
+
+                        <div id="pendContratosPainel-lista" class="pend-contratos-painel">
+                            <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-3">
+                                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2 text-xs">
+                                    <select id="pendFiltroOrigem" onchange="aplicarFiltrosPendencias()" class="p-1.5 border rounded bg-white"><option value="">Toda origem</option><option value="MANUAL">Manual</option><option value="UPLOAD_EXCEL">Planilha</option><option value="EMAIL">E-mail</option></select>
+                                    <select id="pendFiltroStatus" onchange="aplicarFiltrosPendencias()" class="p-1.5 border rounded bg-white"><option value="ABERTAS">Em aberto</option><option value="PENDENTE">Pendente</option><option value="ERRO_LEITURA">Erro de leitura</option><option value="APROVADA">Aprovada</option><option value="REJEITADA">Rejeitada</option><option value="TODAS">Todas</option></select>
+                                    <select id="pendFiltroNf" onchange="aplicarFiltrosPendencias()" class="p-1.5 border rounded bg-white"><option value="">Qualquer NF</option><option value="RECEBIDA">NF recebida</option><option value="NAO_RECEBIDA">NF pendente</option><option value="DISPENSADA">NF dispensada</option></select>
+                                    <select id="pendFiltroContrato" onchange="aplicarFiltrosPendencias()" class="p-1.5 border rounded bg-white"><option value="">Todos os contratos</option></select>
+                                    <input id="pendFiltroProjeto" oninput="aplicarFiltrosPendencias()" placeholder="Projeto" class="p-1.5 border rounded">
+                                    <input id="pendFiltroDataDe" type="date" onchange="aplicarFiltrosPendencias()" class="p-1.5 border rounded">
+                                    <input id="pendFiltroDataAte" type="date" onchange="aplicarFiltrosPendencias()" class="p-1.5 border rounded">
+                                </div>
+                                <div id="pendContratosResumo" class="text-[11px] text-gray-500 mt-2"></div>
+                            </div>
+                            <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b text-[10px] uppercase">
+                                        <th class="p-2">Criada</th><th class="p-2">Tipo</th><th class="p-2">Origem</th><th class="p-2">Contrato</th><th class="p-2">Projeto</th><th class="p-2">Fornecedor</th><th class="p-2 text-right">Valor</th><th class="p-2 text-center">NF</th><th class="p-2 text-center">Status</th>
+                                    </tr></thead>
+                                    <tbody id="pendContratosTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div id="pendContratosPainel-importar" class="pend-contratos-painel hidden">
+                            <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mb-4">
+                                <h4 class="font-bold text-gray-800 text-sm mb-1 uppercase tracking-wider">Upload de Planilha Excel</h4>
+                                <p class="text-xs text-gray-500 mb-3">Colunas: <b>Tipo de Lançamento</b> (Proposta/Pagamento), <b>Contrato</b>, <b>Projeto</b>, <b>Fornecedor/Terceiro</b>, <b>Valor</b>, <b>Data de Referência</b> (dd/mm/aaaa), Observações. Uma pendência por linha válida; linhas com erro entram no relatório sem travar as demais.</p>
+                                <input type="file" accept=".xlsx,.xls" onchange="processarPlanilhaContratos(this)" class="text-xs">
+                                <div id="pendImportRelatorio" class="hidden mt-3 border rounded p-2 bg-gray-50"></div>
+                            </div>
+                            <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                                <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Lançamento Manual</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                                    <select id="pendManualTipo" class="p-2 border rounded bg-white"><option value="PAGAMENTO">Pagamento</option><option value="PROPOSTA">Proposta</option></select>
+                                    <select id="pendManualContrato" class="p-2 border rounded bg-white"><option value="">-- Contrato --</option></select>
+                                    <select id="pendManualProjeto" class="p-2 border rounded bg-white"><option value="">-- Projeto --</option></select>
+                                    <input id="pendManualFornecedor" placeholder="Fornecedor / Terceiro" class="p-2 border rounded">
+                                    <input id="pendManualValor" type="number" step="0.01" placeholder="Valor" class="p-2 border rounded">
+                                    <input id="pendManualData" type="date" class="p-2 border rounded">
+                                    <input id="pendManualObs" placeholder="Observações" class="p-2 border rounded md:col-span-3">
+                                </div>
+                                <button onclick="criarPendenciaManual()" class="mt-3 bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded text-xs"><i class="fa-solid fa-plus"></i> Criar Pendência</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Modal detalhe/correção/decisão de pendência de contrato -->
+                <div id="modalPendenciaContrato" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+                        <div class="flex items-center justify-between border-b p-4">
+                            <h3 id="pendModalTitulo" class="font-bold text-gray-800 text-sm uppercase tracking-wider"></h3>
+                            <button onclick="fecharModalPendencia()" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div id="pendModalCorpo" class="p-4 overflow-y-auto"></div>
+                        <div id="pendModalRodape" class="border-t p-3 flex justify-end gap-2 flex-wrap"></div>
+                    </div>
+                </div>
+
+                <!-- Modal dispensa de NF -->
+                <div id="modalDispensaNf" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-5">
+                        <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wider mb-2">Dispensar Nota Fiscal</h3>
+                        <p class="text-xs text-gray-500 mb-2">A dispensa fica registrada no histórico da pendência. Descreva o motivo (ex.: "NF em processamento pelo fornecedor").</p>
+                        <input type="hidden" id="pendDispensaId">
+                        <textarea id="pendDispensaJustificativa" rows="3" class="w-full p-2 border rounded text-xs" placeholder="Justificativa da dispensa *"></textarea>
+                        <div class="flex justify-end gap-2 mt-3">
+                            <button onclick="fecharModalDispensaNf()" class="px-3 py-1.5 bg-gray-200 rounded text-xs font-bold">Cancelar</button>
+                            <button onclick="confirmarDispensaNf()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-bold">Registrar Dispensa</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="view-governanca" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800">Governança — Cobrança de Ajustes</h2>
@@ -4581,6 +4673,7 @@
     <script src="./js/dev-tools/criar-teste.js"></script>
     <script src="./js/contratos/contratos.js"></script>
     <script src="./js/contratos/contratos-vinculos.js"></script>
+    <script src="./js/contratos/pendencias.js"></script>
     <script src="./js/main.js"></script>
 </body>
 </html>

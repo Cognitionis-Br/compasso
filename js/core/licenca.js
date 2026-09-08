@@ -124,6 +124,7 @@ const TAB_MODULO_MAP = {
     relatorio_projetos_contratos: 'FINANCEIRO',
     visao_orcamento: 'FINANCEIRO',
     alertas_orcamento: 'FINANCEIRO',
+    contratos_pendencias: 'FINANCEIRO',   // Release 1 — staging + aprovação de pagamentos/propostas
 
     // PLANEJAMENTO_ESTRATEGICO
     planejamento_estrategico: 'PLANEJAMENTO_ESTRATEGICO'
