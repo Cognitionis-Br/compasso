@@ -84,7 +84,11 @@ async function salvarPercentualBloqueioOrcamento() {
         atualizado_em: new Date().toISOString()
     };
 
-    const { error } = await _supabase.from('config_bloqueio_orcamento').update(payload).eq('id', 1);
+    // UPSERT em id=1: a linha pode não existir (ex.: logo após uma carga
+    // zero, que apagava config_bloqueio_orcamento) — um UPDATE puro
+    // afetava 0 linhas sem erro e "salvava" nada. Com upsert a linha é
+    // criada na hora se faltar.
+    const { error } = await _supabase.from('config_bloqueio_orcamento').upsert({ id: 1, ...payload });
     if (error) return alert('Erro ao salvar o percentual: ' + error.message);
 
     const { error: errorLog } = await _supabase.from('log_percentual_bloqueio_orcamento').insert([{

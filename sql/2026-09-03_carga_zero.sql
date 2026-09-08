@@ -36,6 +36,7 @@
 --   email_fluxo (destinatário/remetente -> nulo; ativo -> false — o
 --   template associado NÃO é zerado, ver acima);
 --   config_email_geral (envio_ativo -> false);
+--   config_bloqueio_orcamento (linha id=1: percentual -> NULL);
 --   catalogo_atividades.restricao_area -> false em todas;
 --   perfis_usuarios.area do(s) PROPRIETÁRIO -> 'COGNITIONIS' (área
 --   reservada, hardcode — não existe em areas_solicitantes).
@@ -66,8 +67,11 @@ DECLARE
         'contratos_projeto','empresas_terceirizadas',
         -- e-mail: email_templates e a associação template<->fluxo NÃO
         -- entram aqui de propósito — ver cabeçalho (ficam como exemplo).
-        -- parâmetros que nascem sem valor (+ histórico de bloqueio de orçamento)
-        'config_bloqueio_orcamento','log_percentual_bloqueio_orcamento',
+        -- parâmetros que nascem sem valor.
+        -- config_bloqueio_orcamento NÃO entra aqui: é linha única id=1 e o
+        -- app só faz UPDATE nela — apagá-la fazia o save virar no-op. É
+        -- resetada in-place mais abaixo. O histórico dela (log_...) some.
+        'log_percentual_bloqueio_orcamento',
         'config_periodo_ano_fiscal','config_controle_orcamento',
         -- empresa licenciada + logs de licença
         'empresa_licenciada','log_licenca_verificacao','log_renovacao_licenca',
@@ -124,6 +128,17 @@ BEGIN
         UPDATE config_email_geral SET envio_ativo = false, atualizado_por = NULL, atualizado_em = NULL WHERE id = 1;
         RAISE NOTICE 'config_email_geral: envio desligado';
     EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): config_email_geral';
+    END;
+
+    -- percentual de bloqueio de orçamento: linha única id=1 — zera o valor
+    -- em vez de apagar a linha (o app só faz UPDATE nela).
+    BEGIN
+        INSERT INTO config_bloqueio_orcamento (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+        UPDATE config_bloqueio_orcamento
+           SET percentual_bloqueio_variacao = NULL, atualizado_por = NULL, atualizado_em = NULL
+         WHERE id = 1;
+        RAISE NOTICE 'config_bloqueio_orcamento: percentual zerado (linha id=1 preservada)';
+    EXCEPTION WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): config_bloqueio_orcamento';
     END;
 
     -- restrição de área por atividade: desmarca tudo (o catálogo em si fica)
