@@ -96,7 +96,12 @@ async function salvarPercentualBloqueioOrcamento() {
         percentual_novo: valor,
         alterado_por: nomeUsuario
     }]);
-    if (errorLog) console.error('Erro ao gravar log de percentual de bloqueio (valor já foi salvo):', errorLog.message);
+    if (errorLog) {
+        console.error('Erro ao gravar log de percentual de bloqueio (valor já foi salvo):', errorLog.message);
+        alert('✅ Percentual salvo — mas NÃO foi possível registrar no histórico: ' + errorLog.message + '\n\nVerifique se a tabela log_percentual_bloqueio_orcamento existe no banco.');
+        await renderPercentualBloqueioOrcamentoView();
+        return;
+    }
 
     alert('✅ Percentual de bloqueio de orçamento salvo com sucesso!');
     await renderPercentualBloqueioOrcamentoView();
