@@ -320,17 +320,17 @@ async function confirmarConclusaoFaseGenerica() {
         ? `\n\n${alertaHoras.nivel === 'vermelho' ? '🔴' : '🟡'} ATENÇÃO: variação de ${alertaHoras.percentual}% em HORAS em relação ao ${config.labelReferencia}!`
         : '';
 
-    // AJUSTADO (Licenciamento de Módulos, 28/08/2026): o bloqueio de
-    // variação de orçamento agora depende do módulo FINANCEIRO estar
-    // ativo (js/core/licenca.js) E de um percentual único configurado
-    // (Administração > Percentual de Bloqueio de Orçamento) — o mesmo
-    // limite vale pra horas e pra valor, nas duas fases. Sem FINANCEIRO
-    // ativo, nunca bloqueia, mesmo com um percentual configurado. Lê ao
-    // vivo (não usa cache) — mesmo padrão já usado pra chave geral de
-    // e-mail — pra não bloquear/liberar com um valor desatualizado numa
-    // sessão aberta há muito tempo.
+    // AJUSTADO (08/09/2026 — a pedido do usuário): a trava de variação de
+    // orçamento é parte do modelo de WORKFLOW desenhado (não do módulo
+    // FINANCEIRO). Depende só de um percentual configurado em Administração
+    // > Percentual de Bloqueio de Orçamento — o mesmo limite vale pra
+    // horas e pra valor, nas duas fases. Como esta tela de fase só existe
+    // com o WORKFLOW licenciado, o gate abaixo é na prática sempre
+    // verdadeiro aqui; fica explícito por clareza. Lê ao vivo (não usa
+    // cache) — mesmo padrão da chave geral de e-mail — pra não bloquear/
+    // liberar com um valor desatualizado numa sessão aberta há muito tempo.
     let vaiBloquear = false;
-    if (moduloAtivo('FINANCEIRO')) {
+    if (moduloAtivo('WORKFLOW')) {
         const { data: configBloqueio } = await _supabase.from('config_bloqueio_orcamento').select('percentual_bloqueio_variacao').eq('id', 1).maybeSingle();
         const limite = configBloqueio && configBloqueio.percentual_bloqueio_variacao != null ? Number(configBloqueio.percentual_bloqueio_variacao) : null;
         vaiBloquear = limite !== null && (alerta.percentual > limite || alertaHoras.percentual > limite);

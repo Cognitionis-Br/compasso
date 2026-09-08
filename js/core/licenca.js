@@ -93,6 +93,14 @@ const TAB_MODULO_MAP = {
     cronograma_evolucao: 'WORKFLOW',
     workflow_etapas: 'WORKFLOW',      // realocado de NÚCLEO (Fase 1)
     prazos: 'WORKFLOW',              // realocado de NÚCLEO (Fase 1)
+    // Etapas de aprovação do Business Case + trava de variação de orçamento
+    // são passos do WORKFLOW desenhado (aprovação de projeto pelo Comitê,
+    // fechamento do orçamento do AF). Realocados de FINANCEIRO 08/09/2026 —
+    // sem FINANCEIRO licenciado o projeto travava sem saída no BC.
+    aprov_comite: 'WORKFLOW',
+    aprov_orcamento_af: 'WORKFLOW',
+    percentual_bloqueio_orcamento: 'WORKFLOW',
+    mudanca_orcamento: 'WORKFLOW',
 
     // EMAIL — templates, fluxo, fila, e a régua de cobrança de ajustes.
     gestao_templates: 'EMAIL',
@@ -100,9 +108,11 @@ const TAB_MODULO_MAP = {
     fila_email: 'EMAIL',
     governanca: 'EMAIL',
 
-    // FINANCEIRO — Contratos & Terceiros, Visão de Orçamento, aprovações
-    // de orçamento, e TODAS as funções de orçamento (Ajuste, Controle,
-    // Validação de Trade-off, Autorização de Demanda Extraordinária).
+    // FINANCEIRO — Contratos & Terceiros, Visão de Orçamento, e as funções
+    // de orçamento que NÃO são passo obrigatório do workflow (Ajuste,
+    // Controle, Validação de Trade-off, Autorização de Demanda
+    // Extraordinária). As aprovações do Business Case e a trava de
+    // variação ficam no WORKFLOW (acima).
     ajuste_orcamento: 'FINANCEIRO',       // realocado de WORKFLOW (Fase 1)
     validacao_tradeoff: 'FINANCEIRO',     // realocado de WORKFLOW (Fase 1)
     controle_orcamento: 'FINANCEIRO',     // realocado de NÚCLEO (Fase 1)
@@ -114,10 +124,6 @@ const TAB_MODULO_MAP = {
     relatorio_projetos_contratos: 'FINANCEIRO',
     visao_orcamento: 'FINANCEIRO',
     alertas_orcamento: 'FINANCEIRO',
-    aprov_comite: 'FINANCEIRO',
-    aprov_orcamento_af: 'FINANCEIRO',
-    percentual_bloqueio_orcamento: 'FINANCEIRO',
-    mudanca_orcamento: 'FINANCEIRO',
 
     // PLANEJAMENTO_ESTRATEGICO
     planejamento_estrategico: 'PLANEJAMENTO_ESTRATEGICO'

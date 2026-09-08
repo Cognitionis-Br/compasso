@@ -25,6 +25,15 @@
 --   workflow_etapas       (omissão) -> WORKFLOW  (config do motor de fases)
 --   prazos                (omissão) -> WORKFLOW  (SLA do motor de fases)
 --   cadastros mestres / perfis / dashboard / consultas -> NUCLEO explícito
+-- Realocações 08/09/2026 (a pedido do usuário): as etapas de aprovação do
+-- Business Case e a trava de variação de orçamento são passos do WORKFLOW
+-- desenhado (aprovação de projeto pelo Comitê, fechamento do orçamento do
+-- Ano Fiscal) — não podem sumir quando o cliente não licencia FINANCEIRO,
+-- senão o projeto trava sem saída. Movidos FINANCEIRO -> WORKFLOW:
+--   aprov_comite                  (Aprovar Orçamento por Projeto — Comitê)
+--   aprov_orcamento_af            (Aprovar Orçamento Ano Fiscal — fechamento)
+--   mudanca_orcamento             (Mudança de Orçamento — libera projeto travado por variação)
+--   percentual_bloqueio_orcamento (parâmetro da trava de variação)
 --
 -- Sem RLS (mesmo tratamento das demais tabelas de config). Idempotente.
 -- Rode no Supabase → SQL Editor.
@@ -73,10 +82,10 @@ INSERT INTO modulo_funcao (activity_key, modulo, tipo, observacao) VALUES
   ('req_planejamento',            'WORKFLOW',   'LICENCIAVEL', NULL),
   ('req_aprov_negocio',           'WORKFLOW',   'LICENCIAVEL', NULL),
   ('req_aprov_ti',                'WORKFLOW',   'LICENCIAVEL', NULL),
-  ('req_conclusao',               'WORKFLOW',   'LICENCIAVEL', 'Trava de variação embute checagem de FINANCEIRO'),
+  ('req_conclusao',               'WORKFLOW',   'LICENCIAVEL', 'Conclusão embute a trava de variação de orçamento (WORKFLOW)'),
   ('fase_technical',              'WORKFLOW',   'LICENCIAVEL', NULL),
   ('tech_aval_negocio',           'WORKFLOW',   'LICENCIAVEL', NULL),
-  ('tech_conclusao',              'WORKFLOW',   'LICENCIAVEL', 'Trava de variação embute checagem de FINANCEIRO'),
+  ('tech_conclusao',              'WORKFLOW',   'LICENCIAVEL', 'Conclusão embute a trava de variação de orçamento (WORKFLOW)'),
   ('fase_execution',              'WORKFLOW',   'LICENCIAVEL', NULL),
   ('fase_uat',                    'WORKFLOW',   'LICENCIAVEL', NULL),
   ('fase_golive',                 'WORKFLOW',   'LICENCIAVEL', NULL),
@@ -86,6 +95,10 @@ INSERT INTO modulo_funcao (activity_key, modulo, tipo, observacao) VALUES
   ('cronograma_evolucao',         'WORKFLOW',   'LICENCIAVEL', NULL),
   ('workflow_etapas',             'WORKFLOW',   'LICENCIAVEL', 'Config do motor de fases (realocado de NÚCLEO)'),
   ('prazos',                      'WORKFLOW',   'LICENCIAVEL', 'SLA do motor de fases (realocado de NÚCLEO)'),
+  ('aprov_comite',                'WORKFLOW',   'LICENCIAVEL', 'Aprovar Orçamento por Projeto — Comitê (realocado de FINANCEIRO 08/09)'),
+  ('aprov_orcamento_af',          'WORKFLOW',   'LICENCIAVEL', 'Aprovar Orçamento Ano Fiscal — fechamento (realocado de FINANCEIRO 08/09)'),
+  ('percentual_bloqueio_orcamento','WORKFLOW',  'LICENCIAVEL', 'Parâmetro da trava de variação de orçamento (realocado de FINANCEIRO 08/09)'),
+  ('mudanca_orcamento',           'WORKFLOW',   'LICENCIAVEL', 'Libera projeto travado por variação de orçamento (realocado de FINANCEIRO 08/09)'),
   -- ---------- EMAIL ----------
   ('gestao_templates',            'EMAIL',      'LICENCIAVEL', NULL),
   ('gestao_fluxo_email',          'EMAIL',      'LICENCIAVEL', NULL),
@@ -102,10 +115,6 @@ INSERT INTO modulo_funcao (activity_key, modulo, tipo, observacao) VALUES
   ('relatorio_projetos_contratos','FINANCEIRO', 'LICENCIAVEL', NULL),
   ('visao_orcamento',             'FINANCEIRO', 'LICENCIAVEL', NULL),
   ('alertas_orcamento',           'FINANCEIRO', 'LICENCIAVEL', NULL),
-  ('aprov_comite',                'FINANCEIRO', 'LICENCIAVEL', NULL),
-  ('aprov_orcamento_af',          'FINANCEIRO', 'LICENCIAVEL', NULL),
-  ('percentual_bloqueio_orcamento','FINANCEIRO','LICENCIAVEL', NULL),
-  ('mudanca_orcamento',           'FINANCEIRO', 'LICENCIAVEL', NULL),
   -- ---------- PLANEJAMENTO ESTRATÉGICO ----------
   ('planejamento_estrategico',    'PLANEJAMENTO_ESTRATEGICO', 'LICENCIAVEL', NULL)
 ON CONFLICT (activity_key) DO UPDATE
