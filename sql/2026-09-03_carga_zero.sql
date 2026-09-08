@@ -28,8 +28,9 @@
 --   return-benefit / pilares / iniciativas / cargos; empresas terceirizadas
 --   e contratos; config de bloqueio / período / controle de orçamento;
 --   empresa_licenciada e seus logs; responsáveis por atividade; todos os
---   usuários que NÃO são PROPRIETÁRIO; e todas as funções que não a
---   PROPRIETARIO (+ a matriz funcao_atividades delas).
+--   usuários que NÃO são PROPRIETÁRIO (perfis_usuarios + a conta de login
+--   em auth.users, senão o e-mail fica "preso"); e todas as funções que
+--   não a PROPRIETARIO (+ a matriz funcao_atividades delas).
 --
 -- RESETA (mantém a linha, limpa o conteúdo):
 --   email_fluxo (destinatário/remetente -> nulo; ativo -> false — o
@@ -138,6 +139,20 @@ BEGIN
     --  a mesma coluna que usuario_funcoes.usuario_id referencia)
     DELETE FROM usuario_funcoes  WHERE usuario_id <> ALL (v_prop);
     DELETE FROM perfis_usuarios  WHERE id         <> ALL (v_prop);
+
+    -- contas de login (auth) dos usuários que NÃO são PROPRIETÁRIO. Sem
+    -- isso, apagar só perfis_usuarios deixa a conta órfã em auth.users e a
+    -- criação de um novo usuário com o mesmo e-mail falha com "A user with
+    -- this email address has already been registered". auth.identities /
+    -- sessions / refresh_tokens têm FK ON DELETE CASCADE, então some tudo
+    -- junto. O(s) PROPRIETÁRIO(s) ficam intactos (id em v_prop).
+    BEGIN
+        DELETE FROM auth.users WHERE id <> ALL (v_prop);
+        RAISE NOTICE 'auth.users: mantidas só as contas do(s) PROPRIETÁRIO';
+    EXCEPTION
+        WHEN undefined_table THEN RAISE NOTICE 'ignorada (não existe): auth.users';
+        WHEN insufficient_privilege THEN RAISE NOTICE 'sem privilégio p/ limpar auth.users — apague as contas órfãs pelo painel Authentication';
+    END;
 
     -- o(s) PROPRIETÁRIO(s) preservado(s) ficam na área reservada da
     -- Cognitionis (não existe em areas_solicitantes — é hardcode, só para
