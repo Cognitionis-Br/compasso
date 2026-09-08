@@ -41,6 +41,7 @@ function mudarAbaOrcamentarDemanda(aba) {
 }
 
 async function renderF1OrcamentoView() {
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
     // CORRIGIDO 10/08/2026 (bug reportado): desde que "Realizar Orçamento"
     // passou a marcar sub_status='PLANEJADO' assim que o planejamento
     // começa (pra sumir de "Formalizar Demanda"), esse filtro de
@@ -51,23 +52,45 @@ async function renderF1OrcamentoView() {
     renderF1OrcamentoConcluidoView();
 }
 
+// AJUSTADO (a pedido do usuário): a aba "Orçamentação Concluída" mostra
+// TODOS os projetos do Ano Fiscal em curso (o AF em orçamentação) que já
+// tiveram a fase de orçamento concluída — para visualização das tarefas —
+// mesmo depois de passarem pela aprovação/reprovação do Comitê ou de
+// avançarem para Requerimentos. Antes só listava sub_status =
+// 'ORÇAMENTO REALIZADO' (a janela entre orçar e o Comitê), então o
+// projeto sumia da aba assim que o Comitê decidia.
 function renderF1OrcamentoConcluidoView() {
-    const orcados = projectsData.filter(p => p.sub_status === 'ORÇAMENTO REALIZADO');
     const tbodyConcluido = document.getElementById('f1OrcConcluidoTableBody');
     if (!tbodyConcluido) return;
 
+    const afCurso = (typeof afPipelineStr === 'function') ? afPipelineStr() : null;
+    const NAO_CONCLUIDOS = ['A PLANEJAR', 'A PLANEJAR - EM REVISÃO', 'PLANEJADO', 'CANCELADO'];
+
+    let orcados = projectsData.filter(p => {
+        if (afCurso && p.ano_fiscal !== afCurso) return false;
+        const sub = (p.sub_status || '').toUpperCase();
+        if (NAO_CONCLUIDOS.includes(sub)) return false;
+        // orçamento efetivamente definido em algum momento
+        return Number(p.val_bc) > 0 || Number(p.previsto) > 0 || !!p.tipo_orcamento;
+    });
+    orcados = filtrarProjetosPorArea(orcados, 'f1_orcamento:concluidas');
+    orcados.sort((a, b) => (a.codigo || '').localeCompare(b.codigo || '', 'pt-BR'));
+
     if (orcados.length === 0) {
-        tbodyConcluido.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 font-bold">Nenhum orçamento concluído nesta etapa</td></tr>`;
+        tbodyConcluido.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400 font-bold">Nenhum orçamento concluído no Ano Fiscal em curso</td></tr>`;
         return;
     }
 
-    tbodyConcluido.innerHTML = orcados.map(p => `
+    tbodyConcluido.innerHTML = orcados.map(p => {
+        const sub = p.sub_status || 'ORÇAMENTO REALIZADO';
+        const cor = (typeof corBadgeStatusFormalizada === 'function') ? corBadgeStatusFormalizada(sub) : 'bg-green-100 text-green-800';
+        return `
         <tr>
             <td class="p-3 font-mono font-bold text-green-800">${p.codigo}</td>
             <td class="p-3 font-semibold">${escapeHtml(p.nome)}</td>
             <td class="p-3 text-xs font-bold text-blue-900">${p.tipo_orcamento || 'CAPEX'}</td>
             <td class="p-3 font-mono font-bold text-right text-green-700">R$ ${(Number(p.val_bc)||Number(p.previsto)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
-            <td class="p-3 text-xs"><span class="bg-green-100 text-green-800 font-bold px-2 py-1 rounded">ORÇAMENTO REALIZADO</span></td>
-        </tr>
-    `).join('');
+            <td class="p-3 text-xs"><span class="${cor} font-bold px-2 py-1 rounded">${escapeHtml(sub)}</span></td>
+        </tr>`;
+    }).join('');
 }
