@@ -2,5 +2,16 @@
   functions = "netlify/functions"
   publish = "."
 
+[build.environment]
+  # SUPABASE_URL é uma env var usada pelas Netlify Functions, mas o MESMO
+  # valor (o endpoint público do projeto Supabase) fica hardcoded no
+  # frontend em js/core/supabase-client.js — isso é correto e esperado num
+  # app estático Supabase: a URL e a publishable key são públicas por
+  # design; o controle de acesso é feito no front (RLS off nas tabelas do
+  # app). O scanner de segredos do Netlify não sabe disso e falha o build.
+  # Os segredos DE VERDADE (SUPABASE_SERVICE_KEY, LICENSE_HMAC_SECRET,
+  # chaves de provedor de e-mail) continuam sendo escaneados.
+  SECRETS_SCAN_OMIT_KEYS = "SUPABASE_URL"
+
 [functions]
   node_bundler = "esbuild"
