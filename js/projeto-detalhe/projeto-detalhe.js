@@ -172,6 +172,15 @@ async function renderDetalheProjeto(codigo) {
     const { data: logDecisoesFechamentoData } = await _supabase.from('fechamento_af_decisoes').select('*').eq('projeto_codigo', codigo).order('decidido_em', { ascending: false });
     const historicoDecisoesFechamento = logDecisoesFechamentoData || [];
 
+    // NOVO (a pedido do usuário): histórico de decisões de etapa
+    // (APROVADO / REPROVADO / REAVALIAR) — log append-only que sobrevive
+    // ao reinício do ciclo da fase numa reprovação (logDecisaoEtapa em
+    // js/phases/generic-workflow-ui.js). É a fonte confiável das decisões
+    // de avaliação; a coluna "Decisão" da linha do tempo mostra só as
+    // etapas que ainda têm linha em projeto_etapas.
+    const { data: logDecisoesEtapaData } = await _supabase.from('log_decisoes_etapa').select('*').eq('projeto_codigo', codigo).order('decidido_em', { ascending: true });
+    const historicoDecisoesEtapa = logDecisoesEtapaData || [];
+
     container.innerHTML = `
         ${p.bloqueado_mudanca_orcamento ? renderSecaoMudancaOrcamentoDetalhe(p) : ''}
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -297,6 +306,8 @@ async function renderDetalheProjeto(codigo) {
             </div>
         </div>
 
+        ${renderSecaoDecisaoComite(p)}
+        ${renderSecaoHistoricoDecisoesEtapa(historicoDecisoesEtapa)}
         ${renderSecaoDecisoesFechamento(historicoDecisoesFechamento)}
         ${renderSecaoHistoricoAprovacaoMudancaOrcamento(historicoMudancaOrcamento)}
         ${renderSecaoHistoricoHorasDetalhe(historicoHoras)}
@@ -722,6 +733,62 @@ function renderSecaoReprovacaoDetalhe(p) {
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
             <h3 class="text-sm font-bold text-red-700 mb-3 uppercase tracking-wider">Histórico de Reprovação</h3>
             <p class="text-xs text-gray-600">Este projeto já foi reprovado <b>${p.qtd_reprovacoes}</b> vez(es). Última reprovação: por <b>${escapeHtml(p.ultima_reprovacao_por) || '-'}</b> em <b>${(p.ultima_reprovacao_em || '').split('T')[0] || '-'}</b>, na etapa <b>${p.ultima_reprovacao_etapa || '-'}</b>.</p>
+        </div>
+    `;
+}
+
+// NOVO (a pedido do usuário): a decisão de "Aprovar Orçamento por Projeto"
+// (comitê) é gravada direto no projeto (projetos.status_comite /
+// aprovador_nome / dt_aprovacao ou resp_reprovacao / dt_reprovacao), NÃO
+// em projeto_etapas — então não tinha como aparecer na linha do tempo.
+// Este bloco a mostra sempre que houver decisão registrada.
+function renderSecaoDecisaoComite(p) {
+    const st = (p.status_comite || '').toUpperCase();
+    if (st !== 'APROVADO' && st !== 'REPROVADO') return '';
+    const aprov = st === 'APROVADO';
+    const quem = aprov ? p.aprovador_nome : p.resp_reprovacao;
+    const quando = aprov ? p.dt_aprovacao : p.dt_reprovacao;
+    return `
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <h3 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Decisão do Comitê — Aprovar Orçamento por Projeto</h3>
+            <div class="flex flex-wrap items-center gap-x-8 gap-y-1 text-xs">
+                <span><b class="uppercase text-gray-500">Resultado:</b> <span class="${aprov ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} font-bold px-2 py-0.5 rounded text-[10px]">${st}</span></span>
+                <span><b class="uppercase text-gray-500">${aprov ? 'Aprovado por' : 'Reprovado por'}:</b> <span class="uppercase font-bold">${escapeHtml(quem) || '-'}</span></span>
+                <span><b class="uppercase text-gray-500">Em:</b> ${(quando || '').split('T')[0] || '-'}</span>
+                <span><b class="uppercase text-gray-500">Data do Comitê:</b> ${(p.dt_comite || '').split('T')[0] || '-'}</span>
+            </div>
+            ${p.observacao_comite ? `<div class="mt-2 text-xs text-gray-600 bg-gray-50 rounded p-2"><b class="uppercase text-gray-400">Observação do comitê:</b> ${escapeHtml(p.observacao_comite)}</div>` : ''}
+        </div>
+    `;
+}
+
+// NOVO (a pedido do usuário): tabela do log_decisoes_etapa — append-only,
+// nunca apagado (sobrevive ao reinício do ciclo da fase numa reprovação).
+// Cobre APROVADO / REPROVADO / REAVALIAR das etapas de avaliação.
+function renderSecaoHistoricoDecisoesEtapa(historico) {
+    if (!historico || historico.length === 0) return '';
+    const cor = { APROVADO: 'bg-emerald-100 text-emerald-800', REPROVADO: 'bg-red-100 text-red-800', REAVALIAR: 'bg-amber-100 text-amber-800' };
+    return `
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <h3 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Histórico de Decisões de Etapa</h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs">
+                    <thead><tr class="bg-gray-50 text-[10px] uppercase border-b">
+                        <th class="p-2">Quando</th><th class="p-2">Fase</th><th class="p-2">Etapa</th><th class="p-2">Decisão</th><th class="p-2">Por</th><th class="p-2">Motivo</th>
+                    </tr></thead>
+                    <tbody>
+                        ${historico.map(d => `
+                            <tr class="border-b border-gray-100">
+                                <td class="p-2 whitespace-nowrap">${(d.decidido_em || '').replace('T', ' ').split('.')[0] || '-'}</td>
+                                <td class="p-2 font-bold">${escapeHtml(d.fase) || '-'}</td>
+                                <td class="p-2">${escapeHtml(d.etapa) || '-'}</td>
+                                <td class="p-2"><span class="${cor[(d.decisao || '').toUpperCase()] || 'bg-gray-100 text-gray-700'} font-bold px-2 py-0.5 rounded text-[10px]">${escapeHtml(d.decisao) || '-'}</span></td>
+                                <td class="p-2 uppercase font-bold">${escapeHtml(d.decidido_por) || '-'}</td>
+                                <td class="p-2 text-gray-600">${escapeHtml(d.motivo) || '-'}</td>
+                            </tr>`).join('')}
+                    </tbody>
+                </table>
+            </div>
         </div>
     `;
 }
