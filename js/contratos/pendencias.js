@@ -258,6 +258,15 @@ async function abrirDetalhePendencia(id) {
         .concat((projectsData || []).map(pr => `<option value="${escapeHtml(pr.codigo)}" ${pr.codigo === p.projeto_codigo ? 'selected' : ''}>${escapeHtml(pr.codigo)} — ${escapeHtml(pr.nome)}</option>`))
         .join('');
 
+    // vínculos (Contratos por Projeto) do contrato resolvido — o pagamento
+    // é registrado contra um vínculo (projeto + contrato + valor alocado).
+    const vinculosDoContrato = (pendVinculosCache || []).filter(v => v.contrato_id === p.contrato_id);
+    const optVinculos = ['<option value="">— nenhum —</option>'].concat(vinculosDoContrato.map(v => {
+        const pr = (projectsData || []).find(x => x.codigo === v.projeto_codigo);
+        const saldo = Number(v.valor_vinculo || 0) - Number(v.valor_realizado || 0);
+        return `<option value="${v.id}" ${v.id === p.vinculo_id ? 'selected' : ''}>${escapeHtml(v.projeto_codigo)}${pr ? ' — ' + escapeHtml(pr.nome) : ''} · alocado ${formatCurrency(v.valor_vinculo)} · saldo ${formatCurrency(saldo)}</option>`;
+    })).join('');
+
     const anexosHtml = listaAnexos.length === 0
         ? '<div class="text-xs text-gray-400 italic">Nenhum anexo.</div>'
         : listaAnexos.map(a => `
@@ -294,6 +303,9 @@ async function abrirDetalhePendencia(id) {
                 <input id="pendEdValor" type="number" step="0.01" value="${p.valor != null ? p.valor : ''}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Data de Referência</label>
                 <input id="pendEdData" type="date" value="${p.data_referencia || ''}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
+            <div class="md:col-span-2"><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Vínculo — Contratos por Projeto <span class="text-gray-400">(obrigatório para PAGAMENTO)</span></label>
+                <select id="pendEdVinculo" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">${optVinculos}</select>
+                ${vinculosDoContrato.length === 0 ? '<span class="text-[10px] text-amber-700">Nenhum vínculo para este contrato — crie em Contratos e Terceiros → Contratos por Projeto.</span>' : ''}</div>
             <div class="md:col-span-2"><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Descrição / Observações</label>
                 <input id="pendEdDescricao" value="${escapeHtml(p.descricao || '')}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
         </div>
@@ -337,11 +349,13 @@ async function abrirAnexoPendencia(path) {
 }
 
 function _pendLerEdicao() {
+    const selVinc = document.getElementById('pendEdVinculo');
     return {
         tipo: document.getElementById('pendEdTipo').value,
         referencia: document.getElementById('pendEdReferencia').value.trim() || null,
         contrato_id: document.getElementById('pendEdContrato').value ? Number(document.getElementById('pendEdContrato').value) : null,
         projeto_codigo: document.getElementById('pendEdProjeto').value || null,
+        vinculo_id: (selVinc && selVinc.value) ? Number(selVinc.value) : null,
         fornecedor: document.getElementById('pendEdFornecedor').value.trim() || null,
         valor: document.getElementById('pendEdValor').value ? Number(document.getElementById('pendEdValor').value) : null,
         data_referencia: document.getElementById('pendEdData').value || null,
@@ -353,9 +367,11 @@ async function salvarCorrecaoPendencia() {
     if (!pendenciaAtual || !_pendPodeAprovar()) return;
     const antes = { ...pendenciaAtual };
     const ed = _pendLerEdicao();
-    // re-resolve o vínculo a partir do contrato/projeto corrigidos
-    const v = _pendResolverVinculo(ed.contrato_id, ed.projeto_codigo);
-    ed.vinculo_id = v ? v.id : null;
+    // se o aprovador não escolheu vínculo, tenta resolver automático (par único)
+    if (!ed.vinculo_id) {
+        const v = _pendResolverVinculo(ed.contrato_id, ed.projeto_codigo);
+        ed.vinculo_id = v ? v.id : null;
+    }
 
     const { error } = await _supabase.from('contratos_pendencias').update(ed).eq('id', pendenciaAtual.id);
     if (error) return alert('Erro ao salvar correção: ' + error.message);
@@ -468,7 +484,12 @@ async function aprovarPendencia(id) {
 
     if (atual.tipo === 'PAGAMENTO') {
         let vinc = atual.vinculo_id ? pendVinculosCache.find(v => v.id === atual.vinculo_id) : _pendResolverVinculo(atual.contrato_id, atual.projeto_codigo);
-        if (!vinc) return alert('Não há um vínculo único (projeto + contrato) para este pagamento. Crie/ajuste o vínculo em "Contratos por Projeto" e corrija a pendência.');
+        if (!vinc) {
+            const doContrato = (pendVinculosCache || []).filter(v => v.contrato_id === atual.contrato_id);
+            return alert(doContrato.length === 0
+                ? '⛔ Este contrato não tem nenhum vínculo com projeto. Crie o vínculo em Contratos e Terceiros → "Contratos por Projeto" (aloque um valor), depois volte e aprove.'
+                : '⛔ Escolha o Vínculo (Contratos por Projeto) no campo do modal antes de aprovar — este contrato tem mais de um vínculo.');
+        }
         const saldo = saldoDisponivelVinculo(vinc);
         if (Number(atual.valor) > saldo) {
             return alert(`⛔ O valor (${formatCurrency(atual.valor)}) supera o saldo do vínculo (${formatCurrency(saldo)}).`);
