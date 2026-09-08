@@ -291,8 +291,8 @@ async function abrirDetalhePendencia(id) {
                     <option value="PAGAMENTO" ${p.tipo === 'PAGAMENTO' ? 'selected' : ''}>PAGAMENTO</option>
                     <option value="PROPOSTA" ${p.tipo === 'PROPOSTA' ? 'selected' : ''}>PROPOSTA</option>
                 </select></div>
-            <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Referência (§4.3)</label>
-                <input id="pendEdReferencia" value="${escapeHtml(p.referencia || '')}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
+            ${p.origem === 'EMAIL' ? `<div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Referência <span class="text-gray-400">(identificação da instância no e-mail)</span></label>
+                <input id="pendEdReferencia" value="${escapeHtml(p.referencia || '')}" disabled class="w-full p-1.5 border rounded bg-gray-50"></div>` : '<input type="hidden" id="pendEdReferencia" value="' + escapeHtml(p.referencia || '') + '">'}
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Contrato ${p.contrato_ref ? `<span class="text-gray-400">(cru: ${escapeHtml(p.contrato_ref)})</span>` : ''}</label>
                 <select id="pendEdContrato" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">${optContratos}</select></div>
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Projeto ${p.projeto_ref ? `<span class="text-gray-400">(cru: ${escapeHtml(p.projeto_ref)})</span>` : ''}</label>
@@ -504,14 +504,23 @@ async function aprovarPendencia(id) {
 
         const novoRealVinc = Number(vinc.valor_realizado || 0) + Number(atual.valor);
         await _supabase.from('contratos_vinculos_projeto').update({ valor_realizado: novoRealVinc }).eq('id', vinc.id);
+        vinc.valor_realizado = novoRealVinc;
         const contrato = contratosProjetoCache.find(c => c.id === atual.contrato_id);
         if (contrato) {
-            await _supabase.from('contratos_projeto').update({ valor_realizado: Number(contrato.valor_realizado || 0) + Number(atual.valor) }).eq('id', contrato.id);
+            const novoRealContr = Number(contrato.valor_realizado || 0) + Number(atual.valor);
+            await _supabase.from('contratos_projeto').update({ valor_realizado: novoRealContr }).eq('id', contrato.id);
+            contrato.valor_realizado = novoRealContr;
         }
-        if (typeof recalcularRealizadoProjeto === 'function') await recalcularRealizadoProjeto(atual.projeto_codigo);
+        // o realizado do PROJETO é sempre o do projeto DO VÍNCULO (é onde o
+        // valor de fato entra) — não o projeto_codigo cru da pendência, que
+        // pode ter sido resolvido diferente. recalcularRealizadoProjeto
+        // soma todos os vínculos daquele projeto e grava em projetos.realizado
+        // (campo lido por Dashboard/Consultas/Detalhamento).
+        if (typeof recalcularRealizadoProjeto === 'function') await recalcularRealizadoProjeto(vinc.projeto_codigo);
 
         await _supabase.from('contratos_pendencias').update({
-            status: 'APROVADA', vinculo_id: vinc.id, decidido_por: quem, decidido_em: agora,
+            status: 'APROVADA', vinculo_id: vinc.id, projeto_codigo: vinc.projeto_codigo,
+            decidido_por: quem, decidido_em: agora,
             promovido_para_tabela: 'contratos_pagamentos', promovido_para_id: pagId
         }).eq('id', id);
         await _logPendencia(id, 'APROVADA', { promovido_para: 'contratos_pagamentos', id: pagId, valor: Number(atual.valor) });
@@ -539,6 +548,7 @@ async function aprovarPendencia(id) {
         await _logPendencia(id, 'APROVADA', { promovido_para: 'contratos_propostas', id: propId, valor: Number(atual.valor) });
     }
 
+    if (typeof loadProjects === 'function') await loadProjects();   // atualiza projetos.realizado em memória (Dashboard/Consultas/Detalhamento)
     alert('✅ Pendência aprovada e registrada na base oficial.');
     fecharModalPendencia();
     await renderPendenciasContratosView();
