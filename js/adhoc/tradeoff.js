@@ -139,8 +139,16 @@ async function renderAdhocView() {
         const sub = (p.sub_status || '').toUpperCase();
         if (sub !== 'HOLD') {
             totalAprovado += Number(p.val_bc || p.previsto || 0);
-            totalReq += Number(p.val_req || p.val_bc || 0);
-            totalTech += Number(p.val_tech || p.val_req || 0);
+            // AJUSTADO (bug reportado): "Pós-Requisitos" / "Pós-Especificação"
+            // só somam o orçamento QUE FOI DE FATO redefinido nessas fases —
+            // sem cair de volta pro valor de Business Case. Antes, com o AF
+            // ainda em construção (nenhum projeto passou de Requerimentos), os
+            // dois KPIs repetiam o "Orçamento Aprovado AF" e pareciam dados
+            // fantasmas. Agora ficam em R$ 0,00 até algum projeto ter val_req/
+            // val_tech real. Não afeta a simulação (recalcularSaldoSimulado
+            // usa só val_bc).
+            totalReq += Number(p.val_req || 0);
+            totalTech += Number(p.val_tech || 0);
             totalRealizado += Number(p.realizado || 0);
         }
     });
