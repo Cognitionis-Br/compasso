@@ -19,7 +19,36 @@ rodapé do login, no rodapé do menu lateral e na tela inicial.
 
 ## [Não lançado]
 
-_(nada pendente)_
+### Release 1 — em desenvolvimento (branch `release-1`)
+
+**Módulo Financeiro & Contratos — Recebimento de Pagamentos/Propostas com aprovação**
+
+- **Fase A (em andamento):** área de staging "Pendências de Contratos" —
+  toda entrada (lançamento manual, upload de planilha Excel) cai como
+  pendente e só vai para a base oficial (`contratos_pagamentos` /
+  nova `contratos_propostas`) depois de aprovada. Anexo de Nota Fiscal
+  em Supabase Storage, com bloqueio de aprovação sem NF (override por
+  justificativa registrada). Trilha de auditoria append-only. Nova
+  função de catálogo `contratos_pendencias:{consultar,importar,aprovar}`,
+  concedível a qualquer perfil. Tudo dentro do módulo FINANCEIRO.
+- Fase B (planejada): escalonamento de NF pendente > 5 dias úteis via fila
+  de e-mail; classificação de anexos.
+- Fase C (planejada, após PoC): Canal de e-mail padronizado por webhook.
+
+### Ajustes gerais desde o Release 0
+
+- Cadastro de Produtos, Tipos de Projeto e Cargos: nome/descrição editável
+  enquanto não estiver em uso.
+- Percentual de Bloqueio de Orçamento: valor vigente + histórico de alteração.
+- Detalhamento do Projeto: bloco "Decisão do Comitê" e "Histórico de
+  Decisões de Etapa".
+- Licenciamento de Módulos: aprovações do Business Case e trava de variação
+  de orçamento migradas de FINANCEIRO para WORKFLOW (eram passo obrigatório
+  do fluxo).
+- Funções: caixa "Ignora Restrição de Área" (exceção por papel, sem Acesso
+  Irrestrito).
+- Roteiro de Instalação e Primeira Configuração no manual; carga zero
+  revisada (auth.users, cargo reservado, área COGNITIONIS).
 
 ---
 
