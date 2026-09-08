@@ -301,9 +301,11 @@ async function abrirDetalhePendencia(id) {
         <div class="mt-4">
             <div class="flex items-center justify-between mb-1">
                 <span class="text-[10px] font-bold uppercase text-gray-500">Anexos — status NF: <span class="${_pendBadgeNf(p.nf_status)} px-1.5 py-0.5 rounded font-bold">${p.nf_status}</span></span>
-                ${editavel ? `<label class="text-[10px] font-bold text-indigo-600 cursor-pointer">+ Anexar
-                    <select id="pendAnexoClasse" class="ml-1 text-[10px] border rounded"><option value="NOTA_FISCAL">Nota Fiscal</option><option value="COMPROVANTE">Comprovante</option><option value="OUTRO">Outro</option></select>
-                    <input type="file" accept="application/pdf,image/jpeg,image/png" onchange="onAnexoPendenciaSelecionado(this)" class="hidden"></label>` : ''}
+                ${editavel ? `<span class="flex items-center gap-1.5 text-[10px] font-bold">
+                    <select id="pendAnexoClasse" class="text-[10px] border rounded p-0.5 bg-white"><option value="NOTA_FISCAL">Nota Fiscal</option><option value="COMPROVANTE">Comprovante</option><option value="OUTRO">Outro</option></select>
+                    <button type="button" onclick="document.getElementById('pendAnexoInput').click()" class="text-indigo-600 hover:text-indigo-800 underline">+ Anexar arquivo</button>
+                    <input type="file" id="pendAnexoInput" accept="application/pdf,image/jpeg,image/png" onchange="onAnexoPendenciaSelecionado(this)" class="hidden">
+                </span>` : ''}
             </div>
             <div id="pendModalAnexos" class="border rounded p-2 bg-gray-50">${anexosHtml}</div>
         </div>
@@ -368,13 +370,23 @@ async function salvarCorrecaoPendencia() {
 
 async function onAnexoPendenciaSelecionado(input) {
     const f = input.files && input.files[0];
-    if (!f || !pendenciaAtual) return;
+    if (!f) return;
+    if (!pendenciaAtual) { input.value = ''; return alert('Abra a pendência (Detalhar) antes de anexar.'); }
     if (f.size > 10 * 1024 * 1024) { input.value = ''; return alert('Arquivo acima de 10 MB.'); }
-    const classe = document.getElementById('pendAnexoClasse').value;
+    const classe = (document.getElementById('pendAnexoClasse') || {}).value || 'OUTRO';
     const path = `pendencias/${pendenciaAtual.id}/${_pendUuid()}-${f.name.replace(/[^\w.\-]+/g, '_')}`;
 
     const { error: upErr } = await _supabase.storage.from(PEND_BUCKET).upload(path, f, { contentType: f.type || 'application/octet-stream', upsert: false });
-    if (upErr) { input.value = ''; return alert('Erro ao enviar o arquivo: ' + upErr.message); }
+    if (upErr) {
+        input.value = '';
+        console.error('upload anexo:', upErr);
+        const msg = /not found|does not exist/i.test(upErr.message || '')
+            ? `Bucket "${PEND_BUCKET}" não encontrado — rode sql/2026-09-08_storage_contratos_anexos.sql no Supabase.`
+            : /row-level security|not authorized|permission|violates/i.test(upErr.message || '')
+              ? `Permissão negada no Storage — verifique as policies do bucket "${PEND_BUCKET}" (sql/2026-09-08_storage_contratos_anexos.sql).`
+              : ('Erro ao enviar o arquivo: ' + (upErr.message || upErr));
+        return alert('⛔ ' + msg);
+    }
 
     const { error: insErr } = await _supabase.from('contratos_pendencias_anexos').insert([{
         pendencia_id: pendenciaAtual.id, storage_path: path, nome_original: f.name,
