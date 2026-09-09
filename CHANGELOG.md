@@ -31,9 +31,24 @@ rodapé do login, no rodapé do menu lateral e na tela inicial.
   justificativa registrada). Trilha de auditoria append-only. Nova
   função de catálogo `contratos_pendencias:{consultar,importar,aprovar}`,
   concedível a qualquer perfil. Tudo dentro do módulo FINANCEIRO.
-- Fase B (planejada): escalonamento de NF pendente > 5 dias úteis via fila
-  de e-mail; classificação de anexos.
-- Fase C (planejada, após PoC): Canal de e-mail padronizado por webhook.
+- **Fase B:** escalonamento de NF pendente > 5 dias úteis — uma pendência
+  "NF não recebida" que passar de 5 dias úteis gera um e-mail de alerta
+  (uma única vez) pela fila de e-mail existente. Novo ponto de disparo
+  `PENDÊNCIAS DE CONTRATO / ESCALONAMENTO NF` em *Envio de E-mail — Gestão
+  do Fluxo* (nasce inativo; admin define destinatário/remetente e liga).
+  Coluna `contratos_pendencias.escalado_nf_em`.
+- **Fase C:** canal de e-mail padronizado por webhook — Netlify Function
+  `receber-email-contratos` recebe o inbound de um provedor de e-mail,
+  faz o parsing do assunto (§4.2) e do corpo (§4.3) e cria a pendência
+  (`origem = 'EMAIL'`), que segue para aprovação como qualquer outra.
+  Anexos PDF/JPG/PNG viram Nota Fiscal no Storage; campo obrigatório
+  ausente → `ERRO_LEITURA` (nunca descartado). Provedor plugável
+  (`providers/inbound/`), dedupe por `Message-Id`. Autenticação por
+  segredo compartilhado (`INBOUND_CONTRATOS_SECRET`); identificação da
+  instância pelo campo `Referência` (`INBOUND_CONTRATOS_REFERENCIA`).
+  Guia de configuração: `docs/CANAL_EMAIL_CONTRATOS.md`.
+- Classificação de anexos (NF / comprovante / outro): pendente de
+  refinamento na UI.
 
 ### Ajustes gerais desde o Release 0
 
