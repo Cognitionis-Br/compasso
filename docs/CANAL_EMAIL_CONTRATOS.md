@@ -126,9 +126,31 @@ Anexo: Nota Fiscal em PDF, JPG ou PNG
 - Sem anexo PDF/JPG/PNG → pendência criada com `nf_status = 'NAO_RECEBIDA'`
   (destaque na lista; **bloqueia a aprovação** até anexar ou dispensar — §6).
   Anexos de outros formatos são ignorados.
-- E-mail é **single-project**: gera 1 item de rateio (`contratos_pendencias_itens`)
-  com o valor total. Rateio entre vários projetos continua sendo pelo canal
-  Excel ou pela correção manual da pendência antes de aprovar.
+### Pagamento rateado entre vários projetos (§4.3.1)
+
+Se o contrato está vinculado a mais de um projeto, o corpo troca `Projeto:` +
+`Valor:` por um bloco de rateio:
+
+```
+Referência: ACME-PROD
+Tipo de Lançamento: Pagamento
+Contrato: ACME20260900001
+Valor Total da NF: R$ 30.000,00
+Data de Referência: 09/09/2026
+Rateio:
+- Projeto PRJ-0042: R$ 18.000,00
+- Projeto PRJ-0043: R$ 12.000,00
+Descrição/Observações: NF 12346
+
+Anexo obrigatório: Nota Fiscal (PDF, JPG ou PNG)
+```
+
+- A presença de `Rateio:` **ou** `Valor Total da NF:` já ativa o modo rateado.
+- Cada linha `- Projeto X: valor` vira um item de `contratos_pendencias_itens`;
+  a soma tem de fechar com o `Valor Total da NF` (senão → `ERRO_LEITURA`).
+- Single-project (um `Projeto:` + um `Valor:`) continua gerando 1 item.
+- O modelo pronto para os dois casos está na aba **Modelo de E-mail** da tela
+  *Pendências de Contratos* (escolhe o contrato e o texto sai preenchido).
 
 ### Dedupe
 O `Message-Id` do e-mail é gravado em `contratos_pendencias.email_message_id`

@@ -65,6 +65,35 @@ Anexo obrigatório: Nota Fiscal (PDF, JPG ou PNG)
 
 O campo **"Referência"** é obrigatório e tratado com o mesmo rigor dos demais campos obrigatórios (item 4.4) — email sem essa informação é marcado como pendente com erro de leitura, pois o agente não tem como determinar a qual instância/cliente o lançamento pertence.
 
+#### 4.3.1 Pagamento rateado entre vários projetos do mesmo contrato
+
+Quando um contrato está vinculado a mais de um projeto, uma mesma Nota Fiscal
+pode ser rateada. O corpo troca os campos `Projeto:` + `Valor:` por um bloco de
+rateio:
+
+```
+Referência: [identificação da instância/cliente]
+Tipo de Lançamento: Pagamento
+Contrato: [número do contrato]
+Valor Total da NF: [R$ 0.000,00]
+Data de Referência: [dd/mm/aaaa]
+Rateio:
+- Projeto [código ou nome]: [R$ 0.000,00]
+- Projeto [código ou nome]: [R$ 0.000,00]
+Descrição/Observações: [texto livre, opcional]
+
+Anexo obrigatório: Nota Fiscal (PDF, JPG ou PNG)
+```
+
+- Basta a presença do rótulo `Rateio:` **ou** `Valor Total da NF:` para o
+  agente tratar como pagamento rateado.
+- A **soma do rateio deve fechar** com o `Valor Total da NF` (tolerância de
+  centavos); se não fechar, a pendência é criada com erro de leitura.
+- Cada linha `- Projeto X: valor` vira um item de rateio da pendência; o
+  projeto que não for localizado no cadastro sinaliza erro de leitura, sem
+  descartar a pendência.
+- Proposta continua sempre single-project (um `Projeto:` e um `Valor:`).
+
 ### 4.4 Regras de formato
 
 - Campos devem seguir o rótulo exato ("Contrato:", "Projeto:", etc.) para permitir extração confiável — o agente deve tolerar variações simples de maiúsculas/minúsculas e espaçamento, mas não a ausência do rótulo.

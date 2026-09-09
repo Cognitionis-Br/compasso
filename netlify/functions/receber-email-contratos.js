@@ -95,6 +95,20 @@ function parseAssunto(assunto) {
     return { tipo: m[1].toUpperCase(), contratoRef: m[2].trim(), projetoRef: m[3].trim() };
 }
 
+// Rateio multi-projeto (§4.3): linhas do tipo "- Projeto <ref>: <valor>"
+// (sob o rótulo "Rateio:"). Uma linha "Projeto:" simples (sem espaço antes
+// do ":") não casa — é o campo single-project.
+function parseRateio(corpo) {
+    const re = /^\s*[-*•]?\s*Projeto\s+(.+?)\s*[:=]\s*(.+?)\s*$/gim;
+    const out = [];
+    let m;
+    while ((m = re.exec(corpo || '')) !== null) {
+        const v = parseValor(m[2]);
+        if (v !== null && v > 0) out.push({ projetoRef: m[1].trim(), valor: v });
+    }
+    return out;
+}
+
 exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') return resp(405, { erro: 'Use POST.' });
     if (!SUPABASE_URL || !SUPABASE_KEY) return resp(500, { erro: 'SUPABASE_URL / SUPABASE_SERVICE_KEY não configuradas.' });
@@ -125,14 +139,34 @@ exports.handler = async (event) => {
     const data = parseData(campo(corpo, 'Data de Referência') || campo(corpo, 'Data de Referencia'));
     const descricao = campo(corpo, 'Descrição/Observações') || campo(corpo, 'Descrição') || campo(corpo, 'Observações') || null;
 
+    // Pagamento pode ser single-project (campos "Projeto:" + "Valor:") ou
+    // rateado entre vários projetos do mesmo contrato (rótulo "Rateio:" +
+    // "Valor Total da NF:" + linhas "- Projeto X: valor").
+    const rateioLinhas = parseRateio(corpo);
+    const temRateio = /^\s*Rateio\s*:/im.test(corpo) ||
+        campo(corpo, 'Valor Total da NF') !== null || campo(corpo, 'Valor Total') !== null ||
+        rateioLinhas.length >= 2;
+    const multi = tipo === 'PAGAMENTO' && temRateio;
+    const rateio = multi ? rateioLinhas : [];
+    const somaRateio = rateio.reduce((a, r) => a + r.valor, 0);
+    const valorTotalNf = parseValor(campo(corpo, 'Valor Total da NF') || campo(corpo, 'Valor Total'));
+    const valorEfetivo = multi ? (valorTotalNf || somaRateio) : valor;
+
     const erros = [];
     if (REFERENCIA_ESPERADA && (!referencia || referencia.toUpperCase() !== REFERENCIA_ESPERADA.toUpperCase()))
         erros.push({ campo: 'Referência', motivo: referencia ? `"${referencia}" não corresponde a esta instância` : 'ausente (obrigatório — a caixa não é exclusiva)' });
     if (!tipo) erros.push({ campo: 'Tipo de Lançamento', motivo: 'ausente ou inválido (Proposta/Pagamento)' });
     if (!contratoRef) erros.push({ campo: 'Contrato', motivo: 'ausente' });
-    if (!projetoRef) erros.push({ campo: 'Projeto', motivo: 'ausente' });
-    if (!(valor > 0)) erros.push({ campo: 'Valor', motivo: 'ausente ou inválido' });
     if (!data) erros.push({ campo: 'Data de Referência', motivo: 'ausente ou fora do formato dd/mm/aaaa' });
+    if (multi) {
+        if (!rateio.length) erros.push({ campo: 'Rateio', motivo: 'nenhuma linha "Projeto <ref>: <valor>" reconhecida' });
+        if (!(valorEfetivo > 0)) erros.push({ campo: 'Valor Total da NF', motivo: 'ausente ou inválido' });
+        if (rateio.length && valorEfetivo > 0 && Math.abs(somaRateio - valorEfetivo) > 0.02)
+            erros.push({ campo: 'Rateio', motivo: `a soma do rateio (${somaRateio.toFixed(2)}) não fecha com o total da NF (${valorEfetivo.toFixed(2)})` });
+    } else {
+        if (!projetoRef) erros.push({ campo: 'Projeto', motivo: 'ausente' });
+        if (!(valor > 0)) erros.push({ campo: 'Valor', motivo: 'ausente ou inválido' });
+    }
 
     // resolve contrato / projeto (best-effort — mesmo com erro de leitura,
     // a pendência é criada sinalizada, nunca descartada — §4.4)
@@ -143,11 +177,23 @@ exports.handler = async (event) => {
         contrato = (c.ok && Array.isArray(c.json) && c.json[0]) || null;
         if (!contrato) erros.push({ campo: 'Contrato', motivo: `"${contratoRef}" não localizado no cadastro` });
     }
-    if (projetoRef) {
+    if (!multi && projetoRef) {
         const alvo = encodeURIComponent(projetoRef.trim());
         const pr = await sb(`projetos?or=(codigo.ilike.${alvo},nome.ilike.${alvo})&select=codigo,nome`);
         projeto = (pr.ok && Array.isArray(pr.json) && pr.json[0]) || null;
         if (!projeto) erros.push({ campo: 'Projeto', motivo: `"${projetoRef}" não localizado no cadastro` });
+    }
+
+    // rateio: resolve cada projeto (best-effort) antes de decidir o status
+    const rateioResolvido = [];
+    if (multi) {
+        for (const r of rateio) {
+            const alvo = encodeURIComponent(String(r.projetoRef).trim());
+            const pr = await sb(`projetos?or=(codigo.ilike.${alvo},nome.ilike.${alvo})&select=codigo`);
+            const pj = (pr.ok && Array.isArray(pr.json) && pr.json[0]) || null;
+            if (!pj) erros.push({ campo: 'Rateio', motivo: `projeto "${r.projetoRef}" não localizado no cadastro` });
+            rateioResolvido.push({ projetoRef: r.projetoRef, valor: r.valor, projeto_codigo: pj ? pj.codigo : null });
+        }
     }
 
     const status = erros.length ? 'ERRO_LEITURA' : 'PENDENTE';
@@ -158,8 +204,9 @@ exports.handler = async (event) => {
         body: JSON.stringify([{
             tipo: tipo || 'PAGAMENTO', origem: 'EMAIL', referencia: referencia || null,
             contrato_ref: contratoRef || null, contrato_id: contrato ? contrato.id : null,
-            projeto_ref: projetoRef || null, projeto_codigo: projeto ? projeto.codigo : null,
-            valor: valor || null, data_referencia: data, descricao,
+            projeto_ref: multi ? 'vários (rateio)' : (projetoRef || null),
+            projeto_codigo: (!multi && projeto) ? projeto.codigo : null,
+            valor: valorEfetivo || null, data_referencia: data, descricao,
             status, nf_status: nfStatus,
             erros_leitura: erros.length ? erros : null,
             email_message_id: email.messageId || null,
@@ -170,17 +217,23 @@ exports.handler = async (event) => {
     const pend = Array.isArray(ins.json) ? ins.json[0] : ins.json;
     const pendId = pend && pend.id;
 
-    // item de rateio (1 projeto — e-mail é single-project por §4.3)
+    // itens de rateio — 1 linha (single-project) ou N (rateio multi-projeto)
     if (pendId && tipo === 'PAGAMENTO') {
-        let vinculoId = null;
-        if (contrato && projeto) {
-            const v = await sb(`contratos_vinculos_projeto?contrato_id=eq.${contrato.id}&projeto_codigo=eq.${encodeURIComponent(projeto.codigo)}&select=id`);
-            if (v.ok && Array.isArray(v.json) && v.json.length === 1) vinculoId = v.json[0].id;
+        const linhas = multi
+            ? rateioResolvido
+            : [{ projetoRef: projetoRef, valor: valor, projeto_codigo: projeto ? projeto.codigo : null }];
+        const itens = [];
+        for (const ln of linhas) {
+            let vinculoId = null;
+            if (contrato && ln.projeto_codigo) {
+                const v = await sb(`contratos_vinculos_projeto?contrato_id=eq.${contrato.id}&projeto_codigo=eq.${encodeURIComponent(ln.projeto_codigo)}&select=id`);
+                if (v.ok && Array.isArray(v.json) && v.json.length === 1) vinculoId = v.json[0].id;
+            }
+            itens.push({ pendencia_id: pendId, vinculo_id: vinculoId, projeto_ref: ln.projetoRef || null, projeto_codigo: ln.projeto_codigo || null, valor: ln.valor || 0 });
         }
-        await sb('contratos_pendencias_itens', {
-            method: 'POST',
-            body: JSON.stringify([{ pendencia_id: pendId, vinculo_id: vinculoId, projeto_ref: projetoRef || null, projeto_codigo: projeto ? projeto.codigo : null, valor: valor || 0 }])
-        });
+        if (itens.length) {
+            await sb('contratos_pendencias_itens', { method: 'POST', body: JSON.stringify(itens) });
+        }
     }
 
     // anexos de NF -> Storage + tabela
@@ -203,9 +256,9 @@ exports.handler = async (event) => {
     if (pendId) {
         await sb('log_contratos_pendencias', {
             method: 'POST',
-            body: JSON.stringify([{ pendencia_id: pendId, acao: 'IMPORTADA', por: `e-mail: ${email.remetente || '-'}`, detalhe: { origem: 'EMAIL', messageId: email.messageId, status, anexos: email.anexos.length, erros: erros.length } }])
+            body: JSON.stringify([{ pendencia_id: pendId, acao: 'IMPORTADA', por: `e-mail: ${email.remetente || '-'}`, detalhe: { origem: 'EMAIL', messageId: email.messageId, status, rateio: multi ? rateio.length : 0, anexos: email.anexos.length, erros: erros.length } }])
         });
     }
 
-    return resp(200, { ok: true, pendencia_id: pendId, status, erros });
+    return resp(200, { ok: true, pendencia_id: pendId, status, rateio: multi ? rateio.length : 0, erros });
 };

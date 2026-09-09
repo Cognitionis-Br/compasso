@@ -3190,6 +3190,7 @@
                         <div class="flex gap-2 mb-3 flex-wrap">
                             <button onclick="mudarAbaPendencias('lista')" id="pendContratosBtn-lista" class="pend-contratos-btn px-4 py-2 rounded-md text-sm font-bold border-2 bg-red-700 text-white border-red-700">Pendências</button>
                             <button onclick="mudarAbaPendencias('importar')" id="pendContratosBtn-importar" class="pend-contratos-btn px-4 py-2 rounded-md text-sm font-bold border-2 bg-white text-gray-600 border-gray-200">Importar / Lançar</button>
+                            <button onclick="mudarAbaPendencias('modelo')" id="pendContratosBtn-modelo" class="pend-contratos-btn px-4 py-2 rounded-md text-sm font-bold border-2 bg-white text-gray-600 border-gray-200">Modelo de E-mail</button>
                         </div>
 
                         <div id="pendContratosPainel-lista" class="pend-contratos-painel">
@@ -3225,6 +3226,36 @@
                             <div class="mb-1"><h4 class="font-bold text-gray-800 text-sm uppercase tracking-wider">Lançamento Manual (Pagamento)</h4>
                                 <p class="text-xs text-gray-500">Mesmo formulário do Registro de Valores — cria uma pendência para aprovação. O fornecedor vem do contrato.</p></div>
                             <div id="pendManualForm" data-pag-destino="PENDENCIA"></div>
+                        </div>
+
+                        <div id="pendContratosPainel-modelo" class="pend-contratos-painel hidden">
+                            <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mb-4">
+                                <h4 class="font-bold text-gray-800 text-sm mb-1 uppercase tracking-wider">Modelo de E-mail de Lançamento</h4>
+                                <p class="text-xs text-gray-500 mb-3">Texto padrão que o fornecedor deve enviar para o canal de e-mail de contratos. Escolha o contrato para gerar o modelo já com o número e os projetos vinculados. Um contrato com um único projeto usa o formato simples; com vários, o formato com <b>rateio</b> (a soma do rateio tem de fechar com o valor total da NF). O anexo da Nota Fiscal é obrigatório.</p>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                                    <div class="md:col-span-2">
+                                        <label class="block text-[11px] font-bold text-gray-700 uppercase mb-1">Contrato</label>
+                                        <select id="modeloEmailContrato" onchange="onModeloEmailContratoChange()" class="w-full p-2 border border-gray-300 rounded text-sm bg-white"><option value="">— selecione —</option></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[11px] font-bold text-gray-700 uppercase mb-1">Tipo</label>
+                                        <select id="modeloEmailTipo" onchange="onModeloEmailContratoChange()" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
+                                            <option value="PAGAMENTO">Pagamento</option>
+                                            <option value="PROPOSTA">Proposta</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between mb-1">
+                                    <span class="text-[11px] font-bold text-gray-700 uppercase">E-mail para enviar</span>
+                                    <button id="modeloEmailCopiarBtn" onclick="copiarModeloEmail()" class="text-xs bg-gray-700 hover:bg-gray-800 text-white font-bold px-3 py-1 rounded"><i class="fa-solid fa-copy"></i> Copiar</button>
+                                </div>
+                                <pre id="modeloEmailSaida" class="text-[12px] bg-gray-50 border rounded p-3 whitespace-pre-wrap font-mono text-gray-800 min-h-[6rem]">Selecione um contrato para gerar o modelo.</pre>
+                                <div id="modeloEmailProjetos" class="mt-3"></div>
+                            </div>
+                            <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                                <h4 class="font-bold text-gray-800 text-sm mb-2 uppercase tracking-wider">Exemplos</h4>
+                                <div id="modeloEmailExemplos"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
