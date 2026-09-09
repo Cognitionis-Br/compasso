@@ -169,15 +169,37 @@ function renderVinculoPorContrato() {
 function atualizarPreviaDistribuicao() {
     const el = document.getElementById('vpcPreviaAlocacao');
     if (!el) return;
+    const fmtR = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmtH = (h) => `${Number(h || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}h`;
     const contratoId = Number((document.getElementById('vincPorContratoSel') || {}).value) || null;
     const projetoCodigo = (document.getElementById('vpcNovoProjeto') || {}).value || '';
     const valor = Number((document.getElementById('vpcNovoValor') || {}).value || 0);
+
+    // painel de valores do projeto selecionado (aparece assim que escolhe o projeto)
+    const infoProj = document.getElementById('vpcProjetoInfo');
+    const projetoObj = projetoCodigo ? (projectsData || []).find(p => p.codigo === projetoCodigo) : null;
+    if (infoProj) {
+        if (!projetoCodigo || !projetoObj) {
+            infoProj.classList.add('hidden');
+        } else {
+            const orcTot = obterOrcamentoProjeto(projetoObj);
+            const jaVinc = somaVinculosDoProjeto(projetoCodigo, null);
+            document.getElementById('vpcProjTotal').innerText = fmtR(orcTot);
+            document.getElementById('vpcProjVinculado').innerText = fmtR(jaVinc);
+            document.getElementById('vpcProjSaldo').innerText = fmtR(orcTot - jaVinc);
+            const hTot = typeof horasAtuaisDoProjeto === 'function' ? horasAtuaisDoProjeto(projetoObj) : 0;
+            const hVinc = somaHorasVinculadasDoProjeto(projetoCodigo, null);
+            document.getElementById('vpcProjHorasTotal').innerText = fmtH(hTot);
+            document.getElementById('vpcProjHorasVinc').innerText = fmtH(hVinc);
+            document.getElementById('vpcProjHorasSaldo').innerText = fmtH(hTot - hVinc);
+            infoProj.classList.remove('hidden');
+        }
+    }
+
     if (!contratoId || !projetoCodigo || !(valor > 0)) { el.innerHTML = ''; return; }
-    const fmtR = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
     const contrato = contratosProjetoCache.find(c => c.id === contratoId);
     const saldoContrato = Number(contrato.valor_total || 0) - somaVinculosDoContrato(contratoId, null);
-    const projeto = (projectsData || []).find(p => p.codigo === projetoCodigo);
-    const orc = projeto ? obterOrcamentoProjeto(projeto) : 0;
+    const orc = projetoObj ? obterOrcamentoProjeto(projetoObj) : 0;
     const saldoProjeto = orc - somaVinculosDoProjeto(projetoCodigo, null);
     const probs = [];
     if (valor > saldoContrato + 0.005) probs.push(`excede o saldo do contrato (${fmtR(saldoContrato)})`);
