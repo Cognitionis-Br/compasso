@@ -174,19 +174,19 @@ async function _enviarInstrucoesPagamentoFornecedor(forn) {
     try {
         const { data: tpl } = await _supabase.from('email_templates')
             .select('*').ilike('assunto', '[Compasso] MODELO PADRÃO PARA ENVIO DE PAGAMENTOS%').eq('ativo', true).maybeSingle();
-        if (tpl) {
+        if (tpl && tpl.texto && tpl.texto.trim()) {
             const rep = s => String(s || '')
                 .replaceAll('{{fornecedor}}', forn.nome)
                 .replaceAll('{{codigo}}', forn.codigo)
                 .replaceAll('{{ref_habilitacao}}', FORNECEDOR_REF_HABILITACAO);
-            assunto = rep(tpl.assunto);
+            assunto = rep(tpl.assunto) || assunto;
             corpo = rep(tpl.texto);
         }
     } catch (_) { /* usa o texto mínimo */ }
 
     const { error } = await enfileirarEmail({
         destinatarioEmail: forn.email, destinatarioNome: forn.nome,
-        assunto, corpo, contexto: 'habilitacao_fornecedor:' + forn.codigo
+        assunto, corpo, contexto: { tipo: 'habilitacao_fornecedor', fornecedor: forn.codigo }
     });
     if (error) { alert('Não foi possível enfileirar as instruções: ' + error); return false; }
     await _supabase.from('empresas_terceirizadas').update({ email_pagamento_instrucoes_em: new Date().toISOString() }).eq('codigo', forn.codigo);
