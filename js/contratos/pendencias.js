@@ -429,11 +429,11 @@ function _pendRenderTabela() {
         return `
         <tr class="${atraso ? 'bg-red-50' : ''}">
             <td class="p-2 text-[10px] text-gray-500 whitespace-nowrap">${(p.criado_em || '').replace('T', ' ').split('.')[0]}</td>
-            <td class="p-2 font-bold text-xs">${p.tipo}</td>
+            <td class="p-2 font-bold text-xs">${p.tipo === 'HABILITACAO' ? 'HABILITAÇÃO' : p.tipo}</td>
             <td class="p-2 text-[10px] uppercase text-gray-500">${p.origem}</td>
             <td class="p-2 text-xs">${escapeHtml(contrato ? contrato.numero_contrato : (p.contrato_ref || '—'))}</td>
             <td class="p-2 text-xs">${escapeHtml(p.projeto_codigo || p.projeto_ref || '—')}</td>
-            <td class="p-2 text-xs">${escapeHtml(p.fornecedor || '—')}</td>
+            <td class="p-2 text-xs">${escapeHtml(p.habilitacao_fornecedor_codigo || p.fornecedor || '—')}</td>
             <td class="p-2 text-right font-mono text-xs">${p.valor != null ? formatCurrency(p.valor) : '—'}</td>
             <td class="p-2 text-center"><span class="${_pendBadgeNf(p.nf_status)} font-bold px-2 py-0.5 rounded text-[9px]">${p.nf_status}${atraso ? ' ⚠' : ''}</span></td>
             <td class="p-2 text-center">
@@ -503,9 +503,10 @@ async function abrirDetalhePendencia(id) {
         ${errosHtml}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Tipo</label>
-                <select id="pendEdTipo" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">
+                <select id="pendEdTipo" ${(editavel && p.tipo !== 'HABILITACAO') ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">
                     <option value="PAGAMENTO" ${p.tipo === 'PAGAMENTO' ? 'selected' : ''}>PAGAMENTO</option>
                     <option value="PROPOSTA" ${p.tipo === 'PROPOSTA' ? 'selected' : ''}>PROPOSTA</option>
+                    ${p.tipo === 'HABILITACAO' ? '<option value="HABILITACAO" selected>HABILITAÇÃO</option>' : ''}
                 </select></div>
             ${p.origem === 'EMAIL' ? `<div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Referência <span class="text-gray-400">(identificação da instância no e-mail)</span></label>
                 <input id="pendEdReferencia" value="${escapeHtml(p.referencia || '')}" disabled class="w-full p-1.5 border rounded bg-gray-50"></div>` : '<input type="hidden" id="pendEdReferencia" value="' + escapeHtml(p.referencia || '') + '">'}
@@ -688,6 +689,30 @@ async function aprovarPendencia(id) {
         await salvarCorrecaoPendencia();
     }
     const atual = pendenciasContratosCache.find(x => x.id === id);
+
+    // HABILITAÇÃO — e-mail inicial do fornecedor (R$ 0,10). Aprovar liga o
+    // atributo B (email_pagamento_aprovado) do fornecedor; não vira pagamento.
+    if (atual.tipo === 'HABILITACAO' || atual.habilitacao_fornecedor_codigo) {
+        const fCod = atual.habilitacao_fornecedor_codigo || null;
+        if (!fCod) return alert('Pendência de habilitação sem fornecedor identificado — corrija antes de aprovar.');
+        const { data: fornRows } = await _supabase.from('empresas_terceirizadas').select('codigo,nome').ilike('codigo', fCod).limit(1);
+        const forn = (fornRows && fornRows[0]) || null;
+        if (!forn) return alert(`Fornecedor "${fCod}" não localizado no cadastro. Cadastre o fornecedor com esse código e aprove novamente.`);
+        const quemH = currentUser ? currentUser.nome : 'desconhecido';
+        const agoraH = new Date().toISOString();
+        const { error: eF } = await _supabase.from('empresas_terceirizadas')
+            .update({ email_pagamento_aprovado: true, email_pagamento_aprovado_em: agoraH }).eq('codigo', forn.codigo);
+        if (eF) return alert('Erro ao habilitar o fornecedor: ' + eF.message);
+        await _supabase.from('contratos_pendencias').update({
+            status: 'APROVADA', decidido_por: quemH, decidido_em: agoraH
+        }).eq('id', id);
+        await _logPendencia(id, 'APROVADA', { habilitacao_fornecedor: fCod });
+        alert(`✅ Fornecedor "${forn.nome}" habilitado para envio de pagamentos por e-mail.`);
+        fecharModalPendencia();
+        await renderPendenciasContratosView();
+        if (typeof renderEmpresasTerceirizadasView === 'function') { try { await renderEmpresasTerceirizadasView(); } catch (_) {} }
+        return;
+    }
 
     if (!atual.contrato_id) return alert('Resolva o CONTRATO antes de aprovar.');
     if (!(Number(atual.valor) > 0)) return alert('Valor total inválido.');

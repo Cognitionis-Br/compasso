@@ -2929,14 +2929,26 @@
                                 <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Código * (até 12 caracteres)</label>
                                 <input type="text" id="empresaCodigoInput" maxlength="12" class="w-full p-2 border border-gray-300 rounded text-xs uppercase font-mono">
                             </div>
-                            <div class="md:col-span-2">
+                            <div class="md:col-span-3">
                                 <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Nome * (até 80 caracteres)</label>
                                 <input type="text" id="empresaNomeInput" maxlength="80" class="w-full p-2 border border-gray-300 rounded text-xs">
                             </div>
+                            <div class="md:col-span-2">
+                                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">E-mail de contato</label>
+                                <input type="email" id="empresaEmailInput" maxlength="120" class="w-full p-2 border border-gray-300 rounded text-xs" placeholder="pagamentos@fornecedor.com">
+                            </div>
                             <div>
-                                <button onclick="salvarEmpresaTerceirizada()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded text-xs transition"><i class="fa-solid fa-floppy-disk"></i> Cadastrar</button>
+                                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Envia pagamentos por e-mail</label>
+                                <select id="empresaEnviaPagEmailInput" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
+                                    <option value="nao">Não</option>
+                                    <option value="sim">Sim</option>
+                                </select>
+                            </div>
+                            <div>
+                                <button onclick="salvarEmpresaTerceirizada()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2 px-4 rounded text-xs transition"><i class="fa-solid fa-floppy-disk"></i> <span id="empresaSalvarLabel">Cadastrar</span></button>
                             </div>
                         </div>
+                        <p class="text-[10px] text-gray-400 mt-2">Com "Envia pagamentos por e-mail = Sim" e um e-mail informado, o sistema enfileira as instruções de habilitação para o fornecedor (template MODELO PADRÃO PARA ENVIO DE PAGAMENTOS E NOTA FISCAL). A aprovação do envio só liga depois de o e-mail inicial de habilitação ser validado em Pendências de Contratos.</p>
                     </div>
                     </div>
 
@@ -2945,7 +2957,7 @@
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
-                                    <th class="p-3">Código</th><th class="p-3">Nome</th><th class="p-3 text-center">Status</th><th class="p-3 text-center">Ação</th>
+                                    <th class="p-3">Código</th><th class="p-3">Nome</th><th class="p-3">E-mail</th><th class="p-3 text-center">Envia pag. e-mail</th><th class="p-3 text-center">Envio aprovado</th><th class="p-3 text-center">Status</th><th class="p-3 text-center">Ação</th>
                                 </tr></thead>
                                 <tbody id="empresasTerceirizadasTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
                             </table>

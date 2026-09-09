@@ -94,6 +94,26 @@ Anexo obrigatório: Nota Fiscal (PDF, JPG ou PNG)
   descartar a pendência.
 - Proposta continua sempre single-project (um `Projeto:` e um `Valor:`).
 
+#### 4.3.2 Habilitação do fornecedor (opt-in do canal de e-mail)
+
+O cadastro do Fornecedor tem dois atributos:
+
+- **A — "envia informações de pagamento por e-mail"** (sim/não), editável a
+  qualquer momento no cadastro.
+- **B — "aprovado o envio de e-mail de pagamentos"** (sim/não), que **não** é
+  editável direto — só liga depois do handshake abaixo.
+
+Quando A é ligado (e há e-mail de contato), o sistema envia ao fornecedor o
+template **MODELO PADRÃO PARA ENVIO DE PAGAMENTOS E NOTA FISCAL**. O fornecedor
+então manda um **e-mail inicial** com uma referência padronizada
+(`HABILITACAO-FORNECEDOR`), o código do fornecedor, contrato, projeto e
+`Valor: R$ 0,10`. Esse e-mail entra como pendência **tipo HABILITACAO**; ao ser
+validada em Pendências de Contratos, o atributo B do fornecedor é ligado.
+
+Enquanto B não estiver ligado, e-mails de pagamento desse fornecedor são
+recebidos mas marcados com erro de leitura ("fornecedor não habilitado"),
+sem virar pagamento.
+
 ### 4.4 Regras de formato
 
 - Campos devem seguir o rótulo exato ("Contrato:", "Projeto:", etc.) para permitir extração confiável — o agente deve tolerar variações simples de maiúsculas/minúsculas e espaçamento, mas não a ausência do rótulo.

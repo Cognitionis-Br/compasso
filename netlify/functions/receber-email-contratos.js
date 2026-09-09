@@ -29,6 +29,9 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
 const SECRET = process.env.INBOUND_CONTRATOS_SECRET || '';
 const REFERENCIA_ESPERADA = (process.env.INBOUND_CONTRATOS_REFERENCIA || '').trim();
+// Referência fixa do e-mail inicial de HABILITAÇÃO do fornecedor (R$ 0,10).
+// Mantém em sincronia com FORNECEDOR_REF_HABILITACAO de js/contratos/contratos.js.
+const HABILITACAO_REF = (process.env.INBOUND_CONTRATOS_HABILITACAO_REF || 'HABILITACAO-FORNECEDOR').trim();
 const BUCKET = 'contratos-anexos';
 
 async function sb(path, init) {
@@ -139,6 +142,61 @@ exports.handler = async (event) => {
     const data = parseData(campo(corpo, 'Data de Referência') || campo(corpo, 'Data de Referencia'));
     const descricao = campo(corpo, 'Descrição/Observações') || campo(corpo, 'Descrição') || campo(corpo, 'Observações') || null;
 
+    // ---- HABILITAÇÃO do fornecedor (e-mail inicial, R$ 0,10) -------------
+    // Reconhecido pela Referência fixa. Não vira pagamento — ao ser aprovado
+    // em Pendências de Contratos, liga email_pagamento_aprovado do fornecedor.
+    if (referencia && referencia.trim().toUpperCase() === HABILITACAO_REF.toUpperCase()) {
+        const fornCod = (campo(corpo, 'Fornecedor') || campo(corpo, 'Fornecedor/Terceiro') || '').trim().toUpperCase();
+        const errosH = [];
+        if (!fornCod) errosH.push({ campo: 'Fornecedor', motivo: 'ausente (informe o código do fornecedor)' });
+        if (!contratoRef) errosH.push({ campo: 'Contrato', motivo: 'ausente' });
+        if (!projetoRef) errosH.push({ campo: 'Projeto', motivo: 'ausente' });
+        if (!data) errosH.push({ campo: 'Data de Referência', motivo: 'ausente ou fora do formato dd/mm/aaaa' });
+
+        let forn = null;
+        if (fornCod) {
+            const f = await sb(`empresas_terceirizadas?codigo=ilike.${encodeURIComponent(fornCod)}&select=codigo,nome,email,email_pagamento_aprovado`);
+            forn = (f.ok && Array.isArray(f.json) && f.json[0]) || null;
+            if (!forn) errosH.push({ campo: 'Fornecedor', motivo: `"${fornCod}" não localizado no cadastro` });
+        }
+        const remet = String(email.remetente || '').trim().toLowerCase();
+        if (forn && forn.email && remet && forn.email.trim().toLowerCase() !== remet)
+            errosH.push({ campo: 'Fornecedor', motivo: `remetente (${remet}) diferente do e-mail cadastrado (${forn.email})` });
+
+        const statusH = errosH.length ? 'ERRO_LEITURA' : 'PENDENTE';
+        const insH = await sb('contratos_pendencias', {
+            method: 'POST',
+            body: JSON.stringify([{
+                tipo: 'HABILITACAO', origem: 'EMAIL', referencia: referencia,
+                contrato_ref: contratoRef || null, projeto_ref: projetoRef || null,
+                valor: parseValor(campo(corpo, 'Valor')) || 0.10,
+                data_referencia: data,
+                descricao: 'Habilitação de envio de pagamentos por e-mail' + (descricao ? ' — ' + descricao : ''),
+                status: statusH, nf_status: email.anexos.length ? 'RECEBIDA' : 'NAO_RECEBIDA',
+                erros_leitura: errosH.length ? errosH : null,
+                habilitacao_fornecedor_codigo: forn ? forn.codigo : (fornCod || null),
+                email_message_id: email.messageId || null,
+                criado_por: `e-mail: ${email.remetente || 'desconhecido'}`
+            }])
+        });
+        if (!insH.ok) return resp(500, { erro: 'Falha ao gravar a pendência de habilitação.', detalhe: insH.json });
+        const pH = Array.isArray(insH.json) ? insH.json[0] : insH.json;
+        const pendIdH = pH && pH.id;
+        if (pendIdH) {
+            for (const a of email.anexos) {
+                const okTipo = /pdf|jpe?g|png/i.test(a.tipo) || /\.(pdf|jpe?g|png)$/i.test(a.nome);
+                if (!okTipo) continue;
+                const nomeSan = String(a.nome).replace(/[^\w.\-]+/g, '_');
+                const path = `pendencias/${pendIdH}/${Date.now()}-${nomeSan}`;
+                if (await storagePut(path, Buffer.from(a.base64, 'base64'), a.tipo)) {
+                    await sb('contratos_pendencias_anexos', { method: 'POST', body: JSON.stringify([{ pendencia_id: pendIdH, storage_path: path, nome_original: a.nome, tipo_mime: a.tipo, classificacao: 'OUTRO', enviado_por: 'e-mail' }]) });
+                }
+            }
+            await sb('log_contratos_pendencias', { method: 'POST', body: JSON.stringify([{ pendencia_id: pendIdH, acao: 'IMPORTADA', por: `e-mail: ${email.remetente || '-'}`, detalhe: { origem: 'EMAIL', habilitacao: fornCod, status: statusH, erros: errosH.length } }]) });
+        }
+        return resp(200, { ok: true, pendencia_id: pendIdH, tipo: 'HABILITACAO', status: statusH, erros: errosH });
+    }
+
     // Pagamento pode ser single-project (campos "Projeto:" + "Valor:") ou
     // rateado entre vários projetos do mesmo contrato (rótulo "Rateio:" +
     // "Valor Total da NF:" + linhas "- Projeto X: valor").
@@ -173,9 +231,22 @@ exports.handler = async (event) => {
     let contrato = null, projeto = null;
     if (contratoRef) {
         const alvo = encodeURIComponent(contratoRef.trim());
-        const c = await sb(`contratos_projeto?numero_contrato=ilike.${alvo}&select=id,numero_contrato,valor_total`);
+        const c = await sb(`contratos_projeto?numero_contrato=ilike.${alvo}&select=id,numero_contrato,valor_total,empresa_codigo`);
         contrato = (c.ok && Array.isArray(c.json) && c.json[0]) || null;
         if (!contrato) erros.push({ campo: 'Contrato', motivo: `"${contratoRef}" não localizado no cadastro` });
+    }
+
+    // gate: o fornecedor do contrato precisa estar habilitado para envio de
+    // pagamentos por e-mail (atributo B). Sem isso, a pendência é criada
+    // sinalizada e não é processável como pagamento.
+    let fornecedorNaoAutorizado = false;
+    if (tipo === 'PAGAMENTO' && contrato && contrato.empresa_codigo) {
+        const f = await sb(`empresas_terceirizadas?codigo=eq.${encodeURIComponent(contrato.empresa_codigo)}&select=codigo,email_pagamento_aprovado`);
+        const forn = (f.ok && Array.isArray(f.json) && f.json[0]) || null;
+        if (!forn || forn.email_pagamento_aprovado !== true) {
+            fornecedorNaoAutorizado = true;
+            erros.push({ campo: 'Fornecedor', motivo: `fornecedor ${contrato.empresa_codigo} não habilitado para envio de pagamentos por e-mail (habilitação pendente)` });
+        }
     }
     if (!multi && projetoRef) {
         const alvo = encodeURIComponent(projetoRef.trim());
@@ -258,7 +329,13 @@ exports.handler = async (event) => {
             method: 'POST',
             body: JSON.stringify([{ pendencia_id: pendId, acao: 'IMPORTADA', por: `e-mail: ${email.remetente || '-'}`, detalhe: { origem: 'EMAIL', messageId: email.messageId, status, rateio: multi ? rateio.length : 0, anexos: email.anexos.length, erros: erros.length } }])
         });
+        if (fornecedorNaoAutorizado) {
+            await sb('log_contratos_pendencias', {
+                method: 'POST',
+                body: JSON.stringify([{ pendencia_id: pendId, acao: 'FORNECEDOR_NAO_AUTORIZADO', por: `e-mail: ${email.remetente || '-'}`, detalhe: { contrato: contratoRef, empresa_codigo: contrato ? contrato.empresa_codigo : null } }])
+            });
+        }
     }
 
-    return resp(200, { ok: true, pendencia_id: pendId, status, rateio: multi ? rateio.length : 0, erros });
+    return resp(200, { ok: true, pendencia_id: pendId, status, rateio: multi ? rateio.length : 0, fornecedor_nao_autorizado: fornecedorNaoAutorizado, erros });
 };

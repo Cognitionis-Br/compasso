@@ -46,6 +46,19 @@ function mudarAbaContratos(aba) {
 // -------------------------------------------------------------------------
 // Empresas Terceirizadas
 // -------------------------------------------------------------------------
+// Referência fixa que o fornecedor usa no e-mail inicial de habilitação
+// (o webhook reconhece por ela). Mantém em sincronia com
+// INBOUND_CONTRATOS_HABILITACAO_REF de netlify/functions/receber-email-contratos.js.
+const FORNECEDOR_REF_HABILITACAO = 'HABILITACAO-FORNECEDOR';
+
+function _fornBadgeSimNao(v, variante) {
+    if (!v) return '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Não</span>';
+    const cls = variante === 'aprovado'
+        ? 'bg-indigo-100 text-indigo-800'
+        : 'bg-green-100 text-green-800';
+    return `<span class="${cls} font-bold px-2 py-0.5 rounded text-[10px] uppercase">Sim</span>`;
+}
+
 async function renderEmpresasTerceirizadasView() {
     const { data, error } = await _supabase.from('empresas_terceirizadas').select('*').order('codigo');
     empresasTerceirizadasCache = error ? [] : (data || []);
@@ -53,15 +66,32 @@ async function renderEmpresasTerceirizadasView() {
     const tbody = document.getElementById('empresasTerceirizadasTableBody');
     if (tbody) {
         tbody.innerHTML = empresasTerceirizadasCache.length === 0
-            ? `<tr><td colspan="4" class="p-4 text-center text-gray-400 font-bold">Nenhum fornecedor cadastrado ainda</td></tr>`
-            : empresasTerceirizadasCache.map(e => `
+            ? `<tr><td colspan="7" class="p-4 text-center text-gray-400 font-bold">Nenhum fornecedor cadastrado ainda</td></tr>`
+            : empresasTerceirizadasCache.map(e => {
+                const enviaPag = e.envia_pagamento_email === true;
+                const aprovado = e.email_pagamento_aprovado === true;
+                const podeAlterar = typeof usuarioPodeAlterarTela === 'function' && usuarioPodeAlterarTela('empresas_terceirizadas');
+                const toggleA = podeAlterar
+                    ? `<button onclick="alternarEnviaPagamentoEmail('${escapeJsAttr(e.codigo)}')" title="Alternar 'envia pagamentos por e-mail'">${_fornBadgeSimNao(enviaPag)}</button>`
+                    : _fornBadgeSimNao(enviaPag);
+                const acaoInstr = (enviaPag && !aprovado && e.email && podeAlterar)
+                    ? `<button onclick="reenviarInstrucoesPagamento('${escapeJsAttr(e.codigo)}')" class="text-indigo-600 hover:text-indigo-800 font-bold text-[11px] ml-2" title="Reenviar instruções de habilitação"><i class="fa-solid fa-paper-plane"></i></button>`
+                    : '';
+                const editar = podeAlterar
+                    ? `<button onclick="editarFornecedor('${escapeJsAttr(e.codigo)}')" class="text-gray-500 hover:text-gray-800 font-bold text-xs mr-1" title="Editar"><i class="fa-solid fa-pen"></i></button>`
+                    : '';
+                return `
                 <tr class="${!e.ativo ? 'opacity-50' : ''}">
                     <td class="p-3 font-mono font-bold">${escapeHtml(e.codigo)}</td>
                     <td class="p-3 font-semibold">${escapeHtml(e.nome)}</td>
+                    <td class="p-3">${escapeHtml(e.email || '—')}</td>
+                    <td class="p-3 text-center">${toggleA}${acaoInstr}</td>
+                    <td class="p-3 text-center">${_fornBadgeSimNao(aprovado, 'aprovado')}</td>
                     <td class="p-3 text-center">${e.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
-                    <td class="p-3 text-center">${botaoSePodeAtivarInativar('empresas_terceirizadas', `<button onclick="alternarAtivoEmpresa('${escapeJsAttr(e.codigo)}')" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i></button>`)}</td>
+                    <td class="p-3 text-center whitespace-nowrap">${editar}${botaoSePodeAtivarInativar('empresas_terceirizadas', `<button onclick="alternarAtivoEmpresa('${escapeJsAttr(e.codigo)}')" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i></button>`)}</td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
     }
 
     // Popula o select de empresa (só ativas) na tela de Contratos.
@@ -72,26 +102,122 @@ async function renderEmpresasTerceirizadasView() {
     }
 }
 
+function _fornLimparForm() {
+    document.getElementById('empresaCodigoInput').value = '';
+    document.getElementById('empresaNomeInput').value = '';
+    const em = document.getElementById('empresaEmailInput'); if (em) em.value = '';
+    const ep = document.getElementById('empresaEnviaPagEmailInput'); if (ep) ep.value = 'nao';
+    document.getElementById('empresaCodigoInput').readOnly = false;
+    const lbl = document.getElementById('empresaSalvarLabel'); if (lbl) lbl.textContent = 'Cadastrar';
+}
+
+function editarFornecedor(codigo) {
+    const e = empresasTerceirizadasCache.find(x => x.codigo === codigo);
+    if (!e) return;
+    document.getElementById('empresaCodigoInput').value = e.codigo;
+    document.getElementById('empresaCodigoInput').readOnly = true;
+    document.getElementById('empresaNomeInput').value = e.nome || '';
+    const em = document.getElementById('empresaEmailInput'); if (em) em.value = e.email || '';
+    const ep = document.getElementById('empresaEnviaPagEmailInput'); if (ep) ep.value = e.envia_pagamento_email ? 'sim' : 'nao';
+    const lbl = document.getElementById('empresaSalvarLabel'); if (lbl) lbl.textContent = 'Salvar alterações';
+    if (typeof mudarAbaEmpresas === 'function') mudarAbaEmpresas('criar');
+}
+
 async function salvarEmpresaTerceirizada() {
-    if (!usuarioPodeIncluirTela('empresas_terceirizadas')) return alert('Você não tem permissão para incluir fornecedores.');
     const codigo = document.getElementById('empresaCodigoInput').value.trim().toUpperCase();
     const nome = document.getElementById('empresaNomeInput').value.trim();
+    const email = (document.getElementById('empresaEmailInput') || {}).value ? document.getElementById('empresaEmailInput').value.trim() : '';
+    const enviaPag = ((document.getElementById('empresaEnviaPagEmailInput') || {}).value || 'nao') === 'sim';
+    const jaExiste = empresasTerceirizadasCache.find(e => e.codigo === codigo);
+
+    if (!jaExiste && !usuarioPodeIncluirTela('empresas_terceirizadas')) return alert('Você não tem permissão para incluir fornecedores.');
+    if (jaExiste && !usuarioPodeAlterarTela('empresas_terceirizadas')) return alert('Você não tem permissão para alterar fornecedores.');
 
     if (!codigo || !nome) return alert('Preencha o código e o nome do fornecedor!');
     if (codigo.length > 12) return alert('O código precisa ter no máximo 12 caracteres!');
     if (nome.length > 80) return alert('O nome precisa ter no máximo 80 caracteres!');
-    if (empresasTerceirizadasCache.some(e => e.codigo === codigo)) {
-        return alert(`⛔ Já existe um fornecedor com o código "${codigo}".`);
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return alert('E-mail de contato inválido.');
+    if (enviaPag && !email) return alert('Para "Envia pagamentos por e-mail = Sim" é preciso informar o e-mail de contato do fornecedor.');
+
+    const quem = currentUser ? currentUser.nome : 'desconhecido';
+    let error;
+    if (jaExiste) {
+        ({ error } = await _supabase.from('empresas_terceirizadas')
+            .update({ nome, email: email || null, envia_pagamento_email: enviaPag })
+            .eq('codigo', codigo));
+    } else {
+        ({ error } = await _supabase.from('empresas_terceirizadas').insert([{
+            codigo, nome, email: email || null, envia_pagamento_email: enviaPag,
+            criado_por: quem, criado_em: new Date().toISOString()
+        }]));
     }
+    if (error) return alert('Erro ao salvar: ' + error.message);
 
-    const { error } = await _supabase.from('empresas_terceirizadas').insert([{
-        codigo, nome, criado_por: currentUser ? currentUser.nome : 'desconhecido', criado_em: new Date().toISOString()
-    }]);
-    if (error) return alert('Erro ao cadastrar: ' + error.message);
+    // liga A -> envia instruções de habilitação (uma vez), se ainda não aprovado
+    let msg = jaExiste ? '✅ Fornecedor atualizado.' : '✅ Fornecedor cadastrado com sucesso!';
+    if (enviaPag && email && !(jaExiste && jaExiste.email_pagamento_aprovado)) {
+        const enviou = await _enviarInstrucoesPagamentoFornecedor({ codigo, nome, email });
+        if (enviou) msg += '\n\n📧 Instruções de habilitação enfileiradas para ' + email + ' (processe a fila de e-mail).';
+    }
+    alert(msg);
+    _fornLimparForm();
+    await renderEmpresasTerceirizadasView();
+}
 
-    alert('✅ Fornecedor cadastrado com sucesso!');
-    document.getElementById('empresaCodigoInput').value = '';
-    document.getElementById('empresaNomeInput').value = '';
+// Monta e enfileira o e-mail "MODELO PADRÃO PARA ENVIO DE PAGAMENTOS E NOTA
+// FISCAL" para o fornecedor. Usa o template do banco quando existe; senão,
+// um texto mínimo. Marca email_pagamento_instrucoes_em.
+async function _enviarInstrucoesPagamentoFornecedor(forn) {
+    if (typeof enfileirarEmail !== 'function') { alert('Fila de e-mail indisponível — instruções não enviadas.'); return false; }
+    let assunto = `[Compasso] MODELO PADRÃO PARA ENVIO DE PAGAMENTOS E NOTA FISCAL — ${forn.nome}`;
+    let corpo = `Prezado(a) ${forn.nome},\n\nPara habilitar o envio de pagamentos por e-mail, mande um e-mail inicial ao canal de contratos com:\nReferência: ${FORNECEDOR_REF_HABILITACAO}\nTipo de Lançamento: Pagamento\nFornecedor: ${forn.codigo}\nContrato: <número do contrato>\nProjeto: <código ou nome>\nValor: R$ 0,10\nData de Referência: <dd/mm/aaaa>\n(anexe qualquer PDF/JPG/PNG como exemplo de NF)\n\nApós esse e-mail ser validado em Pendências de Contratos, seu cadastro fica liberado para pagamentos.\n\nÁrea de Governança`;
+    try {
+        const { data: tpl } = await _supabase.from('email_templates')
+            .select('*').ilike('assunto', '[Compasso] MODELO PADRÃO PARA ENVIO DE PAGAMENTOS%').eq('ativo', true).maybeSingle();
+        if (tpl) {
+            const rep = s => String(s || '')
+                .replaceAll('{{fornecedor}}', forn.nome)
+                .replaceAll('{{codigo}}', forn.codigo)
+                .replaceAll('{{ref_habilitacao}}', FORNECEDOR_REF_HABILITACAO);
+            assunto = rep(tpl.assunto);
+            corpo = rep(tpl.texto);
+        }
+    } catch (_) { /* usa o texto mínimo */ }
+
+    const { error } = await enfileirarEmail({
+        destinatarioEmail: forn.email, destinatarioNome: forn.nome,
+        assunto, corpo, contexto: 'habilitacao_fornecedor:' + forn.codigo
+    });
+    if (error) { alert('Não foi possível enfileirar as instruções: ' + error); return false; }
+    await _supabase.from('empresas_terceirizadas').update({ email_pagamento_instrucoes_em: new Date().toISOString() }).eq('codigo', forn.codigo);
+    return true;
+}
+
+async function reenviarInstrucoesPagamento(codigo) {
+    if (!usuarioPodeAlterarTela('empresas_terceirizadas')) return alert('Você não tem permissão para alterar fornecedores.');
+    const e = empresasTerceirizadasCache.find(x => x.codigo === codigo);
+    if (!e) return;
+    if (!e.email) return alert('Este fornecedor não tem e-mail de contato cadastrado.');
+    if (!confirm(`Reenviar as instruções de habilitação para "${e.nome}" (${e.email})?`)) return;
+    const ok = await _enviarInstrucoesPagamentoFornecedor({ codigo: e.codigo, nome: e.nome, email: e.email });
+    if (ok) { alert('📧 Instruções reenfileiradas. Processe a fila de e-mail.'); await renderEmpresasTerceirizadasView(); }
+}
+
+async function alternarEnviaPagamentoEmail(codigo) {
+    if (!usuarioPodeAlterarTela('empresas_terceirizadas')) return alert('Você não tem permissão para alterar fornecedores.');
+    const e = empresasTerceirizadasCache.find(x => x.codigo === codigo);
+    if (!e) return;
+    const novo = !e.envia_pagamento_email;
+    if (novo && !e.email) return alert('Cadastre o e-mail de contato do fornecedor antes de ligar "envia pagamentos por e-mail" (use o lápis para editar).');
+    if (!confirm(`${novo ? 'Ligar' : 'Desligar'} "envia pagamentos por e-mail" para "${e.nome}"?`)) return;
+
+    const { error } = await _supabase.from('empresas_terceirizadas').update({ envia_pagamento_email: novo }).eq('codigo', codigo);
+    if (error) return alert('Erro ao atualizar: ' + error.message);
+
+    if (novo && e.email && !e.email_pagamento_aprovado) {
+        await _enviarInstrucoesPagamentoFornecedor({ codigo: e.codigo, nome: e.nome, email: e.email });
+        alert('✅ Ligado. Instruções de habilitação enfileiradas para ' + e.email + '.');
+    }
     await renderEmpresasTerceirizadasView();
 }
 
