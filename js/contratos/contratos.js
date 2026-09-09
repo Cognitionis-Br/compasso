@@ -229,183 +229,11 @@ async function salvarContratoProjeto() {
 }
 
 // -------------------------------------------------------------------------
-// Registro de Valores Realizados — por Projeto ou por Proposta, sempre
-// travando no valor total do contrato (item 6, parte pendente).
+// Registro de Valores Realizados — REESCRITO no Release 1: pagamento por
+// Nota Fiscal com rateio entre os projetos vinculados ao contrato. O
+// formulário (compartilhado com "Pendências > Lançar Manual") e o ponto
+// de entrada renderRegistroValoresView() vivem em js/contratos/pagamento-nf.js.
 // -------------------------------------------------------------------------
-let regValVinculoAtual = null;
-
-async function renderRegistroValoresView() {
-    await renderContratosVinculosView(); // garante contratosVinculosCache/contratosProjetoCache/empresasTerceirizadasCache atualizados
-
-    const ordem = document.querySelector('input[name="regValOrdem"]:checked').value;
-    const lista = [...contratosVinculosCache];
-
-    // AJUSTADO (Fase 4 — múltiplos contratos por projeto): a fonte agora é
-    // o VÍNCULO (contratos_vinculos_projeto), não mais o contrato direto —
-    // um projeto pode ter mais de um contrato vinculado, e o mesmo contrato
-    // pode servir mais de um projeto. Cada vínculo tem seu próprio saldo.
-    if (ordem === 'projeto') {
-        lista.sort((a, b) => (a.projeto_codigo || '').localeCompare(b.projeto_codigo || ''));
-    } else {
-        lista.sort((a, b) => {
-            const ca = contratosProjetoCache.find(c => c.id === a.contrato_id);
-            const cb = contratosProjetoCache.find(c => c.id === b.contrato_id);
-            return (ca ? ca.numero_contrato : '').localeCompare(cb ? cb.numero_contrato : '');
-        });
-    }
-
-    const select = document.getElementById('regValContratoSelect');
-    select.innerHTML = '<option value="">-- Selecione --</option>' + lista.map(v => {
-        const c = contratosProjetoCache.find(x => x.id === v.contrato_id);
-        const empresa = c ? empresasTerceirizadasCache.find(e => e.codigo === c.empresa_codigo) : null;
-        const numeroContrato = escapeHtml(c ? c.numero_contrato : '?');
-        const empresaLabel = escapeHtml(empresa ? empresa.nome : (c ? c.empresa_codigo : '?'));
-        const rotulo = ordem === 'projeto'
-            ? `${v.projeto_codigo} — ${numeroContrato} (${empresaLabel})`
-            : `${numeroContrato} — ${v.projeto_codigo} (${empresaLabel})`;
-        return `<option value="${v.id}">${rotulo}</option>`;
-    }).join('');
-
-    document.getElementById('regValDadosWrapper').classList.add('hidden');
-    document.getElementById('regValVisaoContratoWrapper').classList.add('hidden');
-    regValVinculoAtual = null;
-}
-
-async function onSelecionarContratoRegistro() {
-    const id = document.getElementById('regValContratoSelect').value;
-    const wrapper = document.getElementById('regValDadosWrapper');
-    if (!id) {
-        wrapper.classList.add('hidden');
-        document.getElementById('regValVisaoContratoWrapper').classList.add('hidden');
-        regValVinculoAtual = null;
-        return;
-    }
-
-    const v = contratosVinculosCache.find(x => x.id === Number(id));
-    if (!v) return;
-    regValVinculoAtual = v;
-
-    const c = contratosProjetoCache.find(x => x.id === v.contrato_id);
-    const projeto = (projectsData || []).find(p => p.codigo === v.projeto_codigo);
-    const empresa = c ? empresasTerceirizadasCache.find(e => e.codigo === c.empresa_codigo) : null;
-    const saldo = Number(v.valor_vinculo) - Number(v.valor_realizado || 0);
-
-    document.getElementById('regValProjetoInfo').innerText = `${v.projeto_codigo}${projeto ? ' - ' + projeto.nome : ''}`;
-    document.getElementById('regValEmpresaInfo').innerText = (c ? `${c.numero_contrato} — ` : '') + (empresa ? `${empresa.codigo} - ${empresa.nome}` : (c ? c.empresa_codigo : '?'));
-    document.getElementById('regValTotalInfo').innerText = `R$ ${Number(v.valor_vinculo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    document.getElementById('regValRealizadoInfo').innerText = `R$ ${Number(v.valor_realizado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    document.getElementById('regValSaldoInfo').innerText = `R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    document.getElementById('regValValorInput').value = '';
-    document.getElementById('regValObservacaoInput').value = '';
-
-    wrapper.classList.remove('hidden');
-    await renderHistoricoPagamentos(v.id);
-    renderVisaoContratoRegistro(v.contrato_id);
-}
-
-// NOVO (a pedido do usuário 26/08/2026): visão do contrato inteiro — valor
-// total do contrato +, pra cada projeto vinculado a ele, quanto foi
-// alocado (valor_vinculo) e quanto já foi realizado (valor_realizado do
-// próprio vínculo, mantido em dia desde a Fase 4) + saldo, com totais.
-function renderVisaoContratoRegistro(contratoId) {
-    const wrapper = document.getElementById('regValVisaoContratoWrapper');
-    const tbody = document.getElementById('regValVisaoContratoTableBody');
-    if (!wrapper || !tbody) return;
-
-    const contrato = contratosProjetoCache.find(c => c.id === contratoId);
-    document.getElementById('regValContratoTotalGeralInfo').innerText = contrato ? `R$ ${Number(contrato.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-';
-
-    const vinculosDoContrato = contratosVinculosCache.filter(v => v.contrato_id === contratoId);
-    let totalVinculado = 0, totalRealizado = 0;
-
-    tbody.innerHTML = vinculosDoContrato.map(v => {
-        const projeto = (projectsData || []).find(p => p.codigo === v.projeto_codigo);
-        const vinculado = Number(v.valor_vinculo);
-        const realizado = Number(v.valor_realizado || 0);
-        totalVinculado += vinculado;
-        totalRealizado += realizado;
-        return `
-            <tr class="${v.id === (regValVinculoAtual && regValVinculoAtual.id) ? 'bg-indigo-50 font-bold' : ''}">
-                <td class="p-3 font-mono">${v.projeto_codigo}${projeto ? ' - ' + projeto.nome : ''}</td>
-                <td class="p-3 text-right font-mono">R$ ${vinculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td class="p-3 text-right font-mono">R$ ${realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td class="p-3 text-right font-mono">R$ ${(vinculado - realizado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            </tr>
-        `;
-    }).join('') + `
-        <tr class="bg-gray-100 font-bold border-t-2 border-gray-300">
-            <td class="p-3">TOTAL</td>
-            <td class="p-3 text-right font-mono">R$ ${totalVinculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            <td class="p-3 text-right font-mono">R$ ${totalRealizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            <td class="p-3 text-right font-mono">R$ ${(totalVinculado - totalRealizado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-        </tr>
-    `;
-
-    wrapper.classList.remove('hidden');
-}
-
-async function renderHistoricoPagamentos(vinculoId) {
-    const { data, error } = await _supabase.from('contratos_pagamentos').select('*').eq('vinculo_id', vinculoId).order('registrado_em', { ascending: false });
-    const historico = error ? [] : (data || []);
-
-    const tbody = document.getElementById('regValHistoricoTableBody');
-    if (!tbody) return;
-
-    tbody.innerHTML = historico.length === 0
-        ? `<tr><td colspan="4" class="p-4 text-center text-gray-400 font-bold">Nenhum pagamento registrado ainda pra este vínculo</td></tr>`
-        : historico.map(h => `
-            <tr>
-                <td class="p-3 text-xs">${h.registrado_em ? new Date(h.registrado_em).toLocaleString('pt-BR') : '-'}</td>
-                <td class="p-3 text-right font-mono">R$ ${Number(h.valor_pago).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td class="p-3 text-xs uppercase">${escapeHtml(h.registrado_por)}</td>
-                <td class="p-3 text-xs text-gray-500">${escapeHtml(h.observacao) || '-'}</td>
-            </tr>
-        `).join('');
-}
-
-async function registrarValorRealizado() {
-    if (!usuarioPodeIncluirTela('registro_valores_contrato') && !usuarioPodeAlterarTela('registro_valores_contrato')) return alert('Você não tem permissão para registrar valores realizados.');
-    if (!regValVinculoAtual) return alert('Selecione um vínculo (projeto + contrato) primeiro!');
-
-    const valorPago = Number(document.getElementById('regValValorInput').value);
-    const observacao = document.getElementById('regValObservacaoInput').value.trim();
-
-    if (!valorPago || valorPago <= 0) return alert('Informe um valor pago válido!');
-
-    const saldo = Number(regValVinculoAtual.valor_vinculo) - Number(regValVinculoAtual.valor_realizado || 0);
-    if (valorPago > saldo) {
-        return alert(`⛔ O valor informado (R$ ${valorPago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) supera o saldo disponível deste vínculo (R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`);
-    }
-
-    const quem = currentUser ? currentUser.nome : 'desconhecido';
-    const agora = new Date().toISOString();
-    const contratoId = regValVinculoAtual.contrato_id;
-
-    const { error: errorPagamento } = await _supabase.from('contratos_pagamentos').insert([{
-        contrato_id: contratoId, vinculo_id: regValVinculoAtual.id, valor_pago: valorPago, registrado_por: quem, registrado_em: agora, observacao: observacao || null
-    }]);
-    if (errorPagamento) return alert('Erro ao registrar o pagamento: ' + errorPagamento.message);
-
-    const novoRealizadoVinculo = Number(regValVinculoAtual.valor_realizado || 0) + valorPago;
-    const { error: errorVinculo } = await _supabase.from('contratos_vinculos_projeto').update({ valor_realizado: novoRealizadoVinculo }).eq('id', regValVinculoAtual.id);
-    if (errorVinculo) return alert('Pagamento registrado, mas houve erro ao atualizar o total realizado do vínculo: ' + errorVinculo.message);
-
-    // Mantém o agregado do contrato como um todo em sincronia (usado pela
-    // tela Contratos Terceirizados e pelo Relatório de Projetos).
-    const contrato = contratosProjetoCache.find(c => c.id === contratoId);
-    if (contrato) {
-        const novoRealizadoContrato = Number(contrato.valor_realizado || 0) + valorPago;
-        const { error: errorContrato } = await _supabase.from('contratos_projeto').update({ valor_realizado: novoRealizadoContrato }).eq('id', contratoId);
-        if (errorContrato) console.error('Erro ao atualizar o total realizado do contrato:', errorContrato.message);
-        else contrato.valor_realizado = novoRealizadoContrato;
-    }
-
-    regValVinculoAtual.valor_realizado = novoRealizadoVinculo;
-    await recalcularRealizadoProjeto(regValVinculoAtual.projeto_codigo);
-
-    alert('✅ Pagamento registrado com sucesso!');
-    await onSelecionarContratoRegistro();
-}
 
 // -------------------------------------------------------------------------
 // Reconciliação com projetos.realizado (a pedido do usuário 26/08/2026):
@@ -520,13 +348,21 @@ async function abrirZoomRelatorioProjeto(codigo) {
         (contratosData || []).forEach(c => { contratosPorId[c.id] = c; });
     }
 
-    // Pagamentos de TODOS os vínculos do projeto, de uma vez.
+    // Pagamentos (itens de rateio) de TODOS os vínculos do projeto, com o
+    // cabeçalho da NF junto (data / quem / nº NF).
     let pagamentosPorVinculo = {};
     if (vinculos.length > 0) {
-        const { data: pagamentosData } = await _supabase.from('contratos_pagamentos').select('*').in('vinculo_id', vinculos.map(v => v.id));
-        (pagamentosData || []).forEach(pg => {
-            if (!pagamentosPorVinculo[pg.vinculo_id]) pagamentosPorVinculo[pg.vinculo_id] = [];
-            pagamentosPorVinculo[pg.vinculo_id].push(pg);
+        const { data: itensData } = await _supabase.from('contratos_pagamento_itens').select('*').in('vinculo_id', vinculos.map(v => v.id));
+        const itens = itensData || [];
+        let cabPorId = {};
+        if (itens.length > 0) {
+            const { data: cabsData } = await _supabase.from('contratos_pagamentos').select('*').in('id', [...new Set(itens.map(i => i.pagamento_id))]);
+            (cabsData || []).forEach(c => { cabPorId[c.id] = c; });
+        }
+        itens.forEach(i => {
+            const cab = cabPorId[i.pagamento_id] || {};
+            const linha = { valor_pago: i.valor, registrado_em: cab.registrado_em, registrado_por: cab.registrado_por, numero_nf: cab.numero_nf, valor_total_nf: cab.valor_total_nf };
+            (pagamentosPorVinculo[i.vinculo_id] = pagamentosPorVinculo[i.vinculo_id] || []).push(linha);
         });
     }
 
@@ -583,11 +419,12 @@ async function abrirZoomRelatorioProjeto(codigo) {
                             ${pagamentos.length === 0
                                 ? `<p class="text-[11px] text-gray-400 italic">Nenhum pagamento registrado ainda.</p>`
                                 : `<table class="w-full text-left text-[11px]">
-                                    <thead><tr class="text-gray-500 uppercase text-[9px]"><th class="py-1">Data</th><th class="py-1 text-right">Valor Pago</th><th class="py-1">Quem Autorizou</th></tr></thead>
+                                    <thead><tr class="text-gray-500 uppercase text-[9px]"><th class="py-1">Data</th><th class="py-1">NF</th><th class="py-1 text-right">Rateio p/ este projeto</th><th class="py-1">Quem Autorizou</th></tr></thead>
                                     <tbody>
                                         ${pagamentos.map(pg => `
                                             <tr class="border-t border-gray-200">
                                                 <td class="py-1">${pg.registrado_em ? new Date(pg.registrado_em).toLocaleString('pt-BR') : '-'}</td>
+                                                <td class="py-1">${escapeHtml(pg.numero_nf || '-')}</td>
                                                 <td class="py-1 text-right font-mono">${fmt(pg.valor_pago)}</td>
                                                 <td class="py-1 uppercase">${escapeHtml(pg.registrado_por) || '-'}</td>
                                             </tr>

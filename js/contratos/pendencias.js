@@ -114,6 +114,9 @@ function mudarAbaPendencias(aba) {
         if (btn) btn.className = `pend-contratos-btn px-4 py-2 rounded-md text-sm font-bold border-2 ${a === aba ? 'bg-red-700 text-white border-red-700' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
         if (painel) painel.classList.toggle('hidden', a !== aba);
     });
+    if (aba === 'importar' && typeof renderFormPagamentoNF === 'function') {
+        renderFormPagamentoNF('pendManualForm', 'PENDENCIA');
+    }
 }
 
 // -------------------------------------------------------------------------
@@ -145,7 +148,6 @@ async function renderPendenciasContratosView() {
     window._pendPropostasCache = prop || [];
 
     _pendPopularFiltros();
-    _pendPopularSelectsManual();
     _pendRenderTabela();
 }
 
@@ -249,6 +251,16 @@ async function abrirDetalhePendencia(id) {
     const { data: anexos } = await _supabase.from('contratos_pendencias_anexos').select('*').eq('pendencia_id', id).order('enviado_em');
     const listaAnexos = anexos || [];
 
+    const { data: itensPend } = await _supabase.from('contratos_pendencias_itens').select('*').eq('pendencia_id', id);
+    const listaItens = itensPend || [];
+    const itensHtml = listaItens.length === 0 ? '' : `
+        <div class="mt-3">
+            <span class="text-[10px] font-bold uppercase text-gray-500">Rateio por projeto (total NF: ${formatCurrency(p.valor)})</span>
+            <table class="w-full text-xs mt-1 border rounded">
+                <tbody>${listaItens.map(i => `<tr class="border-b border-gray-100"><td class="p-1.5 font-mono">${escapeHtml(i.projeto_codigo || i.projeto_ref || '—')}</td><td class="p-1.5 text-right font-mono">${formatCurrency(i.valor)}</td></tr>`).join('')}</tbody>
+            </table>
+        </div>`;
+
     const podeAprovar = _pendPodeAprovar();
     const editavel = podeAprovar && p.status === 'PENDENTE';
     const optContratos = ['<option value="">— não resolvido —</option>']
@@ -303,12 +315,13 @@ async function abrirDetalhePendencia(id) {
                 <input id="pendEdValor" type="number" step="0.01" value="${p.valor != null ? p.valor : ''}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Data de Referência</label>
                 <input id="pendEdData" type="date" value="${p.data_referencia || ''}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
-            <div class="md:col-span-2"><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Vínculo — Contratos por Projeto <span class="text-gray-400">(obrigatório para PAGAMENTO)</span></label>
+            ${listaItens.length > 0 ? '' : `<div class="md:col-span-2"><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Vínculo — Contratos por Projeto <span class="text-gray-400">(pagamento de 1 projeto só)</span></label>
                 <select id="pendEdVinculo" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">${optVinculos}</select>
-                ${vinculosDoContrato.length === 0 ? '<span class="text-[10px] text-amber-700">Nenhum vínculo para este contrato — crie em Contratos e Terceiros → Contratos por Projeto.</span>' : ''}</div>
+                ${vinculosDoContrato.length === 0 ? '<span class="text-[10px] text-amber-700">Nenhum vínculo para este contrato — crie em Contratos e Terceiros → Contratos por Projeto.</span>' : ''}</div>`}
             <div class="md:col-span-2"><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Descrição / Observações</label>
                 <input id="pendEdDescricao" value="${escapeHtml(p.descricao || '')}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
         </div>
+        ${itensHtml}
 
         <div class="mt-4">
             <div class="flex items-center justify-between mb-1">
@@ -473,8 +486,7 @@ async function aprovarPendencia(id) {
     const atual = pendenciasContratosCache.find(x => x.id === id);
 
     if (!atual.contrato_id) return alert('Resolva o CONTRATO antes de aprovar.');
-    if (!atual.projeto_codigo) return alert('Resolva o PROJETO antes de aprovar.');
-    if (!(Number(atual.valor) > 0)) return alert('Valor inválido.');
+    if (!(Number(atual.valor) > 0)) return alert('Valor total inválido.');
     if (atual.nf_status !== 'RECEBIDA' && atual.nf_status !== 'DISPENSADA') {
         return alert('⛔ Não é possível aprovar sem Nota Fiscal. Anexe a NF ou registre uma dispensa com justificativa.');
     }
@@ -483,47 +495,73 @@ async function aprovarPendencia(id) {
     const agora = new Date().toISOString();
 
     if (atual.tipo === 'PAGAMENTO') {
-        let vinc = atual.vinculo_id ? pendVinculosCache.find(v => v.id === atual.vinculo_id) : _pendResolverVinculo(atual.contrato_id, atual.projeto_codigo);
-        if (!vinc) {
-            const doContrato = (pendVinculosCache || []).filter(v => v.contrato_id === atual.contrato_id);
-            return alert(doContrato.length === 0
-                ? '⛔ Este contrato não tem nenhum vínculo com projeto. Crie o vínculo em Contratos e Terceiros → "Contratos por Projeto" (aloque um valor), depois volte e aprove.'
-                : '⛔ Escolha o Vínculo (Contratos por Projeto) no campo do modal antes de aprovar — este contrato tem mais de um vínculo.');
+        // itens de rateio; se não houver (pendência legada de 1 projeto),
+        // trata como 1 item usando vinculo_id resolvido.
+        let { data: itens } = await _supabase.from('contratos_pendencias_itens').select('*').eq('pendencia_id', id);
+        itens = itens || [];
+        if (itens.length === 0) {
+            const v = atual.vinculo_id ? pendVinculosCache.find(x => x.id === atual.vinculo_id) : _pendResolverVinculo(atual.contrato_id, atual.projeto_codigo);
+            if (!v) {
+                const doContrato = (pendVinculosCache || []).filter(x => x.contrato_id === atual.contrato_id);
+                return alert(doContrato.length === 0
+                    ? '⛔ Este contrato não tem vínculo com projeto. Crie em "Contratos por Projeto" e volte.'
+                    : '⛔ Pendência sem rateio e o contrato tem mais de um vínculo — corrija o rateio antes de aprovar.');
+            }
+            itens = [{ vinculo_id: v.id, projeto_codigo: v.projeto_codigo, valor: Number(atual.valor) }];
         }
-        const saldo = saldoDisponivelVinculo(vinc);
-        if (Number(atual.valor) > saldo) {
-            return alert(`⛔ O valor (${formatCurrency(atual.valor)}) supera o saldo do vínculo (${formatCurrency(saldo)}).`);
+        // resolve os vínculos
+        const linhas = itens.map(i => ({
+            ...i,
+            vinc: pendVinculosCache.find(v => v.id === i.vinculo_id)
+        }));
+        if (linhas.some(l => !l.vinc)) return alert('⛔ Há item de rateio sem vínculo válido. Recrie o vínculo e corrija a pendência.');
+
+        const somaItens = Math.round(linhas.reduce((a, l) => a + Number(l.valor), 0) * 100) / 100;
+        if (Math.abs(somaItens - Number(atual.valor)) >= 0.005) {
+            return alert(`⛔ A soma do rateio (${formatCurrency(somaItens)}) não bate com o valor total da NF (${formatCurrency(atual.valor)}).`);
         }
+        const excede = linhas.find(l => Number(l.valor) > saldoDisponivelVinculo(l.vinc) + 0.005);
+        if (excede) return alert(`⛔ Rateio de ${excede.projeto_codigo} (${formatCurrency(excede.valor)}) supera o saldo do vínculo (${formatCurrency(saldoDisponivelVinculo(excede.vinc))}).`);
+        const contrato = contratosProjetoCache.find(c => c.id === atual.contrato_id);
+        if (contrato) {
+            const jaReal = (pendVinculosCache || []).filter(v => v.contrato_id === contrato.id).reduce((a, v) => a + Number(v.valor_realizado || 0), 0);
+            if (jaReal + Number(atual.valor) > Number(contrato.valor_total || 0) + 0.005) {
+                return alert(`⛔ Total de pagamentos deste contrato (${formatCurrency(jaReal + Number(atual.valor))}) superaria o valor do contrato (${formatCurrency(contrato.valor_total)}).`);
+            }
+        }
+
         const { data: pag, error } = await _supabase.from('contratos_pagamentos').insert([{
-            contrato_id: atual.contrato_id, vinculo_id: vinc.id, valor_pago: Number(atual.valor),
+            contrato_id: atual.contrato_id, valor_total_nf: Number(atual.valor), valor_pago: Number(atual.valor),
+            data_pagamento: atual.data_referencia || null, numero_nf: atual.numero_nf || null,
             registrado_por: quem, registrado_em: agora,
             observacao: (atual.descricao || '') + ' [via pendência #' + id + ']'
         }]).select();
         if (error) return alert('Erro ao gravar o pagamento: ' + error.message);
-        const pagId = pag && pag[0] ? pag[0].id : null;
+        const pagId = pag[0].id;
 
-        const novoRealVinc = Number(vinc.valor_realizado || 0) + Number(atual.valor);
-        await _supabase.from('contratos_vinculos_projeto').update({ valor_realizado: novoRealVinc }).eq('id', vinc.id);
-        vinc.valor_realizado = novoRealVinc;
-        const contrato = contratosProjetoCache.find(c => c.id === atual.contrato_id);
+        await _supabase.from('contratos_pagamento_itens').insert(linhas.map(l => ({
+            pagamento_id: pagId, vinculo_id: l.vinc.id, projeto_codigo: l.vinc.projeto_codigo, valor: Number(l.valor)
+        })));
+
+        for (const l of linhas) {
+            const novo = Number(l.vinc.valor_realizado || 0) + Number(l.valor);
+            await _supabase.from('contratos_vinculos_projeto').update({ valor_realizado: novo }).eq('id', l.vinc.id);
+            l.vinc.valor_realizado = novo;
+        }
         if (contrato) {
             const novoRealContr = Number(contrato.valor_realizado || 0) + Number(atual.valor);
             await _supabase.from('contratos_projeto').update({ valor_realizado: novoRealContr }).eq('id', contrato.id);
             contrato.valor_realizado = novoRealContr;
         }
-        // o realizado do PROJETO é sempre o do projeto DO VÍNCULO (é onde o
-        // valor de fato entra) — não o projeto_codigo cru da pendência, que
-        // pode ter sido resolvido diferente. recalcularRealizadoProjeto
-        // soma todos os vínculos daquele projeto e grava em projetos.realizado
-        // (campo lido por Dashboard/Consultas/Detalhamento).
-        if (typeof recalcularRealizadoProjeto === 'function') await recalcularRealizadoProjeto(vinc.projeto_codigo);
+        for (const proj of [...new Set(linhas.map(l => l.vinc.projeto_codigo))]) {
+            if (typeof recalcularRealizadoProjeto === 'function') await recalcularRealizadoProjeto(proj);
+        }
 
         await _supabase.from('contratos_pendencias').update({
-            status: 'APROVADA', vinculo_id: vinc.id, projeto_codigo: vinc.projeto_codigo,
-            decidido_por: quem, decidido_em: agora,
+            status: 'APROVADA', decidido_por: quem, decidido_em: agora,
             promovido_para_tabela: 'contratos_pagamentos', promovido_para_id: pagId
         }).eq('id', id);
-        await _logPendencia(id, 'APROVADA', { promovido_para: 'contratos_pagamentos', id: pagId, valor: Number(atual.valor) });
+        await _logPendencia(id, 'APROVADA', { promovido_para: 'contratos_pagamentos', id: pagId, valor: Number(atual.valor), itens: linhas.length });
 
     } else { // PROPOSTA
         const contrato = contratosProjetoCache.find(c => c.id === atual.contrato_id);
@@ -677,39 +715,7 @@ function _pendRenderRelatorioImport(okCount, totalLinhas) {
     el.classList.remove('hidden');
 }
 
-async function criarPendenciaManual() {
-    if (!_pendPodeImportar()) return alert('Você não tem permissão.');
-    const tipo = document.getElementById('pendManualTipo').value;
-    const contratoId = document.getElementById('pendManualContrato').value ? Number(document.getElementById('pendManualContrato').value) : null;
-    const projetoCodigo = document.getElementById('pendManualProjeto').value || null;
-    const fornecedor = document.getElementById('pendManualFornecedor').value.trim();
-    const valor = _pendNumero(document.getElementById('pendManualValor').value);
-    const data = document.getElementById('pendManualData').value || null;
-    const obs = document.getElementById('pendManualObs').value.trim();
-
-    if (!contratoId || !projetoCodigo || !fornecedor || !(valor > 0) || !data) {
-        return alert('Preencha contrato, projeto, fornecedor, valor (positivo) e data.');
-    }
-    const vinc = _pendResolverVinculo(contratoId, projetoCodigo);
-    const { data: nova, error } = await _supabase.from('contratos_pendencias').insert([{
-        tipo, origem: 'MANUAL', contrato_id: contratoId, projeto_codigo: projetoCodigo,
-        vinculo_id: vinc ? vinc.id : null, fornecedor, valor, data_referencia: data,
-        descricao: obs || null, status: 'PENDENTE', criado_por: currentUser ? currentUser.nome : 'desconhecido'
-    }]).select();
-    if (error) return alert('Erro ao criar pendência: ' + error.message);
-    if (nova && nova[0]) await _logPendencia(nova[0].id, 'CRIADA', { origem: 'MANUAL' });
-
-    ['pendManualFornecedor', 'pendManualValor', 'pendManualData', 'pendManualObs'].forEach(k => document.getElementById(k).value = '');
-    alert('✅ Pendência criada. Anexe a Nota Fiscal e submeta à aprovação.');
-    mudarAbaPendencias('lista');
-    await renderPendenciasContratosView();
-}
-
-function _pendPopularSelectsManual() {
-    const selC = document.getElementById('pendManualContrato');
-    if (selC) selC.innerHTML = '<option value="">-- Contrato --</option>' +
-        (contratosProjetoCache || []).map(c => `<option value="${c.id}">${escapeHtml(c.numero_contrato)}</option>`).join('');
-    const selP = document.getElementById('pendManualProjeto');
-    if (selP) selP.innerHTML = '<option value="">-- Projeto --</option>' +
-        (projectsData || []).map(pr => `<option value="${escapeHtml(pr.codigo)}">${escapeHtml(pr.codigo)} — ${escapeHtml(pr.nome)}</option>`).join('');
-}
+// Lançamento manual de PAGAMENTO agora usa o formulário compartilhado
+// (js/contratos/pagamento-nf.js -> renderFormPagamentoNF('pendManualForm',
+// 'PENDENCIA')). Lançamento manual de PROPOSTA fica fora do escopo por ora
+// (chega por Excel/e-mail; se precisar, entra depois).
