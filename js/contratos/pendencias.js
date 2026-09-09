@@ -466,7 +466,7 @@ async function abrirDetalhePendencia(id) {
         </div>`;
 
     const podeAprovar = _pendPodeAprovar();
-    const editavel = podeAprovar && p.status === 'PENDENTE';
+    const editavel = podeAprovar && (p.status === 'PENDENTE' || p.status === 'ERRO_LEITURA');
     const optContratos = ['<option value="">— não resolvido —</option>']
         .concat((contratosProjetoCache || []).map(c => `<option value="${c.id}" ${c.id === p.contrato_id ? 'selected' : ''}>${escapeHtml(c.numero_contrato)}</option>`))
         .join('');
@@ -581,6 +581,20 @@ function _pendLerEdicao() {
     };
 }
 
+// Campos mínimos por tipo — usados para tirar uma pendência de ERRO_LEITURA
+// depois da correção manual do aprovador.
+function _pendFaltaMinimo(ed, pend) {
+    const faltas = [];
+    if ((pend.tipo || ed.tipo) === 'HABILITACAO') {
+        if (!pend.habilitacao_fornecedor_codigo) faltas.push('fornecedor da habilitação');
+        return faltas;
+    }
+    if (!ed.contrato_id) faltas.push('Contrato');
+    if (!(Number(ed.valor) > 0)) faltas.push('Valor');
+    if ((pend.tipo || ed.tipo) !== 'PROPOSTA' && !ed.data_referencia) faltas.push('Data de Referência');
+    return faltas;
+}
+
 async function salvarCorrecaoPendencia() {
     if (!pendenciaAtual || !_pendPodeAprovar()) return;
     const antes = { ...pendenciaAtual };
@@ -589,6 +603,12 @@ async function salvarCorrecaoPendencia() {
     if (!ed.vinculo_id) {
         const v = _pendResolverVinculo(ed.contrato_id, ed.projeto_codigo);
         ed.vinculo_id = v ? v.id : null;
+    }
+
+    // correção que resolve os campos obrigatórios tira a pendência de ERRO_LEITURA
+    if (antes.status === 'ERRO_LEITURA' && _pendFaltaMinimo(ed, antes).length === 0) {
+        ed.status = 'PENDENTE';
+        ed.erros_leitura = null;
     }
 
     const { error } = await _supabase.from('contratos_pendencias').update(ed).eq('id', pendenciaAtual.id);
@@ -682,13 +702,18 @@ async function confirmarDispensaNf() {
 async function aprovarPendencia(id) {
     if (!_pendPodeAprovar()) return alert('Você não tem permissão para aprovar pendências.');
     const p = pendenciasContratosCache.find(x => x.id === id);
-    if (!p || p.status !== 'PENDENTE') return;
+    if (!p || (p.status !== 'PENDENTE' && p.status !== 'ERRO_LEITURA')) return;
 
     // aplica correções não salvas se o modal estiver aberto nesta pendência
+    // (é o que pode tirar a pendência de ERRO_LEITURA)
     if (pendenciaAtual && pendenciaAtual.id === id && document.getElementById('pendEdTipo')) {
         await salvarCorrecaoPendencia();
     }
     const atual = pendenciasContratosCache.find(x => x.id === id);
+    if (!atual) return;
+    if (atual.status === 'ERRO_LEITURA') {
+        return alert('⛔ Esta pendência está com erro de leitura. Preencha os campos sinalizados e clique em "Salvar Correção" antes de aprovar.');
+    }
 
     // HABILITAÇÃO — e-mail inicial do fornecedor (R$ 0,10). Aprovar liga o
     // atributo B (email_pagamento_aprovado) do fornecedor; não vira pagamento.
