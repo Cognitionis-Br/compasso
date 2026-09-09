@@ -634,6 +634,12 @@ function _pendData(v) {
     return iso ? _pendDataValida(iso[0]) : null;
 }
 
+// Colunas: Tipo de Lançamento | Contrato | Projeto | Valor |
+//          Data de Referência | Nº da NF | Observações
+// PAGAMENTO: linhas com o MESMO (Contrato + Nº da NF) viram 1 pendência
+//   (cabeçalho) com N itens de rateio; sem Nº da NF, cada linha é 1
+//   pendência de 1 projeto. O fornecedor NÃO é informado — vem do contrato.
+// PROPOSTA: 1 linha = 1 pendência (sem rateio).
 async function processarPlanilhaContratos(input) {
     if (!_pendPodeImportar()) return alert('Você não tem permissão para importar.');
     const f = input.files && input.files[0];
@@ -647,58 +653,82 @@ async function processarPlanilhaContratos(input) {
     const lote = _pendUuid();
     const quem = currentUser ? currentUser.nome : 'desconhecido';
     pendImportErros = [];
-    const paraInserir = [];
 
+    // 1) valida linha a linha e monta as "linhas boas"
+    const boas = [];
     linhas.forEach((row, i) => {
-        const nLinha = i + 2; // +1 header, +1 base-1
+        const nLinha = i + 2;
         const tipoRaw = String(row['Tipo de Lançamento'] || row['Tipo de Lancamento'] || '').trim().toUpperCase();
         const tipo = tipoRaw.startsWith('PROP') ? 'PROPOSTA' : tipoRaw.startsWith('PAG') ? 'PAGAMENTO' : null;
         const contratoRef = String(row['Contrato'] || '').trim();
         const projetoRef = String(row['Projeto'] || '').trim();
-        const fornecedor = String(row['Fornecedor/Terceiro'] || row['Fornecedor'] || '').trim();
         const valor = _pendNumero(row['Valor']);
         const data = _pendData(row['Data de Referência'] || row['Data de Referencia']);
+        const numeroNF = String(row['Nº da NF'] || row['No da NF'] || row['Numero da NF'] || row['Número da NF'] || '').trim();
         const obs = String(row['Observações'] || row['Observacoes'] || '').trim();
 
         const erros = [];
         if (!tipo) erros.push({ campo: 'Tipo de Lançamento', motivo: 'deve ser "Proposta" ou "Pagamento"' });
         if (!contratoRef) erros.push({ campo: 'Contrato', motivo: 'obrigatório' });
         if (!projetoRef) erros.push({ campo: 'Projeto', motivo: 'obrigatório' });
-        if (!fornecedor) erros.push({ campo: 'Fornecedor/Terceiro', motivo: 'obrigatório' });
         if (!(valor > 0)) erros.push({ campo: 'Valor', motivo: 'numérico positivo obrigatório' });
         if (!data) erros.push({ campo: 'Data de Referência', motivo: 'data inválida (use dd/mm/aaaa)' });
-
         if (erros.length) { pendImportErros.push({ linha: nLinha, erros }); return; }
 
         const contrato = _pendResolverContrato(contratoRef);
         const projeto = (projectsData || []).find(pr =>
             String(pr.codigo || '').toUpperCase() === projetoRef.toUpperCase() ||
             String(pr.nome || '').toUpperCase() === projetoRef.toUpperCase());
+        boas.push({ nLinha, tipo, contratoRef, contrato, projetoRef, projeto, valor, data, numeroNF, obs });
+    });
+
+    // 2) agrupa PAGAMENTO por (contratoRef + Nº NF); PROPOSTA fica solto
+    const grupos = new Map();
+    boas.forEach(b => {
+        const chave = b.tipo === 'PAGAMENTO' && b.numeroNF
+            ? `PAG|${b.contratoRef.toUpperCase()}|${b.numeroNF.toUpperCase()}`
+            : `${b.tipo}|${b.nLinha}`;
+        if (!grupos.has(chave)) grupos.set(chave, []);
+        grupos.get(chave).push(b);
+    });
+
+    // 3) cria uma pendência (+itens) por grupo
+    let criadas = 0;
+    for (const [, rows] of grupos) {
+        const first = rows[0];
+        const contrato = first.contrato;
         const errosLeitura = [];
-        if (!contrato) errosLeitura.push({ campo: 'Contrato', motivo: `"${contratoRef}" não localizado no cadastro` });
-        if (!projeto) errosLeitura.push({ campo: 'Projeto', motivo: `"${projetoRef}" não localizado no cadastro` });
+        if (!contrato) errosLeitura.push({ campo: 'Contrato', motivo: `"${first.contratoRef}" não localizado no cadastro` });
+        rows.filter(r => !r.projeto).forEach(r => errosLeitura.push({ campo: 'Projeto', motivo: `linha ${r.nLinha}: "${r.projetoRef}" não localizado` }));
 
-        const vinc = (contrato && projeto) ? _pendResolverVinculo(contrato.id, projeto.codigo) : null;
+        const total = Math.round(rows.reduce((a, r) => a + r.valor, 0) * 100) / 100;
 
-        paraInserir.push({
-            tipo, origem: 'UPLOAD_EXCEL', lote_importacao: lote,
-            contrato_ref: contratoRef, contrato_id: contrato ? contrato.id : null,
-            projeto_ref: projetoRef, projeto_codigo: projeto ? projeto.codigo : null,
-            vinculo_id: vinc ? vinc.id : null,
-            fornecedor, valor, data_referencia: data, descricao: obs || null,
+        const { data: cab, error } = await _supabase.from('contratos_pendencias').insert([{
+            tipo: first.tipo, origem: 'UPLOAD_EXCEL', lote_importacao: lote,
+            contrato_ref: first.contratoRef, contrato_id: contrato ? contrato.id : null,
+            projeto_ref: rows.length === 1 ? first.projetoRef : null,
+            projeto_codigo: (rows.length === 1 && first.projeto) ? first.projeto.codigo : null,
+            numero_nf: first.numeroNF || null,
+            valor: total, data_referencia: first.data, descricao: first.obs || null,
             status: errosLeitura.length ? 'ERRO_LEITURA' : 'PENDENTE',
             erros_leitura: errosLeitura.length ? errosLeitura : null,
             criado_por: quem
-        });
-    });
+        }]).select();
+        if (error) { pendImportErros.push({ linha: first.nLinha, erros: [{ campo: '-', motivo: 'erro ao gravar: ' + error.message }] }); continue; }
+        const pendId = cab[0].id;
+        criadas++;
+        await _logPendencia(pendId, 'IMPORTADA', { lote, itens: rows.length });
 
-    if (paraInserir.length) {
-        const { data: inseridas, error } = await _supabase.from('contratos_pendencias').insert(paraInserir).select('id');
-        if (error) return alert('Erro ao gravar as pendências: ' + error.message);
-        for (const r of (inseridas || [])) await _logPendencia(r.id, 'IMPORTADA', { lote });
+        if (first.tipo === 'PAGAMENTO') {
+            const itens = rows.map(r => {
+                const vinc = (contrato && r.projeto) ? _pendResolverVinculo(contrato.id, r.projeto.codigo) : null;
+                return { pendencia_id: pendId, vinculo_id: vinc ? vinc.id : null, projeto_ref: r.projetoRef, projeto_codigo: r.projeto ? r.projeto.codigo : null, valor: r.valor };
+            });
+            await _supabase.from('contratos_pendencias_itens').insert(itens);
+        }
     }
 
-    _pendRenderRelatorioImport(paraInserir.length, linhas.length);
+    _pendRenderRelatorioImport(criadas, linhas.length);
     input.value = '';
     await renderPendenciasContratosView();
 }

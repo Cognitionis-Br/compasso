@@ -3170,7 +3170,7 @@
                         <div id="pendContratosPainel-importar" class="pend-contratos-painel hidden">
                             <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mb-4">
                                 <h4 class="font-bold text-gray-800 text-sm mb-1 uppercase tracking-wider">Upload de Planilha Excel</h4>
-                                <p class="text-xs text-gray-500 mb-3">Colunas: <b>Tipo de Lançamento</b> (Proposta/Pagamento), <b>Contrato</b>, <b>Projeto</b>, <b>Fornecedor/Terceiro</b>, <b>Valor</b>, <b>Data de Referência</b> (dd/mm/aaaa), Observações. Uma pendência por linha válida; linhas com erro entram no relatório sem travar as demais.</p>
+                                <p class="text-xs text-gray-500 mb-3">Colunas: <b>Tipo de Lançamento</b> (Proposta/Pagamento), <b>Contrato</b>, <b>Projeto</b>, <b>Valor</b>, <b>Data de Referência</b> (dd/mm/aaaa), <b>Nº da NF</b>, Observações. O fornecedor vem do contrato — não precisa informar. Em <b>Pagamento</b>, linhas com o mesmo Contrato + Nº da NF viram uma pendência só, com o valor rateado entre os projetos daquelas linhas. Linhas com erro entram no relatório sem travar as demais.</p>
                                 <input type="file" accept=".xlsx,.xls" onchange="processarPlanilhaContratos(this)" class="text-xs">
                                 <div id="pendImportRelatorio" class="hidden mt-3 border rounded p-2 bg-gray-50"></div>
                             </div>
