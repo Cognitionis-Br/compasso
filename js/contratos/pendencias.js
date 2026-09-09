@@ -315,9 +315,9 @@ async function abrirDetalhePendencia(id) {
                 <input id="pendEdValor" type="number" step="0.01" value="${p.valor != null ? p.valor : ''}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Data de Referência</label>
                 <input id="pendEdData" type="date" value="${p.data_referencia || ''}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
-            ${listaItens.length > 0 ? '' : `<div class="md:col-span-2"><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Vínculo — Contratos por Projeto <span class="text-gray-400">(pagamento de 1 projeto só)</span></label>
+            ${listaItens.length > 0 ? '' : `<div class="md:col-span-2"><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Vínculo (projeto + contrato) <span class="text-gray-400">(pagamento de 1 projeto só)</span></label>
                 <select id="pendEdVinculo" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">${optVinculos}</select>
-                ${vinculosDoContrato.length === 0 ? '<span class="text-[10px] text-amber-700">Nenhum vínculo para este contrato — crie em Contratos e Terceiros → Contratos por Projeto.</span>' : ''}</div>`}
+                ${vinculosDoContrato.length === 0 ? '<span class="text-[10px] text-amber-700">Nenhum vínculo para este contrato — crie em Vincular Projeto e Contrato.</span>' : ''}</div>`}
             <div class="md:col-span-2"><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Descrição / Observações</label>
                 <input id="pendEdDescricao" value="${escapeHtml(p.descricao || '')}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
         </div>
@@ -504,7 +504,7 @@ async function aprovarPendencia(id) {
             if (!v) {
                 const doContrato = (pendVinculosCache || []).filter(x => x.contrato_id === atual.contrato_id);
                 return alert(doContrato.length === 0
-                    ? '⛔ Este contrato não tem vínculo com projeto. Crie em "Contratos por Projeto" e volte.'
+                    ? '⛔ Este contrato não tem vínculo com projeto. Crie em "Vincular Projeto e Contrato" e volte.'
                     : '⛔ Pendência sem rateio e o contrato tem mais de um vínculo — corrija o rateio antes de aprovar.');
             }
             itens = [{ vinculo_id: v.id, projeto_codigo: v.projeto_codigo, valor: Number(atual.valor) }];

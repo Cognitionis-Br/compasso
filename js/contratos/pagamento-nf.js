@@ -133,7 +133,7 @@ function onPnfContratoChange() {
     const vinculos = contratosVinculosCache.filter(v => v.contrato_id === _pnfContratoId);
     const body = document.getElementById('pnfRateioBody');
     if (!_pnfContratoId || vinculos.length === 0) {
-        body.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-amber-700 font-bold">${_pnfContratoId ? 'Este contrato não tem projetos vinculados — crie o vínculo em "Contratos por Projeto".' : 'Selecione um contrato.'}</td></tr>`;
+        body.innerHTML = `<tr><td colspan="5" class="p-3 text-center text-amber-700 font-bold">${_pnfContratoId ? 'Este contrato não tem projetos vinculados — crie o vínculo em "Vincular Projeto e Contrato".' : 'Selecione um contrato.'}</td></tr>`;
         ['pnfRateioWrapper', 'pnfAnexoWrapper', 'pnfBotaoSalvar'].forEach(id => document.getElementById(id).classList.add('hidden'));
     } else {
         body.innerHTML = vinculos.map(v => {

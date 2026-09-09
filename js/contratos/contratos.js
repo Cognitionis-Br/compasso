@@ -45,7 +45,7 @@ async function renderEmpresasTerceirizadasView() {
     const tbody = document.getElementById('empresasTerceirizadasTableBody');
     if (tbody) {
         tbody.innerHTML = empresasTerceirizadasCache.length === 0
-            ? `<tr><td colspan="4" class="p-4 text-center text-gray-400 font-bold">Nenhuma empresa cadastrada ainda</td></tr>`
+            ? `<tr><td colspan="4" class="p-4 text-center text-gray-400 font-bold">Nenhum fornecedor cadastrado ainda</td></tr>`
             : empresasTerceirizadasCache.map(e => `
                 <tr class="${!e.ativo ? 'opacity-50' : ''}">
                     <td class="p-3 font-mono font-bold">${escapeHtml(e.codigo)}</td>
@@ -65,15 +65,15 @@ async function renderEmpresasTerceirizadasView() {
 }
 
 async function salvarEmpresaTerceirizada() {
-    if (!usuarioPodeIncluirTela('empresas_terceirizadas')) return alert('Você não tem permissão para incluir empresas terceirizadas.');
+    if (!usuarioPodeIncluirTela('empresas_terceirizadas')) return alert('Você não tem permissão para incluir fornecedores.');
     const codigo = document.getElementById('empresaCodigoInput').value.trim().toUpperCase();
     const nome = document.getElementById('empresaNomeInput').value.trim();
 
-    if (!codigo || !nome) return alert('Preencha o código e o nome da empresa!');
+    if (!codigo || !nome) return alert('Preencha o código e o nome do fornecedor!');
     if (codigo.length > 12) return alert('O código precisa ter no máximo 12 caracteres!');
     if (nome.length > 80) return alert('O nome precisa ter no máximo 80 caracteres!');
     if (empresasTerceirizadasCache.some(e => e.codigo === codigo)) {
-        return alert(`⛔ Já existe uma empresa com o código "${codigo}".`);
+        return alert(`⛔ Já existe um fornecedor com o código "${codigo}".`);
     }
 
     const { error } = await _supabase.from('empresas_terceirizadas').insert([{
@@ -81,7 +81,7 @@ async function salvarEmpresaTerceirizada() {
     }]);
     if (error) return alert('Erro ao cadastrar: ' + error.message);
 
-    alert('✅ Empresa cadastrada com sucesso!');
+    alert('✅ Fornecedor cadastrado com sucesso!');
     document.getElementById('empresaCodigoInput').value = '';
     document.getElementById('empresaNomeInput').value = '';
     await renderEmpresasTerceirizadasView();
@@ -90,9 +90,9 @@ async function salvarEmpresaTerceirizada() {
 async function alternarAtivoEmpresa(codigo) {
     const e = empresasTerceirizadasCache.find(x => x.codigo === codigo);
     if (!e) return;
-    if (e.ativo && !usuarioPodeDeletarTela('empresas_terceirizadas')) return alert('Você não tem permissão para inativar empresas terceirizadas.');
-    if (!e.ativo && !usuarioPodeAlterarTela('empresas_terceirizadas')) return alert('Você não tem permissão para reativar empresas terceirizadas.');
-    if (!confirm(`Confirma ${e.ativo ? 'inativar' : 'reativar'} a empresa "${e.nome}"?`)) return;
+    if (e.ativo && !usuarioPodeDeletarTela('empresas_terceirizadas')) return alert('Você não tem permissão para inativar fornecedores.');
+    if (!e.ativo && !usuarioPodeAlterarTela('empresas_terceirizadas')) return alert('Você não tem permissão para reativar fornecedores.');
+    if (!confirm(`Confirma ${e.ativo ? 'inativar' : 'reativar'} o fornecedor "${e.nome}"?`)) return;
 
     const { error } = await _supabase.from('empresas_terceirizadas').update({ ativo: !e.ativo }).eq('codigo', codigo);
     if (error) return alert('Erro ao atualizar: ' + error.message);

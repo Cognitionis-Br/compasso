@@ -255,14 +255,14 @@
                     <button onclick="toggleSidebarMenu('menu-contratos', 'icon-contratos')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
                             <i class="fa-solid fa-file-signature text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase whitespace-nowrap text-[11px] tracking-wide">Contratos & Terceiros</span>
+                            <span class="uppercase whitespace-nowrap text-[11px] tracking-wide">Contratos e Fornecedores</span>
                         </div>
                         <i id="icon-contratos" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
                     <div id="menu-contratos" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('empresas_terceirizadas')" id="link-empresas_terceirizadas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Empresas Terceirizadas</button>
+                        <button onclick="switchTab('empresas_terceirizadas')" id="link-empresas_terceirizadas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fornecedores</button>
                         <button onclick="switchTab('contratos_projeto')" id="link-contratos_projeto" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Contratos Terceirizados</button>
-                        <button onclick="switchTab('contratos_vinculos')" id="link-contratos_vinculos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Contratos por Projeto</button>
+                        <button onclick="switchTab('contratos_vinculos')" id="link-contratos_vinculos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Vincular Projeto e Contrato</button>
                         <button onclick="switchTab('registro_valores_contrato')" id="link-registro_valores_contrato" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Registro de Valores Realizados</button>
                         <button onclick="switchTab('relatorio_projetos_contratos')" id="link-relatorio_projetos_contratos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Relatório de Projetos</button>
                         <button onclick="switchTab('contratos_pendencias')" id="link-contratos_pendencias" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pendências de Contratos</button>
@@ -2656,7 +2656,7 @@
                 </div>
 
                 <!-- NOVO (evolução de RLS — cargos, 27/08/2026): mesmo padrão
-                     de 2 abas usado em Usuários/Empresas Terceirizadas. -->
+                     de 2 abas usado em Usuários/Fornecedores. -->
                 <div id="view-cargos" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Cargos</h2></div>
 
@@ -2910,16 +2910,16 @@
                 </div>
 
                 <!-- NOVO (item 7): Governança — Cobrança de Ajustes -->
-                <!-- NOVO (item 6): Empresas Terceirizadas -->
+                <!-- Fornecedores (antes "Empresas Terceirizadas") -->
                 <div id="view-empresas_terceirizadas" class="tab-content hidden">
-                    <div class="mb-6 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Empresas Terceirizadas</h2></div>
+                    <div class="mb-6 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Fornecedores</h2></div>
 
                     <!-- NOVO (a pedido do usuário 25/08/2026 — padronização/segregação
                          de atividades): 2 abas, mesmo padrão V2 de Usuários/Funções/
                          Responsáveis. -->
                     <div class="flex gap-2 mb-4 flex-wrap">
-                        <button onclick="mudarAbaEmpresas('criar')" id="empresasBtn-criar" class="empresas-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Nova Empresa</button>
-                        <button onclick="mudarAbaEmpresas('cadastradas')" id="empresasBtn-cadastradas" class="empresas-btn px-4 py-2 rounded-md text-sm font-bold border-2">Empresas Cadastradas</button>
+                        <button onclick="mudarAbaEmpresas('criar')" id="empresasBtn-criar" class="empresas-btn px-4 py-2 rounded-md text-sm font-bold border-2">Cadastrar Novo Fornecedor</button>
+                        <button onclick="mudarAbaEmpresas('cadastradas')" id="empresasBtn-cadastradas" class="empresas-btn px-4 py-2 rounded-md text-sm font-bold border-2">Fornecedores Cadastrados</button>
                     </div>
 
                     <div id="empresasPainel-criar" class="empresas-painel">
@@ -2960,7 +2960,7 @@
                 <div id="view-contratos_projeto" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800">Contratos Terceirizados</h2>
-                        <p class="text-xs text-gray-500 mt-1">Cadastro do contrato em si (empresa, número, valor). Vincular o contrato a um ou mais projetos é feito em outra tela.</p>
+                        <p class="text-xs text-gray-500 mt-1">Cadastro do contrato em si (fornecedor, número, valor). Vincular o contrato a um ou mais projetos é feito em outra tela.</p>
                     </div>
 
                     <!-- NOVO (a pedido do usuário 25/08/2026): 2 abas, mesmo padrão V2. -->
@@ -2974,7 +2974,7 @@
                         <h4 class="font-bold text-gray-800 text-sm mb-3 uppercase tracking-wider">Novo Contrato</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                             <div>
-                                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Empresa *</label>
+                                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Fornecedor *</label>
                                 <select id="contratoEmpresaSelect" onchange="atualizarPreviaNumeroContrato()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
                                     <option value="">-- Selecione --</option>
                                 </select>
@@ -3022,7 +3022,7 @@
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
-                                    <th class="p-3">Empresa</th><th class="p-3">Contrato</th>
+                                    <th class="p-3">Fornecedor</th><th class="p-3">Contrato</th>
                                     <th class="p-3">Início</th><th class="p-3 text-right">Valor Total</th><th class="p-3 text-right">Realizado</th>
                                     <th class="p-3 text-center">Status</th><th class="p-3 text-center">Ação</th>
                                 </tr></thead>
@@ -3037,9 +3037,9 @@
                      Contratos Terceirizados e Projetos — 1 contrato pode ser ligado a
                      vários projetos, e vice-versa, cada vínculo com seu próprio valor. -->
                 <div id="view-contratos_vinculos" class="tab-content hidden">
-                    <div class="mb-6 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Contratos por Projeto</h2>
-                        <p class="text-xs text-gray-500 mt-1">Liga contratos já cadastrados (Contratos Terceirizados) a um ou mais projetos, com o valor de cada vínculo. A soma dos vínculos de um projeto não pode superar o orçamento dele, e a soma dos vínculos de um contrato não pode superar o valor total do contrato. Só é possível editar ou excluir um vínculo enquanto o contrato ainda não tiver nenhum valor realizado.</p>
+                    <div class="mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Vincular Projeto e Contrato</h2>
+                        <p class="text-xs text-gray-500 mt-1">Liga contratos a projetos, com o valor alocado de cada vínculo. Um projeto pode ter vários contratos; um contrato pode ratear seu valor entre vários projetos. A soma dos vínculos de um projeto não pode superar o orçamento dele; a soma dos vínculos de um contrato não pode superar o valor total do contrato. Vínculo só pode ser editado/excluído enquanto não houver valor realizado.</p>
                     </div>
 
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200 mb-6">
@@ -3087,7 +3087,7 @@
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
-                                    <th class="p-3">Projeto</th><th class="p-3">Contrato</th><th class="p-3">Empresa</th>
+                                    <th class="p-3">Projeto</th><th class="p-3">Contrato</th><th class="p-3">Fornecedor</th>
                                     <th class="p-3 text-right">Valor do Vínculo</th><th class="p-3 text-center">Ação</th>
                                 </tr></thead>
                                 <tbody id="contratosVinculosTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
