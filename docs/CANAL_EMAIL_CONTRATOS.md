@@ -67,6 +67,7 @@ Ordem sugerida (todos idempotentes):
 | `SUPABASE_SERVICE_KEY` | sim | service_role key (ou a publishable — as tabelas de pendência estão com RLS off) |
 | `INBOUND_CONTRATOS_SECRET` | sim | segredo compartilhado com o provedor. O webhook só é aceito se vier `?secret=<valor>` na URL **ou** header `X-Webhook-Secret: <valor>`. Sem match → HTTP 401. |
 | `INBOUND_CONTRATOS_REFERENCIA` | recomendada | valor esperado do campo **Referência** do corpo (identifica **esta** instância/cliente — a caixa de e-mail não é exclusiva, §4.1). Se vazia, a Referência não é validada. |
+| `INBOUND_CONTRATOS_HABILITACAO_REF` | opcional | referência do e-mail inicial de **habilitação** do fornecedor (padrão `HABILITACAO-FORNECEDOR`). Deve bater com `FORNECEDOR_REF_HABILITACAO` de `js/contratos/contratos.js`. |
 
 ---
 
@@ -126,9 +127,54 @@ Anexo: Nota Fiscal em PDF, JPG ou PNG
 - Sem anexo PDF/JPG/PNG → pendência criada com `nf_status = 'NAO_RECEBIDA'`
   (destaque na lista; **bloqueia a aprovação** até anexar ou dispensar — §6).
   Anexos de outros formatos são ignorados.
-- E-mail é **single-project**: gera 1 item de rateio (`contratos_pendencias_itens`)
-  com o valor total. Rateio entre vários projetos continua sendo pelo canal
-  Excel ou pela correção manual da pendência antes de aprovar.
+### Pagamento rateado entre vários projetos (§4.3.1)
+
+Se o contrato está vinculado a mais de um projeto, o corpo troca `Projeto:` +
+`Valor:` por um bloco de rateio:
+
+```
+Referência: ACME-PROD
+Tipo de Lançamento: Pagamento
+Contrato: ACME20260900001
+Valor Total da NF: R$ 30.000,00
+Data de Referência: 09/09/2026
+Rateio:
+- Projeto PRJ-0042: R$ 18.000,00
+- Projeto PRJ-0043: R$ 12.000,00
+Descrição/Observações: NF 12346
+
+Anexo obrigatório: Nota Fiscal (PDF, JPG ou PNG)
+```
+
+- A presença de `Rateio:` **ou** `Valor Total da NF:` já ativa o modo rateado.
+- Cada linha `- Projeto X: valor` vira um item de `contratos_pendencias_itens`;
+  a soma tem de fechar com o `Valor Total da NF` (senão → `ERRO_LEITURA`).
+- Single-project (um `Projeto:` + um `Valor:`) continua gerando 1 item.
+- O modelo pronto para os dois casos está na aba **Modelo de E-mail** da tela
+  *Pendências de Contratos* (escolhe o contrato e o texto sai preenchido).
+
+### Habilitação do fornecedor (atributos A/B)
+
+O fornecedor só tem os e-mails de pagamento **aceitos** depois de habilitado:
+
+1. No cadastro de Fornecedores, liga-se **A — "envia pagamentos por e-mail"**
+   (com e-mail de contato). O sistema enfileira o template *MODELO PADRÃO PARA
+   ENVIO DE PAGAMENTOS E NOTA FISCAL* para o fornecedor.
+2. O fornecedor manda um **e-mail inicial** com `Referência:
+   HABILITACAO-FORNECEDOR`, `Fornecedor: <código>`, contrato, projeto e
+   `Valor: R$ 0,10` (anexo de exemplo). Vira uma pendência **tipo
+   HABILITACAO**.
+3. Ao **aprovar** essa pendência em *Pendências de Contratos*, liga-se
+   **B — `email_pagamento_aprovado`** do fornecedor.
+4. A partir daí, e-mails de PAGAMENTO desse fornecedor são processados.
+   Antes disso (ou se A/B estiverem desligados), o webhook cria a pendência
+   com `ERRO_LEITURA` e o motivo *"fornecedor … não habilitado para envio de
+   pagamentos por e-mail"* (log `FORNECEDOR_NAO_AUTORIZADO`), sem virar
+   pagamento.
+
+O e-mail de habilitação **não** é validado contra `INBOUND_CONTRATOS_REFERENCIA`
+(usa a referência fixa `INBOUND_CONTRATOS_HABILITACAO_REF`); a conferência é
+feita por um humano ao aprovar a pendência.
 
 ### Dedupe
 O `Message-Id` do e-mail é gravado em `contratos_pendencias.email_message_id`

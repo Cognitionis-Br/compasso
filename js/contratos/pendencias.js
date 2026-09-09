@@ -108,7 +108,7 @@ function _pendSomaPropostasContrato(contratoId, exclProstaId) {
 // Abas
 // -------------------------------------------------------------------------
 function mudarAbaPendencias(aba) {
-    ['lista', 'importar'].forEach(a => {
+    ['lista', 'importar', 'modelo'].forEach(a => {
         const btn = document.getElementById(`pendContratosBtn-${a}`);
         const painel = document.getElementById(`pendContratosPainel-${a}`);
         if (btn) btn.className = `pend-contratos-btn px-4 py-2 rounded-md text-sm font-bold border-2 ${a === aba ? 'bg-red-700 text-white border-red-700' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
@@ -117,6 +117,178 @@ function mudarAbaPendencias(aba) {
     if (aba === 'importar' && typeof renderFormPagamentoNF === 'function') {
         renderFormPagamentoNF('pendManualForm', 'PENDENCIA');
     }
+    if (aba === 'modelo' && typeof renderModeloEmailPendencia === 'function') {
+        renderModeloEmailPendencia();
+    }
+}
+
+// -------------------------------------------------------------------------
+// Aba "Modelo de E-mail" — texto padrão que o fornecedor envia para o
+// canal de e-mail (spec §4.2/§4.3). Consulta: escolhe o contrato e o
+// modelo já sai com o número e os projetos vinculados; 1 projeto -> formato
+// simples, vários -> formato com rateio.
+// -------------------------------------------------------------------------
+function _modeloRefInstancia() {
+    return '«Referência da instância — conforme configurado pelo administrador»';
+}
+function _modeloNomeProjeto(cod) {
+    const p = (projectsData || []).find(x => x.codigo === cod);
+    return p ? p.nome : cod;
+}
+
+function renderModeloEmailPendencia() {
+    const sel = document.getElementById('modeloEmailContrato');
+    if (!sel) return;
+    const atual = sel.value;
+    const lista = (contratosProjetoCache || []).slice()
+        .sort((a, b) => String(a.numero_contrato || '').localeCompare(String(b.numero_contrato || ''), 'pt-BR'));
+    sel.innerHTML = '<option value="">— selecione —</option>' + lista.map(c =>
+        `<option value="${c.id}" ${String(c.id) === atual ? 'selected' : ''}>${escapeHtml(c.numero_contrato || ('#' + c.id))}</option>`
+    ).join('');
+    _modeloEmailRenderExemplos();
+    onModeloEmailContratoChange();
+}
+
+function onModeloEmailContratoChange() {
+    const out = document.getElementById('modeloEmailSaida');
+    const projBox = document.getElementById('modeloEmailProjetos');
+    if (!out) return;
+    const cid = Number((document.getElementById('modeloEmailContrato') || {}).value || 0);
+    const tipo = ((document.getElementById('modeloEmailTipo') || {}).value || 'PAGAMENTO').toUpperCase();
+
+    if (!cid) {
+        out.textContent = 'Selecione um contrato para gerar o modelo.';
+        if (projBox) projBox.innerHTML = '';
+        return;
+    }
+
+    const contrato = (contratosProjetoCache || []).find(c => c.id === cid);
+    const numero = contrato ? (contrato.numero_contrato || ('#' + cid)) : ('#' + cid);
+    const vincs = (pendVinculosCache || []).filter(v => v.contrato_id === cid);
+    const ref = _modeloRefInstancia();
+
+    let assunto, linhas;
+    if (tipo === 'PROPOSTA') {
+        const proj = vincs.length === 1 ? vincs[0].projeto_codigo : '«projeto»';
+        assunto = `[CONTRATOS] PROPOSTA - Contrato ${numero} - Projeto ${proj}`;
+        linhas = [
+            `Referência: ${ref}`,
+            `Tipo de Lançamento: Proposta`,
+            `Contrato: ${numero}`,
+            `Projeto: ${proj}`,
+            `Valor: R$ 0,00`,
+            `Data de Referência: dd/mm/aaaa`,
+            `Descrição/Observações: `,
+            ``,
+            `Anexo: proposta / documento de suporte (PDF, JPG ou PNG)`
+        ];
+    } else if (vincs.length > 1) {
+        assunto = `[CONTRATOS] PAGAMENTO - Contrato ${numero} - Projeto vários (rateio)`;
+        linhas = [
+            `Referência: ${ref}`,
+            `Tipo de Lançamento: Pagamento`,
+            `Contrato: ${numero}`,
+            `Valor Total da NF: R$ 0,00`,
+            `Data de Referência: dd/mm/aaaa`,
+            `Rateio:`,
+            ...vincs.map(v => `- Projeto ${v.projeto_codigo}: R$ 0,00`),
+            `Descrição/Observações: `,
+            ``,
+            `Anexo obrigatório: Nota Fiscal (PDF, JPG ou PNG)`,
+            `Regra: a soma do rateio deve fechar com o Valor Total da NF.`
+        ];
+    } else {
+        const proj = vincs.length === 1 ? vincs[0].projeto_codigo : '«projeto vinculado ao contrato»';
+        assunto = `[CONTRATOS] PAGAMENTO - Contrato ${numero} - Projeto ${proj}`;
+        linhas = [
+            `Referência: ${ref}`,
+            `Tipo de Lançamento: Pagamento`,
+            `Contrato: ${numero}`,
+            `Projeto: ${proj}`,
+            `Valor: R$ 0,00`,
+            `Data de Referência: dd/mm/aaaa`,
+            `Descrição/Observações: `,
+            ``,
+            `Anexo obrigatório: Nota Fiscal (PDF, JPG ou PNG)`
+        ];
+    }
+
+    out.textContent = 'Assunto: ' + assunto + '\n\n' + linhas.join('\n');
+
+    if (!projBox) return;
+    if (!vincs.length) {
+        projBox.innerHTML = '<p class="text-xs text-gray-400">Este contrato ainda não tem projetos vinculados — vincule em "Vincular Projeto e Contrato".</p>';
+        return;
+    }
+    projBox.innerHTML =
+        '<p class="text-[11px] font-bold text-gray-500 uppercase mb-1">Projetos deste contrato (referência para preencher os valores)</p>' +
+        '<table class="w-full text-xs border-collapse"><thead><tr class="bg-gray-50 text-gray-600 uppercase text-[10px]">' +
+        '<th class="p-1.5 text-left">Projeto</th><th class="p-1.5 text-right">Alocado</th><th class="p-1.5 text-right">Saldo disponível</th></tr></thead><tbody>' +
+        vincs.map(v => `<tr class="border-b border-gray-100"><td class="p-1.5">${escapeHtml(v.projeto_codigo)} — ${escapeHtml(_modeloNomeProjeto(v.projeto_codigo))}</td>` +
+            `<td class="p-1.5 text-right font-mono">${formatCurrency(v.valor_vinculo)}</td>` +
+            `<td class="p-1.5 text-right font-mono">${formatCurrency(saldoDisponivelVinculo(v))}</td></tr>`).join('') +
+        '</tbody></table>';
+}
+
+function copiarModeloEmail() {
+    const el = document.getElementById('modeloEmailSaida');
+    const txt = el ? (el.textContent || '') : '';
+    if (!txt.trim() || txt.startsWith('Selecione um contrato')) return;
+    const feedback = () => {
+        const b = document.getElementById('modeloEmailCopiarBtn');
+        if (!b) return;
+        const o = b.innerHTML; b.innerHTML = '<i class="fa-solid fa-check"></i> Copiado';
+        setTimeout(() => { b.innerHTML = o; }, 1500);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(txt).then(feedback).catch(() => _modeloSelecionar(el));
+    } else {
+        _modeloSelecionar(el);
+    }
+}
+function _modeloSelecionar(el) {
+    try {
+        const r = document.createRange(); r.selectNodeContents(el);
+        const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        document.execCommand('copy');
+    } catch (_) {}
+}
+
+function _modeloEmailRenderExemplos() {
+    const box = document.getElementById('modeloEmailExemplos');
+    if (!box || box.dataset.rendered) return;
+    box.dataset.rendered = '1';
+    const um =
+`Assunto: [CONTRATOS] PAGAMENTO - Contrato ACME20260900001 - Projeto PRJ-001
+
+Referência: COMPASSO-COGNITIONIS-PAGTO-PROPOSTA
+Tipo de Lançamento: Pagamento
+Contrato: ACME20260900001
+Projeto: PRJ-001
+Valor: R$ 12.500,00
+Data de Referência: 15/09/2026
+Descrição/Observações: NF 12345 - serviços de setembro
+
+Anexo obrigatório: Nota Fiscal (PDF, JPG ou PNG)`;
+    const varios =
+`Assunto: [CONTRATOS] PAGAMENTO - Contrato ACME20260900001 - Projeto vários (rateio)
+
+Referência: COMPASSO-COGNITIONIS-PAGTO-PROPOSTA
+Tipo de Lançamento: Pagamento
+Contrato: ACME20260900001
+Valor Total da NF: R$ 30.000,00
+Data de Referência: 15/09/2026
+Rateio:
+- Projeto PRJ-001: R$ 18.000,00
+- Projeto PRJ-002: R$ 12.000,00
+Descrição/Observações: NF 12346 - rateio conforme apropriação
+
+Anexo obrigatório: Nota Fiscal (PDF, JPG ou PNG)`;
+    box.innerHTML =
+        '<div class="grid md:grid-cols-2 gap-3">' +
+        `<div><p class="text-[11px] font-bold text-gray-600 uppercase mb-1">1 projeto</p><pre class="text-[11px] bg-gray-50 border rounded p-2 whitespace-pre-wrap font-mono">${escapeHtml(um)}</pre></div>` +
+        `<div><p class="text-[11px] font-bold text-gray-600 uppercase mb-1">Vários projetos (rateio)</p><pre class="text-[11px] bg-gray-50 border rounded p-2 whitespace-pre-wrap font-mono">${escapeHtml(varios)}</pre></div>` +
+        '</div>';
 }
 
 // -------------------------------------------------------------------------
@@ -257,11 +429,11 @@ function _pendRenderTabela() {
         return `
         <tr class="${atraso ? 'bg-red-50' : ''}">
             <td class="p-2 text-[10px] text-gray-500 whitespace-nowrap">${(p.criado_em || '').replace('T', ' ').split('.')[0]}</td>
-            <td class="p-2 font-bold text-xs">${p.tipo}</td>
+            <td class="p-2 font-bold text-xs">${p.tipo === 'HABILITACAO' ? 'HABILITAÇÃO' : p.tipo}</td>
             <td class="p-2 text-[10px] uppercase text-gray-500">${p.origem}</td>
             <td class="p-2 text-xs">${escapeHtml(contrato ? contrato.numero_contrato : (p.contrato_ref || '—'))}</td>
             <td class="p-2 text-xs">${escapeHtml(p.projeto_codigo || p.projeto_ref || '—')}</td>
-            <td class="p-2 text-xs">${escapeHtml(p.fornecedor || '—')}</td>
+            <td class="p-2 text-xs">${escapeHtml(p.habilitacao_fornecedor_codigo || p.fornecedor || '—')}</td>
             <td class="p-2 text-right font-mono text-xs">${p.valor != null ? formatCurrency(p.valor) : '—'}</td>
             <td class="p-2 text-center"><span class="${_pendBadgeNf(p.nf_status)} font-bold px-2 py-0.5 rounded text-[9px]">${p.nf_status}${atraso ? ' ⚠' : ''}</span></td>
             <td class="p-2 text-center">
@@ -331,9 +503,10 @@ async function abrirDetalhePendencia(id) {
         ${errosHtml}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Tipo</label>
-                <select id="pendEdTipo" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">
+                <select id="pendEdTipo" ${(editavel && p.tipo !== 'HABILITACAO') ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">
                     <option value="PAGAMENTO" ${p.tipo === 'PAGAMENTO' ? 'selected' : ''}>PAGAMENTO</option>
                     <option value="PROPOSTA" ${p.tipo === 'PROPOSTA' ? 'selected' : ''}>PROPOSTA</option>
+                    ${p.tipo === 'HABILITACAO' ? '<option value="HABILITACAO" selected>HABILITAÇÃO</option>' : ''}
                 </select></div>
             ${p.origem === 'EMAIL' ? `<div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Referência <span class="text-gray-400">(identificação da instância no e-mail)</span></label>
                 <input id="pendEdReferencia" value="${escapeHtml(p.referencia || '')}" disabled class="w-full p-1.5 border rounded bg-gray-50"></div>` : '<input type="hidden" id="pendEdReferencia" value="' + escapeHtml(p.referencia || '') + '">'}
@@ -516,6 +689,30 @@ async function aprovarPendencia(id) {
         await salvarCorrecaoPendencia();
     }
     const atual = pendenciasContratosCache.find(x => x.id === id);
+
+    // HABILITAÇÃO — e-mail inicial do fornecedor (R$ 0,10). Aprovar liga o
+    // atributo B (email_pagamento_aprovado) do fornecedor; não vira pagamento.
+    if (atual.tipo === 'HABILITACAO' || atual.habilitacao_fornecedor_codigo) {
+        const fCod = atual.habilitacao_fornecedor_codigo || null;
+        if (!fCod) return alert('Pendência de habilitação sem fornecedor identificado — corrija antes de aprovar.');
+        const { data: fornRows } = await _supabase.from('empresas_terceirizadas').select('codigo,nome').ilike('codigo', fCod).limit(1);
+        const forn = (fornRows && fornRows[0]) || null;
+        if (!forn) return alert(`Fornecedor "${fCod}" não localizado no cadastro. Cadastre o fornecedor com esse código e aprove novamente.`);
+        const quemH = currentUser ? currentUser.nome : 'desconhecido';
+        const agoraH = new Date().toISOString();
+        const { error: eF } = await _supabase.from('empresas_terceirizadas')
+            .update({ email_pagamento_aprovado: true, email_pagamento_aprovado_em: agoraH }).eq('codigo', forn.codigo);
+        if (eF) return alert('Erro ao habilitar o fornecedor: ' + eF.message);
+        await _supabase.from('contratos_pendencias').update({
+            status: 'APROVADA', decidido_por: quemH, decidido_em: agoraH
+        }).eq('id', id);
+        await _logPendencia(id, 'APROVADA', { habilitacao_fornecedor: fCod });
+        alert(`✅ Fornecedor "${forn.nome}" habilitado para envio de pagamentos por e-mail.`);
+        fecharModalPendencia();
+        await renderPendenciasContratosView();
+        if (typeof renderEmpresasTerceirizadasView === 'function') { try { await renderEmpresasTerceirizadasView(); } catch (_) {} }
+        return;
+    }
 
     if (!atual.contrato_id) return alert('Resolva o CONTRATO antes de aprovar.');
     if (!(Number(atual.valor) > 0)) return alert('Valor total inválido.');

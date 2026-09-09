@@ -19,7 +19,28 @@ rodapé do login, no rodapé do menu lateral e na tela inicial.
 
 ## [Não lançado]
 
-_Sem itens no momento._
+**Contratos e Fornecedores — canal de e-mail**
+
+- Pendências de Contratos: nova aba **"Modelo de E-mail"** — escolhe o
+  contrato e gera o texto padrão do e-mail de lançamento já com o número e os
+  projetos vinculados (formato simples para 1 projeto, formato com rateio para
+  vários), com botão copiar e tabela de saldo por projeto.
+- Pagamento por e-mail passa a aceitar **rateio entre vários projetos** do
+  mesmo contrato (bloco `Rateio:` + `Valor Total da NF:`); a soma do rateio
+  tem de fechar com o total, senão erro de leitura.
+- Cadastro de Fornecedores: campo **e-mail de contato** + atributos
+  **A ("envia pagamentos por e-mail", editável)** e
+  **B ("envio aprovado", via habilitação)**. Ao ligar A, o sistema enfileira
+  ao fornecedor o template *MODELO PADRÃO PARA ENVIO DE PAGAMENTOS E NOTA
+  FISCAL*.
+- **Habilitação do fornecedor:** e-mail inicial com referência
+  `HABILITACAO-FORNECEDOR` + código + R$ 0,10 entra como pendência tipo
+  **HABILITACAO**; aprovar liga o atributo B. Enquanto B estiver desligado,
+  e-mails de pagamento do fornecedor entram com erro de leitura (log
+  `FORNECEDOR_NAO_AUTORIZADO`), sem virar pagamento.
+- Nova env var da função de inbound: `INBOUND_CONTRATOS_HABILITACAO_REF`
+  (padrão `HABILITACAO-FORNECEDOR`).
+- SQL: `sql/2026-09-10_fornecedor_habilitacao_email.sql`.
 
 ---
 
