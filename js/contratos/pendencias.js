@@ -149,6 +149,38 @@ async function renderPendenciasContratosView() {
 
     _pendPopularFiltros();
     _pendRenderTabela();
+    _pendEscalonarNfAtrasadas();   // fire-and-forget (Fase B — §6)
+}
+
+// Envia UMA vez o alerta de NF pendente há mais de N dias úteis, pela
+// fila de e-mail (ponto de disparo "PENDÊNCIAS DE CONTRATO / ESCALONAMENTO
+// NF" — ver sql/2026-09-09_pendencias_escalonamento_nf.sql). Marca
+// escalado_nf_em para não reenviar. Se a linha do fluxo estiver inativa
+// ou o módulo E-mail desligado, dispararEmailFluxo simplesmente não faz
+// nada — o destaque visual na lista continua valendo.
+async function _pendEscalonarNfAtrasadas() {
+    if (typeof dispararEmailFluxo !== 'function') return;
+    const atrasadas = pendenciasContratosCache.filter(p => _pendEmAtrasoNf(p) && !p.escalado_nf_em);
+    for (const p of atrasadas) {
+        const contrato = (contratosProjetoCache || []).find(c => c.id === p.contrato_id);
+        const forn = (contrato && typeof _pnfFornecedorDoContrato === 'function') ? _pnfFornecedorDoContrato(contrato) : (p.fornecedor || '—');
+        try {
+            await dispararEmailFluxo(
+                'PENDÊNCIAS DE CONTRATO', 'ESCALONAMENTO NF', 'NF pendente há mais de 5 dias úteis',
+                { codigo: 'Pendência #' + p.id, nome: `${p.tipo} · ${contrato ? contrato.numero_contrato : (p.contrato_ref || '')}` },
+                {
+                    pendencia: '#' + p.id,
+                    fornecedor: typeof forn === 'string' ? forn : String(forn),
+                    contrato: contrato ? contrato.numero_contrato : (p.contrato_ref || '-'),
+                    valor: formatCurrency(p.valor),
+                    dias: String(PEND_NF_ATRASO_DIAS_UTEIS)
+                }
+            );
+        } catch (e) { console.error('escalonamento NF:', e); }
+        await _supabase.from('contratos_pendencias').update({ escalado_nf_em: new Date().toISOString() }).eq('id', p.id);
+        p.escalado_nf_em = new Date().toISOString();
+        await _logPendencia(p.id, 'ESCALONAMENTO_NF', { dias_uteis: _pendDiasUteisDesde(p.criado_em) });
+    }
 }
 
 function _pendPopularFiltros() {
