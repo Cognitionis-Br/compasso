@@ -54,11 +54,21 @@ async function storagePut(pathNoBucket, buffer, contentType) {
     return r.ok;
 }
 
-// extrai "Rótulo: valor" tolerando maiúsc/minúsc e espaçamento (§4.4)
+// normaliza p/ comparar rótulos: sem acento, minúsculo, espaços colapsados (§4.4)
+function _norm(s) {
+    return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/\s+/g, ' ').trim();
+}
+// extrai "Rótulo: valor" tolerando maiúsc/minúsc, espaçamento e acentos (§4.4).
+// Linha a linha, quebrando no primeiro ":" — o valor pode conter ":".
 function campo(corpo, rotulo) {
-    const re = new RegExp('^\\s*' + rotulo.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\s*:\\s*(.+?)\\s*$', 'im');
-    const m = re.exec(corpo || '');
-    return m ? m[1].trim() : null;
+    const alvo = _norm(rotulo);
+    for (const ln of String(corpo || '').split(/\r?\n/)) {
+        const i = ln.indexOf(':');
+        if (i < 0) continue;
+        if (_norm(ln.slice(0, i)) === alvo) return ln.slice(i + 1).trim() || null;
+    }
+    return null;
 }
 function parseValor(v) {
     if (!v) return null;
