@@ -13,6 +13,14 @@
 let empresasTerceirizadasCache = [];
 let contratosProjetoCache = [];
 
+// Abre um anexo do bucket contratos-anexos (NF de pagamento etc.) por
+// signed URL de curta duração. Usado no Relatório de Projetos.
+async function abrirAnexoContrato(path) {
+    const { data, error } = await _supabase.storage.from('contratos-anexos').createSignedUrl(path, 300);
+    if (error || !data) return alert('Não foi possível abrir o anexo: ' + (error ? error.message : 'link não gerado'));
+    window.open(data.signedUrl, '_blank');
+}
+
 // NOVO (a pedido do usuário 25/08/2026 — padronização/segregação de
 // atividades): 2 abas, mesmo padrão V2 de Usuários/Funções/Responsáveis.
 function mudarAbaEmpresas(aba) {
@@ -354,14 +362,19 @@ async function abrirZoomRelatorioProjeto(codigo) {
     if (vinculos.length > 0) {
         const { data: itensData } = await _supabase.from('contratos_pagamento_itens').select('*').in('vinculo_id', vinculos.map(v => v.id));
         const itens = itensData || [];
-        let cabPorId = {};
+        let cabPorId = {}, anexosPorPag = {};
         if (itens.length > 0) {
-            const { data: cabsData } = await _supabase.from('contratos_pagamentos').select('*').in('id', [...new Set(itens.map(i => i.pagamento_id))]);
+            const pagIds = [...new Set(itens.map(i => i.pagamento_id))];
+            const [{ data: cabsData }, { data: anexData }] = await Promise.all([
+                _supabase.from('contratos_pagamentos').select('*').in('id', pagIds),
+                _supabase.from('contratos_pagamentos_anexos').select('*').in('pagamento_id', pagIds)
+            ]);
             (cabsData || []).forEach(c => { cabPorId[c.id] = c; });
+            (anexData || []).forEach(a => { (anexosPorPag[a.pagamento_id] = anexosPorPag[a.pagamento_id] || []).push(a); });
         }
         itens.forEach(i => {
             const cab = cabPorId[i.pagamento_id] || {};
-            const linha = { valor_pago: i.valor, registrado_em: cab.registrado_em, registrado_por: cab.registrado_por, numero_nf: cab.numero_nf, valor_total_nf: cab.valor_total_nf };
+            const linha = { valor_pago: i.valor, registrado_em: cab.registrado_em, registrado_por: cab.registrado_por, numero_nf: cab.numero_nf, valor_total_nf: cab.valor_total_nf, anexos: anexosPorPag[i.pagamento_id] || [] };
             (pagamentosPorVinculo[i.vinculo_id] = pagamentosPorVinculo[i.vinculo_id] || []).push(linha);
         });
     }
@@ -419,7 +432,7 @@ async function abrirZoomRelatorioProjeto(codigo) {
                             ${pagamentos.length === 0
                                 ? `<p class="text-[11px] text-gray-400 italic">Nenhum pagamento registrado ainda.</p>`
                                 : `<table class="w-full text-left text-[11px]">
-                                    <thead><tr class="text-gray-500 uppercase text-[9px]"><th class="py-1">Data</th><th class="py-1">NF</th><th class="py-1 text-right">Rateio p/ este projeto</th><th class="py-1">Quem Autorizou</th></tr></thead>
+                                    <thead><tr class="text-gray-500 uppercase text-[9px]"><th class="py-1">Data</th><th class="py-1">NF</th><th class="py-1 text-right">Rateio p/ este projeto</th><th class="py-1">Quem Autorizou</th><th class="py-1">Nota Fiscal</th></tr></thead>
                                     <tbody>
                                         ${pagamentos.map(pg => `
                                             <tr class="border-t border-gray-200">
@@ -427,6 +440,9 @@ async function abrirZoomRelatorioProjeto(codigo) {
                                                 <td class="py-1">${escapeHtml(pg.numero_nf || '-')}</td>
                                                 <td class="py-1 text-right font-mono">${fmt(pg.valor_pago)}</td>
                                                 <td class="py-1 uppercase">${escapeHtml(pg.registrado_por) || '-'}</td>
+                                                <td class="py-1">${(pg.anexos && pg.anexos.length)
+                                                    ? pg.anexos.map(a => `<button onclick="abrirAnexoContrato('${escapeJsAttr(a.storage_path)}')" class="text-indigo-600 hover:underline font-bold">${a.classificacao === 'NOTA_FISCAL' ? '📄 Ver NF' : '📎 ' + escapeHtml(a.nome_original || 'anexo')}</button>`).join(' · ')
+                                                    : '<span class="text-gray-400">sem anexo</span>'}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
