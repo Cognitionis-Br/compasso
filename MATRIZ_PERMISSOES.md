@@ -136,9 +136,9 @@ inteiro** (eles têm acesso a tudo, sempre, por fora desta tabela).
 
 | Ação | Tabela(s) afetada(s) | Operação | Função(ões) autorizada(s) hoje | Onde é checado |
 |---|---|---|---|---|
-| Empresas Terceirizadas | `empresas_terceirizadas` | INSERT/UPDATE | GESTOR TI, GOVERNANÇA | **Só menu (#1)** |
+| Fornecedores | `empresas_terceirizadas` | INSERT/UPDATE | GESTOR TI, GOVERNANÇA | **Só menu (#1)** |
 | Contratos Terceirizados | `contratos_projeto`, `contratos_pagamentos` | INSERT/UPDATE | GESTOR TI, GOVERNANÇA | **Só menu (#1)** |
-| Contratos por Projeto (vínculo) | `contratos_vinculos_projeto`, `log_alteracao_vinculo_contrato` | INSERT/UPDATE/DELETE | GESTOR TI, GOVERNANÇA | **Só menu (#1)** |
+| Vincular Projeto e Contrato | `contratos_vinculos_projeto`, `log_alteracao_vinculo_contrato` | INSERT/UPDATE/DELETE | GESTOR TI, GOVERNANÇA | **Só menu (#1)** |
 | **Registro de Valores Realizados** (lançamento financeiro real) | `contratos_pagamentos` | INSERT/UPDATE | GESTOR TI, GOVERNANÇA | **Só menu (#1)** |
 | Relatório de Projetos (Contratos) | — | SELECT | GESTOR TI, GOVERNANÇA | Só menu (#1) |
 

@@ -54,12 +54,17 @@ DECLARE
         'projeto_etapas','projeto_benefit_results','log_decisoes_etapa',
         'log_alteracoes_horas','log_ratificacao_planejamento','log_retomada_hold',
         'log_aprovacao_mudanca_orcamento','golive_ocorrencias','golive_termo_aceite',
-        'log_alteracao_vinculo_contrato','contratos_pagamentos','contratos_vinculos_projeto',
+        'log_alteracao_vinculo_contrato',
+        -- Contratos e Terceiros — staging (Release 1) + pagamento NF (cabeçalho/itens/anexos)
+        'contratos_pendencias_itens','contratos_pendencias_anexos','log_contratos_pendencias',
+        'contratos_pendencias','contratos_propostas',
+        'contratos_pagamento_itens','contratos_pagamentos_anexos',
+        'contratos_pagamentos','contratos_vinculos_projeto',
         'adhoc_aprovacoes','tradeoff_validacao_pendencias','fechamento_af_decisoes',
         'ajuste_orcamento_autorizacoes','log_fechamento_ano_fiscal','emails_pendentes',
         'projetos',
         -- ciclo / numeração
-        'anos_fiscais_config','contadores_codigo_projeto',
+        'anos_fiscais_config','contadores_codigo_projeto','contadores_contrato_af',
         -- cadastros operacionais (pessoas antes de áreas por causa de FK)
         'pessoas_solicitantes','areas_solicitantes','portes','tipos_projeto',
         'tipos_return_benefit','iniciativas_estrategicas','pilares_estrategicos',

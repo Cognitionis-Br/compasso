@@ -119,6 +119,7 @@ function switchTab(tabId) {
     if (tabId === 'contratos_vinculos') renderContratosVinculosView();
     if (tabId === 'registro_valores_contrato') renderRegistroValoresView();
     if (tabId === 'relatorio_projetos_contratos') renderRelatorioProjetosContratosView();
+    if (tabId === 'contratos_pendencias') { mudarAbaPendencias('lista'); renderPendenciasContratosView(); }
     if (tabId === 'tipos_projeto') { mudarAbaTiposProjeto('criar'); renderTiposProjetoView(); }
     if (tabId === 'produtos') { mudarAbaProdutos('criar'); renderProdutosView(); }
     if (tabId === 'cargos') { mudarAbaCargos('criar'); renderCargosView(); }
@@ -241,12 +242,14 @@ function switchTab(tabId) {
         const conteudo = document.getElementById('devToolsConteudo');
         const conteudoLimpeza = document.getElementById('devToolsLimpezaConteudo');
         const conteudoLimpezaTotal = document.getElementById('devToolsLimpezaTotalConteudo');
+        const conteudoLimpezaContratos = document.getElementById('devToolsLimpezaContratosConteudo');
         const conteudoCriarTeste = document.getElementById('devToolsCriarTesteConteudo');
         if (ehProprietario) {
             if (restrito) restrito.classList.add('hidden');
             if (conteudo) conteudo.classList.remove('hidden');
             if (conteudoLimpeza) conteudoLimpeza.classList.remove('hidden');
             if (conteudoLimpezaTotal) conteudoLimpezaTotal.classList.remove('hidden');
+            if (conteudoLimpezaContratos) conteudoLimpezaContratos.classList.remove('hidden');
             if (conteudoCriarTeste) conteudoCriarTeste.classList.remove('hidden');
             renderListaProjetosDevTools();
             if (typeof inicializarFormCriarTeste === 'function') inicializarFormCriarTeste();
@@ -255,6 +258,7 @@ function switchTab(tabId) {
             if (conteudo) conteudo.classList.add('hidden');
             if (conteudoLimpeza) conteudoLimpeza.classList.add('hidden');
             if (conteudoLimpezaTotal) conteudoLimpezaTotal.classList.add('hidden');
+            if (conteudoLimpezaContratos) conteudoLimpezaContratos.classList.add('hidden');
             if (conteudoCriarTeste) conteudoCriarTeste.classList.add('hidden');
         }
     }

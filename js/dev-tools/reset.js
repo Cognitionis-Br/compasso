@@ -210,6 +210,9 @@ async function resetarBaseParaFase1() {
     // Contrato por Projeto e o log de alterações deles. NOVO (Fase 4):
     // apaga os pagamentos do vínculo antes do vínculo em si (vinculo_id
     // sem cascade).
+    // Release 1: pendências / propostas de contrato desses projetos.
+    if (typeof _limparPendenciasPropostasDeProjetos === 'function') await _limparPendenciasPropostasDeProjetos(codigos);
+
     const { data: vinculosParaApagarReset } = await _supabase.from('contratos_vinculos_projeto').select('id').in('projeto_codigo', codigos);
     const idsVinculosParaApagarReset = (vinculosParaApagarReset || []).map(v => v.id);
     if (idsVinculosParaApagarReset.length > 0) {

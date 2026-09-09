@@ -13,6 +13,14 @@
 let empresasTerceirizadasCache = [];
 let contratosProjetoCache = [];
 
+// Abre um anexo do bucket contratos-anexos (NF de pagamento etc.) por
+// signed URL de curta duração. Usado no Relatório de Projetos.
+async function abrirAnexoContrato(path) {
+    const { data, error } = await _supabase.storage.from('contratos-anexos').createSignedUrl(path, 300);
+    if (error || !data) return alert('Não foi possível abrir o anexo: ' + (error ? error.message : 'link não gerado'));
+    window.open(data.signedUrl, '_blank');
+}
+
 // NOVO (a pedido do usuário 25/08/2026 — padronização/segregação de
 // atividades): 2 abas, mesmo padrão V2 de Usuários/Funções/Responsáveis.
 function mudarAbaEmpresas(aba) {
@@ -45,7 +53,7 @@ async function renderEmpresasTerceirizadasView() {
     const tbody = document.getElementById('empresasTerceirizadasTableBody');
     if (tbody) {
         tbody.innerHTML = empresasTerceirizadasCache.length === 0
-            ? `<tr><td colspan="4" class="p-4 text-center text-gray-400 font-bold">Nenhuma empresa cadastrada ainda</td></tr>`
+            ? `<tr><td colspan="4" class="p-4 text-center text-gray-400 font-bold">Nenhum fornecedor cadastrado ainda</td></tr>`
             : empresasTerceirizadasCache.map(e => `
                 <tr class="${!e.ativo ? 'opacity-50' : ''}">
                     <td class="p-3 font-mono font-bold">${escapeHtml(e.codigo)}</td>
@@ -65,15 +73,15 @@ async function renderEmpresasTerceirizadasView() {
 }
 
 async function salvarEmpresaTerceirizada() {
-    if (!usuarioPodeIncluirTela('empresas_terceirizadas')) return alert('Você não tem permissão para incluir empresas terceirizadas.');
+    if (!usuarioPodeIncluirTela('empresas_terceirizadas')) return alert('Você não tem permissão para incluir fornecedores.');
     const codigo = document.getElementById('empresaCodigoInput').value.trim().toUpperCase();
     const nome = document.getElementById('empresaNomeInput').value.trim();
 
-    if (!codigo || !nome) return alert('Preencha o código e o nome da empresa!');
+    if (!codigo || !nome) return alert('Preencha o código e o nome do fornecedor!');
     if (codigo.length > 12) return alert('O código precisa ter no máximo 12 caracteres!');
     if (nome.length > 80) return alert('O nome precisa ter no máximo 80 caracteres!');
     if (empresasTerceirizadasCache.some(e => e.codigo === codigo)) {
-        return alert(`⛔ Já existe uma empresa com o código "${codigo}".`);
+        return alert(`⛔ Já existe um fornecedor com o código "${codigo}".`);
     }
 
     const { error } = await _supabase.from('empresas_terceirizadas').insert([{
@@ -81,7 +89,7 @@ async function salvarEmpresaTerceirizada() {
     }]);
     if (error) return alert('Erro ao cadastrar: ' + error.message);
 
-    alert('✅ Empresa cadastrada com sucesso!');
+    alert('✅ Fornecedor cadastrado com sucesso!');
     document.getElementById('empresaCodigoInput').value = '';
     document.getElementById('empresaNomeInput').value = '';
     await renderEmpresasTerceirizadasView();
@@ -90,9 +98,9 @@ async function salvarEmpresaTerceirizada() {
 async function alternarAtivoEmpresa(codigo) {
     const e = empresasTerceirizadasCache.find(x => x.codigo === codigo);
     if (!e) return;
-    if (e.ativo && !usuarioPodeDeletarTela('empresas_terceirizadas')) return alert('Você não tem permissão para inativar empresas terceirizadas.');
-    if (!e.ativo && !usuarioPodeAlterarTela('empresas_terceirizadas')) return alert('Você não tem permissão para reativar empresas terceirizadas.');
-    if (!confirm(`Confirma ${e.ativo ? 'inativar' : 'reativar'} a empresa "${e.nome}"?`)) return;
+    if (e.ativo && !usuarioPodeDeletarTela('empresas_terceirizadas')) return alert('Você não tem permissão para inativar fornecedores.');
+    if (!e.ativo && !usuarioPodeAlterarTela('empresas_terceirizadas')) return alert('Você não tem permissão para reativar fornecedores.');
+    if (!confirm(`Confirma ${e.ativo ? 'inativar' : 'reativar'} o fornecedor "${e.nome}"?`)) return;
 
     const { error } = await _supabase.from('empresas_terceirizadas').update({ ativo: !e.ativo }).eq('codigo', codigo);
     if (error) return alert('Erro ao atualizar: ' + error.message);
@@ -107,6 +115,8 @@ async function alternarAtivoEmpresa(codigo) {
 // -------------------------------------------------------------------------
 async function renderContratosProjetoView() {
     await renderEmpresasTerceirizadasView(); // garante o select de empresa populado
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista(); // p/ afEmAndamentoStr()
+    atualizarPreviaNumeroContrato();
 
     const { data, error } = await _supabase.from('contratos_projeto').select('*').order('id', { ascending: false });
     contratosProjetoCache = error ? [] : (data || []);
@@ -148,10 +158,36 @@ async function alternarStatusContrato(id) {
     await renderContratosProjetoView();
 }
 
+// AF usado na numeração automática do contrato = o Ano Fiscal em
+// andamento (o que foi aberto); fallback: o AF corrente pela data.
+function _afNumeroContrato() {
+    let af = (typeof afEmAndamentoStr === 'function') ? afEmAndamentoStr() : null;
+    if (!af && typeof getInfoAnoFiscal === 'function') af = getInfoAnoFiscal().afAtualStr;
+    return af || null;
+}
+
+// Monta o número do contrato: <EMPRESA><YYYY><MM><NNNN>.
+function _montarNumeroContrato(empresaCodigo, af, mesMM, seq) {
+    const yyyy = String(af || '').replace(/\D/g, '');   // AF2027 -> 2027
+    return `${String(empresaCodigo || '').toUpperCase()}${yyyy}${mesMM}${String(seq).padStart(4, '0')}`;
+}
+
+// Prévia (sem consumir sequência) — só leitura do contador do AF.
+async function atualizarPreviaNumeroContrato() {
+    const campo = document.getElementById('contratoNumeroInput');
+    if (!campo) return;
+    const empresaCodigo = (document.getElementById('contratoEmpresaSelect') || {}).value || '';
+    const af = _afNumeroContrato();
+    if (!empresaCodigo || !af) { campo.value = ''; return; }
+    const mesMM = String(new Date().getMonth() + 1).padStart(2, '0');
+    const { data: cont } = await _supabase.from('contadores_contrato_af').select('ultimo_numero').eq('ano_fiscal', af).maybeSingle();
+    const proximo = (cont ? cont.ultimo_numero : 0) + 1;
+    campo.value = _montarNumeroContrato(empresaCodigo, af, mesMM, proximo) + '  (prévia)';
+}
+
 async function salvarContratoProjeto() {
     if (!usuarioPodeIncluirTela('contratos_projeto')) return alert('Você não tem permissão para incluir contratos.');
     const empresaCodigo = document.getElementById('contratoEmpresaSelect').value;
-    const numeroContrato = document.getElementById('contratoNumeroInput').value.trim();
     const dataInicio = document.getElementById('contratoDataInicioInput').value;
     const dataEncerramento = document.getElementById('contratoDataEncerramentoInput').value;
     const qtdHoras = document.getElementById('contratoQtdHorasInput').value;
@@ -159,18 +195,29 @@ async function salvarContratoProjeto() {
     const valorTotal = document.getElementById('contratoValorTotalInput').value;
     const observacao = document.getElementById('contratoObservacaoInput').value.trim();
 
-    // Campos obrigatórios: empresa, número, data início, valor total.
-    // Qtde horas, valor hora, data encerramento e observação são opcionais.
-    // NOVO (a pedido do usuário 25/08/2026): o contrato não pede mais o
-    // projeto aqui — o vínculo contrato×projeto virou uma função própria
-    // numa fase futura ("Contratos por Projeto").
-    if (!empresaCodigo || !numeroContrato || !dataInicio || !valorTotal) {
-        return alert('Preencha Empresa, Número do Contrato, Data de Início e Valor Total (os demais campos são opcionais)!');
+    // O número NÃO é mais digitado — é gerado no formato
+    // <EMPRESA><YYYY><MM><NNNN> (ver _montarNumeroContrato / RPC
+    // proximo_numero_contrato). Campos obrigatórios: empresa, data início,
+    // valor total.
+    if (!empresaCodigo || !dataInicio || !valorTotal) {
+        return alert('Preencha Empresa, Data de Início e Valor Total (os demais campos são opcionais)!');
     }
+
+    const af = _afNumeroContrato();
+    if (!af) return alert('Não foi possível determinar o Ano Fiscal para numerar o contrato. Abra/configure o Ano Fiscal antes.');
+    const mesMM = String(new Date().getMonth() + 1).padStart(2, '0');
+
+    // sequência definitiva, atômica, só agora no salvamento
+    const { data: seq, error: errSeq } = await _supabase.rpc('proximo_numero_contrato', { p_ano_fiscal: af });
+    if (errSeq) return alert('Erro ao gerar o número do contrato: ' + errSeq.message);
+    const numeroContrato = _montarNumeroContrato(empresaCodigo, af, mesMM, seq);
 
     const { error } = await _supabase.from('contratos_projeto').insert([{
         empresa_codigo: empresaCodigo,
         numero_contrato: numeroContrato,
+        ano_fiscal: af,
+        mes_registro: mesMM,
+        numero_sequencial: seq,
         data_inicio: dataInicio,
         quantidade_horas: qtdHoras ? Number(qtdHoras) : null,
         valor_hora: valorHora ? Number(valorHora) : null,
@@ -182,191 +229,19 @@ async function salvarContratoProjeto() {
     }]);
     if (error) return alert('Erro ao salvar o contrato: ' + error.message);
 
-    alert('✅ Contrato salvo com sucesso!');
-    ['contratoEmpresaSelect', 'contratoNumeroInput', 'contratoDataInicioInput', 'contratoDataEncerramentoInput', 'contratoQtdHorasInput', 'contratoValorHoraInput', 'contratoValorTotalInput', 'contratoObservacaoInput'].forEach(id => {
+    alert(`✅ Contrato salvo — número gerado: ${numeroContrato}`);
+    ['contratoEmpresaSelect', 'contratoDataInicioInput', 'contratoDataEncerramentoInput', 'contratoQtdHorasInput', 'contratoValorHoraInput', 'contratoValorTotalInput', 'contratoObservacaoInput'].forEach(id => {
         document.getElementById(id).value = '';
     });
     await renderContratosProjetoView();
 }
 
 // -------------------------------------------------------------------------
-// Registro de Valores Realizados — por Projeto ou por Proposta, sempre
-// travando no valor total do contrato (item 6, parte pendente).
+// Registro de Valores Realizados — REESCRITO no Release 1: pagamento por
+// Nota Fiscal com rateio entre os projetos vinculados ao contrato. O
+// formulário (compartilhado com "Pendências > Lançar Manual") e o ponto
+// de entrada renderRegistroValoresView() vivem em js/contratos/pagamento-nf.js.
 // -------------------------------------------------------------------------
-let regValVinculoAtual = null;
-
-async function renderRegistroValoresView() {
-    await renderContratosVinculosView(); // garante contratosVinculosCache/contratosProjetoCache/empresasTerceirizadasCache atualizados
-
-    const ordem = document.querySelector('input[name="regValOrdem"]:checked').value;
-    const lista = [...contratosVinculosCache];
-
-    // AJUSTADO (Fase 4 — múltiplos contratos por projeto): a fonte agora é
-    // o VÍNCULO (contratos_vinculos_projeto), não mais o contrato direto —
-    // um projeto pode ter mais de um contrato vinculado, e o mesmo contrato
-    // pode servir mais de um projeto. Cada vínculo tem seu próprio saldo.
-    if (ordem === 'projeto') {
-        lista.sort((a, b) => (a.projeto_codigo || '').localeCompare(b.projeto_codigo || ''));
-    } else {
-        lista.sort((a, b) => {
-            const ca = contratosProjetoCache.find(c => c.id === a.contrato_id);
-            const cb = contratosProjetoCache.find(c => c.id === b.contrato_id);
-            return (ca ? ca.numero_contrato : '').localeCompare(cb ? cb.numero_contrato : '');
-        });
-    }
-
-    const select = document.getElementById('regValContratoSelect');
-    select.innerHTML = '<option value="">-- Selecione --</option>' + lista.map(v => {
-        const c = contratosProjetoCache.find(x => x.id === v.contrato_id);
-        const empresa = c ? empresasTerceirizadasCache.find(e => e.codigo === c.empresa_codigo) : null;
-        const numeroContrato = escapeHtml(c ? c.numero_contrato : '?');
-        const empresaLabel = escapeHtml(empresa ? empresa.nome : (c ? c.empresa_codigo : '?'));
-        const rotulo = ordem === 'projeto'
-            ? `${v.projeto_codigo} — ${numeroContrato} (${empresaLabel})`
-            : `${numeroContrato} — ${v.projeto_codigo} (${empresaLabel})`;
-        return `<option value="${v.id}">${rotulo}</option>`;
-    }).join('');
-
-    document.getElementById('regValDadosWrapper').classList.add('hidden');
-    document.getElementById('regValVisaoContratoWrapper').classList.add('hidden');
-    regValVinculoAtual = null;
-}
-
-async function onSelecionarContratoRegistro() {
-    const id = document.getElementById('regValContratoSelect').value;
-    const wrapper = document.getElementById('regValDadosWrapper');
-    if (!id) {
-        wrapper.classList.add('hidden');
-        document.getElementById('regValVisaoContratoWrapper').classList.add('hidden');
-        regValVinculoAtual = null;
-        return;
-    }
-
-    const v = contratosVinculosCache.find(x => x.id === Number(id));
-    if (!v) return;
-    regValVinculoAtual = v;
-
-    const c = contratosProjetoCache.find(x => x.id === v.contrato_id);
-    const projeto = (projectsData || []).find(p => p.codigo === v.projeto_codigo);
-    const empresa = c ? empresasTerceirizadasCache.find(e => e.codigo === c.empresa_codigo) : null;
-    const saldo = Number(v.valor_vinculo) - Number(v.valor_realizado || 0);
-
-    document.getElementById('regValProjetoInfo').innerText = `${v.projeto_codigo}${projeto ? ' - ' + projeto.nome : ''}`;
-    document.getElementById('regValEmpresaInfo').innerText = (c ? `${c.numero_contrato} — ` : '') + (empresa ? `${empresa.codigo} - ${empresa.nome}` : (c ? c.empresa_codigo : '?'));
-    document.getElementById('regValTotalInfo').innerText = `R$ ${Number(v.valor_vinculo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    document.getElementById('regValRealizadoInfo').innerText = `R$ ${Number(v.valor_realizado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    document.getElementById('regValSaldoInfo').innerText = `R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    document.getElementById('regValValorInput').value = '';
-    document.getElementById('regValObservacaoInput').value = '';
-
-    wrapper.classList.remove('hidden');
-    await renderHistoricoPagamentos(v.id);
-    renderVisaoContratoRegistro(v.contrato_id);
-}
-
-// NOVO (a pedido do usuário 26/08/2026): visão do contrato inteiro — valor
-// total do contrato +, pra cada projeto vinculado a ele, quanto foi
-// alocado (valor_vinculo) e quanto já foi realizado (valor_realizado do
-// próprio vínculo, mantido em dia desde a Fase 4) + saldo, com totais.
-function renderVisaoContratoRegistro(contratoId) {
-    const wrapper = document.getElementById('regValVisaoContratoWrapper');
-    const tbody = document.getElementById('regValVisaoContratoTableBody');
-    if (!wrapper || !tbody) return;
-
-    const contrato = contratosProjetoCache.find(c => c.id === contratoId);
-    document.getElementById('regValContratoTotalGeralInfo').innerText = contrato ? `R$ ${Number(contrato.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : '-';
-
-    const vinculosDoContrato = contratosVinculosCache.filter(v => v.contrato_id === contratoId);
-    let totalVinculado = 0, totalRealizado = 0;
-
-    tbody.innerHTML = vinculosDoContrato.map(v => {
-        const projeto = (projectsData || []).find(p => p.codigo === v.projeto_codigo);
-        const vinculado = Number(v.valor_vinculo);
-        const realizado = Number(v.valor_realizado || 0);
-        totalVinculado += vinculado;
-        totalRealizado += realizado;
-        return `
-            <tr class="${v.id === (regValVinculoAtual && regValVinculoAtual.id) ? 'bg-indigo-50 font-bold' : ''}">
-                <td class="p-3 font-mono">${v.projeto_codigo}${projeto ? ' - ' + projeto.nome : ''}</td>
-                <td class="p-3 text-right font-mono">R$ ${vinculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td class="p-3 text-right font-mono">R$ ${realizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td class="p-3 text-right font-mono">R$ ${(vinculado - realizado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            </tr>
-        `;
-    }).join('') + `
-        <tr class="bg-gray-100 font-bold border-t-2 border-gray-300">
-            <td class="p-3">TOTAL</td>
-            <td class="p-3 text-right font-mono">R$ ${totalVinculado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            <td class="p-3 text-right font-mono">R$ ${totalRealizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-            <td class="p-3 text-right font-mono">R$ ${(totalVinculado - totalRealizado).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-        </tr>
-    `;
-
-    wrapper.classList.remove('hidden');
-}
-
-async function renderHistoricoPagamentos(vinculoId) {
-    const { data, error } = await _supabase.from('contratos_pagamentos').select('*').eq('vinculo_id', vinculoId).order('registrado_em', { ascending: false });
-    const historico = error ? [] : (data || []);
-
-    const tbody = document.getElementById('regValHistoricoTableBody');
-    if (!tbody) return;
-
-    tbody.innerHTML = historico.length === 0
-        ? `<tr><td colspan="4" class="p-4 text-center text-gray-400 font-bold">Nenhum pagamento registrado ainda pra este vínculo</td></tr>`
-        : historico.map(h => `
-            <tr>
-                <td class="p-3 text-xs">${h.registrado_em ? new Date(h.registrado_em).toLocaleString('pt-BR') : '-'}</td>
-                <td class="p-3 text-right font-mono">R$ ${Number(h.valor_pago).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td class="p-3 text-xs uppercase">${escapeHtml(h.registrado_por)}</td>
-                <td class="p-3 text-xs text-gray-500">${escapeHtml(h.observacao) || '-'}</td>
-            </tr>
-        `).join('');
-}
-
-async function registrarValorRealizado() {
-    if (!usuarioPodeIncluirTela('registro_valores_contrato') && !usuarioPodeAlterarTela('registro_valores_contrato')) return alert('Você não tem permissão para registrar valores realizados.');
-    if (!regValVinculoAtual) return alert('Selecione um vínculo (projeto + contrato) primeiro!');
-
-    const valorPago = Number(document.getElementById('regValValorInput').value);
-    const observacao = document.getElementById('regValObservacaoInput').value.trim();
-
-    if (!valorPago || valorPago <= 0) return alert('Informe um valor pago válido!');
-
-    const saldo = Number(regValVinculoAtual.valor_vinculo) - Number(regValVinculoAtual.valor_realizado || 0);
-    if (valorPago > saldo) {
-        return alert(`⛔ O valor informado (R$ ${valorPago.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) supera o saldo disponível deste vínculo (R$ ${saldo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`);
-    }
-
-    const quem = currentUser ? currentUser.nome : 'desconhecido';
-    const agora = new Date().toISOString();
-    const contratoId = regValVinculoAtual.contrato_id;
-
-    const { error: errorPagamento } = await _supabase.from('contratos_pagamentos').insert([{
-        contrato_id: contratoId, vinculo_id: regValVinculoAtual.id, valor_pago: valorPago, registrado_por: quem, registrado_em: agora, observacao: observacao || null
-    }]);
-    if (errorPagamento) return alert('Erro ao registrar o pagamento: ' + errorPagamento.message);
-
-    const novoRealizadoVinculo = Number(regValVinculoAtual.valor_realizado || 0) + valorPago;
-    const { error: errorVinculo } = await _supabase.from('contratos_vinculos_projeto').update({ valor_realizado: novoRealizadoVinculo }).eq('id', regValVinculoAtual.id);
-    if (errorVinculo) return alert('Pagamento registrado, mas houve erro ao atualizar o total realizado do vínculo: ' + errorVinculo.message);
-
-    // Mantém o agregado do contrato como um todo em sincronia (usado pela
-    // tela Contratos Terceirizados e pelo Relatório de Projetos).
-    const contrato = contratosProjetoCache.find(c => c.id === contratoId);
-    if (contrato) {
-        const novoRealizadoContrato = Number(contrato.valor_realizado || 0) + valorPago;
-        const { error: errorContrato } = await _supabase.from('contratos_projeto').update({ valor_realizado: novoRealizadoContrato }).eq('id', contratoId);
-        if (errorContrato) console.error('Erro ao atualizar o total realizado do contrato:', errorContrato.message);
-        else contrato.valor_realizado = novoRealizadoContrato;
-    }
-
-    regValVinculoAtual.valor_realizado = novoRealizadoVinculo;
-    await recalcularRealizadoProjeto(regValVinculoAtual.projeto_codigo);
-
-    alert('✅ Pagamento registrado com sucesso!');
-    await onSelecionarContratoRegistro();
-}
 
 // -------------------------------------------------------------------------
 // Reconciliação com projetos.realizado (a pedido do usuário 26/08/2026):
@@ -481,13 +356,26 @@ async function abrirZoomRelatorioProjeto(codigo) {
         (contratosData || []).forEach(c => { contratosPorId[c.id] = c; });
     }
 
-    // Pagamentos de TODOS os vínculos do projeto, de uma vez.
+    // Pagamentos (itens de rateio) de TODOS os vínculos do projeto, com o
+    // cabeçalho da NF junto (data / quem / nº NF).
     let pagamentosPorVinculo = {};
     if (vinculos.length > 0) {
-        const { data: pagamentosData } = await _supabase.from('contratos_pagamentos').select('*').in('vinculo_id', vinculos.map(v => v.id));
-        (pagamentosData || []).forEach(pg => {
-            if (!pagamentosPorVinculo[pg.vinculo_id]) pagamentosPorVinculo[pg.vinculo_id] = [];
-            pagamentosPorVinculo[pg.vinculo_id].push(pg);
+        const { data: itensData } = await _supabase.from('contratos_pagamento_itens').select('*').in('vinculo_id', vinculos.map(v => v.id));
+        const itens = itensData || [];
+        let cabPorId = {}, anexosPorPag = {};
+        if (itens.length > 0) {
+            const pagIds = [...new Set(itens.map(i => i.pagamento_id))];
+            const [{ data: cabsData }, { data: anexData }] = await Promise.all([
+                _supabase.from('contratos_pagamentos').select('*').in('id', pagIds),
+                _supabase.from('contratos_pagamentos_anexos').select('*').in('pagamento_id', pagIds)
+            ]);
+            (cabsData || []).forEach(c => { cabPorId[c.id] = c; });
+            (anexData || []).forEach(a => { (anexosPorPag[a.pagamento_id] = anexosPorPag[a.pagamento_id] || []).push(a); });
+        }
+        itens.forEach(i => {
+            const cab = cabPorId[i.pagamento_id] || {};
+            const linha = { valor_pago: i.valor, registrado_em: cab.registrado_em, registrado_por: cab.registrado_por, numero_nf: cab.numero_nf, valor_total_nf: cab.valor_total_nf, anexos: anexosPorPag[i.pagamento_id] || [] };
+            (pagamentosPorVinculo[i.vinculo_id] = pagamentosPorVinculo[i.vinculo_id] || []).push(linha);
         });
     }
 
@@ -544,13 +432,17 @@ async function abrirZoomRelatorioProjeto(codigo) {
                             ${pagamentos.length === 0
                                 ? `<p class="text-[11px] text-gray-400 italic">Nenhum pagamento registrado ainda.</p>`
                                 : `<table class="w-full text-left text-[11px]">
-                                    <thead><tr class="text-gray-500 uppercase text-[9px]"><th class="py-1">Data</th><th class="py-1 text-right">Valor Pago</th><th class="py-1">Quem Autorizou</th></tr></thead>
+                                    <thead><tr class="text-gray-500 uppercase text-[9px]"><th class="py-1">Data</th><th class="py-1">NF</th><th class="py-1 text-right">Rateio p/ este projeto</th><th class="py-1">Quem Autorizou</th><th class="py-1">Nota Fiscal</th></tr></thead>
                                     <tbody>
                                         ${pagamentos.map(pg => `
                                             <tr class="border-t border-gray-200">
                                                 <td class="py-1">${pg.registrado_em ? new Date(pg.registrado_em).toLocaleString('pt-BR') : '-'}</td>
+                                                <td class="py-1">${escapeHtml(pg.numero_nf || '-')}</td>
                                                 <td class="py-1 text-right font-mono">${fmt(pg.valor_pago)}</td>
                                                 <td class="py-1 uppercase">${escapeHtml(pg.registrado_por) || '-'}</td>
+                                                <td class="py-1">${(pg.anexos && pg.anexos.length)
+                                                    ? pg.anexos.map(a => `<button onclick="abrirAnexoContrato('${escapeJsAttr(a.storage_path)}')" class="text-indigo-600 hover:underline font-bold">${a.classificacao === 'NOTA_FISCAL' ? '📄 Ver NF' : '📎 ' + escapeHtml(a.nome_original || 'anexo')}</button>`).join(' · ')
+                                                    : '<span class="text-gray-400">sem anexo</span>'}</td>
                                             </tr>
                                         `).join('')}
                                     </tbody>

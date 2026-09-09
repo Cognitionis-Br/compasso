@@ -48,10 +48,24 @@ async function renderContratosVinculosView() {
             }).join('');
     }
 
+    const selPorContrato = document.getElementById('vincPorContratoSel');
+    if (selPorContrato) {
+        const contratosAtivos = contratosProjetoCache.filter(c => (c.status || 'ATIVO') === 'ATIVO');
+        const valAtual = selPorContrato.value;
+        selPorContrato.innerHTML = '<option value="">-- Selecione --</option>' +
+            contratosAtivos.map(c => {
+                const empresa = empresasTerceirizadasCache.find(e => e.codigo === c.empresa_codigo);
+                return `<option value="${c.id}">${escapeHtml(c.numero_contrato)} — ${escapeHtml(empresa ? empresa.nome : c.empresa_codigo)}</option>`;
+            }).join('');
+        if (valAtual) selPorContrato.value = valAtual;
+    }
+
     const { data, error } = await _supabase.from('contratos_vinculos_projeto').select('*').order('id', { ascending: false });
     contratosVinculosCache = error ? [] : (data || []);
 
     if (typeof atualizarInfoHorasVinculo === 'function') atualizarInfoHorasVinculo(); // selects foram resetados acima
+    const painelContrato = document.getElementById('vincPainel-contrato');
+    if (painelContrato && !painelContrato.classList.contains('hidden')) renderVinculoPorContrato();
 
     const tbody = document.getElementById('contratosVinculosTableBody');
     if (!tbody) return;
@@ -80,6 +94,150 @@ async function renderContratosVinculosView() {
             </tr>
         `;
     }).join('');
+}
+
+// -------------------------------------------------------------------------
+// Visão POR CONTRATO — distribuir o valor do contrato entre projetos.
+// Cria os mesmos registros de contratos_vinculos_projeto que a visão por
+// projeto, com as mesmas regras (saldo do contrato + orçamento do projeto).
+// -------------------------------------------------------------------------
+function mudarAbaVinculo(aba) {
+    ['projeto', 'contrato'].forEach(a => {
+        const btn = document.getElementById(`vincAbaBtn-${a}`);
+        const painel = document.getElementById(`vincPainel-${a}`);
+        if (btn) btn.className = `vinc-aba-btn px-4 py-2 rounded-md text-sm font-bold border-2 ${a === aba ? 'bg-red-700 text-white border-red-700' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
+        if (painel) painel.classList.toggle('hidden', a !== aba);
+    });
+    if (aba === 'contrato') renderVinculoPorContrato();
+}
+
+function renderVinculoPorContrato() {
+    const fmtR = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const contratoId = Number((document.getElementById('vincPorContratoSel') || {}).value) || null;
+    const visao = document.getElementById('vincPorContratoVisao');
+    const distWrap = document.getElementById('vincPorContratoDistWrapper');
+    if (!contratoId) {
+        if (visao) visao.classList.add('hidden');
+        if (distWrap) distWrap.classList.add('hidden');
+        return;
+    }
+    const contrato = contratosProjetoCache.find(c => c.id === contratoId);
+    const total = contrato ? Number(contrato.valor_total || 0) : 0;
+    const vinculos = contratosVinculosCache.filter(v => v.contrato_id === contratoId);
+    const distribuido = vinculos.reduce((a, v) => a + Number(v.valor_vinculo || 0), 0);
+    const realizado = vinculos.reduce((a, v) => a + Number(v.valor_realizado || 0), 0);
+
+    document.getElementById('vpcTotal').innerText = fmtR(total);
+    document.getElementById('vpcDistribuido').innerText = fmtR(distribuido);
+    document.getElementById('vpcSaldo').innerText = fmtR(total - distribuido);
+    document.getElementById('vpcRealizado').innerText = fmtR(realizado);
+    if (visao) visao.classList.remove('hidden');
+    if (distWrap) distWrap.classList.remove('hidden');
+
+    const tbody = document.getElementById('vincPorContratoBody');
+    tbody.innerHTML = vinculos.length === 0
+        ? `<tr><td colspan="5" class="p-3 text-center text-gray-400 font-bold">Nenhum projeto alocado neste contrato ainda</td></tr>`
+        : vinculos.map(v => {
+            const pr = (projectsData || []).find(p => p.codigo === v.projeto_codigo);
+            const saldoV = Number(v.valor_vinculo || 0) - Number(v.valor_realizado || 0);
+            const editavel = Number(v.valor_realizado || 0) === 0;
+            return `
+            <tr>
+                <td class="p-2 font-mono">${escapeHtml(v.projeto_codigo)}${pr ? ' — ' + escapeHtml(pr.nome) : ''}</td>
+                <td class="p-2 text-right font-mono">${fmtR(v.valor_vinculo)}</td>
+                <td class="p-2 text-right font-mono">${fmtR(v.valor_realizado || 0)}</td>
+                <td class="p-2 text-right font-mono">${fmtR(saldoV)}</td>
+                <td class="p-2 text-center">${editavel
+                    ? botaoSePodeDeletar('contratos_vinculos', `<button onclick="excluirVinculoContrato(${v.id})" class="text-red-600 hover:text-red-800 font-bold text-[10px]"><i class="fa-solid fa-trash-can"></i> Excluir</button>`)
+                    : '<span class="text-gray-400 text-[10px] font-bold">🔒 Travado</span>'}</td>
+            </tr>`;
+        }).join('');
+
+    // projetos elegíveis ainda não alocados neste contrato
+    const jaAlocados = new Set(vinculos.map(v => v.projeto_codigo));
+    const sel = document.getElementById('vpcNovoProjeto');
+    if (sel) {
+        sel.innerHTML = '<option value="">-- Selecione --</option>' +
+            obterProjetosElegiveisParaVinculoContrato()
+                .filter(p => !jaAlocados.has(p.codigo))
+                .sort((a, b) => a.codigo.localeCompare(b.codigo))
+                .map(p => `<option value="${p.codigo}">${p.codigo} — ${escapeHtml(p.nome)}</option>`).join('');
+    }
+    atualizarPreviaDistribuicao();
+}
+
+function atualizarPreviaDistribuicao() {
+    const el = document.getElementById('vpcPreviaAlocacao');
+    if (!el) return;
+    const fmtR = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmtH = (h) => `${Number(h || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}h`;
+    const contratoId = Number((document.getElementById('vincPorContratoSel') || {}).value) || null;
+    const projetoCodigo = (document.getElementById('vpcNovoProjeto') || {}).value || '';
+    const valor = Number((document.getElementById('vpcNovoValor') || {}).value || 0);
+
+    // painel de valores do projeto selecionado (aparece assim que escolhe o projeto)
+    const infoProj = document.getElementById('vpcProjetoInfo');
+    const projetoObj = projetoCodigo ? (projectsData || []).find(p => p.codigo === projetoCodigo) : null;
+    if (infoProj) {
+        if (!projetoCodigo || !projetoObj) {
+            infoProj.classList.add('hidden');
+        } else {
+            const orcTot = obterOrcamentoProjeto(projetoObj);
+            const jaVinc = somaVinculosDoProjeto(projetoCodigo, null);
+            document.getElementById('vpcProjTotal').innerText = fmtR(orcTot);
+            document.getElementById('vpcProjVinculado').innerText = fmtR(jaVinc);
+            document.getElementById('vpcProjSaldo').innerText = fmtR(orcTot - jaVinc);
+            const hTot = typeof horasAtuaisDoProjeto === 'function' ? horasAtuaisDoProjeto(projetoObj) : 0;
+            const hVinc = somaHorasVinculadasDoProjeto(projetoCodigo, null);
+            document.getElementById('vpcProjHorasTotal').innerText = fmtH(hTot);
+            document.getElementById('vpcProjHorasVinc').innerText = fmtH(hVinc);
+            document.getElementById('vpcProjHorasSaldo').innerText = fmtH(hTot - hVinc);
+            infoProj.classList.remove('hidden');
+        }
+    }
+
+    if (!contratoId || !projetoCodigo || !(valor > 0)) { el.innerHTML = ''; return; }
+    const contrato = contratosProjetoCache.find(c => c.id === contratoId);
+    const saldoContrato = Number(contrato.valor_total || 0) - somaVinculosDoContrato(contratoId, null);
+    const orc = projetoObj ? obterOrcamentoProjeto(projetoObj) : 0;
+    const saldoProjeto = orc - somaVinculosDoProjeto(projetoCodigo, null);
+    const probs = [];
+    if (valor > saldoContrato + 0.005) probs.push(`excede o saldo do contrato (${fmtR(saldoContrato)})`);
+    if (orc > 0 && valor > saldoProjeto + 0.005) probs.push(`excede o saldo do orçamento do projeto (${fmtR(saldoProjeto)})`);
+    el.innerHTML = probs.length
+        ? `<span class="text-red-700 font-bold">⛔ ${probs.join(' · ')}</span>`
+        : `<span class="text-green-700">OK — saldo contrato ${fmtR(saldoContrato)} · saldo projeto ${fmtR(saldoProjeto)}</span>`;
+}
+
+async function adicionarDistribuicaoContrato() {
+    if (!usuarioPodeIncluirTela('contratos_vinculos') && !usuarioPodeAlterarTela('contratos_vinculos')) return alert('Você não tem permissão para vincular contratos.');
+    const contratoId = Number((document.getElementById('vincPorContratoSel') || {}).value) || null;
+    const projetoCodigo = (document.getElementById('vpcNovoProjeto') || {}).value || '';
+    const valorVinculo = Number((document.getElementById('vpcNovoValor') || {}).value || 0);
+    if (!contratoId || !projetoCodigo || !(valorVinculo > 0)) return alert('Selecione o projeto e informe um valor válido.');
+    if (contratosVinculosCache.some(v => v.contrato_id === contratoId && v.projeto_codigo === projetoCodigo)) {
+        return alert('⛔ Este contrato já está alocado a este projeto.');
+    }
+    const contrato = contratosProjetoCache.find(c => c.id === contratoId);
+    const saldoContrato = Number(contrato.valor_total || 0) - somaVinculosDoContrato(contratoId, null);
+    if (valorVinculo > saldoContrato + 0.005) {
+        return alert(`⛔ O valor (${valorVinculo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) supera o saldo a distribuir do contrato (R$ ${saldoContrato.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`);
+    }
+    const projeto = (projectsData || []).find(p => p.codigo === projetoCodigo);
+    const orc = projeto ? obterOrcamentoProjeto(projeto) : 0;
+    const totalProjeto = somaVinculosDoProjeto(projetoCodigo, null) + valorVinculo;
+    if (orc > 0 && totalProjeto > orc + 0.005) {
+        return alert(`⛔ A soma dos vínculos do projeto (R$ ${totalProjeto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) superaria o orçamento dele (R$ ${orc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`);
+    }
+    const { error } = await _supabase.from('contratos_vinculos_projeto').insert([{
+        contrato_id: contratoId, projeto_codigo: projetoCodigo, valor_vinculo: valorVinculo,
+        criado_por: currentUser ? currentUser.nome : 'desconhecido'
+    }]);
+    if (error) return alert('Erro ao alocar: ' + error.message);
+    await logAlteracaoVinculoContrato(contratoId, projetoCodigo, 'CRIADO', null, valorVinculo);
+    document.getElementById('vpcNovoValor').value = '';
+    document.getElementById('vpcNovoProjeto').value = '';
+    await renderContratosVinculosView();
 }
 
 // Soma dos vínculos já existentes de um contrato, opcionalmente
