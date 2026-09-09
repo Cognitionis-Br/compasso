@@ -19,6 +19,12 @@ rodapé do login, no rodapé do menu lateral e na tela inicial.
 
 ## [Não lançado]
 
+_Sem itens no momento._
+
+---
+
+## [1.2.0] - 2026-09-10 — Release 1
+
 **Contratos e Fornecedores — canal de e-mail**
 
 - Pendências de Contratos: nova aba **"Modelo de E-mail"** — escolhe o
