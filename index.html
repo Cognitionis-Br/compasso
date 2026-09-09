@@ -3642,6 +3642,18 @@
                         </button>
                     </div>
 
+                    <!-- NOVO (Release 1): zera só o módulo Contratos e
+                         Fornecedores (contratos, vínculos, pendências,
+                         propostas, pagamentos por NF e anexos), mantendo
+                         projetos e o cadastro de Fornecedores — para uma
+                         nova rodada de testes do módulo. -->
+                    <div id="devToolsLimpezaContratosConteudo" class="hidden bg-red-50 p-6 rounded-lg shadow-sm border-2 border-dashed border-red-300 mb-6">
+                        <p class="text-xs text-red-700 mb-4">Apaga FISICAMENTE (não é reversível) tudo do módulo <strong>Contratos e Fornecedores</strong>: contratos e sua numeração automática, vínculos Projeto × Contrato, pendências (manual / Excel / e-mail) com itens e anexos de NF, propostas, pagamentos por NF (cabeçalho + itens + anexos) e os arquivos no bucket <code>contratos-anexos</code>. <strong>Mantém</strong> projetos, etapas e o cadastro de Fornecedores. O "realizado" de cada projeto volta a ser só o gasto das etapas.</p>
+                        <button onclick="limparBaseContratosFornecedores()" class="bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded transition text-sm">
+                            <i class="fa-solid fa-file-contract"></i> Zerar Contratos e Fornecedores (manter cadastro de Fornecedores)
+                        </button>
+                    </div>
+
                     <!-- NOVO (a pedido do usuário 25/08/2026): criar projeto
                          de teste já nascendo em qualquer fase do funil
                          (Requerimentos a Go-Live), com Extraordinário/
@@ -4655,6 +4667,7 @@
     <script src="./js/budget-overview/visao-orcamento.js"></script>
     <script src="./js/dev-tools/reset.js"></script>
     <script src="./js/dev-tools/limpeza-base.js"></script>
+    <script src="./js/dev-tools/limpeza-contratos.js"></script>
     <script src="./js/dev-tools/criar-teste.js"></script>
     <script src="./js/contratos/contratos.js"></script>
     <script src="./js/contratos/contratos-vinculos.js"></script>

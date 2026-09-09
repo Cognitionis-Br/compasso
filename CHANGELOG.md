@@ -19,36 +19,77 @@ rodapé do login, no rodapé do menu lateral e na tela inicial.
 
 ## [Não lançado]
 
-### Release 1 — em desenvolvimento (branch `release-1`)
+_Sem itens no momento._
 
-**Módulo Financeiro & Contratos — Recebimento de Pagamentos/Propostas com aprovação**
+---
 
-- **Fase A (em andamento):** área de staging "Pendências de Contratos" —
-  toda entrada (lançamento manual, upload de planilha Excel) cai como
-  pendente e só vai para a base oficial (`contratos_pagamentos` /
-  nova `contratos_propostas`) depois de aprovada. Anexo de Nota Fiscal
-  em Supabase Storage, com bloqueio de aprovação sem NF (override por
-  justificativa registrada). Trilha de auditoria append-only. Nova
-  função de catálogo `contratos_pendencias:{consultar,importar,aprovar}`,
-  concedível a qualquer perfil. Tudo dentro do módulo FINANCEIRO.
-- **Fase B:** escalonamento de NF pendente > 5 dias úteis — uma pendência
-  "NF não recebida" que passar de 5 dias úteis gera um e-mail de alerta
-  (uma única vez) pela fila de e-mail existente. Novo ponto de disparo
-  `PENDÊNCIAS DE CONTRATO / ESCALONAMENTO NF` em *Envio de E-mail — Gestão
-  do Fluxo* (nasce inativo; admin define destinatário/remetente e liga).
-  Coluna `contratos_pendencias.escalado_nf_em`.
-- **Fase C:** canal de e-mail padronizado por webhook — Netlify Function
-  `receber-email-contratos` recebe o inbound de um provedor de e-mail,
-  faz o parsing do assunto (§4.2) e do corpo (§4.3) e cria a pendência
-  (`origem = 'EMAIL'`), que segue para aprovação como qualquer outra.
-  Anexos PDF/JPG/PNG viram Nota Fiscal no Storage; campo obrigatório
-  ausente → `ERRO_LEITURA` (nunca descartado). Provedor plugável
-  (`providers/inbound/`), dedupe por `Message-Id`. Autenticação por
-  segredo compartilhado (`INBOUND_CONTRATOS_SECRET`); identificação da
-  instância pelo campo `Referência` (`INBOUND_CONTRATOS_REFERENCIA`).
-  Guia de configuração: `docs/CANAL_EMAIL_CONTRATOS.md`.
-- Classificação de anexos (NF / comprovante / outro): pendente de
-  refinamento na UI.
+## [1.1.0] - 2026-09-09 — Release 1
+
+**Módulo Financeiro & Contratos — Contratos e Fornecedores com aprovação de
+pagamentos/propostas.** Toda a entrega foi desenvolvida na branch `release-1`,
+isolada da produção (Release 0), e agora integrada ao `main`.
+
+### Contratos e Fornecedores
+
+- **Renomeações** (menu, workflow, parâmetros, funções, catálogo de
+  atividades): "Contratos e Terceiros" → **Contratos e Fornecedores**;
+  "Empresas Terceirizadas" → **Fornecedores**; "Contratos por Projeto" →
+  **Vincular Projeto e Contrato**.
+- **Vincular Projeto e Contrato** — além da visão Projeto → Contrato, nova
+  visão **Contrato → Projeto**: distribui o valor do contrato entre os
+  projetos e mostra total / distribuído / saldo / realizado do contrato. Ao
+  selecionar um projeto em qualquer das visões, os valores dele (orçamento,
+  já vinculado, saldo) e as horas aparecem no painel. Regras mantidas: Σ
+  vínculos de um projeto ≤ orçamento do projeto; Σ vínculos de um contrato ≤
+  valor do contrato; vínculo só é editável/excluível enquanto não houver
+  valor realizado.
+- **Numeração automática de contrato** por Ano Fiscal (`contadores_contrato_af`
+  + RPC atômica `proximo_numero_contrato`), formato
+  `EMPRESA + AAAA + MM + sequência`.
+- **Pagamento por Nota Fiscal — cabeçalho + itens.** Um pagamento (uma NF)
+  pode envolver vários projetos do mesmo contrato: registra-se o valor total
+  da NF e o rateio por projeto (Σ itens = total da NF; rateio ≤ saldo do
+  vínculo; Σ pagamentos ≤ valor do contrato). Anexo da NF na própria tela.
+  "Registro de Valores Realizados" e o lançamento manual passaram a ser **o
+  mesmo formulário**; o Fornecedor vem do contrato (consulta), não é digitado.
+- **Pendências de Contratos** (staging, módulo FINANCEIRO) — toda entrada
+  (lançamento manual, planilha Excel, e-mail) cai como pendente e só vai para
+  a base oficial (`contratos_pagamentos` / nova `contratos_propostas`) depois
+  de aprovada. Anexo de Nota Fiscal em Supabase Storage, com bloqueio de
+  aprovação sem NF (override por justificativa registrada). Trilha de
+  auditoria append-only. Nova função de catálogo
+  `contratos_pendencias:{consultar,importar,aprovar}`, concedível a qualquer
+  perfil.
+- **Escalonamento de NF pendente > 5 dias úteis** — uma pendência "NF não
+  recebida" que passar de 5 dias úteis gera um e-mail de alerta (uma única
+  vez) pela fila de e-mail existente. Novo ponto de disparo
+  `PENDÊNCIAS DE CONTRATO / ESCALONAMENTO NF` em *Envio de E-mail — Gestão do
+  Fluxo* (nasce inativo; admin define destinatário/remetente e liga).
+- **Canal de e-mail padronizado por webhook** — Netlify Function
+  `receber-email-contratos` recebe o inbound de um provedor de e-mail, faz o
+  parsing do assunto e do corpo (spec §4.2/§4.3) e cria a pendência
+  (`origem = 'EMAIL'`), que segue para aprovação como qualquer outra. Anexos
+  PDF/JPG/PNG viram Nota Fiscal no Storage; campo obrigatório ausente →
+  `ERRO_LEITURA` (nunca descartado). Provedor plugável
+  (`netlify/functions/providers/inbound/`), dedupe por `Message-Id`.
+  Autenticação por segredo compartilhado (`INBOUND_CONTRATOS_SECRET`);
+  identificação da instância pelo campo `Referência`
+  (`INBOUND_CONTRATOS_REFERENCIA`). Guia: `docs/CANAL_EMAIL_CONTRATOS.md`.
+- **Relatório de Projetos** — permite consultar a Nota Fiscal do pagamento.
+- Exemplos de planilha atualizados (`docs/exemplo_pendencias_contratos.xlsx`,
+  `docs/exemplo_pagamento_rateio_excel.xlsx`).
+- Classificação de anexos (NF / comprovante / outro): pendente de refinamento
+  na UI.
+
+### Ferramentas de Dev
+
+- Novo botão **"Zerar Contratos e Fornecedores"** (exclusivo do Proprietário):
+  apaga contratos, vínculos, pendências, propostas, pagamentos por NF e anexos
+  do bucket, mantendo projetos e o cadastro de Fornecedores; recalcula o
+  realizado dos projetos. Equivalente em SQL:
+  `sql/2026-09-09_reset_contratos_para_testes.sql`.
+- Reset para Fase 1 e as limpezas de base por projeto passam a remover também
+  as pendências/propostas de contrato dos projetos afetados.
 
 ### Ajustes gerais desde o Release 0
 

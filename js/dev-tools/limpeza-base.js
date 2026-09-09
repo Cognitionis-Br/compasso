@@ -82,6 +82,9 @@ async function limparBaseSomenteAF2027() {
         // contratos_pagamentos agora referencia vinculo_id sem cascade —
         // precisa apagar os pagamentos do vínculo antes do vínculo em si,
         // senão o delete abaixo falha por violação de chave estrangeira.
+        // Release 1: pendências / propostas de contrato desses projetos.
+        if (typeof _limparPendenciasPropostasDeProjetos === 'function') await _limparPendenciasPropostasDeProjetos(codigosParaApagar);
+
         const { data: vinculosParaApagar1 } = await _supabase.from('contratos_vinculos_projeto').select('id').in('projeto_codigo', codigosParaApagar);
         const idsVinculosParaApagar1 = (vinculosParaApagar1 || []).map(v => v.id);
         if (idsVinculosParaApagar1.length > 0) {
@@ -208,6 +211,9 @@ async function limparBaseCompletamente() {
         // NOVOS (a pedido do usuário 25/08/2026 — Fase 3): vínculos de
         // Contrato por Projeto e o log de alterações deles. NOVO (Fase 4):
         // apaga os pagamentos do vínculo antes do vínculo em si.
+        // Release 1: pendências / propostas de contrato desses projetos.
+        if (typeof _limparPendenciasPropostasDeProjetos === 'function') await _limparPendenciasPropostasDeProjetos(codigosParaApagar);
+
         const { data: vinculosParaApagar2 } = await _supabase.from('contratos_vinculos_projeto').select('id').in('projeto_codigo', codigosParaApagar);
         const idsVinculosParaApagar2 = (vinculosParaApagar2 || []).map(v => v.id);
         if (idsVinculosParaApagar2.length > 0) {
@@ -330,6 +336,9 @@ async function excluirFisicamenteSelecionados() {
 
     const { error: errorGoliveTermo } = await _supabase.from('golive_termo_aceite').delete().in('projeto_codigo', codigos);
     if (errorGoliveTermo) console.error('Erro ao limpar golive_termo_aceite:', errorGoliveTermo.message);
+
+    // Release 1: pendências / propostas de contrato desses projetos.
+    if (typeof _limparPendenciasPropostasDeProjetos === 'function') await _limparPendenciasPropostasDeProjetos(codigos);
 
     const { data: vinculosParaApagar3 } = await _supabase.from('contratos_vinculos_projeto').select('id').in('projeto_codigo', codigos);
     const idsVinculosParaApagar3 = (vinculosParaApagar3 || []).map(v => v.id);
