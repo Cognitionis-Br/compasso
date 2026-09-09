@@ -44,16 +44,14 @@ SELECT
   'Seu cadastro foi habilitado para enviar informações de pagamento e Nota Fiscal por e-mail. ' ||
   'Antes de enviar pagamentos reais, é preciso concluir uma habilitação única.' || chr(10) || chr(10) ||
   '1) HABILITAÇÃO (uma vez). Envie um e-mail para o canal de contratos com:' || chr(10) ||
-  '   Assunto: [CONTRATOS] PAGAMENTO - Contrato <número do contrato> - Projeto <projeto>' || chr(10) ||
+  '   Assunto: [CONTRATOS] PAGAMENTO - Habilitação de Fornecedor' || chr(10) ||
   '   Corpo:' || chr(10) ||
   '   Referência: {{ref_habilitacao}}' || chr(10) ||
   '   Tipo de Lançamento: Pagamento' || chr(10) ||
   '   Fornecedor: {{codigo}}' || chr(10) ||
-  '   Contrato: <número do contrato>' || chr(10) ||
-  '   Projeto: <código ou nome do projeto>' || chr(10) ||
   '   Valor: R$ 0,10' || chr(10) ||
-  '   Data de Referência: <dd/mm/aaaa>' || chr(10) ||
-  '   (anexe qualquer PDF/JPG/PNG como exemplo de Nota Fiscal)' || chr(10) || chr(10) ||
+  '   (anexe qualquer PDF/JPG/PNG como exemplo de Nota Fiscal)' || chr(10) ||
+  '   Contrato / Projeto / Data são opcionais neste e-mail de habilitação.' || chr(10) || chr(10) ||
   'Após recebermos e validarmos esse e-mail, seu cadastro fica liberado para pagamentos.' || chr(10) || chr(10) ||
   '2) PAGAMENTO — 1 projeto:' || chr(10) ||
   '   Referência: <referência da instância informada pela governança>' || chr(10) ||

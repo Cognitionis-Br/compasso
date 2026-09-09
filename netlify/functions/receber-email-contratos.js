@@ -146,12 +146,12 @@ exports.handler = async (event) => {
     // Reconhecido pela Referência fixa. Não vira pagamento — ao ser aprovado
     // em Pendências de Contratos, liga email_pagamento_aprovado do fornecedor.
     if (referencia && referencia.trim().toUpperCase() === HABILITACAO_REF.toUpperCase()) {
+        // Habilitação valida SÓ o fornecedor — o fornecedor recém-cadastrado
+        // pode ainda não ter contrato/projeto para testar. Contrato, Projeto
+        // e Data são opcionais aqui (guardados se vierem).
         const fornCod = (campo(corpo, 'Fornecedor') || campo(corpo, 'Fornecedor/Terceiro') || '').trim().toUpperCase();
         const errosH = [];
         if (!fornCod) errosH.push({ campo: 'Fornecedor', motivo: 'ausente (informe o código do fornecedor)' });
-        if (!contratoRef) errosH.push({ campo: 'Contrato', motivo: 'ausente' });
-        if (!projetoRef) errosH.push({ campo: 'Projeto', motivo: 'ausente' });
-        if (!data) errosH.push({ campo: 'Data de Referência', motivo: 'ausente ou fora do formato dd/mm/aaaa' });
 
         let forn = null;
         if (fornCod) {

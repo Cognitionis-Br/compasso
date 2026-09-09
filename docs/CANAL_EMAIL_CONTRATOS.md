@@ -161,9 +161,12 @@ O fornecedor só tem os e-mails de pagamento **aceitos** depois de habilitado:
    (com e-mail de contato). O sistema enfileira o template *MODELO PADRÃO PARA
    ENVIO DE PAGAMENTOS E NOTA FISCAL* para o fornecedor.
 2. O fornecedor manda um **e-mail inicial** com `Referência:
-   HABILITACAO-FORNECEDOR`, `Fornecedor: <código>`, contrato, projeto e
-   `Valor: R$ 0,10` (anexo de exemplo). Vira uma pendência **tipo
-   HABILITACAO**.
+   HABILITACAO-FORNECEDOR`, `Fornecedor: <código>` e `Valor: R$ 0,10`
+   (anexo de exemplo). **Contrato, Projeto e Data são opcionais** neste
+   e-mail (o fornecedor recém-cadastrado pode ainda não ter contrato). O
+   webhook só exige a referência + o código do fornecedor (localizável no
+   cadastro) e confere o remetente contra o e-mail cadastrado. Vira uma
+   pendência **tipo HABILITACAO**.
 3. Ao **aprovar** essa pendência em *Pendências de Contratos*, liga-se
    **B — `email_pagamento_aprovado`** do fornecedor.
 4. A partir daí, e-mails de PAGAMENTO desse fornecedor são processados.
