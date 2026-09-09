@@ -2975,13 +2975,14 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Empresa *</label>
-                                <select id="contratoEmpresaSelect" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
+                                <select id="contratoEmpresaSelect" onchange="atualizarPreviaNumeroContrato()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
                                     <option value="">-- Selecione --</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Número do Contrato *</label>
-                                <input type="text" id="contratoNumeroInput" class="w-full p-2 border border-gray-300 rounded text-xs">
+                                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Número do Contrato (automático)</label>
+                                <input type="text" id="contratoNumeroInput" readonly class="w-full p-2 border border-gray-200 bg-gray-50 rounded text-xs font-mono text-gray-600">
+                                <span class="text-[10px] text-gray-400">Formato: código da empresa + ano fiscal + mês + sequencial (por AF). Gerado ao salvar.</span>
                             </div>
                         </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">

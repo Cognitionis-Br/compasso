@@ -59,7 +59,7 @@ DECLARE
         'ajuste_orcamento_autorizacoes','log_fechamento_ano_fiscal','emails_pendentes',
         'projetos',
         -- ciclo / numeração
-        'anos_fiscais_config','contadores_codigo_projeto',
+        'anos_fiscais_config','contadores_codigo_projeto','contadores_contrato_af',
         -- cadastros operacionais (pessoas antes de áreas por causa de FK)
         'pessoas_solicitantes','areas_solicitantes','portes','tipos_projeto',
         'tipos_return_benefit','iniciativas_estrategicas','pilares_estrategicos',

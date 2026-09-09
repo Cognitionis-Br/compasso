@@ -107,6 +107,8 @@ async function alternarAtivoEmpresa(codigo) {
 // -------------------------------------------------------------------------
 async function renderContratosProjetoView() {
     await renderEmpresasTerceirizadasView(); // garante o select de empresa populado
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista(); // p/ afEmAndamentoStr()
+    atualizarPreviaNumeroContrato();
 
     const { data, error } = await _supabase.from('contratos_projeto').select('*').order('id', { ascending: false });
     contratosProjetoCache = error ? [] : (data || []);
@@ -148,10 +150,36 @@ async function alternarStatusContrato(id) {
     await renderContratosProjetoView();
 }
 
+// AF usado na numeração automática do contrato = o Ano Fiscal em
+// andamento (o que foi aberto); fallback: o AF corrente pela data.
+function _afNumeroContrato() {
+    let af = (typeof afEmAndamentoStr === 'function') ? afEmAndamentoStr() : null;
+    if (!af && typeof getInfoAnoFiscal === 'function') af = getInfoAnoFiscal().afAtualStr;
+    return af || null;
+}
+
+// Monta o número do contrato: <EMPRESA><YYYY><MM><NNNN>.
+function _montarNumeroContrato(empresaCodigo, af, mesMM, seq) {
+    const yyyy = String(af || '').replace(/\D/g, '');   // AF2027 -> 2027
+    return `${String(empresaCodigo || '').toUpperCase()}${yyyy}${mesMM}${String(seq).padStart(4, '0')}`;
+}
+
+// Prévia (sem consumir sequência) — só leitura do contador do AF.
+async function atualizarPreviaNumeroContrato() {
+    const campo = document.getElementById('contratoNumeroInput');
+    if (!campo) return;
+    const empresaCodigo = (document.getElementById('contratoEmpresaSelect') || {}).value || '';
+    const af = _afNumeroContrato();
+    if (!empresaCodigo || !af) { campo.value = ''; return; }
+    const mesMM = String(new Date().getMonth() + 1).padStart(2, '0');
+    const { data: cont } = await _supabase.from('contadores_contrato_af').select('ultimo_numero').eq('ano_fiscal', af).maybeSingle();
+    const proximo = (cont ? cont.ultimo_numero : 0) + 1;
+    campo.value = _montarNumeroContrato(empresaCodigo, af, mesMM, proximo) + '  (prévia)';
+}
+
 async function salvarContratoProjeto() {
     if (!usuarioPodeIncluirTela('contratos_projeto')) return alert('Você não tem permissão para incluir contratos.');
     const empresaCodigo = document.getElementById('contratoEmpresaSelect').value;
-    const numeroContrato = document.getElementById('contratoNumeroInput').value.trim();
     const dataInicio = document.getElementById('contratoDataInicioInput').value;
     const dataEncerramento = document.getElementById('contratoDataEncerramentoInput').value;
     const qtdHoras = document.getElementById('contratoQtdHorasInput').value;
@@ -159,18 +187,29 @@ async function salvarContratoProjeto() {
     const valorTotal = document.getElementById('contratoValorTotalInput').value;
     const observacao = document.getElementById('contratoObservacaoInput').value.trim();
 
-    // Campos obrigatórios: empresa, número, data início, valor total.
-    // Qtde horas, valor hora, data encerramento e observação são opcionais.
-    // NOVO (a pedido do usuário 25/08/2026): o contrato não pede mais o
-    // projeto aqui — o vínculo contrato×projeto virou uma função própria
-    // numa fase futura ("Contratos por Projeto").
-    if (!empresaCodigo || !numeroContrato || !dataInicio || !valorTotal) {
-        return alert('Preencha Empresa, Número do Contrato, Data de Início e Valor Total (os demais campos são opcionais)!');
+    // O número NÃO é mais digitado — é gerado no formato
+    // <EMPRESA><YYYY><MM><NNNN> (ver _montarNumeroContrato / RPC
+    // proximo_numero_contrato). Campos obrigatórios: empresa, data início,
+    // valor total.
+    if (!empresaCodigo || !dataInicio || !valorTotal) {
+        return alert('Preencha Empresa, Data de Início e Valor Total (os demais campos são opcionais)!');
     }
+
+    const af = _afNumeroContrato();
+    if (!af) return alert('Não foi possível determinar o Ano Fiscal para numerar o contrato. Abra/configure o Ano Fiscal antes.');
+    const mesMM = String(new Date().getMonth() + 1).padStart(2, '0');
+
+    // sequência definitiva, atômica, só agora no salvamento
+    const { data: seq, error: errSeq } = await _supabase.rpc('proximo_numero_contrato', { p_ano_fiscal: af });
+    if (errSeq) return alert('Erro ao gerar o número do contrato: ' + errSeq.message);
+    const numeroContrato = _montarNumeroContrato(empresaCodigo, af, mesMM, seq);
 
     const { error } = await _supabase.from('contratos_projeto').insert([{
         empresa_codigo: empresaCodigo,
         numero_contrato: numeroContrato,
+        ano_fiscal: af,
+        mes_registro: mesMM,
+        numero_sequencial: seq,
         data_inicio: dataInicio,
         quantidade_horas: qtdHoras ? Number(qtdHoras) : null,
         valor_hora: valorHora ? Number(valorHora) : null,
@@ -182,8 +221,8 @@ async function salvarContratoProjeto() {
     }]);
     if (error) return alert('Erro ao salvar o contrato: ' + error.message);
 
-    alert('✅ Contrato salvo com sucesso!');
-    ['contratoEmpresaSelect', 'contratoNumeroInput', 'contratoDataInicioInput', 'contratoDataEncerramentoInput', 'contratoQtdHorasInput', 'contratoValorHoraInput', 'contratoValorTotalInput', 'contratoObservacaoInput'].forEach(id => {
+    alert(`✅ Contrato salvo — número gerado: ${numeroContrato}`);
+    ['contratoEmpresaSelect', 'contratoDataInicioInput', 'contratoDataEncerramentoInput', 'contratoQtdHorasInput', 'contratoValorHoraInput', 'contratoValorTotalInput', 'contratoObservacaoInput'].forEach(id => {
         document.getElementById(id).value = '';
     });
     await renderContratosProjetoView();
