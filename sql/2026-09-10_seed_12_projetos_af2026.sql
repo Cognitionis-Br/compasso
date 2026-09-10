@@ -38,6 +38,19 @@
 
 
 -- =========================================================================
+-- SEÇÃO 0 — Registro do AF2026 em anos_fiscais_config
+--   O seletor de Ano Fiscal do Dashboard / Roadmap / Financeiro / Consulta
+--   é montado A PARTIR desta tabela (js/core/filtro-af-visao.js). Sem uma
+--   linha para 'AF2026', os 12 projetos existem mas o AF2026 nem aparece
+--   como opção. Cria a linha como "Ano Fiscal em andamento" (orçamento
+--   fechado, AF ainda não encerrado). Não mexe se já existir.
+-- =========================================================================
+INSERT INTO anos_fiscais_config (ano_fiscal, orcamento_fechado, recebimento_demandas_aberto, ano_fiscal_fechado)
+VALUES ('AF2026', true, false, false)
+ON CONFLICT (ano_fiscal) DO NOTHING;
+
+
+-- =========================================================================
 -- SEÇÃO 1 — Pilares e Iniciativas Estratégicas de AF2026
 --   Se AF2026 não tiver nenhum pilar, copia os de AF2026 <- AF2027.
 --   (Se AF2027 também não tiver, os 12 projetos ficam sem pilar — ok.)
