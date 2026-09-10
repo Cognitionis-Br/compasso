@@ -16,7 +16,9 @@
 --
 -- DEPOIS DESTE SCRIPT, rode NA ORDEM:
 --   a) sql/2026-09-02_seed_49_projetos_teste CARGA DE 49 PROJETOS PARA TESTES.sql
---   b) sql/2026-09-02_seed_12_projetos_carryover_af2026.sql
+--   b) sql/2026-09-10_seed_12_projetos_af2026.sql
+--      (substitui o antigo sql/2026-09-02_seed_12_projetos_carryover_af2026.sql —
+--       agora auto-adaptável ao conteúdo das tabelas de cadastro)
 --   c) (opcional) sql/2026-09-02_update_pilar_iniciativa_projetos_teste.sql
 --      — se quiser os 49 projetos AF2027 já com pilar/iniciativa.
 --
