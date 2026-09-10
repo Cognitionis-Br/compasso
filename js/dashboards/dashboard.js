@@ -135,20 +135,25 @@ async function renderDashboardMetrics() {
         try { await carregarProdutosData(); } catch (e) { /* rótulo cai p/ "Produto #id" */ }
     }
     if (typeof montarSeletorAF === 'function') modoAFDashboard = montarSeletorAF('dashSeletorAF', modoAFDashboard);
-    const projectsDataFiltrado = filtrarProjetosPorAgrupamento(
-        filtrarProjetosPorArea(filtrarProjetosPorAnoFiscalSelecionado(projectsData, modoAFDashboard), 'dashboard'),
-        modoAgrupamentoOrcamento, valorAgrupamentoSelecionado);
+    // Recorte por Ano Fiscal selecionado + restrição de área do usuário.
+    // O agrupamento AF/Área/Produto foi absorvido pelo Filtro Global.
+    const projectsDataFiltrado = filtrarProjetosPorArea(
+        filtrarProjetosPorAnoFiscalSelecionado(projectsData, modoAFDashboard), 'dashboard');
     renderFaixaAFSelecionado('dashFaixaAFSelecionado', modoAFDashboard);
-    renderSeletorAgrupamento('dashSeletorAgrupamento', 'renderDashboardMetrics');
-    renderQuadroOrcamentoAgrupado('dash', projectsDataFiltrado);
 
     // Filtro Global (Estágio 1) — recorte compartilhado sobre a lista já
     // no escopo do Ano Fiscal. Resumo Orçamentário e Funis seguem com a
     // lista do AF (projectsDataFiltrado); Consolidação por Fase, Farol,
-    // Orçado×Realizado e Status Detalhado usam projectsDataDash.
+    // Orçado×Realizado, Composição e Status Detalhado usam projectsDataDash.
     if (typeof renderFiltroGlobalDashboard === 'function') renderFiltroGlobalDashboard();
     const projectsDataDash = (typeof aplicarFiltroGlobal === 'function')
         ? aplicarFiltroGlobal(projectsDataFiltrado) : projectsDataFiltrado;
+
+    // Estágio 2 — Resumo Orçamentário (§4.3), Composição (§4.5).
+    // O Farol (§4.4) precisa do cache de projeto_etapas; renderizado
+    // logo depois do fetch dele, mais abaixo.
+    if (typeof renderResumoOrcamentario === 'function') renderResumoOrcamentario(projectsDataFiltrado);
+    if (typeof renderComposicaoPortfolio === 'function') renderComposicaoPortfolio(projectsDataDash);
 
     let totOrcamentoOficial = 0;
     let totOrcamentoEmConstrucao = 0;
@@ -160,6 +165,9 @@ async function renderDashboardMetrics() {
     // o farol de saúde não detectava etapas com prazo vencido fora de
     // Business Case/Requerimentos.
     const { data: todasEtapasCache } = await _supabase.from('projeto_etapas').select('*');
+
+    // Estágio 2 — Farol de Saúde (§4.4), agora com o cache de etapas.
+    if (typeof renderFarolSaudeDash === 'function') renderFarolSaudeDash(projectsDataDash, todasEtapasCache || []);
 
     // CORRIGIDO (a pedido do usuário — bug reportado: valores de projetos
     // sendo aprovados no AF recém-aberto não apareciam em lugar nenhum):

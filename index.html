@@ -522,11 +522,16 @@
                         <div class="flex items-center gap-1.5 flex-wrap mt-3" id="dashFiltroGlobalTrilha"></div>
                     </section>
 
-                    <!-- NOVO (Agrupamento de Orçamento — itens 5/6): seletor + quadro
-                         de valores por Ano Fiscal / Área / Produto, no lugar dos
-                         KPI cards antigos (incl. a "Projeção Final", removida). -->
-                    <div id="dashSeletorAgrupamento"></div>
-                    <div id="dashQuadroOrcamento" class="mb-6"></div>
+                    <!-- Resumo Orçamentário (§4.3) + Farol de Saúde (§4.4) +
+                         Composição do Portfólio (§4.5). O agrupamento AF/Área/
+                         Produto do Dashboard foi absorvido pelo Filtro Global. -->
+                    <div id="dashResumoOrcamentario"></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+                        <div id="dashFarolSaude"></div>
+                        <div id="dashComposicao"></div>
+                    </div>
+                    <div id="dashSeletorAgrupamento" class="hidden"></div>
+                    <div id="dashQuadroOrcamento" class="hidden"></div>
 
                     <section class="bg-white p-5 rounded-lg border border-gray-200 border-l-4 border-l-blue-400 shadow-sm mb-6">
                         <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Projetos na Criação do Ano Fiscal</h3>
@@ -623,16 +628,12 @@
 
                     <div class="grid grid-cols-1 gap-6 mb-6">
                         <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                            <h3 class="font-bold text-gray-800 text-sm mb-2">1. Funil de Demandas</h3>
-                            <div id="chartFunilFases" class="h-64 w-full"></div>
-                        </section>
-                        <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                            <h3 class="font-bold text-gray-800 text-sm mb-2">2. Farol de Saúde</h3>
-                            <div id="chartFarolSaude" class="h-64 w-full"></div>
-                        </section>
-                        <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                            <h3 class="font-bold text-gray-800 text-sm mb-2">3. Orçado vs. Realizado por UN</h3>
+                            <h3 class="font-bold text-gray-800 text-sm mb-2 uppercase tracking-wide">Orçado vs. Realizado por Área / UN</h3>
                             <div id="chartOrcadoVsRealizadoUn" class="h-64 w-full"></div>
+                        </section>
+                        <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
+                            <h3 class="font-bold text-gray-800 text-sm mb-2 uppercase tracking-wide">Funil de Fases (visão gráfica)</h3>
+                            <div id="chartFunilFases" class="h-64 w-full"></div>
                         </section>
                     </div>
 
@@ -4688,6 +4689,7 @@
     <script src="./js/projeto-detalhe/projeto-detalhe.js"></script>
     <script src="./js/dashboards/graphs.js"></script>
     <script src="./js/dashboards/dashboard-filtro.js"></script>
+    <script src="./js/dashboards/dashboard-resumo.js"></script>
     <script src="./js/dashboards/dashboard.js"></script>
     <script src="./js/consultas/consulta-projetos.js"></script>
     <script src="./js/roadmap/roadmap.js"></script>
