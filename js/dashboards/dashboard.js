@@ -237,7 +237,13 @@ async function renderDashboardMetrics() {
     // 'Projeção Final' (totR * 1.15) removida — ver INVESTIGACAO_PROJECAO_FINAL.md / quadro novo (Orçamento a Realizar).
     if (document.getElementById('kpiSaldo')) document.getElementById('kpiSaldo').innerText = `R$ ${(displayOrcamento - totR).toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
 
-    renderTabelaConsolidacaoPortfolio(displayOrcamento, projectsDataDash, isFechadoParaAF);
+    // Estágio 3 — Consolidação por Fase (§4.2) substitui a tabela antiga.
+    // Os gráficos e a tabela de Carryover (antes chamados no fim de
+    // renderTabelaConsolidacaoPortfolio) passam a ser chamados aqui direto.
+    if (typeof renderConsolidacaoFases === 'function') renderConsolidacaoFases(projectsDataDash, todasEtapasCache || []);
+    if (typeof renderGraphOrcadoVsRealizadoUn === 'function') renderGraphOrcadoVsRealizadoUn(projectsDataDash);
+    if (typeof renderGraphFunilFases === 'function') renderGraphFunilFases(projectsDataDash);
+    if (typeof renderTabelaCarryoverDashboard === 'function') renderTabelaCarryoverDashboard(projectsDataDash, isFechadoParaAF);
     await renderBlocosCriacaoEPortfolioFY(projectsDataFiltrado);
 
     const dashTableBody = document.getElementById('dashTableBody');

@@ -30,11 +30,26 @@ const DASH_FASES = [
 ];
 const DASH_TIPOS = ['GROW', 'REG', 'RUN'];
 
+// Normaliza qualquer rótulo de etapa (REQUIREMENTS/REQUERIMENTS,
+// TECHNICAL/ESPECIFICAÇÃO, GO LIVE/GOLIVE, CONCLUIDO/CONCLUÍDO...) para
+// uma das 7 chaves lineares de DASH_FASES.
+function dashFaseKeyRaw(raw) {
+    const s = String(raw || 'BUSINESS CASE').toUpperCase().replace(/\s+/g, '').replace(/[ÍÌÎ]/g, 'I').replace(/[ÉÊÈ]/g, 'E').replace(/[ÇC]/g, 'C');
+    if (s.startsWith('BUSINESS') || s === '' || s === 'BC') return 'BUSINESSCASE';
+    if (s.startsWith('REQ')) return 'REQUIREMENTS';
+    if (s.startsWith('TECH') || s.startsWith('ESPEC') || s.startsWith('ARQ')) return 'TECHNICAL';
+    if (s.startsWith('EXEC') || s.startsWith('DESENV')) return 'EXECUTION';
+    if (s.startsWith('UAT') || s.startsWith('HOMOLOG')) return 'UAT';
+    if (s.startsWith('GO') || s.includes('GOLIVE')) return 'GOLIVE';
+    if (s.startsWith('CONCLU')) return 'CONCLUIDO';
+    return s;
+}
+
 // Fase "canônica" de um projeto para o filtro/consolidação: projeto com
 // baixa final é 'CONCLUIDO'; senão, a etapa_atual normalizada.
 function dashFaseDe(p) {
     if (p.projeto_concluido === true) return 'CONCLUIDO';
-    return String(p.etapa_atual || 'BUSINESS CASE').toUpperCase().replace(/\s+/g, '');
+    return dashFaseKeyRaw(p.etapa_atual);
 }
 
 function _dashNomeProduto(id) {

@@ -587,26 +587,9 @@
                         </div>
                     </section>
 
-                    <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm mb-6">
-                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Consolidação do Portfólio por Fase</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead>
-                                    <tr class="bg-gray-50 text-gray-700 font-semibold text-xs uppercase">
-                                        <th class="p-3 border-b">Fase / Status</th>
-                                        <th class="p-3 text-center border-b">Qtd</th>
-                                        <th class="p-3 text-center border-b">% Portfólio</th>
-                                        <th class="p-3 text-right border-b">Orçamento Previsto</th>
-                                        <th class="p-3 border-b">Status de Saúde</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableConsolidacaoPortfolio" class="divide-y divide-gray-100 text-xs"></tbody>
-                                <tfoot>
-                                    <tr id="tableConsolidacaoPortfolioTotal" class="bg-gray-100 font-bold text-xs border-t-2 border-gray-300"></tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </section>
+                    <!-- Consolidação do Portfólio por Fase (§4.2) — 7 fases
+                         lineares + 3 desfechos satélite, com validação da soma. -->
+                    <div id="dashConsolidacaoFases"></div>
 
                     <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm mb-6">
                         <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide"><i class="fa-solid fa-flag text-orange-600"></i> Consolidação de Projetos Carryover</h3>
@@ -4690,6 +4673,7 @@
     <script src="./js/dashboards/graphs.js"></script>
     <script src="./js/dashboards/dashboard-filtro.js"></script>
     <script src="./js/dashboards/dashboard-resumo.js"></script>
+    <script src="./js/dashboards/dashboard-fases.js"></script>
     <script src="./js/dashboards/dashboard.js"></script>
     <script src="./js/consultas/consulta-projetos.js"></script>
     <script src="./js/roadmap/roadmap.js"></script>
