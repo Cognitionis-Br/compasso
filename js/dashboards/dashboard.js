@@ -130,6 +130,10 @@ async function renderDashboardMetrics() {
     // Aplicado ANTES de tudo pra a tela inteira (quadro, listas, gráficos)
     // refletir o subgrupo escolhido.
     if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
+    // Filtro Global por Produto precisa de produtosCache p/ os rótulos.
+    if (typeof carregarProdutosData === 'function' && (typeof produtosCache === 'undefined' || !produtosCache || !produtosCache.length)) {
+        try { await carregarProdutosData(); } catch (e) { /* rótulo cai p/ "Produto #id" */ }
+    }
     if (typeof montarSeletorAF === 'function') modoAFDashboard = montarSeletorAF('dashSeletorAF', modoAFDashboard);
     const projectsDataFiltrado = filtrarProjetosPorAgrupamento(
         filtrarProjetosPorArea(filtrarProjetosPorAnoFiscalSelecionado(projectsData, modoAFDashboard), 'dashboard'),

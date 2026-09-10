@@ -15,7 +15,7 @@
 // =========================================================================
 
 // Estado — Sets vazios = "sem filtro" naquela dimensão.
-const dashFiltroGlobal = { areas: new Set(), fases: new Set(), status: new Set(), tipos: new Set() };
+const dashFiltroGlobal = { produtos: new Set(), areas: new Set(), fases: new Set(), status: new Set(), tipos: new Set() };
 
 // 7 fases lineares, na ordem de leitura 1 -> 7 (spec §4.2). A chave é
 // normalizada (sem espaços) para casar 'GOLIVE' e 'GO LIVE'.
@@ -37,6 +37,16 @@ function dashFaseDe(p) {
     return String(p.etapa_atual || 'BUSINESS CASE').toUpperCase().replace(/\s+/g, '');
 }
 
+function _dashNomeProduto(id) {
+    if (typeof nomeProdutoPorId === 'function') return nomeProdutoPorId(id);
+    return 'Produto #' + id;
+}
+function _dashProdutosDistintos() {
+    const base = (typeof projectsData !== 'undefined' && projectsData) ? projectsData : [];
+    const ids = [...new Set(base.map(p => p.produto_id).filter(v => v != null && v !== ''))].map(String);
+    return ids.map(id => ({ k: id, l: _dashNomeProduto(id) }))
+        .sort((a, b) => a.l.localeCompare(b.l, 'pt-BR'));
+}
 function _dashStatusDistintos() {
     const base = (typeof projectsData !== 'undefined' && projectsData) ? projectsData : [];
     return [...new Set(base.map(p => (p.sub_status || '').trim().toUpperCase()).filter(Boolean))]
@@ -52,6 +62,7 @@ function _dashAreasDistintas() {
 function aplicarFiltroGlobal(lista) {
     const f = dashFiltroGlobal;
     return (lista || []).filter(p => {
+        if (f.produtos.size && !f.produtos.has(String(p.produto_id))) return false;
         if (f.areas.size && !f.areas.has((p.area || '').trim())) return false;
         if (f.fases.size && !f.fases.has(dashFaseDe(p))) return false;
         if (f.status.size && !f.status.has((p.sub_status || '').trim().toUpperCase())) return false;
@@ -61,12 +72,13 @@ function aplicarFiltroGlobal(lista) {
 }
 function filtroGlobalAtivo() {
     const f = dashFiltroGlobal;
-    return f.areas.size + f.fases.size + f.status.size + f.tipos.size > 0;
+    return f.produtos.size + f.areas.size + f.fases.size + f.status.size + f.tipos.size > 0;
 }
 
 // ---- UI -------------------------------------------------------------
 function _dashDimSet(dim) {
-    return dim === 'area' ? dashFiltroGlobal.areas
+    return dim === 'produto' ? dashFiltroGlobal.produtos
+        : dim === 'area' ? dashFiltroGlobal.areas
         : dim === 'fase' ? dashFiltroGlobal.fases
         : dim === 'status' ? dashFiltroGlobal.status
         : dashFiltroGlobal.tipos;
@@ -79,6 +91,7 @@ function toggleFiltroGlobal(dim, valor) {
     if (typeof renderDashboardMetrics === 'function') renderDashboardMetrics();
 }
 function limparFiltroGlobal() {
+    dashFiltroGlobal.produtos.clear();
     dashFiltroGlobal.areas.clear();
     dashFiltroGlobal.fases.clear();
     dashFiltroGlobal.status.clear();
@@ -111,6 +124,7 @@ function renderFiltroGlobalDashboard() {
     const bar = document.getElementById('dashFiltroGlobalBar');
     if (bar) {
         bar.innerHTML =
+            _dashDropdown('produto', 'Produto', _dashProdutosDistintos()) +
             _dashDropdown('area', 'Área', _dashAreasDistintas()) +
             _dashDropdown('fase', 'Fase', DASH_FASES) +
             _dashDropdown('status', 'Status', _dashStatusDistintos()) +
@@ -125,6 +139,7 @@ function renderFiltroGlobalDashboard() {
             class="inline-flex items-center gap-1 bg-indigo-50 text-indigo-800 border border-indigo-200 rounded-full px-2.5 py-1 text-[11px] font-bold hover:bg-indigo-100">
             ${escapeHtml(lab)} <i class="fa-solid fa-xmark text-[9px]"></i></button>`;
         const chips = [];
+        dashFiltroGlobal.produtos.forEach(v => chips.push(chip('produto', v, 'Produto: ' + _dashNomeProduto(v))));
         dashFiltroGlobal.areas.forEach(v => chips.push(chip('area', v, 'Área: ' + v)));
         dashFiltroGlobal.fases.forEach(v => chips.push(chip('fase', v, 'Fase: ' + ((DASH_FASES.find(f => f.k === v) || {}).l || v))));
         dashFiltroGlobal.status.forEach(v => chips.push(chip('status', v, 'Status: ' + v)));
