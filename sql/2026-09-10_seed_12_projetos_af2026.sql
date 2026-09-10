@@ -192,9 +192,9 @@ BEGIN
 
         v_porte := COALESCE(
             (SELECT codigo FROM portes
-             WHERE ativo IS NOT FALSE AND horas_minimo <= GREATEST(v_hs_bc, v_hs_req, v_hs_tech)
+             WHERE horas_minimo <= GREATEST(v_hs_bc, v_hs_req, v_hs_tech)
              ORDER BY horas_minimo DESC LIMIT 1),
-            (SELECT codigo FROM portes WHERE ativo IS NOT FALSE ORDER BY horas_minimo LIMIT 1),
+            (SELECT codigo FROM portes ORDER BY horas_minimo LIMIT 1),
             'M'
         );
 
