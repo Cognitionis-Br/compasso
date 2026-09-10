@@ -511,7 +511,16 @@
 
                     <!-- NOVO (a pedido do usuário): faixa visível indicando qual
                          Ano Fiscal está selecionado, sempre no topo da tela. -->
-                    <div id="dashFaixaAFSelecionado" class="mb-6"></div>
+                    <div id="dashFaixaAFSelecionado" class="mb-4"></div>
+
+                    <!-- Filtro Global (spec-dashboard-portfolio.md §4.1) — Área /
+                         Fase / Status / Tipo em múltipla seleção; recalcula
+                         Farol, Orçado×Realizado, Consolidação por Fase,
+                         Composição e Status Detalhado sem reload. -->
+                    <section class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm mb-3">
+                        <div class="flex items-center gap-2 flex-wrap" id="dashFiltroGlobalBar"></div>
+                        <div class="flex items-center gap-1.5 flex-wrap mt-3" id="dashFiltroGlobalTrilha"></div>
+                    </section>
 
                     <!-- NOVO (Agrupamento de Orçamento — itens 5/6): seletor + quadro
                          de valores por Ano Fiscal / Área / Produto, no lugar dos
@@ -628,34 +637,8 @@
                     </div>
 
                     <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                        <h3 class="font-bold text-gray-800 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Status Detalhado da Carteira</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Filtrar por Área</label>
-                                <select id="dashFiltroArea" onchange="renderDashboardMetrics()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
-                                    <option value="">-- Todas --</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Filtrar por Fase</label>
-                                <select id="dashFiltroFase" onchange="renderDashboardMetrics()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
-                                    <option value="">-- Todas --</option>
-                                    <option value="BUSINESS CASE">Business Case</option>
-                                    <option value="REQUIREMENTS">Requerimentos</option>
-                                    <option value="TECHNICAL">Especificação</option>
-                                    <option value="EXECUTION">Execução</option>
-                                    <option value="UAT">UAT</option>
-                                    <option value="GO LIVE">Go-Live</option>
-                                    <option value="CONCLUIDO">Concluído</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Filtrar por Status</label>
-                                <select id="dashFiltroStatus" onchange="renderDashboardMetrics()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
-                                    <option value="">-- Todos --</option>
-                                </select>
-                            </div>
-                        </div>
+                        <h3 class="font-bold text-gray-800 text-sm mb-2 border-b pb-2 uppercase tracking-wide">Status Detalhado da Carteira</h3>
+                        <p class="text-[11px] text-gray-400 mb-3">Usa o Filtro Global do topo da tela (Área / Fase / Status / Tipo).</p>
                         <div class="overflow-x-auto hidden md:block">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
@@ -4704,6 +4687,7 @@
     <script src="./js/formalizar-v2/detalhe-demanda.js"></script>
     <script src="./js/projeto-detalhe/projeto-detalhe.js"></script>
     <script src="./js/dashboards/graphs.js"></script>
+    <script src="./js/dashboards/dashboard-filtro.js"></script>
     <script src="./js/dashboards/dashboard.js"></script>
     <script src="./js/consultas/consulta-projetos.js"></script>
     <script src="./js/roadmap/roadmap.js"></script>

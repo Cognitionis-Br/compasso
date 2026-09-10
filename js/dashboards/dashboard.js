@@ -138,6 +138,14 @@ async function renderDashboardMetrics() {
     renderSeletorAgrupamento('dashSeletorAgrupamento', 'renderDashboardMetrics');
     renderQuadroOrcamentoAgrupado('dash', projectsDataFiltrado);
 
+    // Filtro Global (Estágio 1) — recorte compartilhado sobre a lista já
+    // no escopo do Ano Fiscal. Resumo Orçamentário e Funis seguem com a
+    // lista do AF (projectsDataFiltrado); Consolidação por Fase, Farol,
+    // Orçado×Realizado e Status Detalhado usam projectsDataDash.
+    if (typeof renderFiltroGlobalDashboard === 'function') renderFiltroGlobalDashboard();
+    const projectsDataDash = (typeof aplicarFiltroGlobal === 'function')
+        ? aplicarFiltroGlobal(projectsDataFiltrado) : projectsDataFiltrado;
+
     let totOrcamentoOficial = 0;
     let totOrcamentoEmConstrucao = 0;
     let totR = 0, totAdhoc = 0;
@@ -217,24 +225,13 @@ async function renderDashboardMetrics() {
     // 'Projeção Final' (totR * 1.15) removida — ver INVESTIGACAO_PROJECAO_FINAL.md / quadro novo (Orçamento a Realizar).
     if (document.getElementById('kpiSaldo')) document.getElementById('kpiSaldo').innerText = `R$ ${(displayOrcamento - totR).toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
 
-    renderTabelaConsolidacaoPortfolio(displayOrcamento, projectsDataFiltrado, isFechadoParaAF);
+    renderTabelaConsolidacaoPortfolio(displayOrcamento, projectsDataDash, isFechadoParaAF);
     await renderBlocosCriacaoEPortfolioFY(projectsDataFiltrado);
 
     const dashTableBody = document.getElementById('dashTableBody');
     if (dashTableBody) {
-        // NOVO 10/08/2026: filtros por Área/Fase/Status no Status
-        // Detalhado da Carteira.
-        popularFiltrosStatusDetalhado();
-        const filtroArea = (document.getElementById('dashFiltroArea') || {}).value || '';
-        const filtroFase = (document.getElementById('dashFiltroFase') || {}).value || '';
-        const filtroStatus = (document.getElementById('dashFiltroStatus') || {}).value || '';
-
-        const projetosFiltrados = projectsDataFiltrado.filter(p => {
-            if (filtroArea && (p.area || '') !== filtroArea) return false;
-            if (filtroFase && (p.etapa_atual || 'BUSINESS CASE').toUpperCase() !== filtroFase) return false;
-            if (filtroStatus && (p.sub_status || '') !== filtroStatus) return false;
-            return true;
-        });
+        // Status Detalhado da Carteira — reflete o Filtro Global (§4.9).
+        const projetosFiltrados = projectsDataDash;
 
         if (projetosFiltrados.length === 0) {
             const msgVazia = projectsDataFiltrado.length === 0 ? 'Nenhum projeto cadastrado no portfólio' : 'Nenhum projeto encontrado com esses filtros';
