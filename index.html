@@ -533,92 +533,15 @@
                     <div id="dashSeletorAgrupamento" class="hidden"></div>
                     <div id="dashQuadroOrcamento" class="hidden"></div>
 
-                    <section class="bg-white p-5 rounded-lg border border-gray-200 border-l-4 border-l-blue-400 shadow-sm mb-6">
-                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Projetos na Criação do Ano Fiscal</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead>
-                                    <tr class="bg-gray-50 text-gray-700 font-semibold text-xs uppercase">
-                                        <th class="p-3 border-b">Categoria</th>
-                                        <th class="p-3 text-center border-b">Qtd</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableCriacaoFYBody" class="divide-y divide-gray-100 text-xs"></tbody>
-                                <tfoot>
-                                    <tr id="tableCriacaoFYTotal" class="bg-gray-100 font-bold text-xs border-t-2 border-gray-300"></tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </section>
+                    <!-- §4.6 Orçado vs. Realizado por Área/UN -->
+                    <div id="dashOrcadoRealizado" class="mb-6"></div>
 
-                    <section class="bg-white p-5 rounded-lg border border-gray-200 border-l-4 border-l-purple-400 shadow-sm mb-6">
-                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Projetos Extraordinários na Criação do Ano Fiscal</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead>
-                                    <tr class="bg-gray-50 text-gray-700 font-semibold text-xs uppercase">
-                                        <th class="p-3 border-b">Categoria</th>
-                                        <th class="p-3 text-center border-b">Qtd</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableCriacaoAdhocFYBody" class="divide-y divide-gray-100 text-xs"></tbody>
-                                <tfoot>
-                                    <tr id="tableCriacaoAdhocFYTotal" class="bg-gray-100 font-bold text-xs border-t-2 border-gray-300"></tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </section>
-
-                    <section class="bg-white p-5 rounded-lg border border-gray-200 border-l-4 border-l-indigo-400 shadow-sm mb-6">
-                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Portfolio de Projetos do Ano Fiscal</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead>
-                                    <tr class="bg-gray-50 text-gray-700 font-semibold text-xs uppercase">
-                                        <th class="p-3 border-b">Categoria</th>
-                                        <th class="p-3 text-center border-b">Qtd</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tablePortfolioFYBody" class="divide-y divide-gray-100 text-xs"></tbody>
-                                <tfoot>
-                                    <tr id="tablePortfolioFYTotal" class="bg-gray-100 font-bold text-xs border-t-2 border-gray-300"></tr>
-                                </tfoot>
-                            </table>
-                        </div>
-                    </section>
-
-                    <!-- Consolidação do Portfólio por Fase (§4.2) — 7 fases
+                    <!-- §4.2 Consolidação do Portfólio por Fase — 7 fases
                          lineares + 3 desfechos satélite, com validação da soma. -->
                     <div id="dashConsolidacaoFases"></div>
 
-                    <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm mb-6">
-                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide"><i class="fa-solid fa-flag text-orange-600"></i> Consolidação de Projetos Carryover</h3>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse text-sm">
-                                <thead>
-                                    <tr class="bg-gray-50 text-gray-700 font-semibold text-xs uppercase">
-                                        <th class="p-3 border-b">Código</th>
-                                        <th class="p-3 border-b">Projeto</th>
-                                        <th class="p-3 border-b">Fase / Situação</th>
-                                        <th class="p-3 text-right border-b">Saldo Carryover</th>
-                                        <th class="p-3 border-b">Marcado Por</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="tableCarryoverDashboardBody" class="divide-y divide-gray-100 text-xs"></tbody>
-                            </table>
-                        </div>
-                    </section>
-
-                    <div class="grid grid-cols-1 gap-6 mb-6">
-                        <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                            <h3 class="font-bold text-gray-800 text-sm mb-2 uppercase tracking-wide">Orçado vs. Realizado por Área / UN</h3>
-                            <div id="chartOrcadoVsRealizadoUn" class="h-64 w-full"></div>
-                        </section>
-                        <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                            <h3 class="font-bold text-gray-800 text-sm mb-2 uppercase tracking-wide">Funil de Fases (visão gráfica)</h3>
-                            <div id="chartFunilFases" class="h-64 w-full"></div>
-                        </section>
-                    </div>
+                    <!-- §4.7 Funis de Criação do Ano Fiscal (Normal + Extraordinária) -->
+                    <div id="dashFunisCriacao" class="mb-6"></div>
 
                     <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
                         <h3 class="font-bold text-gray-800 text-sm mb-2 border-b pb-2 uppercase tracking-wide">Status Detalhado da Carteira</h3>
@@ -643,6 +566,25 @@
                         </div>
                         <!-- Versão em cartão, só em telas estreitas (abaixo de md) -->
                         <div id="dashCardsBody" class="md:hidden space-y-3"></div>
+                    </section>
+
+                    <!-- §4.10 Consolidação de Projetos Carryover -->
+                    <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm mt-6">
+                        <h3 class="font-extrabold text-gray-900 text-sm mb-4 border-b pb-2 uppercase tracking-wide"><i class="fa-solid fa-flag text-orange-600"></i> Consolidação de Projetos Carryover</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-700 font-semibold text-xs uppercase">
+                                        <th class="p-3 border-b">Código</th>
+                                        <th class="p-3 border-b">Projeto</th>
+                                        <th class="p-3 border-b">Fase / Situação</th>
+                                        <th class="p-3 text-right border-b">Saldo Carryover</th>
+                                        <th class="p-3 border-b">Marcado Por</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableCarryoverDashboardBody" class="divide-y divide-gray-100 text-xs"></tbody>
+                            </table>
+                        </div>
                     </section>
                 </div>
 
@@ -4674,6 +4616,7 @@
     <script src="./js/dashboards/dashboard-filtro.js"></script>
     <script src="./js/dashboards/dashboard-resumo.js"></script>
     <script src="./js/dashboards/dashboard-fases.js"></script>
+    <script src="./js/dashboards/dashboard-funis.js"></script>
     <script src="./js/dashboards/dashboard.js"></script>
     <script src="./js/consultas/consulta-projetos.js"></script>
     <script src="./js/roadmap/roadmap.js"></script>

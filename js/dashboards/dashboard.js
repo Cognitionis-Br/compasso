@@ -240,11 +240,10 @@ async function renderDashboardMetrics() {
     // Estágio 3 — Consolidação por Fase (§4.2) substitui a tabela antiga.
     // Os gráficos e a tabela de Carryover (antes chamados no fim de
     // renderTabelaConsolidacaoPortfolio) passam a ser chamados aqui direto.
+    if (typeof renderOrcadoRealizadoArea === 'function') renderOrcadoRealizadoArea(projectsDataDash);
     if (typeof renderConsolidacaoFases === 'function') renderConsolidacaoFases(projectsDataDash, todasEtapasCache || []);
-    if (typeof renderGraphOrcadoVsRealizadoUn === 'function') renderGraphOrcadoVsRealizadoUn(projectsDataDash);
-    if (typeof renderGraphFunilFases === 'function') renderGraphFunilFases(projectsDataDash);
+    if (typeof renderFunisCriacao === 'function') renderFunisCriacao(projectsDataFiltrado);
     if (typeof renderTabelaCarryoverDashboard === 'function') renderTabelaCarryoverDashboard(projectsDataDash, isFechadoParaAF);
-    await renderBlocosCriacaoEPortfolioFY(projectsDataFiltrado);
 
     const dashTableBody = document.getElementById('dashTableBody');
     if (dashTableBody) {
@@ -298,7 +297,7 @@ async function renderDashboardMetrics() {
                         <td class="p-3 font-bold font-mono"><button onclick="abrirDetalheProjeto('${p.codigo}')" class="text-red-700 hover:text-red-900 hover:underline" title="Ver detalhamento completo">${p.codigo}</button></td>
                         <td class="p-3 font-semibold">${escapeHtml(p.nome)} <br><span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${badgeQualif}">${qualif}</span>${p.is_adhoc ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-purple-100 text-purple-800 ml-1">Extraordinário</span>' : ''}${p.is_carryover ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-orange-100 text-orange-800 ml-1">Carryover</span>' : ''}${p.is_subprojeto ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-cyan-100 text-cyan-800 ml-1">Subprojeto de ' + escapeHtml(p.projeto_pai_codigo) + '</span>' : ''}${p.projeto_concluido ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 ml-1">🏁 Concluído</span>' : ''}</td>
                         <td class="p-3 text-xs font-bold">${p.area || '-'}</td>
-                        <td class="p-3 text-xs">${p.tipo_orcamento || '-'}</td>
+                        <td class="p-3 text-xs"><span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${badgeQualif}">${qualif}</span></td>
                         <td class="p-3 text-xs font-bold">${p.etapa_atual || 'BUSINESS CASE'}</td>
                         <td class="p-3 text-xs">${p.sub_status || '-'}</td>
                         <td class="p-3 font-mono text-right">R$ ${valPrevisto}</td>
