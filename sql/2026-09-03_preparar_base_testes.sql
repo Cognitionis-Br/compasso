@@ -15,12 +15,15 @@
 --   3. Zera o contador de código de projeto de AF2026 e AF2027.
 --
 -- DEPOIS DESTE SCRIPT, rode NA ORDEM:
---   a) sql/2026-09-02_seed_49_projetos_teste CARGA DE 49 PROJETOS PARA TESTES.sql
+--   a) sql/2026-09-11_seed_49_projetos_af2027.sql
+--      (substitui o antigo sql/2026-09-02_seed_49_projetos_teste CARGA DE 49
+--       PROJETOS PARA TESTES.sql — agora auto-adaptável ao cadastro atual;
+--       já sai com pilar/iniciativa, então o antigo passo opcional (c),
+--       sql/2026-09-02_update_pilar_iniciativa_projetos_teste.sql, não é
+--       mais necessário)
 --   b) sql/2026-09-10_seed_12_projetos_af2026.sql
 --      (substitui o antigo sql/2026-09-02_seed_12_projetos_carryover_af2026.sql —
 --       agora auto-adaptável ao conteúdo das tabelas de cadastro)
---   c) (opcional) sql/2026-09-02_update_pilar_iniciativa_projetos_teste.sql
---      — se quiser os 49 projetos AF2027 já com pilar/iniciativa.
 --
 -- Resultado final: exatamente 49 (AF2027, Business Case / A Planejar) + 12
 -- (AF2026, distribuídos por fase, NÃO carryover) = 61 projetos, no estado
