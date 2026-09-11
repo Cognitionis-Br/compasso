@@ -101,6 +101,7 @@ const TAB_MODULO_MAP = {
     aprov_orcamento_af: 'WORKFLOW',
     percentual_bloqueio_orcamento: 'WORKFLOW',
     mudanca_orcamento: 'WORKFLOW',
+    troca_responsavel_atividade: 'WORKFLOW', // perfil OPERADOR — reatribuição de responsável de atividade
 
     // EMAIL — templates, fluxo, fila, e a régua de cobrança de ajustes.
     gestao_templates: 'EMAIL',

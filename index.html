@@ -247,6 +247,7 @@
                         <button onclick="switchTab('governanca')" id="link-governanca" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cobrança de Ajustes</button>
                         <button onclick="switchTab('retomar_hold')" id="link-retomar_hold" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Retomar Projetos em Hold</button>
                         <button onclick="switchTab('mudanca_orcamento')" id="link-mudanca_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Mudança de Orçamento</button>
+                        <button onclick="switchTab('troca_responsavel_atividade')" id="link-troca_responsavel_atividade" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Troca de Responsável de Atividade</button>
                     </div>
                 </div>
 
@@ -2390,6 +2391,17 @@
                                         Ignora Restrição de Área (enxerga todas as áreas nas telas com "Restrição de Área" ligada — mesmo sem Acesso Irrestrito, continua limitada pelas atividades marcadas abaixo)
                                     </label>
                                 </div>
+                                <!-- NOVO (perfil OPERADOR): oposto da restrição de área — em
+                                     vez de isentar, RESTRINGE a função a só enxergar projeto
+                                     onde o usuário está registrado como responsável de alguma
+                                     atividade/etapa planejada (ver "Troca de Responsável nas
+                                     Atividades dos Projetos", menu Governança). -->
+                                <div class="mb-4 bg-orange-50 border border-orange-200 rounded p-3">
+                                    <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-orange-800">
+                                        <input type="checkbox" id="funcaoOperadorInput">
+                                        Restringe por Atividade Responsável — perfil OPERADOR (só enxerga projeto onde o usuário é responsável de alguma atividade/etapa planejada; não afeta Business Case, que ainda não tem atividade planejada)
+                                    </label>
+                                </div>
                                 <!-- NOVO (papel Proprietário, 28/08/2026): separado do Acesso
                                      Irrestrito de propósito — mesmo uma função com acesso
                                      irrestrito (Administrador) NÃO enxerga Licenciamento de
@@ -3304,6 +3316,67 @@
                                 </tr></thead>
                                 <tbody id="mudancaOrcamentoTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Troca de Responsável nas Atividades dos Projetos (Governança) —
+                     também é a base de acesso do perfil OPERADOR (ver
+                     funcoes.restringe_por_atividade_responsavel). -->
+                <div id="view-troca_responsavel_atividade" class="tab-content hidden">
+                    <div class="mb-6 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Troca de Responsável de Atividade</h2>
+                        <p class="text-xs text-gray-500 mt-1">Atividades/etapas de projeto ainda não concluídas, com o responsável atual — use para reatribuir quando alguém sai do time ou muda de função (um a um, ou em lote na mesma etapa). É também a base do perfil OPERADOR: quem tem essa restrição só enxerga o projeto onde está registrado como responsável aqui.</p>
+                    </div>
+
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Buscar Projeto</label>
+                                <input id="trocaRespBuscaProjeto" oninput="renderTrocaResponsavelAtividadeView()" placeholder="Código ou nome" class="w-full p-2 border border-gray-300 rounded text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Etapa</label>
+                                <select id="trocaRespFiltroEtapa" onchange="renderTrocaResponsavelAtividadeView()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white"><option value="">-- Todas --</option></select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Responsável Atual</label>
+                                <select id="trocaRespFiltroResponsavel" onchange="renderTrocaResponsavelAtividadeView()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white"><option value="">-- Todos --</option></select>
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="abrirModalTrocaEmLote()" id="btnTrocaRespLote" class="w-full bg-orange-700 hover:bg-orange-800 text-white font-bold py-2 px-3 rounded text-xs disabled:opacity-40 disabled:cursor-not-allowed" disabled>Trocar Selecionados</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
+                                <th class="p-3"><input type="checkbox" onchange="toggleTodasTrocaResp(this.checked)"></th>
+                                <th class="p-3">Projeto</th><th class="p-3">Etapa</th><th class="p-3">Situação</th><th class="p-3">Responsável Atual</th><th class="p-3 text-center">Ação</th>
+                            </tr></thead>
+                            <tbody id="trocaRespTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Modal de troca de responsável -->
+                <div id="modalTrocaResponsavel" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+                    <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
+                        <div class="flex items-center justify-between border-b p-4">
+                            <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wider">Trocar Responsável</h3>
+                            <button onclick="fecharModalTrocaResponsavel()" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div class="p-4 text-sm">
+                            <div id="trocaRespModalResumo" class="text-xs text-gray-500 mb-3"></div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Novo Responsável</label>
+                            <select id="trocaRespNovoSelect" class="w-full p-2 border border-gray-300 rounded text-sm bg-white mb-3"></select>
+                            <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Motivo *</label>
+                            <textarea id="trocaRespMotivo" rows="2" class="w-full p-2 border border-gray-300 rounded text-sm" placeholder="Ex.: saiu do time, trocou de função..."></textarea>
+                        </div>
+                        <div class="border-t p-3 flex justify-end gap-2">
+                            <button onclick="fecharModalTrocaResponsavel()" class="px-3 py-1.5 bg-gray-200 rounded text-xs font-bold">Cancelar</button>
+                            <button onclick="confirmarTrocaResponsavel()" class="px-3 py-1.5 bg-orange-700 hover:bg-orange-800 text-white rounded text-xs font-bold">Confirmar Troca</button>
                         </div>
                     </div>
                 </div>
@@ -4609,6 +4682,7 @@
     <script src="./js/config/cargos.js"></script>
     <script src="./js/config/bloqueio-orcamento.js"></script>
     <script src="./js/governanca/mudanca-orcamento.js"></script>
+    <script src="./js/governanca/troca-responsavel-atividade.js"></script>
     <script src="./js/tipos-projeto/return-benefit.js"></script>
     <script src="./js/formalizar-v2/detalhe-demanda.js"></script>
     <script src="./js/projeto-detalhe/projeto-detalhe.js"></script>

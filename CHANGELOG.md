@@ -19,7 +19,21 @@ rodapé do login, no rodapé do menu lateral e na tela inicial.
 
 ## [Não lançado]
 
-_Sem itens no momento._
+**Perfil OPERADOR — restrição por atividade responsável**
+
+- Nova chave por função, **Funções e Permissões**: "Restringe por Atividade
+  Responsável" (`funcoes.restringe_por_atividade_responsavel`). Perfil
+  marcado assim só enxerga projeto onde o usuário está registrado como
+  responsável de alguma atividade/etapa planejada
+  (`projeto_etapas.responsavel_etapa_email`) — não afeta Business Case, que
+  ainda não gera etapa. Filtro dentro de `filtrarProjetosPorArea` (mesmo
+  ponto único já usado pela Restrição de Área em ~25 telas).
+- Nova tela **"Troca de Responsável de Atividade"** (menu Governança):
+  lista atividades/etapas não concluídas com o responsável atual, permite
+  reatribuir uma a uma ou em lote (mesma etapa) — para quando alguém sai do
+  time ou muda de função. Auditoria em `log_troca_responsavel_atividade`.
+  Acesso delegável via catálogo (`troca_responsavel_atividade`).
+- SQL: `sql/2026-09-11_perfil_operador_restricao_atividade.sql`.
 
 ---
 
