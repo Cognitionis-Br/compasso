@@ -35,6 +35,38 @@ function obterProximaEtapa(nomeEtapaAtual) {
     return fasesEtapasData.find(e => e.id === atual.proxima_etapa_id) || null;
 }
 
+// Inverso de obterProximaEtapa — encontra a etapa que aponta pra esta via
+// proxima_etapa_id (mesma cadeia global usada pra avançar fase, atravessa
+// Requerimentos -> Especificação -> Execução -> UAT -> Go-Live). Retorna
+// null pra primeira etapa do workflow (Realizar Orçamento), que não tem
+// antecessora.
+function obterEtapaAnterior(nomeEtapaAtual) {
+    const atual = obterEtapaPorNome(nomeEtapaAtual);
+    if (!atual) return null;
+    return fasesEtapasData.find(e => e.proxima_etapa_id === atual.id && e.ativo !== false) || null;
+}
+
+// NOVO (a pedido do usuário 2026-09-13, bug reportado: planejamento aceitava
+// datas fora de sequência entre Requerimentos -> Especificação -> Execução ->
+// UAT -> Go-Live): valida uma etapa contra a etapa imediatamente anterior.
+// Regras: (1) término da própria etapa > início da própria etapa; (2) início
+// não pode ser ANTERIOR ao início da etapa anterior (podem ser iguais); (3)
+// término tem que ser posterior ao término da etapa anterior (não pode
+// empatar nem regredir). `anteriorInicio`/`anteriorTermino` null = sem etapa
+// anterior (ou anterior ainda não planejada) -> só valida a regra (1).
+function validarSequenciaPlanejamento(dataInicio, dataTermino, anteriorInicio, anteriorTermino) {
+    if (dataTermino <= dataInicio) {
+        return 'a data de término deve ser posterior à data de início da própria atividade.';
+    }
+    if (anteriorInicio && dataInicio < anteriorInicio) {
+        return 'a data de início não pode ser anterior à data de início da atividade anterior.';
+    }
+    if (anteriorTermino && dataTermino <= anteriorTermino) {
+        return 'a data de término deve ser posterior à data de término da atividade anterior.';
+    }
+    return null;
+}
+
 // Lista as etapas de uma FASE (ex.: 'REQUERIMENTS'), em ordem — usada
 // pelo motor genérico "consciente de fase" (Especificacao_Workflow_v4.md,
 // seção 13, opção (a)) para navegar dentro de fases com múltiplas etapas

@@ -579,8 +579,31 @@ async function confirmarPlanejamentoGenerico() {
         return alert('Preencha responsável, data de início e data de término!');
     }
 
-    if (dataTermino <= dataInicio) {
-        return alert('A data de término deve ser posterior à data de início!');
+    // NOVO (a pedido do usuário 2026-09-13, bug reportado: planejamento
+    // aceitava datas fora de sequência entre Requerimentos -> Especificação
+    // -> Execução -> UAT -> Go-Live): além da própria etapa (término >
+    // início), valida contra a etapa imediatamente anterior no workflow —
+    // busca direto no banco (não no cache projetoEtapasData, que só guarda
+    // as etapas da FASE atualmente carregada na tela, podendo não ter a
+    // etapa anterior se ela for de outra fase).
+    const etapaAnteriorSeq = (typeof obterEtapaAnterior === 'function') ? obterEtapaAnterior(nomeEtapa) : null;
+    let planoAnteriorSeq = null;
+    if (etapaAnteriorSeq) {
+        const { data: planoAnteriorSeqRow } = await _supabase
+            .from('projeto_etapas')
+            .select('data_inicio_planejamento, data_termino_planejamento')
+            .eq('projeto_codigo', codigoProjeto)
+            .eq('etapa_id', etapaAnteriorSeq.id)
+            .maybeSingle();
+        planoAnteriorSeq = planoAnteriorSeqRow || null;
+    }
+    const erroSequenciaPlanejamento = validarSequenciaPlanejamento(
+        dataInicio, dataTermino,
+        planoAnteriorSeq ? planoAnteriorSeq.data_inicio_planejamento : null,
+        planoAnteriorSeq ? planoAnteriorSeq.data_termino_planejamento : null
+    );
+    if (erroSequenciaPlanejamento) {
+        return alert('⛔ ' + erroSequenciaPlanejamento.charAt(0).toUpperCase() + erroSequenciaPlanejamento.slice(1));
     }
 
     // AJUSTADO (a pedido do usuário): retirada a checagem de data dentro

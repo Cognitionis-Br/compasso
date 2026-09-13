@@ -311,16 +311,23 @@ async function confirmarCriarSubprojeto() {
         dadosEtapas.push({ chave, etapa_id: etapa.id, respNome, respEmail, dtInicio, dtTermino });
     }
 
-    // Mesma regra do planejamento de Execução do projeto principal:
-    // UAT e Go-Live sempre começam depois da Execução.
-    const dtInicioExecSub = dadosEtapas.find(d => d.chave === 'exec').dtInicio;
-    const dtInicioUatSub = dadosEtapas.find(d => d.chave === 'uat').dtInicio;
-    const dtInicioGoliveSub = dadosEtapas.find(d => d.chave === 'golive').dtInicio;
-    if (dtInicioUatSub <= dtInicioExecSub) {
-        return alert('⛔ A data de início do UAT precisa ser maior que a data de início da Execução!');
-    }
-    if (dtInicioGoliveSub <= dtInicioExecSub) {
-        return alert('⛔ A data de início do Go-Live precisa ser maior que a data de início da Execução!');
+    // CORRIGIDO (a pedido do usuário 2026-09-13, bug reportado: aceitava
+    // datas fora de sequência): antes só checava o início do UAT/Go-Live
+    // contra o início da Execução (e o Go-Live nem era comparado com o
+    // UAT). Agora aplica a mesma regra de 3 pontos do planejamento do
+    // projeto principal (validarSequenciaPlanejamento, workflow-engine.js)
+    // em cadeia: Execução -> UAT -> Go-Live.
+    const dExecSub = dadosEtapas.find(d => d.chave === 'exec');
+    const dUatSub = dadosEtapas.find(d => d.chave === 'uat');
+    const dGoliveSub = dadosEtapas.find(d => d.chave === 'golive');
+    const cadeiaSub = [[dExecSub, null], [dUatSub, dExecSub], [dGoliveSub, dUatSub]];
+    for (const [atualSub, anteriorSub] of cadeiaSub) {
+        const erroSub = validarSequenciaPlanejamento(
+            atualSub.dtInicio, atualSub.dtTermino,
+            anteriorSub ? anteriorSub.dtInicio : null,
+            anteriorSub ? anteriorSub.dtTermino : null
+        );
+        if (erroSub) return alert(`⛔ ${campos[atualSub.chave].etapaNome}: ${erroSub}`);
     }
 
     // NOVO (a pedido do usuário): valida contra o AF do PAI, já que o
