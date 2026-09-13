@@ -757,8 +757,17 @@ function filtrarProjetosPorArea(lista, activityKey) {
     // NOVO (perfil OPERADOR): restrição independente da de área, aplicada
     // por cima — só Admin/Proprietário escapam dela. Vale em toda tela que
     // já passa por aqui (mesmos ~25 call sites da restrição de área).
+    // CORRIGIDO (bug reportado: subprojeto sumia do Roadmap): um
+    // subprojeto nasce direto em Execution e é sempre exibido só aninhado
+    // dentro da linha do projeto pai (nunca como item próprio) — não faz
+    // sentido exigir que o usuário seja responsável de uma atividade DELE
+    // especificamente. Ele herda a visibilidade do pai: aparece se o
+    // usuário é responsável de alguma atividade do subprojeto OU do pai.
     if (!ehAdministrador && !ehProprietario && restringePorAtividadeResponsavel) {
-        lista = lista.filter(p => codigosProjetosComoResponsavel.has(p.codigo));
+        lista = lista.filter(p =>
+            codigosProjetosComoResponsavel.has(p.codigo) ||
+            (p.is_subprojeto === true && p.projeto_pai_codigo && codigosProjetosComoResponsavel.has(p.projeto_pai_codigo))
+        );
     }
 
     if (ehAdministrador || usuarioEhDaAreaTI() || ignoraRestricaoArea) return lista;
