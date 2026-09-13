@@ -82,7 +82,24 @@ function filtrarProjetosPorAnoFiscalSelecionado(lista, modoAF) {
     }
 
     // AF específico: projetos daquele Ano Fiscal + todos os Carryover.
-    return lista.filter(p => p.ano_fiscal === modoAF || p.is_carryover === true);
+    // CORRIGIDO (bug reportado 2026-09-13: subprojeto de um projeto pai
+    // marcado como Carryover sumia do Roadmap ao ver o AF pro qual o pai
+    // foi "carregado"): a marcação de Carryover é feita sempre no projeto
+    // PRINCIPAL — o subprojeto nasce com o ano_fiscal do pai mas nunca
+    // recebe `is_carryover` ele mesmo. Nas telas que escondem subprojeto
+    // (Dashboard, Visão de Orçamento) isso não importa; no Roadmap, onde o
+    // subprojeto é sempre exibido aninhado dentro da linha do pai, ele
+    // precisa herdar a mesma liberação de AF do pai, senão o pai aparece
+    // (pela própria marcação) e o subprojeto some da lista usada pra
+    // montar essa linha.
+    return lista.filter(p => {
+        if (p.ano_fiscal === modoAF || p.is_carryover === true) return true;
+        if (p.is_subprojeto === true && p.projeto_pai_codigo) {
+            const pai = lista.find(x => x.codigo === p.projeto_pai_codigo);
+            return !!(pai && pai.is_carryover === true);
+        }
+        return false;
+    });
 }
 
 // ---- selector -------------------------------------------------------
