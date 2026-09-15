@@ -53,7 +53,7 @@ async function renderTechAvalNegocioView() {
 // Requerimentos) — lista simples + modal genérico compartilhado
 // (abrirModalConcluirFase / confirmarConclusaoFaseGenerica).
 const CONFIG_CONCLUSAO_TECHNICAL = {
-    titulo: 'Concluir Etapa de Technical',
+    titulo: 'Concluir Etapa de Especificação',
     labelApos: 'Após Technical',
     labelReferencia: 'Requerimentos',
     campoValorReferencia: 'val_req',
@@ -62,6 +62,15 @@ const CONFIG_CONCLUSAO_TECHNICAL = {
     // CONFIG_CONCLUSAO_REQUERIMENTOS (js/requirements/requirements.js).
     campoHorasReferencia: 'horas_req',
     campoHorasPos: 'horas_tech',
+    // NOVO (a pedido do usuário 2026-09-15): além da referência principal
+    // (Requerimentos, usada pro alerta de variação), mostra também os
+    // valores originais do Business Case no modal — ajuda a enxergar o
+    // desvio acumulado desde o início do projeto, não só o salto da última
+    // fase. Só existe aqui — em Requerimentos a própria referência
+    // principal já É o Business Case (ver abrirModalConcluirFase).
+    campoValorExtra: 'val_bc',
+    campoHorasExtra: 'horas_bc',
+    labelExtra: 'Business Case',
     campoAlertaVariacaoHoras: 'tech_alerta_variacao_horas',
     campoVariacaoPercentualHoras: 'tech_variacao_percentual_horas',
     // REMOVIDO (Licenciamento de Módulos, 28/08/2026): ver mesmo

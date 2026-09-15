@@ -3972,7 +3972,7 @@
 
     <!-- NOVO (item 3, novos ajustes): modal genérico de Conclusão de
          Fase — usado em Concluir Etapa de Requerimentos e (item 6)
-         Concluir Etapa de Technical, mesmo padrão de campos. -->
+         Concluir Etapa de Especificação, mesmo padrão de campos. -->
     <!-- NOVO: Zoom individual do Relatório de Projetos — cabeçalho
          completo do projeto + Propostas + Pagamentos de cada proposta. -->
     <div id="modalZoomRelatorioProjeto" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -4005,6 +4005,25 @@
                 <div>
                     <label id="conclFaseLabelValorBC" class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Orçamento Projeto (Business Case)</label>
                     <div id="conclFaseValorBC" class="p-2 bg-gray-100 rounded text-sm font-bold text-gray-600"></div>
+                </div>
+            </div>
+
+            <!-- NOVO (a pedido do usuário 2026-09-15): referência ADICIONAL,
+                 só usada em Concluir Etapa de Especificação — mostra também
+                 os valores originais do Business Case, junto com os de
+                 Requerimentos acima, pra enxergar o desvio acumulado desde
+                 o início (não só o salto da última fase). Fica escondido
+                 (config sem campoValorExtra/campoHorasExtra) em Concluir
+                 Etapa de Requerimentos, cuja única referência já é o
+                 Business Case. -->
+            <div id="conclFaseReferenciaExtraWrapper" class="hidden grid grid-cols-2 gap-3">
+                <div>
+                    <label id="conclFaseLabelHorasExtra" class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Horas Projeto (Business Case)</label>
+                    <div id="conclFaseHorasExtra" class="p-2 bg-gray-100 rounded text-sm font-bold text-gray-600"></div>
+                </div>
+                <div>
+                    <label id="conclFaseLabelValorExtra" class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Orçamento Projeto (Business Case)</label>
+                    <div id="conclFaseValorExtra" class="p-2 bg-gray-100 rounded text-sm font-bold text-gray-600"></div>
                 </div>
             </div>
 

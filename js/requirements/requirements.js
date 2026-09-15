@@ -251,6 +251,24 @@ function abrirModalConcluirFase(codigo, config) {
     document.getElementById('conclFaseHorasBC').innerText = horasReferencia > 0 ? `${horasReferencia}h` : '-';
     document.getElementById('conclFaseValorBC').innerText = `R$ ${valorReferencia.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
+    // NOVO (a pedido do usuário 2026-09-15): referência ADICIONAL opcional
+    // (hoje só usada em Concluir Etapa de Especificação — mostra também os
+    // valores do Business Case, além dos de Requerimentos acima).
+    const wrapperReferenciaExtra = document.getElementById('conclFaseReferenciaExtraWrapper');
+    if (wrapperReferenciaExtra) {
+        if (config.campoValorExtra || config.campoHorasExtra) {
+            const horasExtra = Number(p[config.campoHorasExtra]) || 0;
+            const valorExtra = Number(p[config.campoValorExtra]) || 0;
+            document.getElementById('conclFaseLabelHorasExtra').innerText = `Horas Projeto (${config.labelExtra})`;
+            document.getElementById('conclFaseLabelValorExtra').innerText = `Orçamento Projeto (${config.labelExtra})`;
+            document.getElementById('conclFaseHorasExtra').innerText = horasExtra > 0 ? `${horasExtra}h` : '-';
+            document.getElementById('conclFaseValorExtra').innerText = `R$ ${valorExtra.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            wrapperReferenciaExtra.classList.remove('hidden');
+        } else {
+            wrapperReferenciaExtra.classList.add('hidden');
+        }
+    }
+
     document.getElementById('conclFaseLabelHorasApos').innerText = `Horas Projeto ${config.labelApos}`;
     document.getElementById('conclFaseLabelValorApos').innerText = `Orçamento Projeto ${config.labelApos}`;
 
