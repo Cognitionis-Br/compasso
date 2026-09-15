@@ -130,7 +130,7 @@ inteiro** (eles têm acesso a tudo, sempre, por fora desta tabela).
 |---|---|---|---|---|
 | Cobrança de Ajustes | `emails_pendentes`, `email_fluxo` | INSERT | GOVERNANÇA | Só menu (#1). Módulo: EMAIL |
 | Retomar Projetos em Hold | `projetos`, `log_retomada_hold` | UPDATE | GOVERNANÇA | Só menu (#1) |
-| **Mudança de Orçamento** (libera projeto bloqueado por estouro) | `projetos`, `log_aprovacao_mudanca_orcamento` | UPDATE/INSERT | *(nenhum papel não-admin tem `mudanca_orcamento` concedida hoje — só ADMINISTRADOR/PROPRIETARIO acessam)* | **Só menu (#1)** + `moduloAtivo('FINANCEIRO')` (#14) |
+| **Aprovar Diferenças de Orçamento** (libera projeto bloqueado por estouro) | `projetos`, `log_aprovacao_mudanca_orcamento` | UPDATE/INSERT | *(nenhum papel não-admin tem `mudanca_orcamento` concedida hoje — só ADMINISTRADOR/PROPRIETARIO acessam)* | **Só menu (#1)** + `moduloAtivo('FINANCEIRO')` (#14) |
 | **Troca de Responsável de Atividade** (reatribui `projeto_etapas.responsavel_etapa_*`; base do perfil OPERADOR) | `projeto_etapas`, `log_troca_responsavel_atividade` | UPDATE/INSERT | *(delegável via catálogo `troca_responsavel_atividade` — sem grant inicial; ADMINISTRADOR/PROPRIETARIO por bypass)* | `usuarioTemAtividade`/`usuarioPodeAlterarTela('troca_responsavel_atividade')` + `moduloAtivo('WORKFLOW')` (#14). Lista já respeita `filtrarProjetosPorArea` (restrição de área **e** de perfil OPERADOR). |
 
 ### CONTRATO E TERCEIROS (módulo FINANCEIRO)

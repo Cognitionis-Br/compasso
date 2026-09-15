@@ -20,9 +20,9 @@ let projetoDetalheOrigemTab = 'dashboard';
 const PROJETO_DETALHE_ORIGENS = {
     dashboard: { tab: 'dashboard', texto: 'Voltar ao Dashboard' },
     consultas: { tab: 'consultas', texto: 'Voltar às Consultas' },
-    // NOVO (Mudança de Orçamento, 27/08/2026): zoom reaproveitado a partir
-    // da lista de projetos bloqueados (js/governanca/mudanca-orcamento.js).
-    mudanca_orcamento: { tab: 'mudanca_orcamento', texto: 'Voltar à Mudança de Orçamento' },
+    // NOVO (Aprovar Diferenças de Orçamento, 27/08/2026): zoom reaproveitado
+    // a partir da lista de projetos bloqueados (js/governanca/mudanca-orcamento.js).
+    mudanca_orcamento: { tab: 'mudanca_orcamento', texto: 'Voltar para Aprovar Diferenças de Orçamento' },
     // NOVO (Fechamento de Ano Fiscal, 2026-09-02): zoom a partir da tela de
     // Fechamento Ano Fiscal (js/ano-fiscal/fechamento-projetos.js).
     fechamento_af: { tab: 'fechamento_af', texto: 'Voltar ao Fechamento Ano Fiscal' }
@@ -163,7 +163,7 @@ async function renderDetalheProjeto(codigo) {
     const historicoVinculosContrato = logVinculosData || [];
 
     // NOVO (a pedido do usuário 27/08/2026): histórico completo de
-    // aprovações de mudança de orçamento (js/governanca/mudanca-orcamento.js).
+    // aprovações de diferenças de orçamento (js/governanca/mudanca-orcamento.js).
     const { data: logMudancaOrcamentoData } = await _supabase.from('log_aprovacao_mudanca_orcamento').select('*').eq('projeto_codigo', codigo).order('aprovado_em', { ascending: false });
     const historicoMudancaOrcamento = logMudancaOrcamentoData || [];
 
@@ -193,7 +193,7 @@ async function renderDetalheProjeto(codigo) {
                         ${p.is_adhoc ? '<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Extraordinário</span>' : ''}
                         ${p.is_carryover ? '<span class="bg-orange-100 text-orange-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Carryover</span>' : ''}
                         ${p.qtd_reprovacoes > 0 ? `<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">${p.qtd_reprovacoes}x Reprovado</span>` : ''}
-                        ${p.bloqueado_mudanca_orcamento ? `<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Mudança de Orçamento</span>` : ''}
+                        ${p.bloqueado_mudanca_orcamento ? `<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Aprovar Diferenças de Orçamento</span>` : ''}
                     </div>
                     <div class="text-[11px] font-bold text-blue-700 uppercase mt-0.5">Formalizado em: <span class="text-gray-800">${p.data_solicitacao || '-'}</span></div>
                     ${linhaDetalhe('Objetivo', escapeHtml(p.objetivo) || '-')}
@@ -426,9 +426,9 @@ function renderSecaoVinculosContrato(vinculos, contratos, empresas, historico) {
 // registrada em "Concluir Projeto" (js/conclusao/conclusao-projeto.js) —
 // o campo já era obrigatório e gravado em observacao_conclusao_final,
 // mas não aparecia em lugar nenhum depois de salvo.
-// NOVO (Mudança de Orçamento, 27/08/2026): exibida no topo do zoom quando
-// o projeto está bloqueado por variação de orçamento acima do percentual
-// parametrizado (Administração > Percentual de Bloqueio de Orçamento).
+// NOVO (Aprovar Diferenças de Orçamento, 27/08/2026): exibida no topo do
+// zoom quando o projeto está bloqueado por variação de orçamento acima do
+// percentual parametrizado (Administração > Percentual de Bloqueio de Orçamento).
 // Compara o par de fases relevante — Business Case→Requerimentos se
 // bloqueou em Requerimentos, Requerimentos→Technical se bloqueou em
 // Technical (etapa_atual não muda enquanto bloqueado, então ele mesmo
@@ -446,7 +446,7 @@ function renderSecaoMudancaOrcamentoDetalhe(p) {
 
     return `
         <div class="bg-red-50 border-2 border-red-300 p-6 rounded-lg shadow-sm mb-6">
-            <h3 class="text-sm font-bold text-red-800 mb-1 uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation"></i> Aguardando Aprovação — Mudança de Orçamento</h3>
+            <h3 class="text-sm font-bold text-red-800 mb-1 uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation"></i> Aguardando Aprovação de Diferenças de Orçamento</h3>
             <p class="text-xs text-red-700 mb-3">Variação de orçamento entre ${valores.labelFase} acima do percentual de bloqueio parametrizado. O projeto está travado nesta fase até a aprovação da continuidade.</p>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div class="bg-white rounded p-3"><span class="text-[10px] font-bold text-gray-500 uppercase block">Orçamento Original</span><span class="text-sm font-bold text-gray-800">${fmt(valores.valorReferencia)}</span></div>
@@ -466,7 +466,7 @@ function renderSecaoMudancaOrcamentoDetalhe(p) {
 }
 
 // NOVO (a pedido do usuário 27/08/2026): histórico de TODAS as aprovações
-// de mudança de orçamento já feitas neste projeto (pode acontecer mais de
+// de diferenças de orçamento já feitas neste projeto (pode acontecer mais de
 // uma vez — uma em Requerimentos, outra em Technical), com valores
 // original/novo, motivo, quem aprovou e quando — gravado em
 // aprovarMudancaOrcamento (js/governanca/mudanca-orcamento.js).
@@ -475,7 +475,7 @@ function renderSecaoHistoricoAprovacaoMudancaOrcamento(historico) {
     const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
     return `
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <h3 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Histórico de Aprovação de Mudança de Orçamento</h3>
+            <h3 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Histórico de Aprovação de Diferenças de Orçamento</h3>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse text-sm">
                     <thead><tr class="bg-gray-50 text-xs uppercase border-b">

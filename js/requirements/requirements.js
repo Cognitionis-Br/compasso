@@ -190,9 +190,9 @@ function renderReqConclusaoView() {
     const candidatos = projectsData.filter(p => {
         const etapa = (p.etapa_atual || '').toUpperCase();
         const sub = (p.sub_status || '').toUpperCase();
-        // NOVO (Mudança de Orçamento, 27/08/2026): some daqui assim que
-        // bloqueado — passa a aparecer só em Governança > Mudança de
-        // Orçamento até ser aprovado.
+        // NOVO (Aprovar Diferenças de Orçamento, 27/08/2026): some daqui
+        // assim que bloqueado — passa a aparecer só em Governança > Aprovar
+        // Diferenças de Orçamento até ser aprovado.
         return etapa === 'REQUIREMENTS' && sub !== 'CANCELADO' && sub !== 'REPROVADO' && sub !== 'HOLD' && p.bloqueado_mudanca_orcamento !== true;
     });
     // NOVO (Controle de acesso por atividade, Fase 5): restrição de área.
@@ -337,7 +337,7 @@ async function confirmarConclusaoFaseGenerica() {
     }
 
     const avisoBloqueio = vaiBloquear
-        ? `\n\n⛔ A variação ultrapassa o percentual de bloqueio parametrizado — o projeto ficará BLOQUEADO, aguardando aprovação em Governança → Mudança de Orçamento, em vez de seguir direto para ${config.proximaFase}.`
+        ? `\n\n⛔ A variação ultrapassa o percentual de bloqueio parametrizado — o projeto ficará BLOQUEADO, aguardando aprovação em Governança → Aprovar Diferenças de Orçamento, em vez de seguir direto para ${config.proximaFase}.`
         : `\n\nO projeto migrará para a fase ${config.proximaFase}.`;
 
     if (!confirm(`Confirma a conclusão de ${config.titulo} para ${codigo}?\n\nHoras: ${horasApos}h (Porte calculado: ${tamanho})\nOrçamento revisado: R$ ${valorApos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}${avisoAlerta}${avisoAlertaHoras}${avisoBloqueio}`)) {
@@ -348,11 +348,11 @@ async function confirmarConclusaoFaseGenerica() {
         tamanho,
         [config.campoValorPos]: valorApos,
         [config.campoHorasPos]: horasApos,
-        // NOVO (Mudança de Orçamento): se bloqueou, a fase/status NÃO
-        // avançam — o projeto fica parado na fase atual até ser aprovado
-        // em Governança > Mudança de Orçamento (aprovarMudancaOrcamento,
-        // js/governanca/mudanca-orcamento.js), que aí sim escreve a
-        // próxima fase.
+        // NOVO (Aprovar Diferenças de Orçamento): se bloqueou, a fase/status
+        // NÃO avançam — o projeto fica parado na fase atual até ser aprovado
+        // em Governança > Aprovar Diferenças de Orçamento
+        // (aprovarMudancaOrcamento, js/governanca/mudanca-orcamento.js), que
+        // aí sim escreve a próxima fase.
         etapa_atual: vaiBloquear ? p.etapa_atual : config.proximaFase,
         sub_status: vaiBloquear ? p.sub_status : config.proximoSubStatus,
         bloqueado_mudanca_orcamento: vaiBloquear,
@@ -394,17 +394,18 @@ async function confirmarConclusaoFaseGenerica() {
     // NOVO (item 1, novos ajustes): disparo de e-mail — pontos 11/15
     // (Fechar Requerimentos / Fechar Especificação), reaproveitado nos
     // dois usos desta mesma função genérica.
-    // NOVO (Mudança de Orçamento): não dispara enquanto bloqueado — o
-    // projeto ainda não avançou de fase de verdade, então o e-mail de
-    // "concluído" seria enganoso; dispara normalmente quando aprovado
-    // em Governança > Mudança de Orçamento (fora do escopo deste e-mail).
+    // NOVO (Aprovar Diferenças de Orçamento): não dispara enquanto
+    // bloqueado — o projeto ainda não avançou de fase de verdade, então o
+    // e-mail de "concluído" seria enganoso; dispara normalmente quando
+    // aprovado em Governança > Aprovar Diferenças de Orçamento (fora do
+    // escopo deste e-mail).
     if (!vaiBloquear && config.faseFluxoEmail && config.quandoDisparaConcluir) {
         const projConcluido = Object.assign({}, p, payload);
         await dispararEmailFluxo(config.faseFluxoEmail, config.etapaNomeRBAC, config.quandoDisparaConcluir, projConcluido, {});
     }
 
     alert(vaiBloquear
-        ? `⛔ Projeto ${codigo} bloqueado — a variação de orçamento ultrapassou o percentual parametrizado. Ele aguarda aprovação em Governança → Mudança de Orçamento.`
+        ? `⛔ Projeto ${codigo} bloqueado — a variação de orçamento ultrapassou o percentual parametrizado. Ele aguarda aprovação em Governança → Aprovar Diferenças de Orçamento.`
         : `✅ Projeto migrado para ${config.proximaFase} com sucesso!`);
     fecharModalConcluirFase();
     await loadProjects();

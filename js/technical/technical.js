@@ -87,9 +87,9 @@ function renderTechConclusaoView() {
     const candidatos = projectsData.filter(p => {
         const etapa = (p.etapa_atual || '').toUpperCase();
         const sub = (p.sub_status || '').toUpperCase();
-        // NOVO (Mudança de Orçamento, 27/08/2026): some daqui assim que
-        // bloqueado — passa a aparecer só em Governança > Mudança de
-        // Orçamento até ser aprovado.
+        // NOVO (Aprovar Diferenças de Orçamento, 27/08/2026): some daqui
+        // assim que bloqueado — passa a aparecer só em Governança > Aprovar
+        // Diferenças de Orçamento até ser aprovado.
         return etapa === 'TECHNICAL' && sub !== 'CANCELADO' && sub !== 'REPROVADO' && sub !== 'HOLD' && p.bloqueado_mudanca_orcamento !== true;
     });
     // NOVO (Controle de acesso por atividade, Fase 5): restrição de área.

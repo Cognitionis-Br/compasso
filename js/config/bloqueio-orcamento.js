@@ -5,7 +5,7 @@
 // config_email_geral) do percentual aceito de variação de horas/valor na
 // conclusão de Requerimentos e de Technical. Usado por
 // confirmarConclusaoFaseGenerica (js/requirements/requirements.js) pra
-// decidir se bloqueia o projeto pra Mudança de Orçamento (Governança).
+// decidir se bloqueia o projeto pra Aprovar Diferenças de Orçamento (Governança).
 //
 // SIMPLIFICADO (Licenciamento de Módulos, 28/08/2026): eram 4 campos
 // separados (req/tech × horas/valor) — viraram 1 parâmetro único

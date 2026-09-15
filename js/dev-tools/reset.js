@@ -149,7 +149,7 @@ async function resetarBaseParaFase1() {
         tech_alerta_variacao_horas: null,
         tech_variacao_percentual_horas: null,
         sub_status_antes_hold: null,
-        // NOVO (Mudança de Orçamento, 27/08/2026)
+        // NOVO (Aprovar Diferenças de Orçamento, 27/08/2026)
         bloqueado_mudanca_orcamento: false,
         mudanca_orcamento_aprovado_por: null,
         mudanca_orcamento_aprovado_em: null,
@@ -229,7 +229,7 @@ async function resetarBaseParaFase1() {
     if (errorLogVinculos) {
         console.error('Reset concluído, mas houve erro ao limpar log_alteracao_vinculo_contrato:', errorLogVinculos.message);
     }
-    // NOVO (Mudança de Orçamento, 27/08/2026)
+    // NOVO (Aprovar Diferenças de Orçamento, 27/08/2026)
     const { error: errorLogMudancaOrcamento } = await _supabase.from('log_aprovacao_mudanca_orcamento').delete().in('projeto_codigo', codigos);
     if (errorLogMudancaOrcamento) {
         console.error('Reset concluído, mas houve erro ao limpar log_aprovacao_mudanca_orcamento:', errorLogMudancaOrcamento.message);

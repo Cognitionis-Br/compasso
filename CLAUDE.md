@@ -144,7 +144,8 @@ it's in `catalogo_atividades` (so it *could* be granted to another role) but the
 `ehAdministrador` before showing real content — don't treat the catalog grant alone as sufficient
 authorization if you ever touch this screen.
 
-Mudança de Orçamento (`js/requirements/requirements.js:confirmarConclusaoFaseGenerica`,
+Aprovar Diferenças de Orçamento (menu label; tabId/activity_key stay `mudanca_orcamento` —
+`js/requirements/requirements.js:confirmarConclusaoFaseGenerica`,
 `js/config/bloqueio-orcamento.js`) now depends on the `FINANCEIRO` module being active *and* a single
 `config_bloqueio_orcamento.percentual_bloqueio_variacao` value (one number, applied to both horas and valor,
 both Requerimentos and Technical) — the older four separate columns (`req_percentual_horas` etc.) still exist

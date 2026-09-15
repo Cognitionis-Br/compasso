@@ -246,7 +246,7 @@
                     <div id="menu-gov" class="submenu pl-9 pr-2 mt-1 space-y-1">
                         <button onclick="switchTab('governanca')" id="link-governanca" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cobrança de Ajustes</button>
                         <button onclick="switchTab('retomar_hold')" id="link-retomar_hold" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Retomar Projetos em Hold</button>
-                        <button onclick="switchTab('mudanca_orcamento')" id="link-mudanca_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Mudança de Orçamento</button>
+                        <button onclick="switchTab('mudanca_orcamento')" id="link-mudanca_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Diferenças de Orçamento</button>
                         <button onclick="switchTab('troca_responsavel_atividade')" id="link-troca_responsavel_atividade" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Troca de Responsável de Atividade</button>
                     </div>
                 </div>
@@ -2618,11 +2618,11 @@
                     </div>
                 </div>
 
-                <!-- NOVO (Mudança de Orçamento, 27/08/2026): percentual aceito
-                     de variação de horas/valor na conclusão de Requerimentos e
-                     de Technical — acima disso, o projeto é bloqueado (ver
-                     Governança > Mudança de Orçamento). Tudo em branco = sem
-                     bloqueio nenhum. -->
+                <!-- NOVO (Aprovar Diferenças de Orçamento, 27/08/2026): percentual
+                     aceito de variação de horas/valor na conclusão de
+                     Requerimentos e de Technical — acima disso, o projeto é
+                     bloqueado (ver Governança > Aprovar Diferenças de
+                     Orçamento). Tudo em branco = sem bloqueio nenhum. -->
                 <!-- SIMPLIFICADO (Licenciamento de Módulos, 28/08/2026): 1 parâmetro
                      único (percentual_bloqueio_variacao) em vez de 4 campos
                      separados por fase/dimensão — os campos antigos
@@ -2633,7 +2633,7 @@
                 <div id="view-percentual_bloqueio_orcamento" class="tab-content hidden">
                     <div class="mb-4 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Percentual de Bloqueio de Orçamento</h2></div>
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-lg">
-                        <p class="text-xs text-gray-500 mb-4">Percentual aceito de variação de orçamento (horas ou valor) na conclusão de Requerimentos e de Especificação. Quando a variação real ultrapassar o percentual configurado aqui, o projeto é bloqueado e passa a exigir aprovação em Governança &gt; Mudança de Orçamento antes de seguir no workflow. Deixe em branco pra não bloquear.</p>
+                        <p class="text-xs text-gray-500 mb-4">Percentual aceito de variação de orçamento (horas ou valor) na conclusão de Requerimentos e de Especificação. Quando a variação real ultrapassar o percentual configurado aqui, o projeto é bloqueado e passa a exigir aprovação em Governança &gt; Aprovar Diferenças de Orçamento antes de seguir no workflow. Deixe em branco pra não bloquear.</p>
                         <div class="mb-4">
                             <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Percentual de Bloqueio de Variação (%)</label>
                             <input type="number" id="bloqueioPercentualVariacao" min="0" step="1" class="w-full p-2 border border-gray-300 rounded text-sm">
@@ -3298,12 +3298,13 @@
                     </div>
                 </div>
 
-                <!-- NOVO (Mudança de Orçamento, 27/08/2026): projetos bloqueados
-                     por variação de orçamento acima do percentual parametrizado
-                     (Administração > Percentual de Bloqueio de Orçamento). -->
+                <!-- NOVO (Aprovar Diferenças de Orçamento, 27/08/2026): projetos
+                     bloqueados por variação de orçamento acima do percentual
+                     parametrizado (Administração > Percentual de Bloqueio de
+                     Orçamento). -->
                 <div id="view-mudanca_orcamento" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Mudança de Orçamento</h2>
+                        <h2 class="text-xl font-bold text-gray-800">Aprovar Diferenças de Orçamento</h2>
                         <p class="text-xs text-gray-500 mt-1">Projetos bloqueados na conclusão de Requerimentos ou Especificação por variação de orçamento acima do percentual parametrizado. Clique em "Analisar" pra ver os valores em detalhe e aprovar a continuidade.</p>
                     </div>
 

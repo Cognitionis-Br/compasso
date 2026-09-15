@@ -39,7 +39,7 @@ async function renderMudancaOrcamentoView() {
         .sort((a, b) => (a.codigo || '').localeCompare(b.codigo || '', 'pt-BR'));
 
     if (pendentes.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400 font-bold">Nenhum projeto aguardando aprovação de mudança de orçamento</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400 font-bold">Nenhum projeto aguardando aprovação de diferenças de orçamento</td></tr>`;
         return;
     }
 
@@ -69,7 +69,7 @@ async function renderMudancaOrcamentoView() {
 // workflow — Requerimentos bloqueado segue pra Technical, Technical
 // bloqueado segue pra Execution — dependendo de qual etapa o bloqueou.
 async function aprovarMudancaOrcamento(codigo) {
-    if (!usuarioPodeAlterarTela('mudanca_orcamento')) return alert('Você não tem permissão para aprovar mudança de orçamento.');
+    if (!usuarioPodeAlterarTela('mudanca_orcamento')) return alert('Você não tem permissão para aprovar diferenças de orçamento.');
     const motivoInput = document.getElementById('mudancaOrcamentoMotivoInput');
     const motivo = (motivoInput ? motivoInput.value : '').trim();
     if (!motivo) return alert('Informe o motivo da aprovação!');
@@ -105,7 +105,7 @@ async function aprovarMudancaOrcamento(codigo) {
     };
 
     const { error } = await _supabase.from('projetos').update(payload).eq('codigo', codigo);
-    if (error) return alert('Erro ao aprovar a mudança de orçamento: ' + error.message);
+    if (error) return alert('Erro ao aprovar a diferença de orçamento: ' + error.message);
 
     // NOVO (a pedido do usuário 27/08/2026): histórico completo, exibido
     // no zoom de Detalhamento do Projeto — os campos mudanca_orcamento_*
@@ -123,7 +123,7 @@ async function aprovarMudancaOrcamento(codigo) {
         aprovado_por: aprovadoPor,
         aprovado_em: agora
     }]);
-    if (errorLog) console.error('Erro ao registrar log de aprovação de mudança de orçamento:', errorLog.message);
+    if (errorLog) console.error('Erro ao registrar log de aprovação de diferenças de orçamento:', errorLog.message);
 
     alert(`✅ Continuidade aprovada! Projeto migrado para ${proximaFase}.`);
     await loadProjects();
