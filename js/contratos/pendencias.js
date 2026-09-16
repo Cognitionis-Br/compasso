@@ -525,7 +525,16 @@ async function abrirDetalhePendencia(id) {
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Contrato ${p.contrato_ref ? `<span class="text-gray-400">(cru: ${escapeHtml(p.contrato_ref)})</span>` : ''}</label>
                 <select id="pendEdContrato" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">${optContratos}</select></div>
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Projeto ${p.projeto_ref ? `<span class="text-gray-400">(cru: ${escapeHtml(p.projeto_ref)})</span>` : ''}</label>
-                <select id="pendEdProjeto" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">${optProjetos}</select></div>
+                <!-- CORRIGIDO (a pedido do usuário 2026-09-16, bug reportado:
+                     quando o e-mail traz o rateio entre VÁRIOS projetos
+                     (listaItens > 0), este campo continuava aberto pra
+                     escolher UM projeto só — sobrepondo/contradizendo o
+                     rateio já detalhado na tabela abaixo e podendo levar a
+                     um vínculo errado no momento de aprovar. Bloqueado
+                     nesse caso; a tabela de rateio (itensHtml) já mostra o
+                     detalhamento correto por projeto. -->
+                <select id="pendEdProjeto" ${(editavel && listaItens.length === 0) ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">${optProjetos}</select>
+                ${listaItens.length > 0 ? '<span class="text-[10px] text-gray-500">Rateado entre vários projetos — ver detalhamento abaixo.</span>' : ''}</div>
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Fornecedor</label>
                 <input id="pendEdFornecedor" value="${escapeHtml(nomeFornecedorResolvido)}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Valor</label>
