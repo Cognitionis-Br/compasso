@@ -87,6 +87,7 @@ function _pagNfRenderTabela() {
             const contrato = (contratosProjetoCache || []).find(c => c.id === p.contrato_id);
             const empresa = contrato ? (empresasTerceirizadasCache || []).find(e => e.codigo === contrato.empresa_codigo) : null;
             const nomeFornecedor = empresa ? empresa.nome : (p.fornecedor || '—');
+            const semEmailFornecedor = !empresa || !empresa.email;
             const atraso = _pendEmAtrasoNf(p);
             const dias = _pendDiasUteisDesde(p.criado_em);
             const projetoTexto = p.projeto_codigo || p.projeto_ref || 'Rateio entre vários projetos';
@@ -94,7 +95,7 @@ function _pagNfRenderTabela() {
             <tr class="${atraso ? 'bg-red-50' : ''}">
                 <td class="p-2 text-[10px] text-gray-500 whitespace-nowrap">${(p.criado_em || '').replace('T', ' ').split('.')[0]}</td>
                 <td class="p-2 text-xs">${escapeHtml(contrato ? contrato.numero_contrato : (p.contrato_ref || '—'))}</td>
-                <td class="p-2 text-xs">${escapeHtml(nomeFornecedor)}</td>
+                <td class="p-2 text-xs">${escapeHtml(nomeFornecedor)}${semEmailFornecedor ? '<br><span class="text-[9px] text-amber-700 font-bold">sem e-mail cadastrado</span>' : ''}</td>
                 <td class="p-2 text-xs">${escapeHtml(projetoTexto)}</td>
                 <td class="p-2 text-right font-mono text-xs">${formatCurrency(p.valor)}</td>
                 <td class="p-2 text-center text-xs font-bold ${atraso ? 'text-red-700' : 'text-gray-600'}">${dias}${atraso ? ' ⚠' : ''}</td>
@@ -113,53 +114,33 @@ function _pagNfRenderTabela() {
 // Contratos (_pendEscalonarNfAtrasadas, pendencias.js) dispara sozinho na
 // 1ª vez que uma pendência passa de 5 dias úteis — aqui o Gestor de
 // Contratos decide reenviar quando quiser, mesmo já tendo sido avisado
-// antes ou ainda dentro do prazo. Mesmo ponto de disparo em email_fluxo
-// ('PENDÊNCIAS DE CONTRATO' / 'ESCALONAMENTO NF') — precisa estar Ativo em
-// Envio de E-mail > Gestão do Fluxo, com um destinatário configurado.
+// antes ou ainda dentro do prazo. CORRIGIDO (a pedido do usuário
+// 2026-09-16): vai direto pro e-mail cadastrado do FORNECEDOR
+// (empresas_terceirizadas.email via _pendEnviarCobrancaNfFornecedor,
+// pendencias.js) — não depende mais de nenhuma configuração em Envio de
+// E-mail > Gestão do Fluxo.
 async function enviarCobrancaNf(id) {
     if (!_pagNfPodeEnviar()) return alert('Você não tem permissão para enviar cobrança de NF.');
     const p = (pendenciasContratosCache || []).find(x => x.id === id);
     if (!p) return;
-    if (typeof dispararEmailFluxo !== 'function') return alert('Módulo de e-mail indisponível.');
 
     const contrato = (contratosProjetoCache || []).find(c => c.id === p.contrato_id);
-    const forn = (contrato && typeof _pnfFornecedorDoContrato === 'function') ? _pnfFornecedorDoContrato(contrato) : (p.fornecedor || '—');
+    const forn = contrato ? (empresasTerceirizadasCache || []).find(e => e.codigo === contrato.empresa_codigo) : null;
     const dias = _pendDiasUteisDesde(p.criado_em);
 
-    // NOVO (a pedido do usuário 2026-09-16): dispararEmailFluxo simplesmente
-    // não faz nada quando o ponto de disparo está inativo/sem template —
-    // sem esta checagem antes, o botão diria "✅ enviada" mesmo sem
-    // mandar e-mail nenhum, escondendo de novo o motivo original do
-    // usuário não estar vendo a cobrança funcionar (linha nasce INATIVA em
-    // sql/2026-09-09_pendencias_escalonamento_nf.sql).
-    const { data: linhaFluxo } = await _supabase.from('email_fluxo').select('ativo, template_id, email_destinatario_fixo')
-        .eq('fase', 'PENDÊNCIAS DE CONTRATO').eq('etapa', 'ESCALONAMENTO NF').eq('quando_dispara', 'NF pendente há mais de 5 dias úteis').maybeSingle();
-    if (!linhaFluxo || !linhaFluxo.ativo || !linhaFluxo.template_id || !linhaFluxo.email_destinatario_fixo) {
-        return alert('⛔ O ponto de disparo "PENDÊNCIAS DE CONTRATO / ESCALONAMENTO NF" está desativado ou incompleto (sem destinatário/template). Ative-o e configure o destinatário em Envio de E-mail → Gestão do Fluxo antes de enviar a cobrança.');
+    if (!forn || !forn.email) {
+        return alert('⛔ O fornecedor deste contrato não tem e-mail cadastrado. Cadastre em Contratos e Fornecedores > Fornecedores antes de enviar a cobrança.');
     }
 
-    if (!confirm(`Confirma o envio da cobrança de NF da pendência #${id} (${contrato ? contrato.numero_contrato : (p.contrato_ref || '-')})?`)) return;
+    if (!confirm(`Confirma o envio da cobrança de NF para ${forn.nome} (${forn.email}), pendência #${id} (${contrato ? contrato.numero_contrato : (p.contrato_ref || '-')})?`)) return;
 
-    try {
-        await dispararEmailFluxo(
-            'PENDÊNCIAS DE CONTRATO', 'ESCALONAMENTO NF', 'NF pendente há mais de 5 dias úteis',
-            { codigo: 'Pendência #' + p.id, nome: `${p.tipo} · ${contrato ? contrato.numero_contrato : (p.contrato_ref || '')}` },
-            {
-                pendencia: '#' + p.id,
-                fornecedor: typeof forn === 'string' ? forn : String(forn),
-                contrato: contrato ? contrato.numero_contrato : (p.contrato_ref || '-'),
-                valor: formatCurrency(p.valor),
-                dias: String(dias)
-            }
-        );
-    } catch (e) {
-        return alert('Erro ao enviar a cobrança: ' + e.message);
-    }
+    const resultado = await _pendEnviarCobrancaNfFornecedor(p, contrato, forn, dias);
+    if (resultado.erro) return alert('⛔ ' + resultado.erro);
 
     await _supabase.from('contratos_pendencias').update({ escalado_nf_em: new Date().toISOString() }).eq('id', id);
     p.escalado_nf_em = new Date().toISOString();
-    await _logPendencia(id, 'ESCALONAMENTO_NF_MANUAL', { dias_uteis: dias, enviado_por: currentUser ? currentUser.nome : 'desconhecido' });
+    await _logPendencia(id, 'ESCALONAMENTO_NF_MANUAL', { dias_uteis: dias, destinatario: forn.email, enviado_por: currentUser ? currentUser.nome : 'desconhecido' });
 
-    alert('✅ Cobrança de NF enviada.');
+    alert(`✅ Cobrança de NF enviada para ${forn.email}.`);
     _pagNfRenderTabela();
 }

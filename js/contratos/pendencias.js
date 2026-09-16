@@ -324,34 +324,69 @@ async function renderPendenciasContratosView() {
     _pendEscalonarNfAtrasadas();   // fire-and-forget (Fase B — §6)
 }
 
-// Envia UMA vez o alerta de NF pendente há mais de N dias úteis, pela
-// fila de e-mail (ponto de disparo "PENDÊNCIAS DE CONTRATO / ESCALONAMENTO
-// NF" — ver sql/2026-09-09_pendencias_escalonamento_nf.sql). Marca
-// escalado_nf_em para não reenviar. Se a linha do fluxo estiver inativa
-// ou o módulo E-mail desligado, dispararEmailFluxo simplesmente não faz
-// nada — o destaque visual na lista continua valendo.
+// CORRIGIDO (a pedido do usuário 2026-09-16): a cobrança de NF pendente
+// deixou de ir pra um endereço FIXO interno configurado em Gestão do Fluxo
+// (email_fluxo 'PENDÊNCIAS DE CONTRATO'/'ESCALONAMENTO NF', que nascia
+// inativo — motivo original de a cobrança nunca sair) — vai direto pro
+// e-mail CADASTRADO DO FORNECEDOR (empresas_terceirizadas.email), pedindo
+// a ele mesmo o reenvio da NF. Usa enfileirarEmail diretamente (mesmo
+// mecanismo de _enviarInstrucoesPagamentoFornecedor, js/contratos/contratos.js)
+// em vez de dispararEmailFluxo — não depende mais de nenhuma configuração
+// em Gestão do Fluxo. Reaproveita o template já cadastrado (mesmo
+// assunto de sql/2026-09-09_pendencias_escalonamento_nf.sql, texto
+// atualizado por sql/2026-09-16_cobranca_nf_email_fornecedor.sql pra falar
+// com o fornecedor em vez de um leitor interno) — sem template ativo, cai
+// no texto mínimo abaixo. Usado tanto pelo aviso automático
+// (_pendEscalonarNfAtrasadas, 1x por pendência) quanto pelo botão manual
+// "Cobrar" (js/contratos/pagamentos-pendentes-nf.js).
+async function _pendEnviarCobrancaNfFornecedor(p, contrato, forn, diasUteis) {
+    if (!forn || !forn.email) {
+        return { erro: `Fornecedor${forn ? ` "${forn.nome}"` : (contrato ? ` do contrato ${contrato.numero_contrato}` : '')} não tem e-mail cadastrado — cadastre em Contratos e Fornecedores > Fornecedores antes de enviar a cobrança.` };
+    }
+    if (typeof enfileirarEmail !== 'function') return { erro: 'Fila de e-mail indisponível.' };
+
+    const numeroContrato = contrato ? contrato.numero_contrato : (p.contrato_ref || '-');
+    let assunto = `[Compasso] NF pendente há mais de ${diasUteis} dias úteis — ${numeroContrato}`;
+    let corpo = `Prezado(a) ${forn.nome},\n\nAinda não recebemos a Nota Fiscal referente ao contrato ${numeroContrato} (pendência #${p.id}, valor ${formatCurrency(p.valor)}), pendente há mais de ${diasUteis} dias úteis.\n\nPor favor, encaminhe a Nota Fiscal pelo mesmo canal de e-mail usado no lançamento original o quanto antes, para que o pagamento possa ser processado.\n\nÁrea de Governança`;
+
+    try {
+        const { data: tpl } = await _supabase.from('email_templates')
+            .select('*').ilike('assunto', '[Compasso] NF pendente há mais de%').eq('ativo', true).maybeSingle();
+        if (tpl && tpl.texto && tpl.texto.trim()) {
+            const rep = s => String(s || '')
+                .replaceAll('{{dias}}', String(diasUteis))
+                .replaceAll('{{contrato}}', numeroContrato)
+                .replaceAll('{{pendencia}}', '#' + p.id)
+                .replaceAll('{{fornecedor}}', forn.nome)
+                .replaceAll('{{valor}}', formatCurrency(p.valor));
+            assunto = rep(tpl.assunto) || assunto;
+            corpo = rep(tpl.texto);
+        }
+    } catch (_) { /* usa o texto mínimo acima */ }
+
+    const { error } = await enfileirarEmail({
+        destinatarioEmail: forn.email, destinatarioNome: forn.nome,
+        assunto, corpo, contexto: { tipo: 'cobranca_nf_pendente', pendencia_id: p.id, contrato: numeroContrato }
+    });
+    return { erro: error ? ('Erro ao enfileirar e-mail: ' + error) : null };
+}
+
+// Envia UMA vez o alerta de NF pendente há mais de N dias úteis. Marca
+// escalado_nf_em para não reenviar — se faltar e-mail do fornecedor (ou
+// falhar o envio), NÃO marca, pra tentar de novo na próxima vez que
+// alguém abrir esta tela (o destaque visual na lista continua valendo
+// enquanto isso).
 async function _pendEscalonarNfAtrasadas() {
-    if (typeof dispararEmailFluxo !== 'function') return;
     const atrasadas = pendenciasContratosCache.filter(p => _pendEmAtrasoNf(p) && !p.escalado_nf_em);
     for (const p of atrasadas) {
         const contrato = (contratosProjetoCache || []).find(c => c.id === p.contrato_id);
-        const forn = (contrato && typeof _pnfFornecedorDoContrato === 'function') ? _pnfFornecedorDoContrato(contrato) : (p.fornecedor || '—');
-        try {
-            await dispararEmailFluxo(
-                'PENDÊNCIAS DE CONTRATO', 'ESCALONAMENTO NF', 'NF pendente há mais de 5 dias úteis',
-                { codigo: 'Pendência #' + p.id, nome: `${p.tipo} · ${contrato ? contrato.numero_contrato : (p.contrato_ref || '')}` },
-                {
-                    pendencia: '#' + p.id,
-                    fornecedor: typeof forn === 'string' ? forn : String(forn),
-                    contrato: contrato ? contrato.numero_contrato : (p.contrato_ref || '-'),
-                    valor: formatCurrency(p.valor),
-                    dias: String(PEND_NF_ATRASO_DIAS_UTEIS)
-                }
-            );
-        } catch (e) { console.error('escalonamento NF:', e); }
+        const forn = contrato ? (empresasTerceirizadasCache || []).find(e => e.codigo === contrato.empresa_codigo) : null;
+        const dias = _pendDiasUteisDesde(p.criado_em);
+        const resultado = await _pendEnviarCobrancaNfFornecedor(p, contrato, forn, dias);
+        if (resultado.erro) { console.error('escalonamento NF:', resultado.erro); continue; }
         await _supabase.from('contratos_pendencias').update({ escalado_nf_em: new Date().toISOString() }).eq('id', p.id);
         p.escalado_nf_em = new Date().toISOString();
-        await _logPendencia(p.id, 'ESCALONAMENTO_NF', { dias_uteis: _pendDiasUteisDesde(p.criado_em) });
+        await _logPendencia(p.id, 'ESCALONAMENTO_NF', { dias_uteis: dias, destinatario: forn ? forn.email : null });
     }
 }
 
