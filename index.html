@@ -3718,7 +3718,7 @@
                          de teste manualmente direto no banco. -->
                     <div id="devToolsCriarTesteConteudo" class="hidden bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
                         <h4 class="font-bold text-gray-800 text-sm uppercase tracking-wider mb-1">Criar Projeto de Teste</h4>
-                        <p class="text-xs text-gray-500 mb-4">O Business Case é sempre considerado aprovado como ponto de partida — escolha a fase em que o projeto já deveria estar e preencha só os checkpoints de orçamento necessários até ali. Não simula o planejamento detalhado da fase (projeto_etapas) — só o estado usado por Dashboard, Financeiro, Carry Over, Roadmap e Consolidação por Fase.</p>
+                        <p class="text-xs text-gray-500 mb-4">O Business Case é sempre considerado aprovado como ponto de partida — escolha a fase em que o projeto já deveria estar e preencha os campos abaixo, na mesma linha da tela de Formalizar Demanda (Business Case). Também usada para a <strong>carga inicial de projetos já em andamento</strong>: além do "estado de superfície" da tabela <code>projetos</code>, agora também cria as etapas concluídas (<code>projeto_etapas</code>) de toda fase anterior à Fase de Destino, pra Roadmap/Detalhamento/Cronograma mostrarem o histórico corretamente.</p>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div class="md:col-span-2">
@@ -3727,9 +3727,21 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Ano Fiscal *</label>
-                                <select id="devTesteAF" class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
+                                <select id="devTesteAF" onchange="onDevTesteAFChange()" class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white">
                                     <option value="" selected disabled>-- SELECIONE --</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <!-- NOVO (a pedido do usuário 2026-09-16, carga inicial de projetos em
+                             andamento): Data de Solicitação passou a ser editável — antes era
+                             sempre "hoje", o que não faz sentido pra um projeto que já está em
+                             andamento há tempos. Mesmo campo da tela de Formalizar Demanda
+                             (bcDtSolicitacao). -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Data da Solicitação *</label>
+                                <input type="date" id="devTesteDtSolicitacao" class="w-full p-2 border border-gray-300 rounded text-sm font-bold bg-white font-mono">
                             </div>
                         </div>
 
@@ -3760,6 +3772,17 @@
                             </div>
                         </div>
 
+                        <!-- NOVO (a pedido do usuário 2026-09-16): campos de Objetivo, Pilar/
+                             Iniciativa Estratégica, Key Results, Benefit Results e Descrição —
+                             existiam na tela de Formalizar Demanda (Business Case) mas não
+                             aqui. Benefit Results simplificado pra UMA linha só (a tela real
+                             aceita várias) — suficiente pra carga inicial, sem duplicar toda a
+                             interação de tabela repetível daquela tela. -->
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Objetivo *</label>
+                            <input type="text" id="devTesteObjetivo" maxlength="200" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
+                        </div>
+
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Qualificação da Demanda *</label>
@@ -3785,6 +3808,56 @@
                                     <option value="UAT">UAT</option>
                                     <option value="GOLIVE">Go-Live</option>
                                 </select>
+                            </div>
+                        </div>
+
+                        <div class="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-2">Projeto associado a Pilar / Iniciativa Estratégica?</label>
+                            <div class="flex gap-4 mb-3">
+                                <label class="flex items-center gap-1.5 text-xs font-bold"><input type="radio" name="devTesteAssociaPilar" value="sim" onchange="onDevTesteChangeAssociaPilar()"> Sim</label>
+                                <label class="flex items-center gap-1.5 text-xs font-bold"><input type="radio" name="devTesteAssociaPilar" value="nao" onchange="onDevTesteChangeAssociaPilar()" checked> Não</label>
+                            </div>
+                            <div id="devTestePilarIniciativaWrapper" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Pilar Estratégico *</label>
+                                    <select id="devTestePilarEstrategico" onchange="onDevTesteChangePilar()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
+                                        <option value="">-- Selecione o Ano Fiscal primeiro --</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Iniciativa Estratégica *</label>
+                                    <select id="devTesteIniciativaEstrategica" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
+                                        <option value="">-- Selecione o Pilar primeiro --</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Key Results *</label>
+                            <input type="text" id="devTesteKeyResults" maxlength="255" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
+                        </div>
+
+                        <div class="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-3">
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-2">Benefit Result <span class="text-[10px] normal-case font-normal text-gray-500">(opcional — uma linha só; a tela de Formalizar Demanda aceita várias)</span></label>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+                                <div class="md:col-span-2">
+                                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Retorno / Benefício de Projeto</label>
+                                    <select id="devTesteBenefitTipo" onchange="onDevTesteChangeBenefitTipo()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
+                                        <option value="">-- Nenhum --</option>
+                                    </select>
+                                </div>
+                                <div id="devTesteBenefitMetricaWrapper" class="hidden">
+                                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Métrica</label>
+                                    <div class="flex gap-3 pt-1.5">
+                                        <label class="flex items-center gap-1 text-xs font-bold"><input type="radio" name="devTesteBenefitMetrica" value="NPV"> NPV</label>
+                                        <label class="flex items-center gap-1 text-xs font-bold"><input type="radio" name="devTesteBenefitMetrica" value="ROI"> ROI</label>
+                                    </div>
+                                </div>
+                                <div id="devTesteBenefitValorWrapper" class="hidden">
+                                    <label class="block text-[10px] font-bold text-gray-600 uppercase mb-1">Valor (até R$ 999.999.999,99)</label>
+                                    <input type="number" id="devTesteBenefitValor" min="0" max="999999999.99" step="0.01" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
+                                </div>
                             </div>
                         </div>
 
@@ -3830,6 +3903,11 @@
                                 <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Horas Especificação *</label>
                                 <input type="number" id="devTesteHorasTech" min="0" step="0.5" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
                             </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Descrição Sucinta do Projeto *</label>
+                            <textarea id="devTesteDescricao" rows="3" maxlength="1000" class="w-full p-2 border border-gray-300 rounded text-sm bg-white"></textarea>
                         </div>
 
                         <div class="flex gap-6 mb-2">
