@@ -120,6 +120,7 @@ function switchTab(tabId) {
     if (tabId === 'registro_valores_contrato') renderRegistroValoresView();
     if (tabId === 'relatorio_projetos_contratos') renderRelatorioProjetosContratosView();
     if (tabId === 'contratos_pendencias') { mudarAbaPendencias('lista'); renderPendenciasContratosView(); }
+    if (tabId === 'pagamentos_pendentes_nf') renderPagamentosPendentesNfView();
     if (tabId === 'tipos_projeto') { mudarAbaTiposProjeto('criar'); renderTiposProjetoView(); }
     if (tabId === 'produtos') { mudarAbaProdutos('criar'); renderProdutosView(); }
     if (tabId === 'cargos') { mudarAbaCargos('criar'); renderCargosView(); }

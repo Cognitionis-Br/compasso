@@ -267,6 +267,7 @@
                         <button onclick="switchTab('registro_valores_contrato')" id="link-registro_valores_contrato" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Registro de Valores Realizados</button>
                         <button onclick="switchTab('relatorio_projetos_contratos')" id="link-relatorio_projetos_contratos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Relatório de Projetos</button>
                         <button onclick="switchTab('contratos_pendencias')" id="link-contratos_pendencias" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pendências de Contratos</button>
+                        <button onclick="switchTab('pagamentos_pendentes_nf')" id="link-pagamentos_pendentes_nf" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pagamentos Pendentes de NF</button>
                     </div>
                 </div>
 
@@ -3219,6 +3220,36 @@
                     </div>
                 </div>
 
+                <!-- NOVO (a pedido do usuário 2026-09-16): tela dedicada de
+                     "Pagamentos Pendentes de NF" — mesma base de dados de
+                     Pendências de Contratos (contratos_pendencias), filtrada
+                     pra tipo PAGAMENTO ainda sem Nota Fiscal, com o alerta
+                     visual de mais de 5 dias úteis e um botão de envio
+                     MANUAL da cobrança (js/contratos/pagamentos-pendentes-nf.js)
+                     — complementa o disparo automático de
+                     _pendEscalonarNfAtrasadas (pendencias.js), que só roda
+                     ao abrir a tela de Pendências e só avisa 1 vez. -->
+                <div id="view-pagamentos_pendentes_nf" class="tab-content hidden">
+                    <div class="mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Pagamentos Pendentes de NF</h2>
+                        <p class="text-xs text-gray-500 mt-1">Pagamentos aguardando Nota Fiscal para poder ser aprovados. Pendências há mais de 5 dias úteis ficam destacadas — use "Cobrar" para reenviar o e-mail de cobrança ao Gestor de Contratos a qualquer momento.</p>
+                    </div>
+                    <div id="pagNfRestrito" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-6 text-amber-800 text-sm font-bold">
+                        <i class="fa-solid fa-lock"></i> Acesso restrito — sua função não tem esta atividade.
+                    </div>
+                    <div id="pagNfConteudo" class="hidden">
+                        <div id="pagNfResumo" class="text-[11px] text-gray-500 mb-2"></div>
+                        <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b text-[10px] uppercase">
+                                    <th class="p-2">Criada</th><th class="p-2">Contrato</th><th class="p-2">Fornecedor</th><th class="p-2">Projeto</th><th class="p-2 text-right">Valor</th><th class="p-2 text-center">Dias Úteis</th><th class="p-2 text-center">Cobrança</th><th class="p-2 text-center">Ação</th>
+                                </tr></thead>
+                                <tbody id="pagNfTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="view-governanca" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
                         <h2 class="text-xl font-bold text-gray-800">Governança — Cobrança de Ajustes</h2>
@@ -4722,6 +4753,7 @@
     <script src="./js/contratos/contratos-vinculos.js"></script>
     <script src="./js/contratos/pendencias.js"></script>
     <script src="./js/contratos/pagamento-nf.js"></script>
+    <script src="./js/contratos/pagamentos-pendentes-nf.js"></script>
     <script src="./js/main.js"></script>
 </body>
 </html>

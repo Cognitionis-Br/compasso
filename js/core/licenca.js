@@ -126,6 +126,7 @@ const TAB_MODULO_MAP = {
     visao_orcamento: 'FINANCEIRO',
     alertas_orcamento: 'FINANCEIRO',
     contratos_pendencias: 'FINANCEIRO',   // Release 1 — staging + aprovação de pagamentos/propostas
+    pagamentos_pendentes_nf: 'FINANCEIRO', // NOVO 2026-09-16 — cobrança de NF pendente
 
     // PLANEJAMENTO_ESTRATEGICO
     planejamento_estrategico: 'PLANEJAMENTO_ESTRATEGICO'
