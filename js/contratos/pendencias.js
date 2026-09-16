@@ -467,6 +467,18 @@ async function abrirDetalhePendencia(id) {
 
     const podeAprovar = _pendPodeAprovar();
     const editavel = podeAprovar && (p.status === 'PENDENTE' || p.status === 'ERRO_LEITURA');
+
+    // NOVO (a pedido do usuário 2026-09-16): usa o contrato já resolvido pra
+    // buscar o nome do fornecedor cadastrado (empresas_terceirizadas, pelo
+    // empresa_codigo do contrato) — em vez de confiar só no texto solto que
+    // veio no e-mail (p.fornecedor), que pode vir divergente do cadastro.
+    // Sem contrato resolvido ainda, cai de volta pro texto cru do e-mail.
+    const contratoResolvido = (contratosProjetoCache || []).find(c => c.id === p.contrato_id);
+    const empresaFornecedor = contratoResolvido
+        ? (empresasTerceirizadasCache || []).find(e => e.codigo === contratoResolvido.empresa_codigo)
+        : null;
+    const nomeFornecedorResolvido = empresaFornecedor ? empresaFornecedor.nome : (p.fornecedor || '');
+
     const optContratos = ['<option value="">— não resolvido —</option>']
         .concat((contratosProjetoCache || []).map(c => `<option value="${c.id}" ${c.id === p.contrato_id ? 'selected' : ''}>${escapeHtml(c.numero_contrato)}</option>`))
         .join('');
@@ -514,10 +526,10 @@ async function abrirDetalhePendencia(id) {
                 <select id="pendEdContrato" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">${optContratos}</select></div>
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Projeto ${p.projeto_ref ? `<span class="text-gray-400">(cru: ${escapeHtml(p.projeto_ref)})</span>` : ''}</label>
                 <select id="pendEdProjeto" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded bg-white">${optProjetos}</select></div>
-            <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Fornecedor / Terceiro</label>
-                <input id="pendEdFornecedor" value="${escapeHtml(p.fornecedor || '')}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
+            <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Fornecedor</label>
+                <input id="pendEdFornecedor" value="${escapeHtml(nomeFornecedorResolvido)}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Valor</label>
-                <input id="pendEdValor" type="number" step="0.01" value="${p.valor != null ? p.valor : ''}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
+                <input id="pendEdValor" type="text" inputmode="decimal" value="${p.valor != null ? formatCurrency(p.valor) : ''}" onfocus="_pendValorFoco(this)" onblur="_pendValorBlur(this)" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded text-right font-mono"></div>
             <div><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Data de Referência</label>
                 <input id="pendEdData" type="date" value="${p.data_referencia || ''}" ${editavel ? '' : 'disabled'} class="w-full p-1.5 border rounded"></div>
             ${listaItens.length > 0 ? '' : `<div class="md:col-span-2"><label class="block text-[10px] font-bold uppercase text-gray-500 mb-0.5">Vínculo (projeto + contrato) <span class="text-gray-400">(pagamento de 1 projeto só)</span></label>
@@ -560,6 +572,21 @@ function fecharModalPendencia() {
     pendenciaAtual = null;
 }
 
+// NOVO (a pedido do usuário 2026-09-16): campo Valor passou a exibir o
+// número formatado ("R$ 999.999.999,99", ver abrirDetalhePendencia) — pra
+// não ficar reformatando a cada tecla, mostra o número "cru" (só com
+// vírgula decimal, sem separador de milhar) enquanto o campo está em foco,
+// e volta a formatar como moeda ao sair do campo. _pendNumero (parser pt-BR
+// já existente) lê os dois formatos sem diferença.
+function _pendValorFoco(el) {
+    const n = _pendNumero(el.value);
+    el.value = n != null ? String(n).replace('.', ',') : '';
+}
+function _pendValorBlur(el) {
+    const n = _pendNumero(el.value);
+    el.value = n != null ? formatCurrency(n) : '';
+}
+
 async function abrirAnexoPendencia(path) {
     const url = await _signedUrlAnexo(path);
     if (url) window.open(url, '_blank');
@@ -575,7 +602,11 @@ function _pendLerEdicao() {
         projeto_codigo: document.getElementById('pendEdProjeto').value || null,
         vinculo_id: (selVinc && selVinc.value) ? Number(selVinc.value) : null,
         fornecedor: document.getElementById('pendEdFornecedor').value.trim() || null,
-        valor: document.getElementById('pendEdValor').value ? Number(document.getElementById('pendEdValor').value) : null,
+        // NOVO (a pedido do usuário 2026-09-16): o campo agora exibe o valor
+        // formatado ("R$ 999.999.999,99", ver abrirDetalhePendencia) — usa
+        // _pendNumero (já existente, parser de número pt-BR) em vez de
+        // Number() direto, que quebraria com o "R$"/pontos de milhar.
+        valor: _pendNumero(document.getElementById('pendEdValor').value),
         data_referencia: document.getElementById('pendEdData').value || null,
         descricao: document.getElementById('pendEdDescricao').value.trim() || null
     };
