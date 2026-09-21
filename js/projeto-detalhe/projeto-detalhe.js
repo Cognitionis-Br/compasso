@@ -120,7 +120,7 @@ async function renderDetalheProjeto(codigo) {
     const { data: beneficiosData } = await _supabase.from('projeto_benefit_results').select('*, tipos_return_benefit(nome)').eq('projeto_codigo', codigo);
     const beneficiosDoProjeto = beneficiosData || [];
 
-    const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
     const valBc = Number(p.val_bc) || Number(p.previsto) || 0;
     const valReq = Number(p.val_req) || 0;
     const valTech = Number(p.val_tech) || 0;
@@ -446,7 +446,7 @@ function renderSecaoMudancaOrcamentoDetalhe(p) {
     const valores = obterValoresMudancaOrcamento(p);
     const alertaValor = calcularAlertaVariacaoOrcamento(valores.valorReferencia, valores.valorNovo);
     const alertaHoras = calcularAlertaVariacaoOrcamento(valores.horasReferencia, valores.horasNovo);
-    const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
 
     return `
         <div class="bg-danger-50 border-2 border-danger-300 p-6 rounded-lg shadow-sm mb-6">
@@ -476,7 +476,7 @@ function renderSecaoMudancaOrcamentoDetalhe(p) {
 // aprovarMudancaOrcamento (js/governanca/mudanca-orcamento.js).
 function renderSecaoHistoricoAprovacaoMudancaOrcamento(historico) {
     if (!historico || historico.length === 0) return '';
-    const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
     return `
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
             <h3 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Histórico de Aprovação de Diferenças de Orçamento</h3>
@@ -548,7 +548,7 @@ function renderSecaoTradeoffDetalhe(p) {
 // projetos que continuam rodando.
 function renderSecaoHistoricoTradeoffComoDoador(historico) {
     if (!historico || historico.length === 0) return '';
-    const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
     const rotuloAcao = {
         HOLD: '<i class="fa-solid fa-pause mr-1"></i>Colocado em HOLD',
         CANCELADO: '<i class="fa-solid fa-ban mr-1"></i>Cancelado',
@@ -685,7 +685,7 @@ function renderSecaoHistoricoHorasDetalhe(historicoHoras) {
 function renderSecaoContratoDetalhe(etapasDoProjeto) {
     const etapaComContrato = etapasDoProjeto.find(pe => pe.tipo_contratacao);
     if (!etapaComContrato) return '';
-    const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
     return `
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
             <h3 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Registro de Contrato (Execution)</h3>
@@ -710,7 +710,7 @@ function renderSecaoContratoDetalhe(etapasDoProjeto) {
 function renderSecaoDecisoesFechamento(historico) {
     if (!historico || historico.length === 0) return '';
     const rot = { CONTINUAR: 'Carryover Desenvolvimento', HOLD: 'Carryover Hold', CANCELAR: 'Cancelar', REVERTIDO: 'Revertido' };
-    const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
     return `
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
             <h3 class="text-sm font-bold text-indigo-700 mb-3 uppercase tracking-wider">Decisões de Fechamento de Ano Fiscal</h3>
@@ -802,7 +802,7 @@ function renderSecaoHistoricoDecisoesEtapa(historico) {
 }
 
 function renderSecaoAdhocDetalhe(p, tradeoffInfo) {
-    const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
     if (!tradeoffInfo || tradeoffInfo.length === 0) {
         return `
             <div class="bg-amber-50 p-6 rounded-lg shadow-sm border border-amber-200 mb-6">

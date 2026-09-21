@@ -33,7 +33,7 @@ function calcularCapexOpex(lista, valorExtractor) {
 // Orçamento, cada um com seu próprio conjunto de ids).
 function renderQuadroCapexOpex(prefixo, lista) {
     const dados = calcularCapexOpex(lista);
-    const fmt = (v) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
     ['capex', 'opex'].forEach(tipo => {
         const orcado = dados[tipo].orcado, realizado = dados[tipo].realizado;
         const sufixo = tipo.charAt(0).toUpperCase() + tipo.slice(1);
@@ -58,7 +58,7 @@ function renderQuadroCapexOpex(prefixo, lista) {
 function renderQuadroCarryOverCapexOpex(prefixo, lista) {
     const dados = calcularCapexOpex(lista, (p) => Number(p.valor_carryover) || 0);
     const total = lista.reduce((acc, p) => acc + (Number(p.valor_carryover) || 0), 0);
-    const fmt = (v) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
     const elTotal = document.getElementById(`${prefixo}TotalCarryOver`);
     const elCapex = document.getElementById(`${prefixo}CapexCarryOver`);
     const elOpex = document.getElementById(`${prefixo}OpexCarryOver`);

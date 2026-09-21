@@ -233,7 +233,7 @@ function renderQuadroOrcamentoAgrupado(prefixo, listaAF) {
     linhas.aRealizarOx = linhas.atualOx - linhas.realOx;
 
     const contarTipo = t => lista.filter(p => (p.tipo_orcamento || '').toUpperCase() === t).length;
-    const fmt = v => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
 
     // rot=rótulo | opt: {ac: classe da faixa de destaque à esquerda,
     //   forte: linha em negrito/fundo, sinal: colore o valor por sinal (a realizar)}

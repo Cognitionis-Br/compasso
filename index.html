@@ -3234,11 +3234,11 @@
                 </div>
 
                 <!-- Modal detalhe/correção/decisão de pendência de contrato -->
-                <div id="modalPendenciaContrato" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+                <div id="modalPendenciaContrato" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
                     <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col">
                         <div class="flex items-center justify-between border-b p-4">
                             <h3 id="pendModalTitulo" class="font-bold text-gray-800 text-sm uppercase tracking-wider"></h3>
-                            <button onclick="fecharModalPendencia()" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+                            <button onclick="fecharModalPendencia()" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
                         </div>
                         <div id="pendModalCorpo" class="p-4 overflow-y-auto"></div>
                         <div id="pendModalRodape" class="border-t p-3 flex justify-end gap-2 flex-wrap"></div>
@@ -3246,7 +3246,7 @@
                 </div>
 
                 <!-- Modal dispensa de NF -->
-                <div id="modalDispensaNf" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+                <div id="modalDispensaNf" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
                     <div class="bg-white rounded-lg shadow-xl w-full max-w-md p-5">
                         <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wider mb-2">Dispensar Nota Fiscal</h3>
                         <p class="text-xs text-gray-500 mb-2">A dispensa fica registrada no histórico da pendência. Descreva o motivo (ex.: "NF em processamento pelo fornecedor").</p>
@@ -3432,11 +3432,11 @@
                 </div>
 
                 <!-- Modal de troca de responsável -->
-                <div id="modalTrocaResponsavel" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
+                <div id="modalTrocaResponsavel" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 z-50 flex items-center justify-center p-4">
                     <div class="bg-white rounded-lg shadow-xl w-full max-w-lg">
                         <div class="flex items-center justify-between border-b p-4">
                             <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wider">Trocar Responsável</h3>
-                            <button onclick="fecharModalTrocaResponsavel()" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+                            <button onclick="fecharModalTrocaResponsavel()" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
                         </div>
                         <div class="p-4 text-sm">
                             <div id="trocaRespModalResumo" class="text-xs text-gray-500 mb-3"></div>
@@ -4389,7 +4389,7 @@
         </div>
     </div>
 
-    <div id="modalTrocaSenhaVoluntaria" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-[100]">
+    <div id="modalTrocaSenhaVoluntaria" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center p-4 z-[100]">
         <div class="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
                 <h3 class="font-bold text-gray-800 text-base"><i class="fa-solid fa-key text-gray-600"></i> Trocar Senha</h3>
@@ -4414,7 +4414,7 @@
          de um select validado contra areas_solicitantes (não digitada
          livre), senão o filtro de restrição de área quebra silenciosamente
          por typo/inconsistência de maiúsculas. -->
-    <div id="modalEditarPerfilUsuario" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-[100]">
+    <div id="modalEditarPerfilUsuario" class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center p-4 z-[100]">
         <div class="bg-white rounded-lg shadow-xl max-w-sm w-full p-6 space-y-4">
             <div class="flex justify-between items-center border-b pb-2">
                 <h3 class="font-bold text-gray-800 text-base">Editar Perfil</h3>

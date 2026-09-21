@@ -112,7 +112,7 @@ function mudarAbaVinculo(aba) {
 }
 
 function renderVinculoPorContrato() {
-    const fmtR = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmtR = formatCurrency;
     const contratoId = Number((document.getElementById('vincPorContratoSel') || {}).value) || null;
     const visao = document.getElementById('vincPorContratoVisao');
     const distWrap = document.getElementById('vincPorContratoDistWrapper');
@@ -169,7 +169,7 @@ function renderVinculoPorContrato() {
 function atualizarPreviaDistribuicao() {
     const el = document.getElementById('vpcPreviaAlocacao');
     if (!el) return;
-    const fmtR = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmtR = formatCurrency;
     const fmtH = (h) => `${Number(h || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}h`;
     const contratoId = Number((document.getElementById('vincPorContratoSel') || {}).value) || null;
     const projetoCodigo = (document.getElementById('vpcNovoProjeto') || {}).value || '';
@@ -296,7 +296,7 @@ function atualizarInfoHorasVinculo() {
     painel.classList.remove('hidden');
 
     const fmtH = (h) => `${Number(h || 0).toLocaleString('pt-BR', { maximumFractionDigits: 1 })}h`;
-    const fmtR = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmtR = formatCurrency;
 
     // AJUSTADO (a pedido do usuário 26/08/2026): o vínculo é feito por
     // VALOR (R$), não por horas — o painel precisa trazer o valor em

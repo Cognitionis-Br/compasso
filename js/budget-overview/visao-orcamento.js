@@ -61,13 +61,13 @@ async function renderVisaoOrcamentoView() {
     const elKpiOrc = document.getElementById('visaoKpiOrcAprovado');
     if (elKpiOrc) {
         elKpiOrc.innerHTML = !algumEmConstrucao
-            ? `R$ ${totOrcado.toLocaleString('pt-BR', {minimumFractionDigits:2})} <span class="text-[10px] bg-green-100 text-green-800 px-1 rounded block font-normal mt-1">Oficial Homologado</span>`
-            : `R$ ${totOrcado.toLocaleString('pt-BR', {minimumFractionDigits:2})} <span class="text-[10px] bg-amber-100 text-amber-800 px-1 rounded block font-normal mt-1">Em Construção (Informativo)</span>`;
+            ? `${formatCurrency(totOrcado)} <span class="text-[10px] bg-emerald-100 text-emerald-800 px-1 rounded block font-normal mt-1">Oficial Homologado</span>`
+            : `${formatCurrency(totOrcado)} <span class="text-[10px] bg-amber-100 text-amber-800 px-1 rounded block font-normal mt-1">Em Construção (Informativo)</span>`;
     }
     const elKpiReal = document.getElementById('visaoKpiOrcUtilizado');
-    if (elKpiReal) elKpiReal.innerText = `R$ ${totRealizado.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+    if (elKpiReal) elKpiReal.innerText = formatCurrency(totRealizado);
     const elKpiSaldo = document.getElementById('visaoKpiSaldo');
-    if (elKpiSaldo) elKpiSaldo.innerText = `R$ ${(totOrcado - totRealizado).toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
+    if (elKpiSaldo) elKpiSaldo.innerText = formatCurrency(totOrcado - totRealizado);
 
     // AJUSTADO (a pedido do usuário): a tabela agora respeita o mesmo
     // filtro de Ano Fiscal selecionado que os KPIs/CAPEX-OPEX acima —

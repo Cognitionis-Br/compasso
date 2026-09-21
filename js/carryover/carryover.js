@@ -142,7 +142,7 @@ async function renderCarryOverView() {
     if (elResumo) {
         const proximoAF = proximoAnoFiscal(infoAF.afAtualStr);
         const pool = calcularPoolCarryover(proximoAF);
-        const fmtResumo = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        const fmtResumo = formatCurrency;
         elResumo.innerHTML = `
             <div class="bg-orange-50 border-2 border-orange-300 rounded-lg p-4">
                 <h4 class="text-xs font-bold text-orange-800 uppercase mb-2"><i class="fa-solid fa-flag"></i> Saldo do Orçamento Carryover — ${proximoAF}</h4>
@@ -168,7 +168,7 @@ async function renderCarryOverView() {
     tbody.innerHTML = elegiveis.map(p => {
         const marcado = p.is_carryover === true;
         const valorExibido = marcado ? Number(p.valor_carryover || 0) : calcularValorCarryover(p);
-        const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+        const fmt = formatCurrency;
         const elegibilidade = marcado ? null : verificarElegibilidadeCarryover(p, anosFiscaisConfigCache || []);
         const elegibilidadeDesmarcar = marcado ? verificarElegibilidadeDesmarcar(p) : null;
 
@@ -217,7 +217,7 @@ async function marcarComoCarryover(codigo) {
     }
 
     const valor = calcularValorCarryover(p);
-    const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
 
     if (!confirm(`Confirma marcar ${codigo} como Carryover?\n\nSaldo calculado: ${fmt(valor)}\n(orçamento definido menos realizado)\n\nO Ano Fiscal do projeto NÃO muda — só recebe a marcação, e ele continua seguindo o fluxo normal do workflow.`)) {
         return;

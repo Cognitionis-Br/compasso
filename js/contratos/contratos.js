@@ -505,7 +505,7 @@ async function abrirZoomRelatorioProjeto(codigo) {
         });
     }
 
-    const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    const fmt = formatCurrency;
 
     conteudo.innerHTML = `
         <div class="bg-gray-50 rounded-lg p-4 mb-4 space-y-1">
