@@ -156,8 +156,8 @@ function renderRoadmap() {
 const FASES_TIMELINE = [
     { key: 'BUSINESS CASE', label: 'Business Case', labelCurto: 'BC', cor: 'bg-red-800' },
     { key: 'REQUERIMENTS', label: 'Requirements', labelCurto: 'Req', cor: 'bg-orange-500' },
-    { key: 'TECHNICAL', label: 'Especificação', labelCurto: 'Espec', cor: 'bg-pink-300' },
-    { key: 'EXECUTION', label: 'Execution', labelCurto: 'Exec', cor: 'bg-sky-300' },
+    { key: 'TECHNICAL', label: 'Especificação', labelCurto: 'Espec', cor: 'bg-pink-600' },
+    { key: 'EXECUTION', label: 'Execution', labelCurto: 'Exec', cor: 'bg-violet-600' },
     { key: 'UAT', label: 'UAT', labelCurto: 'UAT', cor: 'bg-blue-500' },
     { key: 'GOLIVE', label: 'Go-Live', labelCurto: 'GL', cor: 'bg-emerald-600' }
 ];
@@ -504,7 +504,7 @@ function renderTrilhaSegmentos(segmentos, codigoProjeto, todasEtapas, anoFiscalS
                     : `${p.seg.label}: ${p.seg.inicio} a ${p.seg.fim} — ${status.label}`;
 
                 let html = `
-                    <div class="${p.seg.cor} ${temAtraso ? 'rounded-l' : 'rounded'} text-white text-[9px] font-bold flex items-center justify-center gap-1 px-1 h-6" style="grid-column: ${p.idxIni + 1} / span ${spanPlanejado}; grid-row: ${p.raia + 1};" title="${tituloPlanejado}">
+                    <div class="${p.seg.cor} ${temAtraso ? 'rounded-l' : 'rounded'} text-white text-[9px] font-bold flex items-center justify-center gap-1 px-1 h-6 cursor-help" style="grid-column: ${p.idxIni + 1} / span ${spanPlanejado}; grid-row: ${p.raia + 1};" data-tip="${escapeHtml(tituloPlanejado)}">
                         <span class="${status.cor} w-2 h-2 rotate-45 inline-block flex-shrink-0 border border-white"></span>
                         ${p.seg.concluida && !temAtraso ? '<span>✓</span>' : ''}
                     </div>
@@ -513,7 +513,7 @@ function renderTrilhaSegmentos(segmentos, codigoProjeto, todasEtapas, anoFiscalS
                 if (temAtraso) {
                     const spanReal = Math.max(1, p.idxFimReal - p.idxFimPlanejado);
                     html += `
-                        <div class="${p.seg.cor} rounded-r text-white text-[9px] font-bold flex items-center justify-center h-6" style="grid-column: ${p.idxFimPlanejado + 2} / span ${spanReal}; grid-row: ${p.raia + 1}; ${ESTILO_RACHURADO}" title="${p.seg.label}: concluído em ${p.seg.fimReal} — passou do planejado (${p.seg.fimPlanejado})">
+                        <div class="${p.seg.cor} rounded-r text-white text-[9px] font-bold flex items-center justify-center h-6 cursor-help" style="grid-column: ${p.idxFimPlanejado + 2} / span ${spanReal}; grid-row: ${p.raia + 1}; ${ESTILO_RACHURADO}" data-tip="${escapeHtml(`${p.seg.label}: concluído em ${p.seg.fimReal} — passou do planejado (${p.seg.fimPlanejado})`)}">
                             <span>✓</span>
                         </div>
                     `;
@@ -524,6 +524,61 @@ function renderTrilhaSegmentos(segmentos, codigoProjeto, todasEtapas, anoFiscalS
         </div>
     `;
 }
+
+// NOVO (evolução visual do Gantt): tooltip flutuante no lugar do title=
+// nativo do navegador — aparece na hora, com estilo, e funciona em toque
+// (tap abre, tap fora fecha). Delegado no document (o container do
+// Roadmap é substituído por innerHTML a cada render, então listeners
+// presos a ele se perderiam) — inicializado uma única vez, no load do
+// script (o #roadmapTooltip já existe no HTML antes da tag <script>).
+let _tooltipRoadmapAtivo = false;
+function ativarTooltipRoadmap() {
+    if (_tooltipRoadmapAtivo) return;
+    const tip = document.getElementById('roadmapTooltip');
+    if (!tip) return;
+    _tooltipRoadmapAtivo = true;
+
+    function posicionar(x, y) {
+        const margem = 12;
+        const largura = tip.offsetWidth || 240;
+        const altura = tip.offsetHeight || 32;
+        let left = x + margem;
+        if (left + largura > window.innerWidth - 8) left = x - largura - margem;
+        tip.style.left = Math.max(8, left) + 'px';
+        tip.style.top = Math.max(8, y - altura - margem) + 'px';
+    }
+    function mostrar(alvo, x, y) {
+        tip.textContent = alvo.getAttribute('data-tip');
+        tip.classList.remove('hidden');
+        posicionar(x, y);
+    }
+    function esconder() {
+        tip.classList.add('hidden');
+    }
+
+    document.addEventListener('mouseover', (e) => {
+        const alvo = e.target.closest('[data-tip]');
+        if (alvo) mostrar(alvo, e.clientX, e.clientY);
+    });
+    document.addEventListener('mousemove', (e) => {
+        if (tip.classList.contains('hidden')) return;
+        if (e.target.closest('[data-tip]')) posicionar(e.clientX, e.clientY);
+    });
+    document.addEventListener('mouseout', (e) => {
+        const alvo = e.target.closest('[data-tip]');
+        if (alvo && !alvo.contains(e.relatedTarget)) esconder();
+    });
+    document.addEventListener('touchstart', (e) => {
+        const alvo = e.target.closest('[data-tip]');
+        if (alvo) {
+            const t = e.touches[0];
+            mostrar(alvo, t.clientX, t.clientY);
+        } else {
+            esconder();
+        }
+    }, { passive: true });
+}
+ativarTooltipRoadmap();
 
 // AJUSTADO (item 3 do relatório de testes): junta a legenda de cores das
 // fases (já que o nome saiu de dentro da barra) na MESMA linha da
@@ -631,45 +686,6 @@ function renderLinhaGanttProjeto(p, listaCompleta, todasEtapas, extensaoMeses) {
     `;
 }
 
-
-function renderRoadmapPorFase(container, lista) {
-    const fasesOrdem = [
-        { key: 'BUSINESS CASE', label: '1. Business Case', color: 'bg-red-600' },
-        { key: 'REQUIREMENTS', label: '2. Requisitos', color: 'bg-purple-600' },
-        { key: 'TECHNICAL', label: '3. Technical Architecture', color: 'bg-blue-600' },
-        { key: 'EXECUTION', label: '4. Execução (Dev)', color: 'bg-cyan-600' },
-        { key: 'UAT', label: '5. Homologação (UAT)', color: 'bg-teal-600' },
-        { key: 'GOLIVE', label: '6. Go-Live & Concluídos', color: 'bg-emerald-600' }
-    ];
-
-    container.innerHTML = fasesOrdem.map(fase => {
-        const projetosNaFase = lista.filter(p => {
-            const etapa = (p.etapa_atual || 'BUSINESS CASE').toUpperCase();
-            const sub = (p.sub_status || '').toUpperCase();
-            if (sub === 'CANCELADO' || sub === 'REPROVADO' || sub === 'HOLD') return false;
-            // CORRIGIDO 10/08/2026: reconhece 'GOLIVE' (sem espaço, o
-            // valor real gravado pelo avanço automático de fase) e os
-            // dois variantes legados, por segurança.
-            if (fase.key === 'GOLIVE') return etapa === 'GOLIVE' || etapa === 'GO LIVE' || etapa === 'CONCLUIDO';
-            if (fase.key === 'BUSINESS CASE') return etapa === 'BUSINESS CASE' || etapa === '';
-            return etapa === fase.key;
-        });
-
-        const listaProjetosHtml = projetosNaFase.length === 0
-            ? `<div class="text-xs text-gray-400 italic py-2">Nenhum projeto nesta fase no momento.</div>`
-            : projetosNaFase.map(p => renderCardProjetoRoadmap(p)).join('');
-
-        return `
-            <div class="border-l-4 ${fase.color} pl-4 py-2 mb-6">
-                <h4 class="font-bold text-sm text-gray-800 uppercase mb-3 flex items-center justify-between">
-                    <span>${fase.label}</span>
-                    <span class="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-0.5 rounded">${projetosNaFase.length} projeto(s)</span>
-                </h4>
-                <div class="space-y-2">${listaProjetosHtml}</div>
-            </div>
-        `;
-    }).join('');
-}
 
 // Visão genérica Área→Projeto ou Responsável→Projeto: agrupa pelo campo
 // pedido, mostra a fase de cada projeto como atributo da linha (não como
@@ -796,24 +812,3 @@ function renderRoadmapPorIniciativa(container, lista) {
     });
 }
 
-function renderCardProjetoRoadmap(p, mostrarFase) {
-    const faseLabel = (p.etapa_atual || 'BUSINESS CASE').toUpperCase();
-    return `
-        <div class="bg-gray-50 border border-gray-200 p-3 rounded-md mb-2 flex justify-between items-center shadow-xs">
-            <div>
-                <div class="flex items-center gap-2">
-                    <span class="font-mono font-bold text-xs text-red-700">${p.codigo}</span>
-                    <span class="font-bold text-xs text-gray-800">${escapeHtml(p.nome)}</span>
-                    ${mostrarFase ? `<span class="text-[9px] font-bold px-1.5 py-0.5 bg-indigo-100 text-indigo-800 rounded uppercase">${faseLabel}</span>` : ''}
-                </div>
-                <div class="text-[10px] text-gray-500 mt-1">
-                    Área: <span class="font-bold">${p.area || '-'}</span> | Porte: <span class="font-bold">${p.tamanho || 'M'}</span> (${horasAtuaisDoProjeto(p)}h) | Qualificação: <span class="font-bold uppercase">${p.tipo_qualificacao || 'REG'}</span>
-                </div>
-            </div>
-            <div class="text-right">
-                <span class="text-[10px] font-bold px-2 py-1 bg-white border rounded shadow-2xs text-gray-700 uppercase">${p.sub_status || 'EM ANDAMENTO'}</span>
-                <div class="font-mono text-[11px] font-bold text-green-700 mt-1">R$ ${(Number(p.val_bc) || Number(p.previsto) || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</div>
-            </div>
-        </div>
-    `;
-}

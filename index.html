@@ -36,8 +36,6 @@
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Plotly.js -->
-    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
     <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- SheetJS (leitura de planilha Excel — Pendências de Contratos, Release 1) -->
@@ -717,6 +715,12 @@
                     <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                         <div id="roadmapTimelineContainer" class="space-y-4"></div>
                     </div>
+
+                    <!-- NOVO (evolução visual do Gantt): tooltip flutuante compartilhado,
+                         substitui o title= nativo do navegador (lento, sem estilo, não
+                         funciona em toque) por um popover posicionado no cursor/toque —
+                         ver ativarTooltipRoadmap() em roadmap.js. -->
+                    <div id="roadmapTooltip" class="hidden fixed z-50 pointer-events-none bg-gray-900 text-white text-[11px] font-semibold leading-snug rounded-lg shadow-lg px-3 py-2 max-w-xs"></div>
                 </div>
 
                 <!-- VISÃO: ORÇAMENTO -->

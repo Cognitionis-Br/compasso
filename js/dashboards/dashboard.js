@@ -136,10 +136,6 @@ async function renderDashboardMetrics() {
     if (typeof renderResumoOrcamentario === 'function') renderResumoOrcamentario(projectsDataFiltrado);
     if (typeof renderComposicaoPortfolio === 'function') renderComposicaoPortfolio(projectsDataDash);
 
-    let totOrcamentoOficial = 0;
-    let totOrcamentoEmConstrucao = 0;
-    let totR = 0, totAdhoc = 0;
-
     // NOVO 10/08/2026: busca o cronograma granular de todas as etapas
     // uma vez só, pra alimentar calcularSaudeProjeto com o mesmo tipo de
     // checagem de atraso que o Cronograma & Evolução usa — sem isso,
@@ -150,81 +146,13 @@ async function renderDashboardMetrics() {
     // Estágio 2 — Farol de Saúde (§4.4), agora com o cache de etapas.
     if (typeof renderFarolSaudeDash === 'function') renderFarolSaudeDash(projectsDataDash, todasEtapasCache || []);
 
-    // CORRIGIDO (a pedido do usuário — bug reportado: valores de projetos
-    // sendo aprovados no AF recém-aberto não apareciam em lugar nenhum):
-    // isOrcamentoGlobalFechado() checava TODOS os projetos do sistema
-    // juntos, sem separar por Ano Fiscal — bastava UM projeto de
-    // QUALQUER AF (inclusive Carryover de anos anteriores) já estar além
-    // do Business Case pra o sistema achar, erroneamente, que o AF
-    // CORRENTE também estava fechado, escondendo o orçamento "em
-    // construção" que ainda estava sendo aprovado nele. Agora cada
-    // projeto usa o status de fechamento do PRÓPRIO Ano Fiscal dele.
-    const isFechadoParaAF = await construirMapaFechamentoAF();
-
-    // NOVO 10/08/2026 (item 1 do relatório de testes): junto de somar os
-    // totais, guarda também QUAIS projetos entraram na conta — é essa
-    // mesma lista (não todos os projetos) que precisa alimentar o
-    // CAPEX/OPEX logo abaixo, senão os dois quadros não batem.
-    const projetosNoOrcamentoExibido = [];
-    let algumAFAindaEmConstrucao = false;
-
-    projectsDataFiltrado.forEach(p => {
-        const prev = Number(p.val_bc) || Number(p.previsto) || 0;
-        const real = Number(p.realizado) || 0;
-        totR += real;
-        if (p.is_adhoc) totAdhoc += prev;
-
-        const sub = (p.sub_status || '').toUpperCase();
-        if (sub !== 'CANCELADO' && sub !== 'REPROVADO' && sub !== 'HOLD') {
-            const fechadoDesseProjeto = isFechadoParaAF(p.ano_fiscal);
-            if (fechadoDesseProjeto) {
-                if (p.etapa_atual && p.etapa_atual !== 'BUSINESS CASE') {
-                    totOrcamentoOficial += prev;
-                    projetosNoOrcamentoExibido.push(p);
-                } else {
-                    totOrcamentoEmConstrucao += prev;
-                    algumAFAindaEmConstrucao = true;
-                }
-            } else {
-                totOrcamentoEmConstrucao += prev;
-                algumAFAindaEmConstrucao = true;
-                projetosNoOrcamentoExibido.push(p);
-            }
-        }
-    });
-
-    // NOVO: com múltiplos AFs convivendo (alguns fechados, outros ainda
-    // em construção), o valor exibido passa a ser a SOMA dos dois —
-    // antes era um "ou outro" (ternário), que escondia um dos dois
-    // quando havia mais de um AF na visão selecionada. Pra um único AF
-    // num estado uniforme, a soma dá exatamente o mesmo resultado de
-    // antes (um dos dois sempre fica zerado nesse caso).
-    const displayOrcamento = totOrcamentoOficial + totOrcamentoEmConstrucao;
-    const isFechado = !algumAFAindaEmConstrucao;
-
-    if (document.getElementById('kpiTotalProjetos')) document.getElementById('kpiTotalProjetos').innerText = projectsDataFiltrado.length;
-    
-    const kpiOrcAprovado = document.getElementById('kpiOrcAprovado');
-    if (kpiOrcAprovado) {
-        if (isFechado) {
-            kpiOrcAprovado.innerHTML = `R$ ${displayOrcamento.toLocaleString('pt-BR', {minimumFractionDigits:2})} <span class="text-[10px] bg-green-100 text-green-800 px-1 rounded block font-normal">Oficial Homologado</span>`;
-        } else {
-            kpiOrcAprovado.innerHTML = `R$ ${displayOrcamento.toLocaleString('pt-BR', {minimumFractionDigits:2})} <span class="text-[10px] bg-amber-100 text-amber-800 px-1 rounded block font-normal">Em Construção (Informativo)</span>`;
-        }
-    }
-
-    if (document.getElementById('kpiOrcAdhoc')) document.getElementById('kpiOrcAdhoc').innerText = `R$ ${totAdhoc.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-    if (document.getElementById('kpiOrcUtilizado')) document.getElementById('kpiOrcUtilizado').innerText = `R$ ${totR.toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-    // 'Projeção Final' (totR * 1.15) removida — ver INVESTIGACAO_PROJECAO_FINAL.md / quadro novo (Orçamento a Realizar).
-    if (document.getElementById('kpiSaldo')) document.getElementById('kpiSaldo').innerText = `R$ ${(displayOrcamento - totR).toLocaleString('pt-BR', {minimumFractionDigits:2})}`;
-
     // Estágio 3 — Consolidação por Fase (§4.2) substitui a tabela antiga.
     // Os gráficos e a tabela de Carryover (antes chamados no fim de
     // renderTabelaConsolidacaoPortfolio) passam a ser chamados aqui direto.
     if (typeof renderOrcadoRealizadoArea === 'function') renderOrcadoRealizadoArea(projectsDataDash);
     if (typeof renderConsolidacaoFases === 'function') renderConsolidacaoFases(projectsDataDash, todasEtapasCache || []);
     if (typeof renderFunisCriacao === 'function') renderFunisCriacao(projectsDataFiltrado);
-    if (typeof renderTabelaCarryoverDashboard === 'function') renderTabelaCarryoverDashboard(projectsDataDash, isFechadoParaAF);
+    if (typeof renderTabelaCarryoverDashboard === 'function') renderTabelaCarryoverDashboard(projectsDataDash);
 
     const dashTableBody = document.getElementById('dashTableBody');
     if (dashTableBody) {
@@ -317,7 +245,7 @@ async function renderDashboardMetrics() {
 
 // NOVO 10/08/2026 (G19): quadro próprio, só com projetos marcados como
 // Carryover — segregados do quadro principal de consolidação por fase.
-function renderTabelaCarryoverDashboard(listaFiltrada, isFechadoParaAF) {
+function renderTabelaCarryoverDashboard(listaFiltrada) {
     const tbody = document.getElementById('tableCarryoverDashboardBody');
     if (!tbody) return;
 

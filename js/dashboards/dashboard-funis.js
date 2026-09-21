@@ -37,8 +37,8 @@ function renderOrcadoRealizadoArea(listaDash) {
                     <span class="tabular-nums text-gray-400">orç ${_fnFmt(l.orcado)} · real ${_fnFmt(l.realizado)}</span>
                 </div>
                 <div class="space-y-1">
-                    <div class="h-3 bg-gray-100 rounded overflow-hidden"><div class="h-full bg-blue-600" style="width:${(l.orcado / maxV) * 100}%"></div></div>
-                    <div class="h-3 bg-gray-100 rounded overflow-hidden"><div class="h-full bg-purple-600" style="width:${(l.realizado / maxV) * 100}%"></div></div>
+                    <div class="h-3 bg-gray-100 rounded overflow-hidden"><div class="h-full bg-cyan-600" style="width:${(l.orcado / maxV) * 100}%"></div></div>
+                    <div class="h-3 bg-gray-100 rounded overflow-hidden"><div class="h-full bg-fuchsia-600" style="width:${(l.realizado / maxV) * 100}%"></div></div>
                 </div>
             </div>`).join('');
 
@@ -46,7 +46,7 @@ function renderOrcadoRealizadoArea(listaDash) {
         <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="font-extrabold text-gray-900 text-sm uppercase tracking-wide">Orçado vs. Realizado por Área / UN</h3>
-                <span class="text-[10px] font-bold"><span class="text-blue-700">■ Orçado</span> &nbsp; <span class="text-purple-700">■ Realizado</span></span>
+                <span class="text-[10px] font-bold"><span class="text-cyan-700">■ Orçado</span> &nbsp; <span class="text-fuchsia-700">■ Realizado</span></span>
             </div>
             ${corpo}
         </section>`;
