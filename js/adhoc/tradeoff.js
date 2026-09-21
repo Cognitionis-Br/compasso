@@ -82,7 +82,7 @@ function recomputarForaDeEscopoTradeoff() {
 // "Extraordinário" desde a padronização de telas.
 function renderAdhocBadge(projeto) {
     if (projeto.is_adhoc || projeto.tipo === 'ADHOC') {
-        return `<span class="bg-red-100 text-red-700 font-bold text-[9px] px-1.5 py-0.5 rounded ml-1 border border-red-200">EXTRAORDINÁRIO</span>`;
+        return `<span class="bg-purple-100 text-purple-700 font-bold text-[9px] px-1.5 py-0.5 rounded ml-1 border border-purple-200">EXTRAORDINÁRIO</span>`;
     }
     return '';
 }
@@ -451,10 +451,10 @@ function recalcularSaldoSimulado() {
     const elMsg = document.getElementById('simValidacaoMsg');
     const elBtnAprovar = document.getElementById('btnAprovarSimulacaoAdhoc');
 
-    if (elVal5) elVal5.className = simulacaoValida ? 'text-sm font-black text-green-700' : 'text-sm font-black text-red-700';
-    if (elVal5Wrapper) elVal5Wrapper.className = `bg-white rounded p-2 border-2 ${simulacaoValida ? 'border-green-400' : 'border-red-400'}`;
+    if (elVal5) elVal5.className = simulacaoValida ? 'text-sm font-black text-emerald-700' : 'text-sm font-black text-danger-700';
+    if (elVal5Wrapper) elVal5Wrapper.className = `bg-white rounded p-2 border-2 ${simulacaoValida ? 'border-emerald-400' : 'border-danger-400'}`;
     if (elMsg) {
-        elMsg.className = `text-xs font-bold mt-3 ${simulacaoValida ? 'text-green-700' : 'text-red-700'}`;
+        elMsg.className = `text-xs font-bold mt-3 ${simulacaoValida ? 'text-emerald-700' : 'text-danger-700'}`;
         elMsg.innerText = simulacaoValida
             ? '✅ Situação do AF dentro do orçamento aprovado — simulação pode ser aprovada.'
             : `⛔ Situação do AF (${formatCurrency(val5Situacao)}) excede o orçamento aprovado (${formatCurrency(val1OrcamentoAF)}) — marque mais projetos em HOLD/Cancelar/Ceder Parte para liberar saldo suficiente antes de aprovar.`;

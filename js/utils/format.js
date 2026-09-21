@@ -8,6 +8,23 @@ function formatCurrency(val) {
     return Number(val || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
+// NOVO (evolução visual — consolidação de formatação): dezenas de telas
+// formatavam data ad-hoc (toLocaleString/toLocaleDateString/split('T')[0]
+// espalhados, cada uma decidindo por conta própria) — pontos únicos de
+// verdade aqui, aceitando Date, string ISO ou timestamp.
+function formatDate(val) {
+    if (!val) return '-';
+    const d = (val instanceof Date) ? val : new Date(val);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleDateString('pt-BR');
+}
+function formatDateTime(val) {
+    if (!val) return '-';
+    const d = (val instanceof Date) ? val : new Date(val);
+    if (isNaN(d.getTime())) return '-';
+    return d.toLocaleString('pt-BR');
+}
+
 // NOVO (a pedido do usuário 26/08/2026 — item 7 do relatório de
 // higiene/segurança): o sistema inteiro monta HTML via template string
 // interpolando campos de texto livre (nome do projeto, motivo de

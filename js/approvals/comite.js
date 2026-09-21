@@ -50,14 +50,14 @@ function renderAprovComiteView() {
                 ${p.dt_aprovacao ? `<b>Aprovado em:</b> ${p.dt_aprovacao}<br><b>Comitê:</b> ${p.dt_comite || '-'}<br><b>Por:</b> ${escapeHtml(p.aprovador_nome) || '-'}` : '<span class="italic text-gray-400">Pendente registro</span>'}
             </td>
             <td class="p-3 text-center space-x-1">
-                ${p.sub_status === 'APROVADO' ? '<span class="bg-green-600 text-white font-bold px-2.5 py-1 rounded">APROVADO</span>' :
-                  p.sub_status === 'REPROVADO' ? '<span class="bg-red-600 text-white font-bold px-2.5 py-1 rounded">REPROVADO</span>' :
+                ${p.sub_status === 'APROVADO' ? renderBadgeStatus('emerald', 'fa-circle-check', 'Aprovado') :
+                  p.sub_status === 'REPROVADO' ? renderBadgeStatus('danger', 'fa-circle-xmark', 'Reprovado') :
                   // AJUSTADO (Controle de acesso por atividade, Fase 4):
                   // aprovação/reprovação/reavaliação individual de projeto
                   // no comitê -> activity_key "aprov_comite".
                   (botaoSeTemAtividade('aprov_comite',
                     `<button onclick="abrirModalAprovComite('${p.codigo}')" class="bg-green-600 hover:bg-green-700 text-white font-bold text-xs px-2.5 py-1 rounded shadow"><i class="fa-solid fa-check"></i> Aprovar</button>
-                     <button onclick="abrirModalReprovComite('${p.codigo}')" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-2.5 py-1 rounded shadow"><i class="fa-solid fa-xmark"></i> Reprovar</button>
+                     <button onclick="abrirModalReprovComite('${p.codigo}')" class="bg-danger-600 hover:bg-danger-700 text-white font-bold text-xs px-2.5 py-1 rounded shadow"><i class="fa-solid fa-xmark"></i> Reprovar</button>
                      <button onclick="abrirModalReavalComite('${p.codigo}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-2.5 py-1 rounded shadow"><i class="fa-solid fa-rotate-left"></i> Reavaliar</button>`
                   ) || '<span class="text-gray-400 italic text-[10px]">Sem permissão para aprovar</span>')
                 }
@@ -112,7 +112,7 @@ function abrirModalDecisaoComite(codigo, modo) {
         ? 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold transition'
         : ehReavaliacao
             ? 'px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded text-xs font-bold transition'
-            : 'px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold transition';
+            : 'px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded text-xs font-bold transition';
 
     document.getElementById('modalAprovacaoComite').classList.remove('hidden');
 }

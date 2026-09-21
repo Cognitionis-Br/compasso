@@ -72,7 +72,7 @@ function _pagNfRenderTabela() {
     if (resumo) {
         const emAtraso = lista.filter(_pendEmAtrasoNf).length;
         resumo.innerHTML = `${lista.length} pagamento(s) aguardando NF` +
-            (emAtraso > 0 ? ` · <span class="text-red-700 font-bold">${emAtraso} há mais de ${PEND_NF_ATRASO_DIAS_UTEIS} dias úteis</span>` : '');
+            (emAtraso > 0 ? ` · <span class="text-danger-700 font-bold">${emAtraso} há mais de ${PEND_NF_ATRASO_DIAS_UTEIS} dias úteis</span>` : '');
     }
 
     if (lista.length === 0) {
@@ -92,13 +92,13 @@ function _pagNfRenderTabela() {
             const dias = _pendDiasUteisDesde(p.criado_em);
             const projetoTexto = p.projeto_codigo || p.projeto_ref || 'Rateio entre vários projetos';
             return `
-            <tr class="${atraso ? 'bg-red-50' : ''}">
+            <tr class="${atraso ? 'bg-danger-50' : ''}">
                 <td class="p-2 text-[10px] text-gray-500 whitespace-nowrap">${(p.criado_em || '').replace('T', ' ').split('.')[0]}</td>
                 <td class="p-2 text-xs">${escapeHtml(contrato ? contrato.numero_contrato : (p.contrato_ref || '—'))}</td>
                 <td class="p-2 text-xs">${escapeHtml(nomeFornecedor)}${semEmailFornecedor ? '<br><span class="text-[9px] text-amber-700 font-bold">sem e-mail cadastrado</span>' : ''}</td>
                 <td class="p-2 text-xs">${escapeHtml(projetoTexto)}</td>
                 <td class="p-2 text-right font-mono text-xs">${formatCurrency(p.valor)}</td>
-                <td class="p-2 text-center text-xs font-bold ${atraso ? 'text-red-700' : 'text-gray-600'}">${dias}${atraso ? ' ⚠' : ''}</td>
+                <td class="p-2 text-center text-xs font-bold ${atraso ? 'text-danger-700' : 'text-gray-600'}">${dias}${atraso ? ' <i class="fa-solid fa-triangle-exclamation"></i>' : ''}</td>
                 <td class="p-2 text-center">
                     ${p.escalado_nf_em ? `<span class="text-[9px] text-gray-400" title="Última cobrança enviada em ${p.escalado_nf_em.split('T')[0]}"><i class="fa-solid fa-envelope-circle-check"></i> avisado</span>` : '<span class="text-[9px] text-gray-300">—</span>'}
                 </td>

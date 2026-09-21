@@ -198,7 +198,7 @@ function renderTabelaBenefitResultsDetalhe() {
             <td class="p-2">${(b.tipos_return_benefit || {}).nome || '-'}</td>
             <td class="p-2">${b.metrica || '-'}</td>
             <td class="p-2 text-right font-mono">${b.valor !== null ? 'R$ ' + Number(b.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}</td>
-            <td class="p-2 text-center"><button type="button" onclick="removerBeneficioDetalhe(${b.id})" class="text-red-600 hover:text-red-800"><i class="fa-solid fa-trash"></i></button></td>
+            <td class="p-2 text-center"><button type="button" onclick="removerBeneficioDetalhe(${b.id})" class="text-danger-600 hover:text-danger-800"><i class="fa-solid fa-trash"></i></button></td>
         </tr>
     `).join('');
 }

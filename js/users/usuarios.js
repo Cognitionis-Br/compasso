@@ -66,7 +66,7 @@ async function renderUsuariosView() {
         usuariosData = [];
         const tbody = document.getElementById('tableUsuariosBody');
         if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-red-600 font-bold">⛔ Erro ao carregar usuários: ${error.message}<br><span class="text-[10px] font-normal text-gray-500">Verifique a policy de leitura (RLS) da tabela perfis_usuarios no Supabase.</span></td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-danger-600 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Erro ao carregar usuários: ${error.message}<br><span class="text-[10px] font-normal text-gray-500">Verifique a policy de leitura (RLS) da tabela perfis_usuarios no Supabase.</span></td></tr>`;
         }
         return;
     }
@@ -140,16 +140,16 @@ function renderUsuariosTable() {
                 <td class="p-3 text-xs">${cargo ? escapeHtml(cargo.nome) : '-'}</td>
                 <td class="p-3">
                     ${inativo
-                        ? `<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px]">INATIVO</span>`
-                        : `<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px]">ATIVO</span>`}
-                    ${u.senha_provisoria ? `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px] ml-1">SENHA PROVISÓRIA</span>` : ''}
+                        ? renderBadgeStatus('gray', null, 'Inativo')
+                        : renderBadgeStatus('emerald', 'fa-circle-check', 'Ativo')}
+                    ${u.senha_provisoria ? `<span class="ml-1">${renderBadgeStatus('amber', null, 'Senha Provisória')}</span>` : ''}
                 </td>
                 <td class="p-3 text-xs text-gray-500">${u.criado_por || '-'}</td>
                 <td class="p-3 text-right space-x-2 whitespace-nowrap">
                     ${!inativo ? botaoSePodeAlterar('usuarios', `<button onclick="editarPerfilUsuario('${u.id}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`) : ''}
                     ${inativo
-                        ? botaoSePodeAlterar('usuarios', `<button onclick="reativarUsuario('${u.id}')" class="text-green-700 hover:text-green-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`)
-                        : botaoSePodeDeletar('usuarios', `<button onclick="inativarUsuario('${u.id}')" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-user-slash"></i> Inativar</button>`)}
+                        ? botaoSePodeAlterar('usuarios', `<button onclick="reativarUsuario('${u.id}')" class="text-emerald-700 hover:text-emerald-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`)
+                        : botaoSePodeDeletar('usuarios', `<button onclick="inativarUsuario('${u.id}')" class="text-danger-600 hover:text-danger-800 text-xs font-bold"><i class="fa-solid fa-user-slash"></i> Inativar</button>`)}
                 </td>
             </tr>
         `;

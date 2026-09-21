@@ -133,18 +133,18 @@ function renderFuncoesTable() {
                 <td class="p-3 ${inativa ? '' : 'text-gray-600'}">${escapeHtml(f.descricao) || '-'}</td>
                 <td class="p-3">
                     ${inativa
-                        ? `<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px]">INATIVA</span>`
-                        : `<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px]">ATIVA</span>`}
-                    ${f.acesso_irrestrito ? `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px] ml-1">ACESSO IRRESTRITO</span>` : ''}
-                    ${f.eh_proprietario ? `<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[10px] ml-1">PROPRIETÁRIO</span>` : ''}
-                    ${(f.ignora_restricao_area && !f.acesso_irrestrito) ? `<span class="bg-sky-100 text-sky-800 font-bold px-2 py-0.5 rounded text-[10px] ml-1">IGNORA RESTRIÇÃO DE ÁREA</span>` : ''}
-                    ${(f.restringe_por_atividade_responsavel && !f.acesso_irrestrito) ? `<span class="bg-orange-100 text-orange-800 font-bold px-2 py-0.5 rounded text-[10px] ml-1">OPERADOR — SÓ ATIVIDADES DESIGNADAS</span>` : ''}
+                        ? renderBadgeStatus('gray', null, 'Inativa')
+                        : renderBadgeStatus('emerald', 'fa-circle-check', 'Ativa')}
+                    ${f.acesso_irrestrito ? `<span class="ml-1">${renderBadgeStatus('amber', null, 'Acesso Irrestrito')}</span>` : ''}
+                    ${f.eh_proprietario ? `<span class="ml-1">${renderBadgeStatus('purple', null, 'Proprietário')}</span>` : ''}
+                    ${(f.ignora_restricao_area && !f.acesso_irrestrito) ? `<span class="ml-1">${renderBadgeStatus('sky', null, 'Ignora Restrição de Área')}</span>` : ''}
+                    ${(f.restringe_por_atividade_responsavel && !f.acesso_irrestrito) ? `<span class="ml-1">${renderBadgeStatus('orange', null, 'Operador — Só Atividades Designadas')}</span>` : ''}
                 </td>
                 <td class="p-3 text-right space-x-2 whitespace-nowrap">
                     ${inativa
-                        ? `<button onclick="reativarFuncao(${f.id})" class="text-green-700 hover:text-green-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`
+                        ? `<button onclick="reativarFuncao(${f.id})" class="text-emerald-700 hover:text-emerald-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`
                         : `<button onclick="editFuncao(${f.id})" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
-                           <button onclick="deleteFuncao(${f.id})" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-trash"></i> Excluir</button>`}
+                           <button onclick="deleteFuncao(${f.id})" class="text-danger-600 hover:text-danger-800 text-xs font-bold"><i class="fa-solid fa-trash"></i> Excluir</button>`}
                 </td>
             </tr>
         `;

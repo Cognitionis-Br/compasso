@@ -185,7 +185,7 @@ async function renderCarryOverView() {
                     ${marcado
                         ? `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px] block mb-1">CARRYOVER</span>
                            ${elegibilidadeDesmarcar.elegivel
-                                ? `<button onclick="desmarcarCarryover('${p.codigo}')" class="text-red-600 hover:text-red-800 text-[10px] font-bold">Desmarcar</button>`
+                                ? `<button onclick="desmarcarCarryover('${p.codigo}')" class="text-danger-600 hover:text-danger-800 text-[10px] font-bold">Desmarcar</button>`
                                 : `<span class="text-gray-400 text-[10px] font-bold cursor-not-allowed" title="${elegibilidadeDesmarcar.motivo}">Desmarcar</span>
                                    <div class="text-[9px] text-amber-700 mt-1 max-w-[160px]">${elegibilidadeDesmarcar.motivo}</div>`}`
                         : (elegibilidade.elegivel

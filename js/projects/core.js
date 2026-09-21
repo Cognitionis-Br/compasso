@@ -227,7 +227,7 @@ function renderTabelaBeneficiosDemanda() {
             <td class="p-2">${escapeHtml(b.nome)}</td>
             <td class="p-2">${b.metrica || '-'}</td>
             <td class="p-2 text-right font-mono">${b.valor !== null ? 'R$ ' + b.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}</td>
-            <td class="p-2 text-center"><button type="button" onclick="removerBeneficioDemanda(${idx})" class="text-red-600 hover:text-red-800"><i class="fa-solid fa-trash"></i></button></td>
+            <td class="p-2 text-center"><button type="button" onclick="removerBeneficioDemanda(${idx})" class="text-danger-600 hover:text-danger-800"><i class="fa-solid fa-trash"></i></button></td>
         </tr>
     `).join('');
 }
@@ -558,8 +558,8 @@ function corBadgeStatusFormalizada(sub) {
         'A PLANEJAR': 'bg-gray-100 text-gray-800',
         'PLANEJADO': 'bg-blue-100 text-blue-800',
         'ORÇAMENTO REALIZADO': 'bg-amber-100 text-amber-800',
-        'APROVADO': 'bg-green-100 text-green-800',
-        'REPROVADO': 'bg-red-100 text-red-800',
+        'APROVADO': 'bg-emerald-100 text-emerald-800',
+        'REPROVADO': 'bg-danger-100 text-danger-800',
         'HOLD': 'bg-orange-100 text-orange-800'
     };
     return mapa[s] || 'bg-gray-100 text-gray-800';

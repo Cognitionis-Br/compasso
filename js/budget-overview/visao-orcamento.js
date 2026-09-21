@@ -116,8 +116,8 @@ async function renderVisaoOrcamentoView() {
             semaforoHtml = `<span class="px-2 py-1 bg-amber-100 text-amber-800 rounded font-bold flex items-center justify-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> AMARELO (${diffPct.toFixed(1)}%)</span>`;
             corCartao = 'border-l-4 border-l-amber-500';
         } else {
-            semaforoHtml = `<span class="px-2 py-1 bg-red-100 text-red-800 rounded font-bold flex items-center justify-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500"></span> VERMELHO (${diffPct.toFixed(1)}%)</span>`;
-            corCartao = 'border-l-4 border-l-red-500';
+            semaforoHtml = `<span class="px-2 py-1 bg-danger-100 text-danger-800 rounded font-bold flex items-center justify-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-danger-500"></span> VERMELHO (${diffPct.toFixed(1)}%)</span>`;
+            corCartao = 'border-l-4 border-l-danger-500';
         }
 
         const valBcFmt = valBc.toLocaleString('pt-BR', {minimumFractionDigits: 2});

@@ -150,10 +150,10 @@ function renderFasesEtapasTable() {
                 </td>
                 <td class="p-2 text-right space-x-2 whitespace-nowrap">
                     ${inativa
-                        ? botaoSePodeAlterar('workflow_etapas', `<button onclick="reativarEtapa(${e.id})" class="text-green-700 hover:text-green-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`)
+                        ? botaoSePodeAlterar('workflow_etapas', `<button onclick="reativarEtapa(${e.id})" class="text-emerald-700 hover:text-emerald-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`)
                         : botaoSePodeAlterar('workflow_etapas', `<button onclick="editEtapa(${e.id})" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i></button>
                            <button onclick="toggleSlaEtapa(${e.id})" class="text-amber-600 hover:text-amber-800 text-xs font-bold"><i class="fa-solid fa-clock"></i> SLA</button>`)
-                          + botaoSePodeDeletar('workflow_etapas', `<button onclick="deleteEtapa(${e.id})" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-trash"></i></button>`)}
+                          + botaoSePodeDeletar('workflow_etapas', `<button onclick="deleteEtapa(${e.id})" class="text-danger-600 hover:text-danger-800 text-xs font-bold"><i class="fa-solid fa-trash"></i></button>`)}
                 </td>
             </tr>
             <tr id="slaEtapa_${e.id}" class="hidden">

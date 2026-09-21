@@ -156,7 +156,7 @@ async function renderLicenciamentoModulosView() {
 
     const { data, error } = await _supabase.from('licenca_modulos').select('*');
     if (error) {
-        lista.innerHTML = `<p class="text-sm text-red-600">Erro ao carregar módulos: ${escapeHtml(error.message)}</p>`;
+        lista.innerHTML = `<p class="text-sm text-danger-600">Erro ao carregar módulos: ${escapeHtml(error.message)}</p>`;
         return;
     }
     const porCodigo = {};

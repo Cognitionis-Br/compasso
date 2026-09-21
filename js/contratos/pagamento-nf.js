@@ -144,7 +144,7 @@ function onPnfContratoChange() {
                 <td class="p-2 font-mono">${escapeHtml(v.projeto_codigo)}${pr ? ' — ' + escapeHtml(pr.nome) : ''}</td>
                 <td class="p-2 text-right font-mono">${formatCurrency(v.valor_vinculo)}</td>
                 <td class="p-2 text-right font-mono">${formatCurrency(v.valor_realizado || 0)}</td>
-                <td class="p-2 text-right font-mono ${saldo <= 0 ? 'text-red-600' : ''}">${formatCurrency(saldo)}</td>
+                <td class="p-2 text-right font-mono ${saldo <= 0 ? 'text-danger-600' : ''}">${formatCurrency(saldo)}</td>
                 <td class="p-2 text-right"><input type="number" step="0.01" class="pnf-rateio w-28 p-1 border rounded text-right" oninput="atualizarResumoRateioPnf()"></td>
             </tr>`;
         }).join('');
@@ -174,9 +174,9 @@ function atualizarResumoRateioPnf() {
     el.innerHTML =
         `Soma do rateio: <b>${formatCurrency(soma)}</b> · Total da NF: <b>${formatCurrency(total)}</b> · ` +
         (Math.abs(diff) < 0.005
-            ? '<span class="text-green-700 font-bold">confere</span>'
-            : `<span class="text-red-700 font-bold">diferença de ${formatCurrency(diff)}</span>`) +
-        (excede.length ? `<div class="text-red-700 font-bold mt-1">⛔ ${excede.length} projeto(s) com rateio acima do saldo do vínculo.</div>` : '');
+            ? '<span class="text-emerald-700 font-bold">confere</span>'
+            : `<span class="text-danger-700 font-bold">diferença de ${formatCurrency(diff)}</span>`) +
+        (excede.length ? `<div class="text-danger-700 font-bold mt-1"><i class="fa-solid fa-ban mr-1"></i>${excede.length} projeto(s) com rateio acima do saldo do vínculo.</div>` : '');
 }
 
 function onPnfAnexoSelecionado(input) {

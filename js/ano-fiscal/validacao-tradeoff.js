@@ -61,8 +61,8 @@ async function renderValidacaoTradeoffView() {
                     <td class="p-2 text-center whitespace-nowrap">
                         <button onclick="abrirDetalheValidacaoTradeoff(${p.id})" class="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[10px] px-2 py-1 rounded">Detalhar</button>
                         ${podeDecidir ? `
-                        <button onclick="abrirModalDecisaoValidacaoTradeoff(${p.id}, 'aprovar')" class="bg-green-600 hover:bg-green-700 text-white font-bold text-[10px] px-2 py-1 rounded">Aprovar</button>
-                        <button onclick="abrirModalDecisaoValidacaoTradeoff(${p.id}, 'rejeitar')" class="bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] px-2 py-1 rounded">Rejeitar</button>` : ''}
+                        <button onclick="abrirModalDecisaoValidacaoTradeoff(${p.id}, 'aprovar')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2 py-1 rounded">Aprovar</button>
+                        <button onclick="abrirModalDecisaoValidacaoTradeoff(${p.id}, 'rejeitar')" class="bg-danger-600 hover:bg-danger-700 text-white font-bold text-[10px] px-2 py-1 rounded">Rejeitar</button>` : ''}
                     </td>
                 </tr>`).join('');
     }
@@ -166,7 +166,7 @@ function abrirModalDecisaoValidacaoTradeoff(id, acao) {
         : `Rejeitar descarta a simulação de ${pend.projeto_adhoc_codigo}. Nada é aplicado aos projetos; o extraordinário continua em Business Case.`;
     document.getElementById('valTradeoffModalMotivo').value = '';
     const btn = document.getElementById('valTradeoffModalConfirmar');
-    btn.className = `px-4 py-2 ${acao === 'aprovar' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white rounded text-xs font-bold`;
+    btn.className = `px-4 py-2 ${acao === 'aprovar' ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-danger-600 hover:bg-danger-700'} text-white rounded text-xs font-bold`;
     btn.onclick = confirmarDecisaoValidacaoTradeoff;
     document.getElementById('modalDecisaoValidacaoTradeoff').classList.remove('hidden');
 }

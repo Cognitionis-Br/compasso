@@ -57,7 +57,7 @@ async function renderDetalheProjeto(codigo) {
 
     const p = projectsData.find(x => x.codigo === codigo);
     if (!p) {
-        container.innerHTML = `<div class="p-8 text-center text-red-500 font-bold">Projeto ${codigo} não encontrado.</div>`;
+        container.innerHTML = `<div class="p-8 text-center text-danger-500 font-bold">Projeto ${codigo} não encontrado.</div>`;
         return;
     }
 
@@ -192,8 +192,8 @@ async function renderDetalheProjeto(codigo) {
                         <span class="text-lg font-bold text-gray-800 truncate">${escapeHtml(p.nome)}</span>
                         ${p.is_adhoc ? '<span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Extraordinário</span>' : ''}
                         ${p.is_carryover ? '<span class="bg-orange-100 text-orange-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Carryover</span>' : ''}
-                        ${p.qtd_reprovacoes > 0 ? `<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">${p.qtd_reprovacoes}x Reprovado</span>` : ''}
-                        ${p.bloqueado_mudanca_orcamento ? `<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase"><i class="fa-solid fa-triangle-exclamation"></i> Aprovar Diferenças de Orçamento</span>` : ''}
+                        ${p.qtd_reprovacoes > 0 ? renderBadgeStatus('danger', null, `${p.qtd_reprovacoes}x Reprovado`) : ''}
+                        ${p.bloqueado_mudanca_orcamento ? renderBadgeStatus('danger', 'fa-triangle-exclamation', 'Aprovar Diferenças de Orçamento') : ''}
                     </div>
                     <div class="text-[11px] font-bold text-blue-700 uppercase mt-0.5">Formalizado em: <span class="text-gray-800">${p.data_solicitacao || '-'}</span></div>
                     ${linhaDetalhe('Objetivo', escapeHtml(p.objetivo) || '-')}
@@ -284,7 +284,7 @@ async function renderDetalheProjeto(codigo) {
                                     <td class="p-3 text-center font-mono">${pe.percentual_evolucao || 0}%</td>
                                     <td class="p-3 uppercase">${concluidoPor || '-'}</td>
                                     <td class="p-3">${concluidoEm ? concluidoEm.split('T')[0] : '-'}</td>
-                                    <td class="p-3">${decisaoTexto ? `<span class="${decisaoTexto === 'APROVADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} font-bold px-2 py-0.5 rounded text-[10px]">${decisaoTexto}</span>` : '-'}</td>
+                                    <td class="p-3">${decisaoTexto ? renderBadgeStatus(decisaoTexto === 'APROVADO' ? 'emerald' : 'danger', null, decisaoTexto) : '-'}</td>
                                 </tr>
                                 ${pe.observacoes_conclusao ? `
                                 <tr class="border-b border-gray-100 bg-gray-50 text-xs">
@@ -364,7 +364,7 @@ function renderSecaoGoliveOcorrenciasTermo(historicoOcorrencias, termoAceite) {
 
     return `
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <h3 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation text-red-600"></i> Ocorrências de Erro (Go-Live)</h3>
+            <h3 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation text-danger-600"></i> Ocorrências de Erro (Go-Live)</h3>
             ${linhasOcorrencias ? `<div class="space-y-3">${linhasOcorrencias}</div>` : `<p class="text-xs text-gray-400 font-bold text-center py-2">Nenhuma ocorrência registrada.</p>`}
             ${termoHtml}
         </div>
@@ -391,7 +391,11 @@ function renderSecaoVinculosContrato(vinculos, contratos, empresas, historico) {
         `;
     }).join('');
 
-    const ROTULO_ACAO_VINCULO = { CRIADO: '➕ Criado', ALTERADO: '✏️ Alterado', EXCLUIDO: '🗑️ Excluído' };
+    const ROTULO_ACAO_VINCULO = {
+        CRIADO: '<i class="fa-solid fa-plus mr-1"></i>Criado',
+        ALTERADO: '<i class="fa-solid fa-pen mr-1"></i>Alterado',
+        EXCLUIDO: '<i class="fa-solid fa-trash mr-1"></i>Excluído'
+    };
     const linhasHistorico = (historico || []).map(h => `
         <tr class="border-b border-purple-100">
             <td class="p-2">${ROTULO_ACAO_VINCULO[h.acao] || h.acao}</td>
@@ -445,20 +449,20 @@ function renderSecaoMudancaOrcamentoDetalhe(p) {
     const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
     return `
-        <div class="bg-red-50 border-2 border-red-300 p-6 rounded-lg shadow-sm mb-6">
-            <h3 class="text-sm font-bold text-red-800 mb-1 uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation"></i> Aguardando Aprovação de Diferenças de Orçamento</h3>
-            <p class="text-xs text-red-700 mb-3">Variação de orçamento entre ${valores.labelFase} acima do percentual de bloqueio parametrizado. O projeto está travado nesta fase até a aprovação da continuidade.</p>
+        <div class="bg-danger-50 border-2 border-danger-300 p-6 rounded-lg shadow-sm mb-6">
+            <h3 class="text-sm font-bold text-danger-800 mb-1 uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation"></i> Aguardando Aprovação de Diferenças de Orçamento</h3>
+            <p class="text-xs text-danger-700 mb-3">Variação de orçamento entre ${valores.labelFase} acima do percentual de bloqueio parametrizado. O projeto está travado nesta fase até a aprovação da continuidade.</p>
             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 <div class="bg-white rounded p-3"><span class="text-[10px] font-bold text-gray-500 uppercase block">Orçamento Original</span><span class="text-sm font-bold text-gray-800">${fmt(valores.valorReferencia)}</span></div>
-                <div class="bg-white rounded p-3"><span class="text-[10px] font-bold text-red-600 uppercase block">Orçamento Novo (${alertaValor.percentual}%)</span><span class="text-sm font-bold text-red-800">${fmt(valores.valorNovo)}</span></div>
+                <div class="bg-white rounded p-3"><span class="text-[10px] font-bold text-danger-600 uppercase block">Orçamento Novo (${alertaValor.percentual}%)</span><span class="text-sm font-bold text-danger-800">${fmt(valores.valorNovo)}</span></div>
                 <div class="bg-white rounded p-3"><span class="text-[10px] font-bold text-gray-500 uppercase block">Horas Original</span><span class="text-sm font-bold text-gray-800">${valores.horasReferencia > 0 ? valores.horasReferencia + 'h' : '-'}</span></div>
-                <div class="bg-white rounded p-3"><span class="text-[10px] font-bold text-red-600 uppercase block">Horas Novo (${alertaHoras.percentual}%)</span><span class="text-sm font-bold text-red-800">${valores.horasNovo > 0 ? valores.horasNovo + 'h' : '-'}</span></div>
+                <div class="bg-white rounded p-3"><span class="text-[10px] font-bold text-danger-600 uppercase block">Horas Novo (${alertaHoras.percentual}%)</span><span class="text-sm font-bold text-danger-800">${valores.horasNovo > 0 ? valores.horasNovo + 'h' : '-'}</span></div>
             </div>
             <div class="mb-3">
-                <label class="block text-[10px] font-bold uppercase text-red-700 mb-1">Motivo da Aprovação *</label>
-                <textarea id="mudancaOrcamentoMotivoInput" rows="2" class="w-full p-2 border border-red-300 rounded text-sm"></textarea>
+                <label class="block text-[10px] font-bold uppercase text-danger-700 mb-1">Motivo da Aprovação *</label>
+                <textarea id="mudancaOrcamentoMotivoInput" rows="2" class="w-full p-2 border border-danger-300 rounded text-sm"></textarea>
             </div>
-            <button onclick="aprovarMudancaOrcamento('${escapeJsAttr(p.codigo)}')" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded text-sm transition">
+            <button onclick="aprovarMudancaOrcamento('${escapeJsAttr(p.codigo)}')" class="bg-danger-700 hover:bg-danger-800 text-white font-bold py-2 px-4 rounded text-sm transition">
                 <i class="fa-solid fa-check"></i> Aprovar Continuidade do Projeto
             </button>
         </div>
@@ -528,10 +532,10 @@ function renderSecaoTradeoffDetalhe(p) {
     const em = (p.tradeoff_em || p.dt_cancelamento || '').split('T')[0] || p.dt_cancelamento || '-';
     const motivo = p.tradeoff_observacao || p.motivo_cancelamento || null;
     return `
-        <div class="bg-yellow-50 p-6 rounded-lg shadow-sm border border-yellow-200 mb-6">
-            <h3 class="text-sm font-bold text-yellow-800 mb-2 uppercase tracking-wider">${sub === 'HOLD' ? '⏸️ Projeto em Hold' : '🚫 Projeto Cancelado'}</h3>
-            <p class="text-xs text-yellow-800">Por <b>${escapeHtml(por)}</b> em <b>${escapeHtml(em)}</b>.</p>
-            ${motivo ? `<p class="text-xs text-yellow-700 mt-1">${escapeHtml(motivo)}</p>` : ''}
+        <div class="bg-amber-50 p-6 rounded-lg shadow-sm border border-amber-200 mb-6">
+            <h3 class="text-sm font-bold text-amber-800 mb-2 uppercase tracking-wider">${sub === 'HOLD' ? '<i class="fa-solid fa-pause mr-1"></i>Projeto em Hold' : '<i class="fa-solid fa-ban mr-1"></i>Projeto Cancelado'}</h3>
+            <p class="text-xs text-amber-800">Por <b>${escapeHtml(por)}</b> em <b>${escapeHtml(em)}</b>.</p>
+            ${motivo ? `<p class="text-xs text-amber-700 mt-1">${escapeHtml(motivo)}</p>` : ''}
         </div>
     `;
 }
@@ -545,12 +549,16 @@ function renderSecaoTradeoffDetalhe(p) {
 function renderSecaoHistoricoTradeoffComoDoador(historico) {
     if (!historico || historico.length === 0) return '';
     const fmt = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    const rotuloAcao = { HOLD: '⏸️ Colocado em HOLD', CANCELADO: '🚫 Cancelado', CEDER_PARTE: '💸 Cedeu parte do saldo' };
+    const rotuloAcao = {
+        HOLD: '<i class="fa-solid fa-pause mr-1"></i>Colocado em HOLD',
+        CANCELADO: '<i class="fa-solid fa-ban mr-1"></i>Cancelado',
+        CEDER_PARTE: '<i class="fa-solid fa-money-bill-transfer mr-1"></i>Cedeu parte do saldo'
+    };
     return `
-        <div class="bg-yellow-50 p-6 rounded-lg shadow-sm border border-yellow-200 mb-6">
-            <h3 class="text-sm font-bold text-yellow-800 mb-3 uppercase tracking-wider">Histórico de Trade-off (como doador)</h3>
+        <div class="bg-amber-50 p-6 rounded-lg shadow-sm border border-amber-200 mb-6">
+            <h3 class="text-sm font-bold text-amber-800 mb-3 uppercase tracking-wider">Histórico de Trade-off (como doador)</h3>
             <table class="w-full text-left border-collapse text-xs">
-                <thead><tr class="text-yellow-700 uppercase border-b border-yellow-200">
+                <thead><tr class="text-amber-700 uppercase border-b border-amber-200">
                     <th class="p-2">Ação</th><th class="p-2 text-right">Valor Liberado</th>
                     <th class="p-2">Para o Projeto</th><th class="p-2">Aprovado Por</th><th class="p-2">Quando</th>
                 </tr></thead>
@@ -558,7 +566,7 @@ function renderSecaoHistoricoTradeoffComoDoador(historico) {
                     ${historico.map(h => {
                         const projAlvo = (typeof projectsData !== 'undefined' ? projectsData : []).find(pr => pr.codigo === h.projeto_adhoc_codigo);
                         return `
-                        <tr class="border-b border-yellow-100">
+                        <tr class="border-b border-amber-100">
                             <td class="p-2 font-bold">${rotuloAcao[h.acao] || h.acao}</td>
                             <td class="p-2 text-right font-mono">${fmt(h.saldo_liberado)}</td>
                             <td class="p-2 font-mono">${h.projeto_adhoc_codigo}${projAlvo ? ` - ${escapeHtml(projAlvo.nome)}` : ''}</td>
@@ -579,7 +587,7 @@ function renderSecaoHistoricoRetomadaHold(historico) {
     if (!historico || historico.length === 0) return '';
     return `
         <div class="bg-emerald-50 p-6 rounded-lg shadow-sm border border-emerald-200 mb-6">
-            <h3 class="text-sm font-bold text-emerald-800 mb-3 uppercase tracking-wider">▶️ Histórico de Retomada de Hold</h3>
+            <h3 class="text-sm font-bold text-emerald-800 mb-3 uppercase tracking-wider"><i class="fa-solid fa-play mr-1"></i>Histórico de Retomada de Hold</h3>
             <table class="w-full text-left border-collapse text-xs">
                 <thead><tr class="text-emerald-700 uppercase border-b border-emerald-200">
                     <th class="p-2">Situação Anterior ao Hold</th><th class="p-2">Fase na Retomada</th>
@@ -731,7 +739,7 @@ function renderSecaoDecisoesFechamento(historico) {
 function renderSecaoReprovacaoDetalhe(p) {
     return `
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <h3 class="text-sm font-bold text-red-700 mb-3 uppercase tracking-wider">Histórico de Reprovação</h3>
+            <h3 class="text-sm font-bold text-danger-700 mb-3 uppercase tracking-wider">Histórico de Reprovação</h3>
             <p class="text-xs text-gray-600">Este projeto já foi reprovado <b>${p.qtd_reprovacoes}</b> vez(es). Última reprovação: por <b>${escapeHtml(p.ultima_reprovacao_por) || '-'}</b> em <b>${(p.ultima_reprovacao_em || '').split('T')[0] || '-'}</b>, na etapa <b>${p.ultima_reprovacao_etapa || '-'}</b>.</p>
         </div>
     `;
@@ -752,7 +760,7 @@ function renderSecaoDecisaoComite(p) {
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
             <h3 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Decisão do Comitê — Aprovar Orçamento por Projeto</h3>
             <div class="flex flex-wrap items-center gap-x-8 gap-y-1 text-xs">
-                <span><b class="uppercase text-gray-500">Resultado:</b> <span class="${aprov ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} font-bold px-2 py-0.5 rounded text-[10px]">${st}</span></span>
+                <span><b class="uppercase text-gray-500">Resultado:</b> ${renderBadgeStatus(aprov ? 'emerald' : 'danger', null, st)}</span>
                 <span><b class="uppercase text-gray-500">${aprov ? 'Aprovado por' : 'Reprovado por'}:</b> <span class="uppercase font-bold">${escapeHtml(quem) || '-'}</span></span>
                 <span><b class="uppercase text-gray-500">Em:</b> ${(quando || '').split('T')[0] || '-'}</span>
                 <span><b class="uppercase text-gray-500">Data do Comitê:</b> ${(p.dt_comite || '').split('T')[0] || '-'}</span>
@@ -767,7 +775,7 @@ function renderSecaoDecisaoComite(p) {
 // Cobre APROVADO / REPROVADO / REAVALIAR das etapas de avaliação.
 function renderSecaoHistoricoDecisoesEtapa(historico) {
     if (!historico || historico.length === 0) return '';
-    const cor = { APROVADO: 'bg-emerald-100 text-emerald-800', REPROVADO: 'bg-red-100 text-red-800', REAVALIAR: 'bg-amber-100 text-amber-800' };
+    const cor = { APROVADO: 'bg-emerald-100 text-emerald-800', REPROVADO: 'bg-danger-100 text-danger-800', REAVALIAR: 'bg-amber-100 text-amber-800' };
     return `
         <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
             <h3 class="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wider">Histórico de Decisões de Etapa</h3>

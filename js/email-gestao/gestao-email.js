@@ -156,10 +156,10 @@ async function renderFilaEmailPendentes() {
                 <td class="p-3 text-xs font-semibold">${escapeHtml(e.assunto)}</td>
                 <td class="p-3 text-center">
                     ${e.enviado
-                        ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px]">Enviado</span>'
+                        ? renderBadgeStatus('emerald', 'fa-circle-check', 'Enviado')
                         : (e.erro_ultima_tentativa
-                            ? `<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px]" title="${escapeHtml(e.erro_ultima_tentativa)}">Falhou (${e.tentativas || 1}x)</span>`
-                            : '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px]">Aguardando</span>')}
+                            ? renderBadgeStatus('danger', 'fa-circle-xmark', `Falhou (${e.tentativas || 1}x)`, e.erro_ultima_tentativa)
+                            : renderBadgeStatus('amber', 'fa-clock', 'Aguardando'))}
                 </td>
             </tr>
         `;

@@ -124,12 +124,12 @@ function renderCronogramaConteudo() {
         linhasParaExibir.forEach(l => {
             const p = l.projeto, pe = l.pe;
             const farolHtml = l.farolNivel === null
-                ? '<span class="bg-gray-100 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px]">A PLANEJAR</span>'
+                ? renderBadgeStatus('gray', null, 'A Planejar')
                 : l.farolNivel === 'vermelho'
-                    ? '<span class="bg-red-100 text-red-800 font-bold px-2 py-0.5 rounded text-[10px]">🔴 CRÍTICO</span>'
+                    ? renderBadgeStatus('danger', 'fa-circle-exclamation', 'Crítico')
                     : l.farolNivel === 'amarelo'
-                        ? '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px]">🟡 ATENÇÃO</span>'
-                        : '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded text-[10px]">🟢 NO PRAZO</span>';
+                        ? renderBadgeStatus('amber', 'fa-triangle-exclamation', 'Atenção')
+                        : renderBadgeStatus('emerald', 'fa-circle-check', 'No Prazo');
             const previstoRealizado = pe && pe.situacao === 'EXECUCAO_EM_ANDAMENTO'
                 ? `${l.farolAlerta ? l.farolAlerta.percentualPrevisto + '%' : '-'} x ${pe.percentual_evolucao || 0}%`
                 : '-';

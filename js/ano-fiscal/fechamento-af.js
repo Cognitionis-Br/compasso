@@ -112,8 +112,8 @@ function renderFechamentoAfAcaoFechar() {
                 <div class="text-xs text-gray-600">
                     Fechar o Ano Fiscal <b>${alvo}</b> registra quem/quando fechou (com comentário) e libera a abertura do próximo Ano Fiscal.
                     ${bloqueado
-                        ? `<div class="mt-2 text-red-700 font-bold">⛔ EXISTEM PROJETOS EM ANDAMENTO. TRATE TODOS NA ABA DE AVALIAÇÃO</div>`
-                        : `<div class="mt-2 text-emerald-700 font-bold">✅ Todos os projetos do ${alvo} já estão tratados.</div>`}
+                        ? `<div class="mt-2 text-danger-700 font-bold"><i class="fa-solid fa-ban mr-1"></i>Existem projetos em andamento. Trate todos na aba de avaliação</div>`
+                        : `<div class="mt-2 text-emerald-700 font-bold"><i class="fa-solid fa-circle-check mr-1"></i>Todos os projetos do ${alvo} já estão tratados.</div>`}
                 </div>
                 <button onclick="abrirModalFecharAnoFiscal()" ${(!podeFechar || bloqueado) ? 'disabled' : ''}
                     class="font-bold py-2 px-4 rounded text-xs transition ${(!podeFechar || bloqueado) ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-red-700 hover:bg-red-800 text-white'}"

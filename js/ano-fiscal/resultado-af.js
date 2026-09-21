@@ -125,8 +125,8 @@ function renderDestaquesResultado(lista) {
         </div>`;
 
     el.innerHTML =
-        card('Orçamento — Cancelados', somaOrcResultado(cancelados, orcUltimo), cancelados.length, 'bg-red-50 border-red-300 text-red-800') +
-        card('Orçamento — Hold', somaOrcResultado(hold, orcCarryover), hold.length, 'bg-yellow-50 border-yellow-400 text-yellow-800') +
+        card('Orçamento — Cancelados', somaOrcResultado(cancelados, orcUltimo), cancelados.length, 'bg-danger-50 border-danger-300 text-danger-800') +
+        card('Orçamento — Hold', somaOrcResultado(hold, orcCarryover), hold.length, 'bg-amber-50 border-amber-400 text-amber-800') +
         card('Orçamento — Carry Over (andamento)', somaOrcResultado(carryAnd, orcCarryover), carryAnd.length, 'bg-orange-50 border-orange-300 text-orange-800');
 }
 

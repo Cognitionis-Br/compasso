@@ -426,14 +426,14 @@ function aplicarFiltrosPendencias() { _pendRenderTabela(); }
 function _pendBadgeStatus(s) {
     return {
         PENDENTE: 'bg-amber-100 text-amber-800',
-        ERRO_LEITURA: 'bg-red-100 text-red-800',
-        APROVADA: 'bg-green-100 text-green-800',
+        ERRO_LEITURA: 'bg-danger-100 text-danger-800',
+        APROVADA: 'bg-emerald-100 text-emerald-800',
         REJEITADA: 'bg-gray-200 text-gray-600'
     }[s] || 'bg-gray-100 text-gray-700';
 }
 function _pendBadgeNf(s) {
     return {
-        RECEBIDA: 'bg-green-100 text-green-800',
+        RECEBIDA: 'bg-emerald-100 text-emerald-800',
         NAO_RECEBIDA: 'bg-amber-100 text-amber-800',
         DISPENSADA: 'bg-blue-100 text-blue-800'
     }[s] || 'bg-gray-100 text-gray-700';
@@ -450,7 +450,7 @@ function _pendRenderTabela() {
         const abertas = pendenciasContratosCache.filter(p => p.status === 'PENDENTE' || p.status === 'ERRO_LEITURA').length;
         const emAtraso = pendenciasContratosCache.filter(_pendEmAtrasoNf).length;
         resumo.innerHTML = `${abertas} pendência(s) em aberto` +
-            (emAtraso > 0 ? ` · <span class="text-red-700 font-bold">${emAtraso} com NF pendente há mais de ${PEND_NF_ATRASO_DIAS_UTEIS} dias úteis</span>` : '');
+            (emAtraso > 0 ? ` · <span class="text-danger-700 font-bold">${emAtraso} com NF pendente há mais de ${PEND_NF_ATRASO_DIAS_UTEIS} dias úteis</span>` : '');
     }
 
     if (lista.length === 0) {
@@ -462,7 +462,7 @@ function _pendRenderTabela() {
         const contrato = (contratosProjetoCache || []).find(c => c.id === p.contrato_id);
         const atraso = _pendEmAtrasoNf(p);
         return `
-        <tr class="${atraso ? 'bg-red-50' : ''}">
+        <tr class="${atraso ? 'bg-danger-50' : ''}">
             <td class="p-2 text-[10px] text-gray-500 whitespace-nowrap">${(p.criado_em || '').replace('T', ' ').split('.')[0]}</td>
             <td class="p-2 font-bold text-xs">${p.tipo === 'HABILITACAO' ? 'HABILITAÇÃO' : p.tipo}</td>
             <td class="p-2 text-[10px] uppercase text-gray-500">${p.origem}</td>
@@ -536,13 +536,13 @@ async function abrirDetalhePendencia(id) {
             <div class="flex items-center justify-between text-xs border-b border-gray-100 py-1">
                 <div>
                     <button onclick="abrirAnexoPendencia('${escapeJsAttr(a.storage_path)}')" class="text-indigo-600 hover:underline font-bold">${escapeHtml(a.nome_original || a.storage_path)}</button>
-                    <span class="ml-2 ${a.classificacao === 'NOTA_FISCAL' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'} px-1.5 py-0.5 rounded text-[9px] font-bold">${a.classificacao}</span>
+                    <span class="ml-2 ${a.classificacao === 'NOTA_FISCAL' ? 'bg-emerald-100 text-emerald-800' : 'bg-gray-100 text-gray-600'} px-1.5 py-0.5 rounded text-[9px] font-bold">${a.classificacao}</span>
                 </div>
-                ${editavel ? `<button onclick="removerAnexoPendencia(${a.id})" class="text-red-500 hover:text-red-700 text-[10px] font-bold uppercase">Remover</button>` : ''}
+                ${editavel ? `<button onclick="removerAnexoPendencia(${a.id})" class="text-danger-500 hover:text-danger-700 text-[10px] font-bold uppercase">Remover</button>` : ''}
             </div>`).join('');
 
     const errosHtml = (p.erros_leitura && p.erros_leitura.length)
-        ? `<div class="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-700 mb-3"><b>Erros de leitura:</b><ul class="list-disc ml-4">${p.erros_leitura.map(e => `<li>${escapeHtml(e.campo || '')}: ${escapeHtml(e.motivo || '')}</li>`).join('')}</ul></div>`
+        ? `<div class="bg-danger-50 border border-danger-200 rounded p-2 text-xs text-danger-700 mb-3"><b>Erros de leitura:</b><ul class="list-disc ml-4">${p.erros_leitura.map(e => `<li>${escapeHtml(e.campo || '')}: ${escapeHtml(e.motivo || '')}</li>`).join('')}</ul></div>`
         : '';
 
     document.getElementById('pendModalTitulo').innerText = `Pendência #${p.id} — ${p.tipo} (${p.origem})`;
@@ -604,8 +604,8 @@ async function abrirDetalhePendencia(id) {
     rodape.innerHTML = editavel ? `
         <button onclick="salvarCorrecaoPendencia()" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded text-xs font-bold">Salvar Correção</button>
         <button onclick="abrirModalDispensaNf(${p.id})" class="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded text-xs font-bold">Dispensar NF…</button>
-        <button onclick="rejeitarPendencia(${p.id})" class="px-3 py-1.5 bg-red-100 hover:bg-red-200 text-red-800 rounded text-xs font-bold">Rejeitar…</button>
-        <button onclick="aprovarPendencia(${p.id})" class="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold">Aprovar</button>
+        <button onclick="rejeitarPendencia(${p.id})" class="px-3 py-1.5 bg-danger-100 hover:bg-danger-200 text-danger-800 rounded text-xs font-bold">Rejeitar…</button>
+        <button onclick="aprovarPendencia(${p.id})" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold">Aprovar</button>
     ` : `<button onclick="fecharModalPendencia()" class="px-3 py-1.5 bg-gray-200 rounded text-xs font-bold">Fechar</button>`;
 
     document.getElementById('modalPendenciaContrato').classList.remove('hidden');
@@ -1066,9 +1066,9 @@ function _pendRenderRelatorioImport(okCount, totalLinhas) {
     const el = document.getElementById('pendImportRelatorio');
     if (!el) return;
     const errosHtml = pendImportErros.length === 0
-        ? '<div class="text-xs text-green-700 font-bold">Nenhuma linha inválida.</div>'
+        ? '<div class="text-xs text-emerald-700 font-bold">Nenhuma linha inválida.</div>'
         : `<table class="w-full text-xs mt-1"><thead><tr class="text-[10px] uppercase text-gray-400 border-b"><th class="text-left p-1">Linha</th><th class="text-left p-1">Campo</th><th class="text-left p-1">Motivo</th></tr></thead><tbody>
-            ${pendImportErros.flatMap(e => e.erros.map(x => `<tr class="border-b border-gray-100"><td class="p-1">${e.linha}</td><td class="p-1 font-bold">${escapeHtml(x.campo)}</td><td class="p-1 text-red-700">${escapeHtml(x.motivo)}</td></tr>`)).join('')}
+            ${pendImportErros.flatMap(e => e.erros.map(x => `<tr class="border-b border-gray-100"><td class="p-1">${e.linha}</td><td class="p-1 font-bold">${escapeHtml(x.campo)}</td><td class="p-1 text-danger-700">${escapeHtml(x.motivo)}</td></tr>`)).join('')}
         </tbody></table>`;
     el.innerHTML = `<div class="text-xs font-bold mb-1">${okCount} pendência(s) criada(s) de ${totalLinhas} linha(s). ${pendImportErros.length} linha(s) com erro.</div>${errosHtml}`;
     el.classList.remove('hidden');

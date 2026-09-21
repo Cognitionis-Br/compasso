@@ -17,7 +17,7 @@
 // dois lugares.
 function renderBotoesGoliveOcorrenciasTermo(codigo) {
     return `
-        <button onclick="abrirModalGoliveOcorrencias('${codigo}')" class="ml-1 bg-red-100 hover:bg-red-200 text-red-800 font-bold text-[10px] px-2 py-1.5 rounded"><i class="fa-solid fa-triangle-exclamation"></i> Ocorrências</button>
+        <button onclick="abrirModalGoliveOcorrencias('${codigo}')" class="ml-1 bg-danger-100 hover:bg-danger-200 text-danger-800 font-bold text-[10px] px-2 py-1.5 rounded"><i class="fa-solid fa-triangle-exclamation"></i> Ocorrências</button>
         <button onclick="abrirModalGoliveTermoAceite('${codigo}')" class="ml-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-bold text-[10px] px-2 py-1.5 rounded"><i class="fa-solid fa-file-signature"></i> Termo de Aceite</button>
     `;
 }
@@ -70,7 +70,7 @@ async function renderListaGoliveOcorrencias(tbodyId) {
                 <td class="p-3 text-xs uppercase">${pe ? (escapeHtml(pe.responsavel_etapa_nome) || '-') : '-'}</td>
                 <td class="p-3 text-xs">${pe ? `${pe.data_inicio_planejamento || '-'} a ${pe.data_termino_planejamento || '-'}` : '-'}</td>
                 <td class="p-3 text-center">
-                    <button onclick="abrirModalGoliveOcorrencias('${escapeJsAttr(p.codigo)}')" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3 py-1.5 rounded shadow"><i class="fa-solid fa-triangle-exclamation"></i> Ver Ocorrências</button>
+                    <button onclick="abrirModalGoliveOcorrencias('${escapeJsAttr(p.codigo)}')" class="bg-danger-600 hover:bg-danger-700 text-white font-bold text-xs px-3 py-1.5 rounded shadow"><i class="fa-solid fa-triangle-exclamation"></i> Ver Ocorrências</button>
                 </td>
             </tr>
         `).join('');
@@ -181,7 +181,7 @@ async function confirmarSolucaoOcorrencia(ocorrenciaId) {
 }
 
 const GOLIVE_OCORRENCIA_STATUS_BADGE = {
-    ABERTA: 'bg-red-100 text-red-800',
+    ABERTA: 'bg-danger-100 text-danger-800',
     EM_SOLUCAO: 'bg-amber-100 text-amber-800',
     RESOLVIDA: 'bg-emerald-100 text-emerald-800'
 };

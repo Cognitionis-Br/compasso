@@ -40,9 +40,9 @@ function renderAlertasOrcamentoView() {
     let cartoes = '';
 
     linhas.forEach(({ p, fase, nivel, percentual }) => {
-        const cor = nivel === 'vermelho' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800';
-        const icone = nivel === 'vermelho' ? '🔴' : '🟡';
-        const corCartao = nivel === 'vermelho' ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-amber-500';
+        const corKey = nivel === 'vermelho' ? 'danger' : 'amber';
+        const icone = nivel === 'vermelho' ? 'fa-circle-exclamation' : 'fa-triangle-exclamation';
+        const corCartao = nivel === 'vermelho' ? 'border-l-4 border-l-danger-500' : 'border-l-4 border-l-amber-500';
         // AJUSTADO 10/08/2026 (item 13 do relatório de testes): mesmos
         // campos de valor (porte, BC, Req, Tech) da tela de Visão de
         // Orçamento, pra manter consistência entre as duas telas.
@@ -63,7 +63,7 @@ function renderAlertasOrcamentoView() {
                 <td class="p-3 text-right text-blue-800">${valTechFmt}</td>
                 <td class="p-3 text-xs font-bold">${fase}</td>
                 <td class="p-3 text-right font-mono font-bold">${percentual}%</td>
-                <td class="p-3 text-center"><span class="${cor} font-bold px-2 py-0.5 rounded text-[10px]">${icone} ${nivel.toUpperCase()}</span></td>
+                <td class="p-3 text-center">${renderBadgeStatus(corKey, icone, nivel.toUpperCase())}</td>
             </tr>
         `;
 
@@ -71,7 +71,7 @@ function renderAlertasOrcamentoView() {
             <div class="bg-white border border-gray-200 ${corCartao} rounded-lg p-3 shadow-sm">
                 <div class="flex justify-between items-start mb-2">
                     <span class="text-red-700 font-bold text-sm">${p.codigo}</span>
-                    <span class="${cor} font-bold px-2 py-0.5 rounded text-[10px]">${icone} ${nivel.toUpperCase()} (${percentual}%)</span>
+                    ${renderBadgeStatus(corKey, icone, `${nivel.toUpperCase()} (${percentual}%)`)}
                 </div>
                 <div class="font-semibold text-sm text-gray-800 mb-1">${escapeHtml(p.nome)}</div>
                 <div class="text-xs text-gray-500 mb-2">Porte ${p.tamanho || 'M'} · ${horasAtuaisDoProjeto(p)}h · Alerta na fase: <b>${fase}</b></div>

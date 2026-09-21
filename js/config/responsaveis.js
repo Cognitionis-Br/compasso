@@ -113,7 +113,7 @@ function renderResponsaveisTable() {
                 <td class="p-3">${badges || '<span class="text-gray-400 italic">Nenhuma</span>'}</td>
                 <td class="p-3 text-right space-x-2 whitespace-nowrap">
                     ${botaoSePodeAlterar('responsaveis', `<button onclick="editarAtividadesResponsavel('${usuarioId}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`)}
-                    ${botaoSePodeDeletar('responsaveis', `<button onclick="removerTodasAtividadesResponsavel('${usuarioId}')" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-trash"></i> Remover Todas</button>`)}
+                    ${botaoSePodeDeletar('responsaveis', `<button onclick="removerTodasAtividadesResponsavel('${usuarioId}')" class="text-danger-600 hover:text-danger-800 text-xs font-bold"><i class="fa-solid fa-trash"></i> Remover Todas</button>`)}
                 </td>
             </tr>
         `;

@@ -45,7 +45,7 @@ function renderStatusFechamentoAF(afStr) {
     const config = obterConfigAF(afStr);
     if (!config || !config.orcamento_fechado) return '';
     const data = config.fechado_em ? new Date(config.fechado_em).toLocaleDateString('pt-BR') : '-';
-    return `<div class="text-[10px] text-gray-500 mt-1">🔒 Orçamento fechado por <b>${config.fechado_por}</b> em ${data}</div>`;
+    return `<div class="text-[10px] text-gray-500 mt-1"><i class="fa-solid fa-lock mr-1"></i>Orçamento fechado por <b>${config.fechado_por}</b> em ${data}</div>`;
 }
 
 function renderAnoFiscalPanel() {
@@ -94,10 +94,10 @@ function renderAnoFiscalPanel() {
     }
 
     const afAnteriorBadge = !afAnteriorStr || !configAnteriorAF
-        ? '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded">— sem registro</span>'
+        ? renderBadgeStatus('gray', null, '— sem registro')
         : (afAnteriorFechado
-            ? `<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded">🔒 Fechado</span>`
-            : '<span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded">⏳ Em andamento</span>');
+            ? renderBadgeStatus('emerald', 'fa-lock', 'Fechado')
+            : renderBadgeStatus('amber', 'fa-hourglass-half', 'Em andamento'));
 
     const tituloBtn = !afAtualFechado
         ? `O orçamento do ${infoAF.afAtualStr} precisa estar fechado antes de abrir o próximo AF`
@@ -126,8 +126,8 @@ function renderAnoFiscalPanel() {
                 <div class="font-bold text-lg text-gray-800">${infoAF.proximoAFStr}</div>
                 <div class="text-xs mt-1">
                     ${proximoAberto
-                        ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded">🟢 Aberto para demandas</span>'
-                        : '<span class="bg-gray-200 text-gray-600 font-bold px-2 py-0.5 rounded">⚪ Ainda fechado</span>'}
+                        ? renderBadgeStatus('emerald', 'fa-circle-check', 'Aberto para demandas')
+                        : renderBadgeStatus('gray', 'fa-circle-minus', 'Ainda fechado')}
                 </div>
                 ${renderStatusFechamentoAF(infoAF.proximoAFStr)}
             </div>

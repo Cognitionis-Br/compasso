@@ -236,7 +236,7 @@ function formEmpresaHTML() {
         <div>
             <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Logo (PNG ou SVG, até 2 MB, ~300×100 px)</label>
             <input type="file" id="empLogoInput" accept="image/png,image/svg+xml" onchange="onEmpLogoSelecionado(this)" class="text-xs">
-            <button type="button" onclick="removerEmpLogo()" class="ml-2 text-[10px] text-red-600 hover:underline">remover logo</button>
+            <button type="button" onclick="removerEmpLogo()" class="ml-2 text-[10px] text-danger-600 hover:underline">remover logo</button>
             <div class="mt-2"><img id="empLogoPreview" class="hidden max-h-12 object-contain border border-gray-200 rounded bg-gray-50 p-1" alt=""></div>
             <p id="empLogoMsg" class="text-[10px] text-gray-500 mt-1"></p>
         </div>
@@ -366,7 +366,7 @@ async function renderDadosEmpresaView() {
         st.textContent = dias === null ? 'Vigência não configurada.'
             : dias < 0 ? `Licença EXPIRADA há ${-dias} dia(s).`
             : `Licença ativa — ${dias} dia(s) restantes.`;
-        st.className = 'text-xs font-bold mt-1 ' + (dias === null || dias < 0 ? 'text-red-700' : dias <= 30 ? 'text-amber-700' : 'text-emerald-700');
+        st.className = 'text-xs font-bold mt-1 ' + (dias === null || dias < 0 ? 'text-danger-700' : dias <= 30 ? 'text-amber-700' : 'text-emerald-700');
     }
 }
 
@@ -388,13 +388,13 @@ async function enviarCodigoRenovacao() {
         });
         body = await res.json().catch(() => ({}));
     } catch (e) {
-        if (msg) { msg.textContent = 'Não foi possível contatar o serviço de validação neste ambiente.'; msg.className = 'text-xs text-red-700 mt-2'; }
+        if (msg) { msg.textContent = 'Não foi possível contatar o serviço de validação neste ambiente.'; msg.className = 'text-xs text-danger-700 mt-2'; }
         return;
     }
     if (res.ok && body && body.ok) {
         if (msg) { msg.textContent = `✅ Licença renovada até ${body.vigencia_nova}. Recarregando…`; msg.className = 'text-xs text-emerald-700 mt-2'; }
         setTimeout(() => window.location.reload(), 1500);
     } else {
-        if (msg) { msg.textContent = '⛔ ' + ((body && body.erro) || 'Código inválido.'); msg.className = 'text-xs text-red-700 mt-2'; }
+        if (msg) { msg.textContent = '⛔ ' + ((body && body.erro) || 'Código inválido.'); msg.className = 'text-xs text-danger-700 mt-2'; }
     }
 }

@@ -26,8 +26,8 @@ let fechamentoAnosFiscaisCfgCache = [];
 
 const FECHAMENTO_DECISAO_LABEL = {
     CONTINUAR: { txt: 'Carryover Desenv.', cls: 'bg-emerald-100 text-emerald-800' },
-    HOLD:      { txt: 'Carryover Hold',    cls: 'bg-yellow-100 text-yellow-800' },
-    CANCELAR:  { txt: 'Cancelado',         cls: 'bg-red-100 text-red-800' },
+    HOLD:      { txt: 'Carryover Hold',    cls: 'bg-amber-100 text-amber-800' },
+    CANCELAR:  { txt: 'Cancelado',         cls: 'bg-danger-100 text-danger-800' },
     REVERTIDO: { txt: 'Revertido',         cls: 'bg-gray-100 text-gray-500' }
 };
 
@@ -119,8 +119,8 @@ async function renderFechamentoProjetosView() {
         elResumo.innerHTML =
             chip(`Projetos ${alvo || ''}`.trim(), lista.length, 'bg-slate-100 text-slate-700') +
             chip('Carryover Desenv.', resumo.CONTINUAR, 'bg-emerald-100 text-emerald-800') +
-            chip('Carryover Hold', resumo.HOLD, 'bg-yellow-100 text-yellow-800') +
-            chip('Cancelados', resumo.CANCELAR, 'bg-red-100 text-red-800') +
+            chip('Carryover Hold', resumo.HOLD, 'bg-amber-100 text-amber-800') +
+            chip('Cancelados', resumo.CANCELAR, 'bg-danger-100 text-danger-800') +
             chip('Em andamento (pendente)', resumo.SEM, 'bg-gray-100 text-gray-500');
     }
 
@@ -147,8 +147,8 @@ async function renderFechamentoProjetosView() {
         } else if (situ === 'SEM') {
             acoes = `
                 <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','CONTINUAR')" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] px-2 py-1 rounded">Carryover Desenv.</button>
-                <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','HOLD')" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold text-[10px] px-2 py-1 rounded">Carryover Hold</button>
-                <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','CANCELAR')" class="bg-red-600 hover:bg-red-700 text-white font-bold text-[10px] px-2 py-1 rounded">Cancelar</button>`;
+                <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','HOLD')" class="bg-amber-500 hover:bg-amber-600 text-white font-bold text-[10px] px-2 py-1 rounded">Carryover Hold</button>
+                <button onclick="abrirModalDecisaoFechamento('${escapeJsAttr(p.codigo)}','CANCELAR')" class="bg-danger-600 hover:bg-danger-700 text-white font-bold text-[10px] px-2 py-1 rounded">Cancelar</button>`;
         } else {
             acoes = `<button onclick="reverterDecisaoFechamento('${escapeJsAttr(p.codigo)}')" class="bg-gray-600 hover:bg-gray-700 text-white font-bold text-[10px] px-2 py-1 rounded"><i class="fa-solid fa-rotate-left"></i> Reverter</button>`;
         }

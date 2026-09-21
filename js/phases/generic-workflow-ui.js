@@ -179,9 +179,10 @@ function renderBadgeAlertaEvolucao(pe) {
     const alerta = calcularAlertaEvolucao(pe);
     if (!alerta || alerta.nivel === 'ok') return '';
 
-    const cor = alerta.nivel === 'vermelho' ? 'bg-red-100 text-red-800' : 'bg-amber-100 text-amber-800';
-    const icone = alerta.nivel === 'vermelho' ? '🔴' : '🟡';
-    return `<span class="${cor} font-bold px-1.5 py-0.5 rounded text-[9px] ml-1" title="Previsto: ${alerta.percentualPrevisto}% | Realizado: ${pe.percentual_evolucao || 0}% | Atraso: ${alerta.diferenca} pontos">${icone} Previsto ${alerta.percentualPrevisto}%</span>`;
+    const corKey = alerta.nivel === 'vermelho' ? 'danger' : 'amber';
+    const icone = alerta.nivel === 'vermelho' ? 'fa-circle-exclamation' : 'fa-triangle-exclamation';
+    return `<span class="ml-1">${renderBadgeStatus(corKey, icone, `Previsto ${alerta.percentualPrevisto}%`,
+        `Previsto: ${alerta.percentualPrevisto}% | Realizado: ${pe.percentual_evolucao || 0}% | Atraso: ${alerta.diferenca} pontos`)}</span>`;
 }
 
 // NOVO 10/08/2026 (bug reportado pelo usuário: Dashboard não detectava
@@ -310,7 +311,7 @@ async function renderListaPlanejamentoEvolucao(projetosElegiveis, nomeEtapaWorkf
                     <td class="p-3 text-xs">${pe.data_inicio_planejamento || '-'} a ${pe.data_termino_planejamento || '-'}</td>
                     <td class="p-3 text-center">
                         ${pe.situacao === 'EXECUCAO_CONCLUIDO'
-                            ? '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded text-[10px]">✅ CONCLUÍDO (100%)</span>'
+                            ? renderBadgeStatus('emerald', 'fa-circle-check', 'Concluído (100%)')
                             : `<button onclick="abrirModalEvolucaoGenerica('${p.codigo}', '${nomeEtapaWorkflow}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-1.5 rounded shadow">
                                    <i class="fa-solid fa-chart-line"></i> Evolução (${pe.percentual_evolucao || 0}%)
                                </button>${renderBadgeAlertaEvolucao(pe)}
@@ -436,7 +437,8 @@ async function renderFaseGenericaViewPorFase(etapaAtualProjeto, nomeFaseWorkflow
                 return `
                 <tr>
                     <td class="p-3 font-mono font-bold text-purple-700">${p.codigo}</td>
-                    <td class="p-3 font-semibold">${escapeHtml(p.nome)} ${p.qtd_reprovacoes > 0 ? `<span class="ml-1 bg-red-100 text-red-800 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase" title="Reprovado por ${escapeHtml(p.ultima_reprovacao_por) || '-'} em ${(p.ultima_reprovacao_em || '').split('T')[0]}">Em Revisão (${p.qtd_reprovacoes}ª reprovação)</span>` : ''}</td>
+                    <td class="p-3 font-semibold">${escapeHtml(p.nome)} ${p.qtd_reprovacoes > 0 ? `<span class="ml-1">${renderBadgeStatus('danger', null, `Em Revisão (${p.qtd_reprovacoes}ª reprovação)`,
+                        `Reprovado por ${p.ultima_reprovacao_por || '-'} em ${(p.ultima_reprovacao_em || '').split('T')[0]}`)}</span>` : ''}</td>
                     <td class="p-3 text-xs font-bold">${p.tamanho || 'M'} <span class="text-gray-400 font-normal">(${horasAtuaisDoProjeto(p)}h)</span></td>
                     <td class="p-3 text-xs text-gray-500">${prazoLimite2}</td>
                     <td class="p-3 text-center">
@@ -461,8 +463,8 @@ async function renderFaseGenericaViewPorFase(etapaAtualProjeto, nomeFaseWorkflow
                     <td class="p-3 text-center">
                         ${pe.situacao === 'EXECUCAO_CONCLUIDO'
                             ? (pe.decisao_resultado
-                                ? `<span class="${pe.decisao_resultado === 'APROVADO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'} font-bold px-2 py-1 rounded text-[10px]">${pe.decisao_resultado === 'APROVADO' ? '✅ APROVADO' : '❌ REPROVADO'}</span>`
-                                : '<span class="bg-emerald-100 text-emerald-800 font-bold px-2 py-1 rounded text-[10px]">✅ CONCLUÍDO (100%)</span>')
+                                ? (pe.decisao_resultado === 'APROVADO' ? renderBadgeStatus('emerald', 'fa-circle-check', 'Aprovado') : renderBadgeStatus('danger', 'fa-circle-xmark', 'Reprovado'))
+                                : renderBadgeStatus('emerald', 'fa-circle-check', 'Concluído (100%)'))
                             : `<button onclick="abrirModalEvolucaoGenerica('${p.codigo}', '${nomeEtapaAlvo}')" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-1.5 rounded shadow">
                                    <i class="fa-solid fa-chart-line"></i> Evolução (${pe.percentual_evolucao || 0}%)
                                </button>${renderBadgeAlertaEvolucao(pe)}
@@ -770,7 +772,7 @@ function abrirModalEvolucaoGenerica(codigoProjeto, nomeEtapa) {
 
     const alerta = calcularAlertaEvolucao(pe);
     const alertaHtml = (alerta && alerta.nivel !== 'ok')
-        ? `<br><span class="${alerta.nivel === 'vermelho' ? 'text-red-700' : 'text-amber-700'}">${alerta.nivel === 'vermelho' ? '🔴' : '🟡'} Previsto: ${alerta.percentualPrevisto}% já decorrido do prazo — você está ${alerta.diferenca} pontos atrás.</span>`
+        ? `<br><span class="${alerta.nivel === 'vermelho' ? 'text-danger-700' : 'text-amber-700'}"><i class="fa-solid ${alerta.nivel === 'vermelho' ? 'fa-circle-exclamation' : 'fa-triangle-exclamation'} mr-1"></i>Previsto: ${alerta.percentualPrevisto}% já decorrido do prazo — você está ${alerta.diferenca} pontos atrás.</span>`
         : '';
     document.getElementById('evolGenNomeDisplay').innerHTML = `${projeto.codigo} - ${escapeHtml(projeto.nome)} — ${etapa.etapa}${alertaHtml}`;
 

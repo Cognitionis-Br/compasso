@@ -75,9 +75,9 @@ function renderAreasTable() {
                     </td>
                     <td class="p-3 text-right space-x-2">
                         ${inativa
-                            ? botaoSePodeAlterar('areas', `<button onclick="reativarArea(${a.id})" class="text-green-700 hover:text-green-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`)
+                            ? botaoSePodeAlterar('areas', `<button onclick="reativarArea(${a.id})" class="text-emerald-700 hover:text-emerald-900 text-xs font-bold"><i class="fa-solid fa-rotate-left"></i> Reativar</button>`)
                             : botaoSePodeAlterar('areas', `<button onclick="editArea(${a.id})" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`)
-                              + botaoSePodeDeletar('areas', `<button onclick="deleteArea(${a.id})" class="text-red-600 hover:text-red-800 text-xs font-bold"><i class="fa-solid fa-trash"></i> Excluir</button>`)}
+                              + botaoSePodeDeletar('areas', `<button onclick="deleteArea(${a.id})" class="text-danger-600 hover:text-danger-800 text-xs font-bold"><i class="fa-solid fa-trash"></i> Excluir</button>`)}
                     </td>
                 </tr>
             `;

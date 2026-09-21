@@ -88,7 +88,7 @@ async function renderContratosVinculosView() {
                 <td class="p-3 text-right font-mono">R$ ${Number(v.valor_vinculo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
                 <td class="p-3 text-center">
                     ${editavel
-                        ? botaoSePodeDeletar('contratos_vinculos', `<button onclick="excluirVinculoContrato(${v.id})" class="text-red-600 hover:text-red-800 font-bold text-xs"><i class="fa-solid fa-trash-can"></i> Excluir</button>`)
+                        ? botaoSePodeDeletar('contratos_vinculos', `<button onclick="excluirVinculoContrato(${v.id})" class="text-danger-600 hover:text-danger-800 font-bold text-xs"><i class="fa-solid fa-trash-can"></i> Excluir</button>`)
                         : `<span class="text-gray-400 text-[10px] font-bold" title="Vínculo já com valor realizado — travado">🔒 Travado</span>`}
                 </td>
             </tr>
@@ -148,7 +148,7 @@ function renderVinculoPorContrato() {
                 <td class="p-2 text-right font-mono">${fmtR(v.valor_realizado || 0)}</td>
                 <td class="p-2 text-right font-mono">${fmtR(saldoV)}</td>
                 <td class="p-2 text-center">${editavel
-                    ? botaoSePodeDeletar('contratos_vinculos', `<button onclick="excluirVinculoContrato(${v.id})" class="text-red-600 hover:text-red-800 font-bold text-[10px]"><i class="fa-solid fa-trash-can"></i> Excluir</button>`)
+                    ? botaoSePodeDeletar('contratos_vinculos', `<button onclick="excluirVinculoContrato(${v.id})" class="text-danger-600 hover:text-danger-800 font-bold text-[10px]"><i class="fa-solid fa-trash-can"></i> Excluir</button>`)
                     : '<span class="text-gray-400 text-[10px] font-bold">🔒 Travado</span>'}</td>
             </tr>`;
         }).join('');

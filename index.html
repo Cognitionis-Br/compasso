@@ -130,9 +130,9 @@
 
     <!-- FASE 3 — LICENÇA EXPIRADA -->
     <div id="licencaExpiradaScreen" class="hidden fixed inset-0 bg-gray-900 bg-opacity-95 flex items-center justify-center p-4 z-50 overflow-y-auto">
-        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 border-t-4 border-red-600 my-8">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-8 border-t-4 border-danger-600 my-8">
             <div class="text-center mb-4">
-                <i class="fa-solid fa-triangle-exclamation text-4xl text-red-600"></i>
+                <i class="fa-solid fa-triangle-exclamation text-4xl text-danger-600"></i>
                 <h2 class="text-lg font-bold text-gray-900 mt-3">Licença Expirada</h2>
                 <p id="licencaExpiradaInfo" class="text-xs text-gray-500 mt-1"></p>
             </div>
@@ -375,7 +375,7 @@
                         <i id="icon-devtools" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
                     <div id="menu-devtools" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('dev_tools')" id="link-dev_tools" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-red-500 hover:text-red-700 rounded border-l-2 border-transparent transition-colors">Ferramentas de Dev</button>
+                        <button onclick="switchTab('dev_tools')" id="link-dev_tools" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-danger-500 hover:text-danger-700 rounded border-l-2 border-transparent transition-colors">Ferramentas de Dev</button>
                     </div>
                 </div>
 
@@ -762,14 +762,14 @@
                 <div id="view-visao_orcamento" class="tab-content hidden">
                     <div class="flex justify-between items-end mb-4 border-b pb-2">
                         <div>
-                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-wallet text-green-700"></i> Visão de Orçamento</h2>
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-wallet text-emerald-700"></i> Visão de Orçamento</h2>
                             <p class="text-xs text-gray-500 mt-1">Comparativo evolutivo do orçamento (BC vs. Req vs. Tech).</p>
                         </div>
                         <div class="flex items-end gap-6">
                             <div class="flex gap-4 text-xs font-semibold pb-1">
                                 <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> &lt; 10%</span>
                                 <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> 10% - 20%</span>
-                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span> &gt; 20%</span>
+                                <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-danger-500 inline-block"></span> &gt; 20%</span>
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Ano Fiscal</label>
@@ -875,9 +875,9 @@
                             <div id="cronogramaFarolAtencao" class="text-2xl font-black text-amber-700">0</div>
                             <div class="text-[10px] font-bold text-amber-700 uppercase">Atenção</div>
                         </div>
-                        <div class="bg-red-50 border border-red-200 rounded-lg p-3 text-center">
-                            <div id="cronogramaFarolCritico" class="text-2xl font-black text-red-700">0</div>
-                            <div class="text-[10px] font-bold text-red-700 uppercase">Crítico</div>
+                        <div class="bg-danger-50 border border-danger-200 rounded-lg p-3 text-center">
+                            <div id="cronogramaFarolCritico" class="text-2xl font-black text-danger-700">0</div>
+                            <div class="text-[10px] font-bold text-danger-700 uppercase">Crítico</div>
                         </div>
                         <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 text-center">
                             <div id="cronogramaFarolAPlanejar" class="text-2xl font-black text-gray-600">0</div>
@@ -1840,7 +1840,7 @@
                                 <h4 class="font-bold text-amber-900 text-sm">Simulação Ativa para: <span id="simulandoProjetoNome" class="text-red-600 font-mono"></span></h4>
                                 <div class="flex gap-2">
                                     <button onclick="cancelarSimulacaoAdhoc()" class="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 rounded text-xs font-bold transition">Descartar</button>
-                                    <button id="btnAprovarSimulacaoAdhoc" onclick="aprovarSimulacaoAdhoc()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-bold shadow-sm transition">Aprovar Simulação & Efetivar</button>
+                                    <button id="btnAprovarSimulacaoAdhoc" onclick="aprovarSimulacaoAdhoc()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-bold shadow-sm transition">Aprovar Simulação & Efetivar</button>
                                 </div>
                             </div>
                             <!-- Os 5 valores de validação (a pedido do usuário, item 8) -->
@@ -2598,7 +2598,7 @@
                         <h2 class="text-xl font-bold text-gray-800">Envio de E-mail - Gestão de Fila de Envio</h2>
                         <p class="text-xs text-gray-500 mt-1">Tudo que já foi gerado — nada é enviado de verdade ainda (ver item 12/14 do escopo).</p>
                     </div>
-                    <div id="avisoChaveGeralEmailFila" class="hidden bg-red-50 border-2 border-red-300 text-red-800 text-xs font-bold rounded-lg p-3 mb-4">⛔ A Chave Geral de Envio de E-mail está desligada (aba Gestão do Fluxo de E-mail) — nada será enfileirado nem enviado até ela ser ligada de novo.</div>
+                    <div id="avisoChaveGeralEmailFila" class="hidden bg-danger-50 border-2 border-danger-300 text-danger-800 text-xs font-bold rounded-lg p-3 mb-4"><i class="fa-solid fa-ban mr-1"></i>A Chave Geral de Envio de E-mail está desligada (aba Gestão do Fluxo de E-mail) — nada será enfileirado nem enviado até ela ser ligada de novo.</div>
                     <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
                         <div class="flex justify-end gap-3 mb-3">
                             <button onclick="renderFilaEmailPendentes()" class="text-xs font-bold text-indigo-700 hover:text-indigo-900"><i class="fa-solid fa-arrows-rotate"></i> Atualizar</button>
@@ -3027,7 +3027,7 @@
                             <div id="vincPorContratoVisao" class="hidden grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-xs">
                                 <div class="bg-gray-50 rounded p-3"><span class="text-[10px] font-bold uppercase text-gray-500 block">Valor do Contrato</span><b id="vpcTotal">-</b></div>
                                 <div class="bg-gray-50 rounded p-3"><span class="text-[10px] font-bold uppercase text-gray-500 block">Distribuído</span><b id="vpcDistribuido">-</b></div>
-                                <div class="bg-green-50 rounded p-3"><span class="text-[10px] font-bold uppercase text-green-700 block">Saldo a Distribuir</span><b id="vpcSaldo" class="text-green-800">-</b></div>
+                                <div class="bg-emerald-50 rounded p-3"><span class="text-[10px] font-bold uppercase text-emerald-700 block">Saldo a Distribuir</span><b id="vpcSaldo" class="text-emerald-800">-</b></div>
                                 <div class="bg-red-50 rounded p-3"><span class="text-[10px] font-bold uppercase text-red-700 block">Realizado (pagamentos)</span><b id="vpcRealizado" class="text-red-800">-</b></div>
                             </div>
                         </div>
@@ -3708,9 +3708,9 @@
                         <i class="fa-solid fa-lock"></i> Acesso restrito ao PROPRIETÁRIO do sistema.
                     </div>
 
-                    <div id="devToolsConteudo" class="hidden bg-red-50 p-6 rounded-lg shadow-sm border-2 border-dashed border-red-300 mb-6">
-                        <p class="text-xs text-red-700 mb-4">Ações desta seção alteram dados diretamente no banco. Use apenas em ambiente de desenvolvimento/teste.</p>
-                        <button onclick="resetarBaseParaFase1()" class="bg-red-700 hover:bg-red-800 text-white font-bold py-2 px-4 rounded transition text-sm">
+                    <div id="devToolsConteudo" class="hidden bg-danger-50 p-6 rounded-lg shadow-sm border-2 border-dashed border-danger-300 mb-6">
+                        <p class="text-xs text-danger-700 mb-4">Ações desta seção alteram dados diretamente no banco. Use apenas em ambiente de desenvolvimento/teste.</p>
+                        <button onclick="resetarBaseParaFase1()" class="bg-danger-700 hover:bg-danger-800 text-white font-bold py-2 px-4 rounded transition text-sm">
                             <i class="fa-solid fa-rotate-left"></i> Resetar Todos os Projetos para Fase 1 (Business Case)
                         </button>
                     </div>
@@ -3719,9 +3719,9 @@
                          Base — apaga fisicamente tudo que não seja AF2027
                          nem demanda normal (fora Extraordinária/Carryover),
                          reabre o AF2027 e reajusta o contador de código. -->
-                    <div id="devToolsLimpezaConteudo" class="hidden bg-red-50 p-6 rounded-lg shadow-sm border-2 border-dashed border-red-300 mb-6">
-                        <p class="text-xs text-red-700 mb-4">Apaga FISICAMENTE (não é reversível): todo Ano Fiscal diferente de AF2027, e toda demanda Extraordinária ou Carryover — mesmo as que forem do AF2027. O AF2027 fica reaberto pra receber demandas normais, e o contador de código de projeto é ajustado pra bater com o que sobrar.</p>
-                        <button onclick="limparBaseSomenteAF2027()" class="bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded transition text-sm">
+                    <div id="devToolsLimpezaConteudo" class="hidden bg-danger-50 p-6 rounded-lg shadow-sm border-2 border-dashed border-danger-300 mb-6">
+                        <p class="text-xs text-danger-700 mb-4">Apaga FISICAMENTE (não é reversível): todo Ano Fiscal diferente de AF2027, e toda demanda Extraordinária ou Carryover — mesmo as que forem do AF2027. O AF2027 fica reaberto pra receber demandas normais, e o contador de código de projeto é ajustado pra bater com o que sobrar.</p>
+                        <button onclick="limparBaseSomenteAF2027()" class="bg-danger-800 hover:bg-danger-900 text-white font-bold py-2 px-4 rounded transition text-sm">
                             <i class="fa-solid fa-trash-can"></i> Limpar Base — Manter Só AF2027 (Normal)
                         </button>
                     </div>
@@ -3731,9 +3731,9 @@
                          Ano Fiscal (e os totais congelados nela), sem
                          reabrir nada no final. Diferente da limpeza acima,
                          que preserva o AF2027 aberto. -->
-                    <div id="devToolsLimpezaTotalConteudo" class="hidden bg-red-100 p-6 rounded-lg shadow-sm border-2 border-dashed border-red-500 mb-6">
-                        <p class="text-xs text-red-800 mb-4 font-bold">⚠️ Mais destrutivo que a limpeza acima: apaga FISICAMENTE todos os projetos (de qualquer Ano Fiscal) e também TODA a configuração de Ano Fiscal em `anos_fiscais_config` — inclusive os totais já fechados (valor e quantidade). Não reabre nenhum AF no final: depois de rodar, é preciso ir em Ano Fiscal → Abertura Ano Fiscal pra começar do zero.</p>
-                        <button onclick="limparBaseCompletamente()" class="bg-red-900 hover:bg-black text-white font-bold py-2 px-4 rounded transition text-sm">
+                    <div id="devToolsLimpezaTotalConteudo" class="hidden bg-danger-100 p-6 rounded-lg shadow-sm border-2 border-dashed border-danger-500 mb-6">
+                        <p class="text-xs text-danger-800 mb-4 font-bold"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Mais destrutivo que a limpeza acima: apaga FISICAMENTE todos os projetos (de qualquer Ano Fiscal) e também TODA a configuração de Ano Fiscal em `anos_fiscais_config` — inclusive os totais já fechados (valor e quantidade). Não reabre nenhum AF no final: depois de rodar, é preciso ir em Ano Fiscal → Abertura Ano Fiscal pra começar do zero.</p>
+                        <button onclick="limparBaseCompletamente()" class="bg-danger-900 hover:bg-black text-white font-bold py-2 px-4 rounded transition text-sm">
                             <i class="fa-solid fa-bomb"></i> Apagar TUDO e Zerar Totais
                         </button>
                     </div>
@@ -3743,9 +3743,9 @@
                          propostas, pagamentos por NF e anexos), mantendo
                          projetos e o cadastro de Fornecedores — para uma
                          nova rodada de testes do módulo. -->
-                    <div id="devToolsLimpezaContratosConteudo" class="hidden bg-red-50 p-6 rounded-lg shadow-sm border-2 border-dashed border-red-300 mb-6">
-                        <p class="text-xs text-red-700 mb-4">Apaga FISICAMENTE (não é reversível) tudo do módulo <strong>Contratos e Fornecedores</strong>: contratos e sua numeração automática, vínculos Projeto × Contrato, pendências (manual / Excel / e-mail) com itens e anexos de NF, propostas, pagamentos por NF (cabeçalho + itens + anexos) e os arquivos no bucket <code>contratos-anexos</code>. <strong>Mantém</strong> projetos, etapas e o cadastro de Fornecedores. O "realizado" de cada projeto volta a ser só o gasto das etapas.</p>
-                        <button onclick="limparBaseContratosFornecedores()" class="bg-red-800 hover:bg-red-900 text-white font-bold py-2 px-4 rounded transition text-sm">
+                    <div id="devToolsLimpezaContratosConteudo" class="hidden bg-danger-50 p-6 rounded-lg shadow-sm border-2 border-dashed border-danger-300 mb-6">
+                        <p class="text-xs text-danger-700 mb-4">Apaga FISICAMENTE (não é reversível) tudo do módulo <strong>Contratos e Fornecedores</strong>: contratos e sua numeração automática, vínculos Projeto × Contrato, pendências (manual / Excel / e-mail) com itens e anexos de NF, propostas, pagamentos por NF (cabeçalho + itens + anexos) e os arquivos no bucket <code>contratos-anexos</code>. <strong>Mantém</strong> projetos, etapas e o cadastro de Fornecedores. O "realizado" de cada projeto volta a ser só o gasto das etapas.</p>
+                        <button onclick="limparBaseContratosFornecedores()" class="bg-danger-800 hover:bg-danger-900 text-white font-bold py-2 px-4 rounded transition text-sm">
                             <i class="fa-solid fa-file-contract"></i> Zerar Contratos e Fornecedores (manter cadastro de Fornecedores)
                         </button>
                     </div>
@@ -3966,7 +3966,7 @@
                             <h4 class="font-bold text-gray-800 text-sm uppercase tracking-wider">Projetos Cadastrados</h4>
                             <div class="flex gap-2">
                                 <button onclick="renderListaProjetosDevTools()" class="text-xs font-bold text-indigo-700 hover:text-indigo-900"><i class="fa-solid fa-arrows-rotate"></i> Atualizar</button>
-                                <button onclick="excluirFisicamenteSelecionados()" class="bg-red-700 hover:bg-red-800 text-white font-bold text-xs px-3 py-1.5 rounded"><i class="fa-solid fa-trash-can"></i> Excluir Selecionados</button>
+                                <button onclick="excluirFisicamenteSelecionados()" class="bg-danger-700 hover:bg-danger-800 text-white font-bold text-xs px-3 py-1.5 rounded"><i class="fa-solid fa-trash-can"></i> Excluir Selecionados</button>
                             </div>
                         </div>
                         <div class="overflow-x-auto">
@@ -4200,7 +4200,7 @@
     <div id="modalCancelamento" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="font-bold text-red-600 text-base">Cancelar Demanda</h3>
+                <h3 class="font-bold text-danger-600 text-base">Cancelar Demanda</h3>
                 <button onclick="fecharModalCancelamento()" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
             </div>
             <input type="hidden" id="cancelCodigoHidden">
@@ -4222,7 +4222,7 @@
             </div>
             <div class="flex justify-end gap-2 pt-2">
                 <button onclick="fecharModalCancelamento()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700 transition">Voltar</button>
-                <button onclick="confirmarCancelamento()" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold transition">Confirmar Cancelamento</button>
+                <button onclick="confirmarCancelamento()" class="px-4 py-2 bg-danger-600 hover:bg-danger-700 text-white rounded text-xs font-bold transition">Confirmar Cancelamento</button>
             </div>
         </div>
     </div>
@@ -4550,7 +4550,7 @@
             </div>
             <p id="conclusaoProjetoNomeDisplay" class="text-xs font-bold text-gray-600"></p>
             <p id="conclusaoProjetoAreaDisplay" class="text-[11px] text-gray-500"></p>
-            <div id="conclusaoProjetoAvisoSubprojetos" class="hidden bg-red-50 border border-red-300 rounded p-3 text-xs text-red-700"></div>
+            <div id="conclusaoProjetoAvisoSubprojetos" class="hidden bg-danger-50 border border-danger-300 rounded p-3 text-xs text-danger-700"></div>
             <div>
                 <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Data de Conclusão *</label>
                 <input type="date" id="conclusaoProjetoData" class="w-full p-2 border border-gray-300 rounded text-xs">
@@ -4570,16 +4570,16 @@
     <div id="modalGoliveOcorrencias" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
         <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center border-b pb-2">
-                <h3 class="font-bold text-gray-800 text-base"><i class="fa-solid fa-triangle-exclamation text-red-600"></i> Ocorrências de Erro</h3>
+                <h3 class="font-bold text-gray-800 text-base"><i class="fa-solid fa-triangle-exclamation text-danger-600"></i> Ocorrências de Erro</h3>
                 <button onclick="fecharModalGoliveOcorrencias()" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
             </div>
             <p id="goliveOcorrenciasNomeDisplay" class="text-xs font-bold text-gray-600"></p>
 
             <div class="border-t pt-3">
-                <button onclick="abrirFormNovaOcorrencia()" id="btnAbrirNovaOcorrencia" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs px-3 py-1.5 rounded shadow">
+                <button onclick="abrirFormNovaOcorrencia()" id="btnAbrirNovaOcorrencia" class="bg-danger-600 hover:bg-danger-700 text-white font-bold text-xs px-3 py-1.5 rounded shadow">
                     <i class="fa-solid fa-plus"></i> Nova Ocorrência
                 </button>
-                <div id="formNovaOcorrencia" class="hidden mt-3 bg-red-50 border border-red-200 rounded p-3 space-y-2">
+                <div id="formNovaOcorrencia" class="hidden mt-3 bg-danger-50 border border-danger-200 rounded p-3 space-y-2">
                     <div>
                         <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Descrição da Ocorrência *</label>
                         <textarea id="ocorrenciaNovaDescricao" rows="2" class="w-full p-2 border border-gray-300 rounded text-xs"></textarea>
@@ -4590,7 +4590,7 @@
                     </div>
                     <div class="flex justify-end gap-2">
                         <button onclick="fecharFormNovaOcorrencia()" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700 transition">Cancelar</button>
-                        <button onclick="salvarNovaOcorrencia()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded text-xs font-bold transition">Registrar</button>
+                        <button onclick="salvarNovaOcorrencia()" class="px-3 py-1.5 bg-danger-600 hover:bg-danger-700 text-white rounded text-xs font-bold transition">Registrar</button>
                     </div>
                 </div>
             </div>
@@ -4610,7 +4610,7 @@
             <div id="termoAceiteAvisoConcluido" class="hidden bg-gray-100 border border-gray-300 rounded p-3 text-xs text-gray-600">
                 <i class="fa-solid fa-lock"></i> Projeto já concluído — o termo de aceite não pode mais ser editado.
             </div>
-            <div id="termoAceiteAvisoOcorrencias" class="hidden bg-red-50 border border-red-300 rounded p-3 text-xs text-red-700"></div>
+            <div id="termoAceiteAvisoOcorrencias" class="hidden bg-danger-50 border border-danger-300 rounded p-3 text-xs text-danger-700"></div>
             <div id="termoAceiteAvisoEvolucao" class="hidden bg-amber-50 border border-amber-300 rounded p-3 text-xs text-amber-800">
                 <i class="fa-solid fa-hourglass-half"></i> O Go-Live ainda não está 100% concluído — o Termo de Aceite só pode ser registrado depois que a evolução do Go-Live chegar a 100%.
             </div>
@@ -4810,6 +4810,7 @@
     <script src="./js/utils/dates.js"></script>
     <script src="./js/utils/health.js"></script>
     <script src="./js/utils/csv-export.js"></script>
+    <script src="./js/utils/ui-badges.js"></script>
     <script src="./js/ui/navigation.js"></script>
     <script src="./js/auth/auth.js"></script>
     <script src="./js/config/areas.js"></script>
