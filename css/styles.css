@@ -59,3 +59,67 @@ body {
 /* Rotação do ícone de chevron */
 .chevron { transition: transform 0.3s ease; }
 .chevron.rotate { transform: rotate(180deg); }
+
+/* =========================================================================
+   Tokens de marca (evolução visual — skill de design) — camada de custom
+   properties que documenta o que o hack red->indigo do tailwind.config
+   (index.html) já faz hoje, e serve de base pro dark mode abaixo. Nenhuma
+   classe red-* muda de comportamento por causa disso.
+   ========================================================================= */
+:root {
+    --brand-50: #eef2ff; --brand-100: #e0e7ff; --brand-200: #c7d2fe;
+    --brand-300: #a5b4fc; --brand-400: #818cf8; --brand-500: #6366f1;
+    --brand-600: #4f46e5; --brand-700: #4338ca; --brand-800: #3730a3;
+    --brand-900: #312e81;
+}
+
+/* =========================================================================
+   Dark mode (evolução visual). Ativado via [data-theme="dark"] no <html>
+   — ver alternarTemaEscuro() em js/ui/navigation.js. Escopo verificado:
+   chrome do app, Dashboard e Roadmap (telas revisadas nesta sessão); as
+   demais telas herdam automaticamente porque reaproveitam as mesmas
+   classes neutras do Tailwind, mas não foram auditadas uma a uma.
+   O seletor de atributo já tem especificidade maior que uma classe do
+   Tailwind sozinha, então ganha do cascade sem precisar de !important. */
+:root[data-theme="dark"] {
+    --surface: #1c1c22; --surface-sunken: #131317; --surface-muted: #232329;
+}
+:root[data-theme="dark"] body { background-color: var(--surface-sunken); }
+
+:root[data-theme="dark"] .bg-white { background-color: var(--surface); }
+:root[data-theme="dark"] .bg-gray-50 { background-color: var(--surface-sunken); }
+:root[data-theme="dark"] .bg-gray-100 { background-color: var(--surface-muted); }
+:root[data-theme="dark"] .text-gray-900,
+:root[data-theme="dark"] .text-gray-800 { color: #f3f4f6; }
+:root[data-theme="dark"] .text-gray-700,
+:root[data-theme="dark"] .text-gray-600 { color: #d1d5db; }
+:root[data-theme="dark"] .text-gray-500 { color: #9ca3af; }
+:root[data-theme="dark"] .text-gray-400 { color: #71717a; }
+:root[data-theme="dark"] .border-gray-100,
+:root[data-theme="dark"] .divide-gray-100 > :not([hidden]) ~ :not([hidden]) { border-color: #2a2a31; }
+:root[data-theme="dark"] .border-gray-200,
+:root[data-theme="dark"] .border-gray-300,
+:root[data-theme="dark"] .divide-gray-200 > :not([hidden]) ~ :not([hidden]) { border-color: #35353d; }
+:root[data-theme="dark"] .shadow-sm,
+:root[data-theme="dark"] .shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+:root[data-theme="dark"] .kpi-card,
+:root[data-theme="dark"] .dash-row-card { background: var(--surface); border-color: #35353d; }
+:root[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #45454f; }
+
+/* Pastilhas de status (bg-X-100/text-X-800) — legíveis mas suaves demais
+   ou estridentes demais sobre fundo escuro; mesmo par semântico, ajustado
+   pro contraste da superfície escura. */
+:root[data-theme="dark"] .bg-emerald-100 { background-color: rgba(16,185,129,.15); }
+:root[data-theme="dark"] .text-emerald-800 { color: #6ee7b7; }
+:root[data-theme="dark"] .bg-amber-100 { background-color: rgba(245,158,11,.15); }
+:root[data-theme="dark"] .text-amber-800 { color: #fcd34d; }
+:root[data-theme="dark"] .bg-danger-100 { background-color: rgba(239,68,68,.18); }
+:root[data-theme="dark"] .text-danger-800 { color: #fca5a5; }
+:root[data-theme="dark"] .bg-purple-100 { background-color: rgba(168,85,247,.15); }
+:root[data-theme="dark"] .text-purple-800 { color: #d8b4fe; }
+:root[data-theme="dark"] .bg-blue-100 { background-color: rgba(59,130,246,.15); }
+:root[data-theme="dark"] .text-blue-800 { color: #93c5fd; }
+:root[data-theme="dark"] .bg-orange-100 { background-color: rgba(249,115,22,.15); }
+:root[data-theme="dark"] .text-orange-800 { color: #fdba74; }
+:root[data-theme="dark"] .bg-cyan-100 { background-color: rgba(6,182,212,.15); }
+:root[data-theme="dark"] .text-cyan-800 { color: #67e8f9; }

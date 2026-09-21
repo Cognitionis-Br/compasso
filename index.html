@@ -19,6 +19,16 @@
          nenhum outro sentido.
          css/styles.css (.brand-red-text/.brand-red-bg) foi atualizado em
          conjunto — mesma cor, mesmo motivo. -->
+    <!-- NOVO (evolução visual — tokens de marca): a marca hijackou o nome
+         "red", então "crítico/atrasado" perdeu o vermelho de alarme —
+         achado da revisão de design (skill dataviz) ao validar a paleta
+         do Gantt: o swatch de Business Case (bg-red-800) renderiza
+         indigo-800 (#3730a3), não o vermelho nominal, e falhava a banda
+         de luminosidade além de colidir em matiz com Execution
+         (violet-600). "danger" abaixo é a escala real do Tailwind red,
+         reservada só pros usos de status crítico/atrasado (Farol de
+         Saúde, Gantt) — não mexe em nenhum dos outros usos de red-* (que
+         continuam sendo a cor de marca). -->
     <script>
         tailwind.config = {
             theme: {
@@ -28,11 +38,26 @@
                             50: '#eef2ff', 100: '#e0e7ff', 200: '#c7d2fe', 300: '#a5b4fc',
                             400: '#818cf8', 500: '#6366f1', 600: '#4f46e5', 700: '#4338ca',
                             800: '#3730a3', 900: '#312e81'
+                        },
+                        danger: {
+                            50: '#fef2f2', 100: '#fee2e2', 200: '#fecaca', 300: '#fca5a5',
+                            400: '#f87171', 500: '#ef4444', 600: '#dc2626', 700: '#b91c1c',
+                            800: '#991b1b', 900: '#7f1d1d'
                         }
                     }
                 }
             }
         };
+    </script>
+    <!-- NOVO (evolução visual — dark mode): aplica o tema salvo ANTES do
+         primeiro paint, pra não piscar claro->escuro no carregamento —
+         ver alternarTemaEscuro() em js/ui/navigation.js. -->
+    <script>
+        try {
+            if (localStorage.getItem('compasso_tema') === 'dark') {
+                document.documentElement.setAttribute('data-theme', 'dark');
+            }
+        } catch (e) { /* navegador privado/bloqueado — segue no tema claro */ }
     </script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -430,6 +455,12 @@
                     <div id="userInfoAvatar" class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border border-gray-300">
                         --
                     </div>
+                    <!-- NOVO (evolução visual — dark mode): alterna [data-theme="dark"]
+                         no <html>, persistido em localStorage — ver
+                         alternarTemaEscuro() em js/ui/navigation.js. -->
+                    <button onclick="alternarTemaEscuro()" id="btnTemaEscuro" class="text-gray-400 hover:text-gray-700 transition" title="Alternar tema claro/escuro">
+                        <i class="fa-solid fa-moon"></i>
+                    </button>
                     <button onclick="abrirModalTrocaSenhaVoluntaria()" class="text-gray-400 hover:text-gray-700 transition" title="Trocar Senha">
                         <i class="fa-solid fa-key"></i>
                     </button>
@@ -544,7 +575,11 @@
                     <div id="dashFunisCriacao" class="mb-6"></div>
 
                     <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                        <h3 class="font-bold text-gray-800 text-sm mb-2 border-b pb-2 uppercase tracking-wide">Status Detalhado da Carteira</h3>
+                        <div class="flex items-center justify-between mb-2 border-b pb-2">
+                            <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wide">Status Detalhado da Carteira</h3>
+                            <button onclick="exportarStatusDetalhadoCSV()" class="inline-flex items-center gap-1.5 text-[10px] font-bold text-gray-500 hover:text-gray-800 border border-gray-300 hover:border-gray-400 rounded px-2 py-1">
+                                <i class="fa-solid fa-file-csv"></i> Exportar CSV</button>
+                        </div>
                         <p class="text-[11px] text-gray-400 mb-3">Usa o Filtro Global do topo da tela (Área / Fase / Status / Tipo).</p>
                         <div class="overflow-x-auto hidden md:block">
                             <table class="w-full text-left border-collapse text-sm">
@@ -4774,6 +4809,7 @@
     <script src="./js/utils/format.js"></script>
     <script src="./js/utils/dates.js"></script>
     <script src="./js/utils/health.js"></script>
+    <script src="./js/utils/csv-export.js"></script>
     <script src="./js/ui/navigation.js"></script>
     <script src="./js/auth/auth.js"></script>
     <script src="./js/config/areas.js"></script>

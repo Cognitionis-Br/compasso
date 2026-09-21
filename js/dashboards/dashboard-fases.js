@@ -8,7 +8,8 @@
 //   cards satélite, nunca barras na sequência.
 // - Validação em tempo de exibição: Σ(7 fases) + Σ(3 desfechos) = Total
 //   Geral da Carteira. Se não bater, sinaliza (não exibe em silêncio).
-// - Cor da barra = saúde agregada da fase (🟢/🟡/🔴), tokens já existentes.
+// - Cor da barra = saúde agregada da fase, ícones FontAwesome (evolução
+//   visual — antes eram emoji 🟢/🟡/🔴), tokens já existentes.
 // Escopo: lista já recortada pelo Filtro Global.
 // =========================================================================
 
@@ -29,10 +30,18 @@ function _cfSaudeFase(projs, etapasCache) {
         else if (s === 'ATENCAO' || s === 'HOLD') temAtencao = true;
         else if (s !== 'INATIVO') temSaudavel = true;
     });
-    if (temCritico) return { emoji: '🔴', barra: 'bg-red-500', texto: 'text-red-700' };
-    if (temAtencao) return { emoji: '🟡', barra: 'bg-amber-500', texto: 'text-amber-700' };
-    if (temSaudavel) return { emoji: '🟢', barra: 'bg-emerald-500', texto: 'text-emerald-700' };
-    return { emoji: '⚪', barra: 'bg-gray-300', texto: 'text-gray-500' };
+    if (temCritico) return { icone: 'fa-circle-exclamation', barra: 'bg-danger-500', texto: 'text-danger-700' };
+    if (temAtencao) return { icone: 'fa-triangle-exclamation', barra: 'bg-amber-500', texto: 'text-amber-700' };
+    if (temSaudavel) return { icone: 'fa-circle-check', barra: 'bg-emerald-500', texto: 'text-emerald-700' };
+    return { icone: 'fa-circle-minus', barra: 'bg-gray-300', texto: 'text-gray-500' };
+}
+
+// NOVO (evolução visual — "ver como tabela"/exportar): guarda a última
+// consolidação renderizada pra exportarConsolidacaoFasesCSV() reusar sem
+// recalcular nada.
+let _cfCsvCache = [];
+function exportarConsolidacaoFasesCSV() {
+    exportarCSV(['Fase', 'Qtd. Projetos', '% da Carteira', 'Orçado (R$)'], _cfCsvCache, 'consolidacao_por_fase');
 }
 
 function renderConsolidacaoFases(listaDash, etapasCache) {
@@ -60,6 +69,7 @@ function renderConsolidacaoFases(listaDash, etapasCache) {
     ];
 
     let somaFases = 0;
+    const linhasCsv = [];
     const linhas = FASES.map((f, idx) => {
         const projs = noFluxo.filter(p => dashFaseDe(p) === f.k);
         const qtd = projs.length;
@@ -67,6 +77,7 @@ function renderConsolidacaoFases(listaDash, etapasCache) {
         const pct = total ? Math.round((qtd / total) * 100) : 0;
         const orc = projs.reduce((a, p) => a + _cfOrc(p), 0);
         const saude = _cfSaudeFase(projs, etapasCache);
+        linhasCsv.push([f.l, qtd, pct + '%', orc.toFixed(2).replace('.', ',')]);
         return `
             <div class="flex items-center gap-3 py-2 ${idx < FASES.length - 1 ? 'border-b border-gray-100' : ''}">
                 <div class="w-40 shrink-0 text-xs font-bold text-gray-700">${idx + 1}. ${escapeHtml(f.l)}</div>
@@ -77,7 +88,7 @@ function renderConsolidacaoFases(listaDash, etapasCache) {
                     <b class="${saude.texto}">${qtd}</b> <span class="text-gray-400">·</span> ${pct}%
                 </div>
                 <div class="w-36 shrink-0 text-right text-[11px] tabular-nums text-gray-500 hidden md:block">${_cfFmt(orc)}</div>
-                <div class="w-5 shrink-0 text-center" title="Saúde agregada da fase">${saude.emoji}</div>
+                <div class="w-5 shrink-0 text-center ${saude.texto}" title="Saúde agregada da fase"><i class="fa-solid ${saude.icone}"></i></div>
             </div>`;
     }).join('');
 
@@ -85,9 +96,14 @@ function renderConsolidacaoFases(listaDash, etapasCache) {
     const somaTotal = somaFases + somaDesfechos;
     const bate = somaTotal === total;
 
+    linhasCsv.push(['Cancelados', cancelados.length, '-', cancelados.reduce((a, p) => a + _cfOrc(p), 0).toFixed(2).replace('.', ',')]);
+    linhasCsv.push(['Reprovados', reprovados.length, '-', reprovados.reduce((a, p) => a + _cfOrc(p), 0).toFixed(2).replace('.', ',')]);
+    linhasCsv.push(['Em Hold', hold.length, '-', hold.reduce((a, p) => a + _cfOrc(p), 0).toFixed(2).replace('.', ',')]);
+    _cfCsvCache = linhasCsv;
+
     const satelite = (rot, arr, cls, icone) => `
         <div class="bg-white rounded-lg border ${cls} p-3 text-center">
-            <div class="text-[10px] font-bold uppercase text-gray-500">${icone} ${rot}</div>
+            <div class="text-[10px] font-bold uppercase text-gray-500"><i class="fa-solid ${icone} mr-1"></i>${rot}</div>
             <div class="text-xl font-extrabold tabular-nums text-gray-800">${arr.length}</div>
             <div class="text-[10px] text-gray-400 tabular-nums">${_cfFmt(arr.reduce((a, p) => a + _cfOrc(p), 0))}</div>
         </div>`;
@@ -96,18 +112,21 @@ function renderConsolidacaoFases(listaDash, etapasCache) {
         <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm mb-6">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="font-extrabold text-gray-900 text-sm uppercase tracking-wide">Consolidação do Portfólio por Fase</h3>
-                <span class="text-[11px] font-bold tabular-nums ${bate ? 'text-gray-400' : 'text-red-600'}">
-                    ${bate
-                        ? `Σ ${somaFases} fases + ${somaDesfechos} desfechos = ${total} (confere)`
-                        : `⚠ inconsistência: Σ fases ${somaFases} + desfechos ${somaDesfechos} = ${somaTotal} ≠ total ${total}`}
-                </span>
+                <div class="flex items-center gap-3">
+                    <span class="text-[11px] font-bold tabular-nums ${bate ? 'text-gray-400' : 'text-danger-600'}">
+                        ${bate
+                            ? `Σ ${somaFases} fases + ${somaDesfechos} desfechos = ${total} (confere)`
+                            : `⚠ inconsistência: Σ fases ${somaFases} + desfechos ${somaDesfechos} = ${somaTotal} ≠ total ${total}`}
+                    </span>
+                    ${typeof botaoExportarCSV === 'function' ? botaoExportarCSV('exportarConsolidacaoFasesCSV()') : ''}
+                </div>
             </div>
             <div class="mb-4">${linhas}</div>
             <div class="text-[10px] font-bold uppercase text-gray-400 mb-2">Fora do fluxo linear</div>
             <div class="grid grid-cols-3 gap-3">
-                ${satelite('Cancelados', cancelados, 'border-gray-200', '🚫')}
-                ${satelite('Reprovados', reprovados, 'border-red-200', '❌')}
-                ${satelite('Em Hold', hold, 'border-amber-200', '⏸️')}
+                ${satelite('Cancelados', cancelados, 'border-gray-200', 'fa-ban')}
+                ${satelite('Reprovados', reprovados, 'border-danger-200', 'fa-circle-xmark')}
+                ${satelite('Em Hold', hold, 'border-amber-200', 'fa-pause')}
             </div>
         </section>`;
 }

@@ -154,7 +154,7 @@ function renderRoadmap() {
 // =========================================================================
 
 const FASES_TIMELINE = [
-    { key: 'BUSINESS CASE', label: 'Business Case', labelCurto: 'BC', cor: 'bg-red-800' },
+    { key: 'BUSINESS CASE', label: 'Business Case', labelCurto: 'BC', cor: 'bg-danger-800' },
     { key: 'REQUERIMENTS', label: 'Requirements', labelCurto: 'Req', cor: 'bg-orange-500' },
     { key: 'TECHNICAL', label: 'Especificação', labelCurto: 'Espec', cor: 'bg-pink-600' },
     { key: 'EXECUTION', label: 'Execution', labelCurto: 'Exec', cor: 'bg-violet-600' },
@@ -437,7 +437,7 @@ function calcularStatusSegmento(codigoProjeto, seg, todasEtapas) {
     const emAndamento = linhas.find(e => e.situacao === 'EXECUCAO_EM_ANDAMENTO');
     if (emAndamento) {
         const alerta = calcularAlertaEvolucao(emAndamento);
-        if (alerta && alerta.nivel === 'vermelho') return { cor: 'bg-red-600', label: 'Atrasado' };
+        if (alerta && alerta.nivel === 'vermelho') return { cor: 'bg-danger-600', label: 'Atrasado' };
         if (alerta && alerta.nivel === 'amarelo') return { cor: 'bg-amber-400', label: 'Em Risco' };
         return { cor: 'bg-emerald-500', label: 'No Prazo' };
     }
@@ -588,7 +588,7 @@ function renderLegendaStatusRoadmap() {
         { cor: 'bg-gray-400', label: 'Não Iniciado' },
         { cor: 'bg-emerald-500', label: 'No Prazo' },
         { cor: 'bg-amber-400', label: 'Em Risco' },
-        { cor: 'bg-red-600', label: 'Atrasado' }
+        { cor: 'bg-danger-600', label: 'Atrasado' }
     ];
     return `
         <div class="flex flex-wrap items-center gap-4 justify-end text-[10px] text-gray-600 mb-3">

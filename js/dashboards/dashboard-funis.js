@@ -27,6 +27,7 @@ function renderOrcadoRealizadoArea(listaDash) {
         return { un, orcado: daArea.reduce((a, p) => a + _fnOrc(p), 0), realizado: daArea.reduce((a, p) => a + (Number(p.realizado) || 0), 0) };
     });
     const maxV = Math.max(1, ...linhas.map(l => Math.max(l.orcado, l.realizado)));
+    _orLinhasCache = linhas;
 
     const corpo = linhas.length === 0
         ? '<div class="text-xs text-gray-400 py-6 text-center">Sem projetos para o filtro atual.</div>'
@@ -46,10 +47,20 @@ function renderOrcadoRealizadoArea(listaDash) {
         <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
             <div class="flex items-center justify-between mb-3">
                 <h3 class="font-extrabold text-gray-900 text-sm uppercase tracking-wide">Orçado vs. Realizado por Área / UN</h3>
-                <span class="text-[10px] font-bold"><span class="text-cyan-700">■ Orçado</span> &nbsp; <span class="text-fuchsia-700">■ Realizado</span></span>
+                <div class="flex items-center gap-3">
+                    <span class="text-[10px] font-bold"><span class="text-cyan-700">■ Orçado</span> &nbsp; <span class="text-fuchsia-700">■ Realizado</span></span>
+                    ${typeof botaoExportarCSV === 'function' ? botaoExportarCSV('exportarOrcadoRealizadoCSV()') : ''}
+                </div>
             </div>
             ${corpo}
         </section>`;
+}
+
+// NOVO (evolução visual — "ver como tabela"/exportar).
+let _orLinhasCache = [];
+function exportarOrcadoRealizadoCSV() {
+    const linhasCsv = _orLinhasCache.map(l => [l.un, l.orcado.toFixed(2).replace('.', ','), l.realizado.toFixed(2).replace('.', ',')]);
+    exportarCSV(['Área / UN', 'Orçado (R$)', 'Realizado (R$)'], linhasCsv, 'orcado_x_realizado_por_area');
 }
 
 // -------------------------------------------------------------------------

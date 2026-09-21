@@ -13,6 +13,34 @@
 // Usada por praticamente todo onclick="switchTab(...)" do index.html —
 // extração de alto uso, testar com atenção redobrada em todas as abas.
 // =========================================================================
+// NOVO (evolução visual — dark mode): alterna [data-theme="dark"] no
+// <html> e persiste em localStorage (só conveniência do navegador de
+// quem está usando — não sincroniza entre dispositivos nem é lido pelo
+// backend). A aplicação do tema salvo ao carregar a página é feita por
+// um script inline no <head>/topo do <body>, ANTES do primeiro paint,
+// pra não piscar claro->escuro; esta função só cuida da troca em tempo
+// de uso e do ícone do botão.
+function alternarTemaEscuro() {
+    const raiz = document.documentElement;
+    const escuroAtivo = raiz.getAttribute('data-theme') === 'dark';
+    const novoTema = escuroAtivo ? 'light' : 'dark';
+    if (novoTema === 'dark') raiz.setAttribute('data-theme', 'dark');
+    else raiz.removeAttribute('data-theme');
+    try { localStorage.setItem('compasso_tema', novoTema); } catch (e) { /* navegador privado/bloqueado — segue sem persistir */ }
+    _atualizarIconeTemaEscuro();
+}
+function _atualizarIconeTemaEscuro() {
+    const btn = document.getElementById('btnTemaEscuro');
+    if (!btn) return;
+    const escuroAtivo = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.innerHTML = escuroAtivo ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+    btn.title = escuroAtivo ? 'Alternar pra tema claro' : 'Alternar pra tema escuro';
+}
+// O <html> já recebeu data-theme (se salvo) pelo script inline no topo do
+// <body>, antes deste arquivo carregar — só falta sincronizar o ícone do
+// botão, que existe desde o HTML estático (não é criado dinamicamente).
+_atualizarIconeTemaEscuro();
+
 // NOVO 10/08/2026 (menu responsivo pro celular): abre/fecha o menu
 // lateral em telas estreitas — em telas md+ (tablet/desktop) essas
 // classes nem entram em jogo, o menu continua fixo como sempre foi.

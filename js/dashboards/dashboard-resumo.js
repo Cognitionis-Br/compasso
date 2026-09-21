@@ -117,24 +117,24 @@ function renderFarolSaudeDash(listaDash, etapasCache) {
     const tot = verde + amarelo + vermelho || 1;
     const pct = n => Math.round((n / tot) * 100);
 
-    const contador = (emoji, rot, n, cls) => `
+    const contador = (icone, rot, n, cls) => `
         <div class="flex-1 text-center">
             <div class="text-2xl font-extrabold tabular-nums ${cls}">${n}</div>
-            <div class="text-[10px] font-bold uppercase text-gray-500">${emoji} ${rot}</div>
+            <div class="text-[10px] font-bold uppercase text-gray-500"><i class="fa-solid ${icone} mr-1"></i>${rot}</div>
         </div>`;
 
     alvo.innerHTML = `
         <section class="bg-white rounded-lg border border-gray-200 border-t-4 border-t-emerald-500 p-4 h-full">
             <h3 class="font-extrabold text-gray-900 text-sm mb-3 uppercase tracking-wide">Farol de Saúde</h3>
             <div class="flex gap-2 mb-3">
-                ${contador('🟢', 'Saudável', verde, 'text-emerald-600')}
-                ${contador('🟡', 'Atenção', amarelo, 'text-amber-600')}
-                ${contador('🔴', 'Crítico', vermelho, 'text-red-600')}
+                ${contador('fa-circle-check', 'Saudável', verde, 'text-emerald-600')}
+                ${contador('fa-triangle-exclamation', 'Atenção', amarelo, 'text-amber-600')}
+                ${contador('fa-circle-exclamation', 'Crítico', vermelho, 'text-danger-600')}
             </div>
             <div class="h-3 w-full rounded-full overflow-hidden flex bg-gray-100">
                 <div class="bg-emerald-500" style="width:${pct(verde)}%"></div>
                 <div class="bg-amber-500" style="width:${pct(amarelo)}%"></div>
-                <div class="bg-red-500" style="width:${pct(vermelho)}%"></div>
+                <div class="bg-danger-500" style="width:${pct(vermelho)}%"></div>
             </div>
             <div class="mt-2 text-[10px] text-gray-400">${tot} projeto(s) no farol${inativo ? ` · ${inativo} inativo(s) fora da conta` : ''}.</div>
         </section>`;

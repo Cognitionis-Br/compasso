@@ -81,6 +81,14 @@ function renderQuadroCarryOverCapexOpex(prefixo, lista) {
 // (js/consultas/consulta-projetos.js).
 let dashOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' };
 
+// NOVO (evolução visual — "ver como tabela"/exportar).
+let _dashStatusCsvCache = [];
+function exportarStatusDetalhadoCSV() {
+    exportarCSV(
+        ['Código', 'Projeto', 'Área', 'Tipo', 'Fase Atual', 'Status', 'Previsto (R$)', 'Realizado (R$)', 'Farol de Saúde'],
+        _dashStatusCsvCache, 'status_detalhado_da_carteira');
+}
+
 function extrairNumeroSequencialCodigo(codigo) {
     const m = (codigo || '').match(/-(\d+)-/);
     return m ? parseInt(m[1], 10) : 0;
@@ -189,6 +197,15 @@ async function renderDashboardMetrics() {
                 });
             }
 
+            // NOVO (evolução visual — "ver como tabela"/exportar): guarda
+            // a lista (já ordenada/filtrada) pra exportarStatusDetalhadoCSV().
+            _dashStatusCsvCache = projetosComSaude.map(({ p, saude }) => [
+                p.codigo, p.nome, p.area || '-', (p.tipo_qualificacao || 'REG').toUpperCase(),
+                p.etapa_atual || 'BUSINESS CASE', p.sub_status || '-',
+                (Number(p.val_bc) || Number(p.previsto) || 0).toFixed(2).replace('.', ','),
+                (Number(p.realizado) || 0).toFixed(2).replace('.', ','), saude.status
+            ]);
+
             // NOVO 10/08/2026 (responsivo pro celular): monta a linha da
             // tabela E o cartão equivalente no mesmo laço, com os mesmos
             // dados — a tabela some (hidden) e os cartões aparecem em
@@ -204,7 +221,7 @@ async function renderDashboardMetrics() {
                 linhasTabela += `
                     <tr>
                         <td class="p-3 font-bold font-mono"><button onclick="abrirDetalheProjeto('${p.codigo}')" class="text-red-700 hover:text-red-900 hover:underline" title="Ver detalhamento completo">${p.codigo}</button></td>
-                        <td class="p-3 font-semibold">${escapeHtml(p.nome)} <br><span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${badgeQualif}">${qualif}</span>${p.is_adhoc ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-purple-100 text-purple-800 ml-1">Extraordinário</span>' : ''}${p.is_carryover ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-orange-100 text-orange-800 ml-1">Carryover</span>' : ''}${p.is_subprojeto ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-cyan-100 text-cyan-800 ml-1">Subprojeto de ' + escapeHtml(p.projeto_pai_codigo) + '</span>' : ''}${p.projeto_concluido ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 ml-1">🏁 Concluído</span>' : ''}</td>
+                        <td class="p-3 font-semibold">${escapeHtml(p.nome)} <br><span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${badgeQualif}">${qualif}</span>${p.is_adhoc ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-purple-100 text-purple-800 ml-1">Extraordinário</span>' : ''}${p.is_carryover ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-orange-100 text-orange-800 ml-1">Carryover</span>' : ''}${p.is_subprojeto ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-cyan-100 text-cyan-800 ml-1">Subprojeto de ' + escapeHtml(p.projeto_pai_codigo) + '</span>' : ''}${p.projeto_concluido ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 ml-1"><i class="fa-solid fa-flag-checkered mr-1"></i>Concluído</span>' : ''}</td>
                         <td class="p-3 text-xs font-bold">${p.area || '-'}</td>
                         <td class="p-3 text-xs"><span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${badgeQualif}">${qualif}</span></td>
                         <td class="p-3 text-xs font-bold">${p.etapa_atual || 'BUSINESS CASE'}</td>

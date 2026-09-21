@@ -9,8 +9,8 @@
 // =========================================================================
 function calcularSaudeProjeto(p, todasEtapasCache) {
     const sub = (p.sub_status || '').toUpperCase();
-    if (sub === 'CANCELADO' || sub === 'REPROVADO') return { status: 'INATIVO', html: '<span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded font-bold text-xs">⚪ Inativo</span>' };
-    if (sub === 'HOLD') return { status: 'HOLD', html: '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-xs">🟡 Em Hold</span>' };
+    if (sub === 'CANCELADO' || sub === 'REPROVADO') return { status: 'INATIVO', html: '<span class="px-2 py-0.5 bg-gray-100 text-gray-600 rounded font-bold text-xs"><i class="fa-solid fa-circle-minus mr-1"></i>Inativo</span>' };
+    if (sub === 'HOLD') return { status: 'HOLD', html: '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-xs"><i class="fa-solid fa-pause mr-1"></i>Em Hold</span>' };
 
     // CORRIGIDO 10/08/2026 (bug reportado pelo usuário: etapa com prazo
     // vencido/hoje não aparecia como atrasada em nenhum dashboard): a
@@ -27,9 +27,9 @@ function calcularSaudeProjeto(p, todasEtapasCache) {
         if (resultado && resultado.pe) {
             const alerta = calcularAlertaEvolucao(resultado.pe);
             if (alerta) {
-                if (alerta.nivel === 'vermelho') return { status: 'CRITICO', html: '<span class="px-2 py-0.5 bg-red-100 text-red-800 rounded font-bold text-xs">🔴 Atrasado (Cronograma)</span>' };
-                if (alerta.nivel === 'amarelo') return { status: 'ATENCAO', html: '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-xs">🟡 Atenção (Cronograma)</span>' };
-                return { status: 'SAUDAVEL', html: '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-xs">🟢 Saudável</span>' };
+                if (alerta.nivel === 'vermelho') return { status: 'CRITICO', html: '<span class="px-2 py-0.5 bg-danger-100 text-danger-800 rounded font-bold text-xs"><i class="fa-solid fa-circle-exclamation mr-1"></i>Atrasado (Cronograma)</span>' };
+                if (alerta.nivel === 'amarelo') return { status: 'ATENCAO', html: '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-xs"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Atenção (Cronograma)</span>' };
+                return { status: 'SAUDAVEL', html: '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-xs"><i class="fa-solid fa-circle-check mr-1"></i>Saudável</span>' };
             }
         }
     }
@@ -49,18 +49,18 @@ function calcularSaudeProjeto(p, todasEtapasCache) {
             if (dtLimiteStr !== '-') {
                 const hojeStr = new Date().toISOString().split('T')[0];
                 if (hojeStr > dtLimiteStr) {
-                    return { status: 'CRITICO', html: '<span class="px-2 py-0.5 bg-red-100 text-red-800 rounded font-bold text-xs">🔴 Atrasado (SLA Vencido)</span>' };
+                    return { status: 'CRITICO', html: '<span class="px-2 py-0.5 bg-danger-100 text-danger-800 rounded font-bold text-xs"><i class="fa-solid fa-circle-exclamation mr-1"></i>Atrasado (SLA Vencido)</span>' };
                 } else {
                     const dHoje = new Date(hojeStr);
                     const dLim = new Date(dtLimiteStr);
                     const diffDays = Math.ceil((dLim - dHoje) / (1000 * 60 * 60 * 24));
                     if (diffDays <= 2) {
-                        return { status: 'ATENCAO', html: '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-xs">🟡 Atenção (Próx. Vencimento)</span>' };
+                        return { status: 'ATENCAO', html: '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold text-xs"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Atenção (Próx. Vencimento)</span>' };
                     }
                 }
             }
         }
     }
 
-    return { status: 'SAUDAVEL', html: '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-xs">🟢 Saudável</span>' };
+    return { status: 'SAUDAVEL', html: '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-xs"><i class="fa-solid fa-circle-check mr-1"></i>Saudável</span>' };
 }
