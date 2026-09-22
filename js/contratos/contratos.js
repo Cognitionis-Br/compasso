@@ -263,9 +263,9 @@ async function renderContratosProjetoView() {
                 <td class="p-3 text-xs">${escapeHtml(empresa ? empresa.nome : c.empresa_codigo)}</td>
                 <td class="p-3 text-xs">${escapeHtml(c.numero_contrato)}</td>
                 <td class="p-3 text-xs">${c.data_inicio}</td>
-                <td class="p-3 text-right font-mono">R$ ${Number(c.valor_total).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td class="p-3 text-right font-mono">R$ ${Number(c.valor_realizado || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td class="p-3 text-center">${ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
+                <td class="p-3 text-right font-mono">${formatCurrency(c.valor_total)}</td>
+                <td class="p-3 text-right font-mono">${formatCurrency(c.valor_realizado)}</td>
+                <td class="p-3 text-center">${ativo ? renderBadgeStatus('emerald', null, 'Ativo') : renderBadgeStatus('gray', null, 'Inativo')}</td>
                 <td class="p-3 text-center">${botaoSePodeAtivarInativar('contratos_projeto', `<button onclick="alternarStatusContrato(${c.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i></button>`)}</td>
             </tr>
         `;
@@ -424,8 +424,8 @@ async function renderRelatorioProjetosContratosView() {
                 <td class="p-3 font-semibold">${escapeHtml(p.nome)}</td>
                 <td class="p-3">${p.etapa_atual || 'BUSINESS CASE'}</td>
                 <td class="p-3">${p.sub_status || '-'}</td>
-                <td class="p-3 text-right font-mono">R$ ${valorOrcado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-                <td class="p-3 text-right font-mono">R$ ${valorRealizado.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="p-3 text-right font-mono">${formatCurrency(valorOrcado)}</td>
+                <td class="p-3 text-right font-mono">${formatCurrency(valorRealizado)}</td>
             </tr>
         `;
     }).join('');
@@ -443,7 +443,7 @@ async function abrirZoomRelatorioProjeto(codigo) {
     if (!p) return;
 
     const conteudo = document.getElementById('zoomRelatorioConteudo');
-    conteudo.innerHTML = `<div class="p-8 text-center text-gray-400 font-bold">Carregando...</div>`;
+    conteudo.innerHTML = renderLoadingState();
     document.getElementById('modalZoomRelatorioProjeto').classList.remove('hidden');
 
     // Lookups de Tipo de Projeto, Pilar e Iniciativa Estratégica — mesmo
@@ -522,7 +522,7 @@ async function abrirZoomRelatorioProjeto(codigo) {
                 ${beneficiosDoProjeto.length === 0
                     ? '<div class="italic text-gray-400">Nenhum Benefit Result cadastrado</div>'
                     : beneficiosDoProjeto.map(b => `
-                        <div>${escapeHtml((b.tipos_return_benefit || {}).nome) || '-'}${b.metrica ? ` — <b>${escapeHtml(b.metrica)}</b>: R$ ${Number(b.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}</div>
+                        <div>${escapeHtml((b.tipos_return_benefit || {}).nome) || '-'}${b.metrica ? ` — <b>${escapeHtml(b.metrica)}</b>: ${formatCurrency(b.valor)}` : ''}</div>
                     `).join('')}
             </div>
             ${p.descricao_projeto ? `<div class="text-xs text-gray-600 mt-2 bg-white rounded p-2"><b class="text-gray-500 uppercase text-[10px] block">Descrição do Projeto</b>${escapeHtml(p.descricao_projeto)}</div>` : ''}
@@ -562,7 +562,7 @@ async function abrirZoomRelatorioProjeto(codigo) {
                                     <tbody>
                                         ${pagamentos.map(pg => `
                                             <tr class="border-t border-gray-200">
-                                                <td class="py-1">${pg.registrado_em ? new Date(pg.registrado_em).toLocaleString('pt-BR') : '-'}</td>
+                                                <td class="py-1">${formatDateTime(pg.registrado_em)}</td>
                                                 <td class="py-1">${escapeHtml(pg.numero_nf || '-')}</td>
                                                 <td class="py-1 text-right font-mono">${fmt(pg.valor_pago)}</td>
                                                 <td class="py-1 uppercase">${escapeHtml(pg.registrado_por) || '-'}</td>

@@ -602,7 +602,7 @@ function renderLegendaStatusRoadmap() {
 }
 
 function renderRoadmapPorProjetoGantt(container, lista) {
-    container.innerHTML = `<div class="p-6 text-center text-gray-400 font-bold">Carregando linha do tempo...</div>`;
+    container.innerHTML = renderLoadingState('Carregando linha do tempo...');
 
     _supabase.from('projeto_etapas').select('*').then(({ data, error }) => {
         const todasEtapas = error ? [] : (data || []);
@@ -664,7 +664,7 @@ function renderLinhaGanttProjeto(p, listaCompleta, todasEtapas, extensaoMeses) {
                     </div>
                     <div class="font-bold text-sm underline">${escapeHtml(p.nome)}</div>
                     <div class="text-[10px] mt-1 opacity-80">Área: ${p.area || '-'}</div>
-                    <div class="text-[10px] opacity-80">Orçamento Original: R$ ${(Number(p.val_bc) || Number(p.previsto) || 0).toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>
+                    <div class="text-[10px] opacity-80">Orçamento Original: ${formatCurrency(Number(p.val_bc) || Number(p.previsto) || 0)}</div>
                     <div class="text-[10px] opacity-80">Solicitante: ${escapeHtml(p.pessoa_solicitante) || '-'}</div>
                 </div>
                 <div class="col-span-3 p-3">
@@ -694,7 +694,7 @@ function renderLinhaGanttProjeto(p, listaCompleta, todasEtapas, extensaoMeses) {
 // tempo do "Por Projeto", só que agrupada por área/responsável — antes
 // usava um card antigo (renderCardProjetoRoadmap), sem trilha nenhuma.
 function renderRoadmapAgrupado(container, lista, campoAgrupador, labelAgrupador) {
-    container.innerHTML = `<div class="p-6 text-center text-gray-400 font-bold">Carregando linha do tempo...</div>`;
+    container.innerHTML = renderLoadingState('Carregando linha do tempo...');
 
     _supabase.from('projeto_etapas').select('*').then(({ data, error }) => {
         const todasEtapas = error ? [] : (data || []);
@@ -750,7 +750,7 @@ function renderRoadmapAgrupado(container, lista, campoAgrupador, labelAgrupador)
 const GRUPO_SEM_INICIATIVA = 'Projetos sem Registro de Iniciativa Estratégica';
 
 function renderRoadmapPorIniciativa(container, lista) {
-    container.innerHTML = `<div class="p-6 text-center text-gray-400 font-bold">Carregando linha do tempo...</div>`;
+    container.innerHTML = renderLoadingState('Carregando linha do tempo...');
 
     Promise.all([
         _supabase.from('projeto_etapas').select('*'),

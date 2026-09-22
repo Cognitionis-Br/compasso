@@ -249,7 +249,7 @@ function abrirModalConcluirFase(codigo, config) {
     document.getElementById('conclFaseLabelHorasBC').innerText = `Horas Projeto (${config.labelReferencia})`;
     document.getElementById('conclFaseLabelValorBC').innerText = `Orçamento Projeto (${config.labelReferencia})`;
     document.getElementById('conclFaseHorasBC').innerText = horasReferencia > 0 ? `${horasReferencia}h` : '-';
-    document.getElementById('conclFaseValorBC').innerText = `R$ ${valorReferencia.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    document.getElementById('conclFaseValorBC').innerText = formatCurrency(valorReferencia);
 
     // NOVO (a pedido do usuário 2026-09-15): referência ADICIONAL opcional
     // (hoje só usada em Concluir Etapa de Especificação — mostra também os
@@ -262,7 +262,7 @@ function abrirModalConcluirFase(codigo, config) {
             document.getElementById('conclFaseLabelHorasExtra').innerText = `Horas Projeto (${config.labelExtra})`;
             document.getElementById('conclFaseLabelValorExtra').innerText = `Orçamento Projeto (${config.labelExtra})`;
             document.getElementById('conclFaseHorasExtra').innerText = horasExtra > 0 ? `${horasExtra}h` : '-';
-            document.getElementById('conclFaseValorExtra').innerText = `R$ ${valorExtra.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+            document.getElementById('conclFaseValorExtra').innerText = formatCurrency(valorExtra);
             wrapperReferenciaExtra.classList.remove('hidden');
         } else {
             wrapperReferenciaExtra.classList.add('hidden');
@@ -358,7 +358,7 @@ async function confirmarConclusaoFaseGenerica() {
         ? `\n\n⛔ A variação ultrapassa o percentual de bloqueio parametrizado — o projeto ficará BLOQUEADO, aguardando aprovação em Governança → Aprovar Diferenças de Orçamento, em vez de seguir direto para ${config.proximaFase}.`
         : `\n\nO projeto migrará para a fase ${config.proximaFase}.`;
 
-    if (!confirm(`Confirma a conclusão de ${config.titulo} para ${codigo}?\n\nHoras: ${horasApos}h (Porte calculado: ${tamanho})\nOrçamento revisado: R$ ${valorApos.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}${avisoAlerta}${avisoAlertaHoras}${avisoBloqueio}`)) {
+    if (!confirm(`Confirma a conclusão de ${config.titulo} para ${codigo}?\n\nHoras: ${horasApos}h (Porte calculado: ${tamanho})\nOrçamento revisado: ${formatCurrency(valorApos)}${avisoAlerta}${avisoAlertaHoras}${avisoBloqueio}`)) {
         return;
     }
 

@@ -44,7 +44,7 @@ function obterConfigAF(afStr) {
 function renderStatusFechamentoAF(afStr) {
     const config = obterConfigAF(afStr);
     if (!config || !config.orcamento_fechado) return '';
-    const data = config.fechado_em ? new Date(config.fechado_em).toLocaleDateString('pt-BR') : '-';
+    const data = formatDate(config.fechado_em);
     return `<div class="text-[10px] text-gray-500 mt-1"><i class="fa-solid fa-lock mr-1"></i>Orçamento fechado por <b>${config.fechado_por}</b> em ${data}</div>`;
 }
 
@@ -112,7 +112,7 @@ function renderAnoFiscalPanel() {
                 <div class="font-bold text-lg text-gray-800">${afAnteriorStr || '-'}</div>
                 <div class="text-xs mt-1">${afAnteriorBadge}</div>
                 ${afAnteriorStr && configAnteriorAF && afAnteriorFechado && configAnteriorAF.af_fechado_por
-                    ? `<div class="text-[10px] text-gray-500 mt-1">por <b>${configAnteriorAF.af_fechado_por}</b>${configAnteriorAF.af_fechado_em ? ' em ' + new Date(configAnteriorAF.af_fechado_em).toLocaleDateString('pt-BR') : ''}</div>`
+                    ? `<div class="text-[10px] text-gray-500 mt-1">por <b>${configAnteriorAF.af_fechado_por}</b>${configAnteriorAF.af_fechado_em ? ' em ' + formatDate(configAnteriorAF.af_fechado_em) : ''}</div>`
                     : ''}
             </div>
             <div class="bg-gray-50 border border-gray-200 rounded p-3">

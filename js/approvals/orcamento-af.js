@@ -36,11 +36,11 @@ async function renderAprovOrcamentoAFView() {
     const valorOpex = projsAprovados.filter(p => (p.tipo_orcamento || '').toUpperCase() === 'OPEX').reduce((acc, p) => acc + (Number(p.val_bc) || Number(p.previsto) || 0), 0);
 
     const elValTotal = document.getElementById('afValTotalDisplay');
-    if (elValTotal) elValTotal.innerText = `R$ ${valorTotalAF.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    if (elValTotal) elValTotal.innerText = formatCurrency(valorTotalAF);
     const elValCapex = document.getElementById('afValCapexDisplay');
-    if (elValCapex) elValCapex.innerText = `R$ ${valorCapex.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    if (elValCapex) elValCapex.innerText = formatCurrency(valorCapex);
     const elValOpex = document.getElementById('afValOpexDisplay');
-    if (elValOpex) elValOpex.innerText = `R$ ${valorOpex.toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+    if (elValOpex) elValOpex.innerText = formatCurrency(valorOpex);
 
     const tbody = document.getElementById('afOrcamentoTableBody');
     if (tbody) {
@@ -63,7 +63,7 @@ async function renderAprovOrcamentoAFView() {
                     <td class="p-3 font-mono">${p.dt_aprovacao || '<span class="text-gray-400 italic">Não informada</span>'}</td>
                     <td class="p-3 font-mono">${p.dt_comite || '<span class="text-gray-400 italic">Não informada</span>'}</td>
                     <td class="p-3 font-bold uppercase text-gray-700">${escapeHtml(p.aprovador_nome) || '<span class="text-gray-400 italic">Não informado</span>'}</td>
-                    <td class="p-3 font-mono font-bold text-right text-green-700">R$ ${(Number(p.val_bc)||Number(p.previsto)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                    <td class="p-3 font-mono font-bold text-right text-emerald-700">${formatCurrency(Number(p.val_bc)||Number(p.previsto)||0)}</td>
                 </tr>
             `;
         }).join('');
@@ -111,7 +111,7 @@ async function executarAprovacaoGlobalOrcamentoAF() {
 
     const mensagemConfirmacao = `CONFIRMAÇÃO DE APROVAÇÃO DO ORÇAMENTO AF:\n\n` +
         `• Projetos Qualificados: ${projsAprovados.length}\n` +
-        `• Valor Total do Orçamento Homologado: R$ ${valorTotalAF.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n\n` +
+        `• Valor Total do Orçamento Homologado: ${formatCurrency(valorTotalAF)}\n\n` +
         `Ao confirmar, o orçamento será oficialmente FECHADO e novas demandas comuns serão bloqueadas (permitidas apenas via Extraordinário). Deseja prosseguir?`;
 
     if (!confirm(mensagemConfirmacao)) return;

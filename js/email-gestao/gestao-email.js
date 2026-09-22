@@ -149,7 +149,7 @@ async function renderFilaEmailPendentes() {
         const ctx = e.contexto || {};
         return `
             <tr>
-                <td class="p-3 text-xs">${e.created_at ? new Date(e.created_at).toLocaleString('pt-BR') : '-'}</td>
+                <td class="p-3 text-xs">${formatDateTime(e.created_at)}</td>
                 <td class="p-3 text-xs">${ctx.etapa || '-'}</td>
                 <td class="p-3 text-xs">${ctx.quando_dispara || '-'}</td>
                 <td class="p-3 text-xs">${e.destinatario_nome ? escapeHtml(e.destinatario_nome) + ' — ' : ''}${escapeHtml(e.destinatario_email)}</td>

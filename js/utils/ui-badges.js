@@ -34,3 +34,12 @@ function renderBadgeStatus(corKey, icone, texto, titulo) {
     const tituloAttr = titulo ? ` title="${escapeHtml(titulo)}"` : '';
     return `<span class="px-2 py-0.5 rounded text-[10px] font-bold ${classes}"${tituloAttr}>${iconeHtml}${escapeHtml(texto)}</span>`;
 }
+
+// NOVO (evolução visual — consolidação de UX): placeholder de "carregando"
+// único — só 5 telas no app inteiro emitiam algum feedback de carregamento,
+// com padding (p-8 vs p-6) e texto (genérico vs específico) divergentes.
+// texto é opcional (default "Carregando..."); passe algo mais específico
+// quando ajudar ("Carregando linha do tempo...").
+function renderLoadingState(texto) {
+    return `<div class="p-6 text-center text-gray-400 font-bold">${escapeHtml(texto || 'Carregando...')}</div>`;
+}

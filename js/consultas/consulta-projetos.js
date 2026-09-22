@@ -97,8 +97,8 @@ async function renderConsultaProjetos() {
     projetosComSaude.forEach(({ p, saude }) => {
         const qualif = (p.tipo_qualificacao || 'REG').toUpperCase();
         const badgeQualif = qualif === 'GROW' ? 'bg-purple-100 text-purple-800' : qualif === 'RUN' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
-        const valPrevisto = (Number(p.val_bc) || Number(p.previsto) || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
-        const valRealizado = (Number(p.realizado) || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+        const valPrevisto = formatCurrency(Number(p.val_bc) || Number(p.previsto) || 0);
+        const valRealizado = formatCurrency(Number(p.realizado) || 0);
 
         linhasTabela += `
             <tr>
@@ -108,8 +108,8 @@ async function renderConsultaProjetos() {
                 <td class="p-3 text-xs">${p.tipo_orcamento || '-'}</td>
                 <td class="p-3 text-xs font-bold">${p.etapa_atual || 'BUSINESS CASE'}</td>
                 <td class="p-3 text-xs">${p.sub_status || '-'}</td>
-                <td class="p-3 font-mono text-right">R$ ${valPrevisto}</td>
-                <td class="p-3 font-mono text-right text-red-600">R$ ${valRealizado}</td>
+                <td class="p-3 font-mono text-right">${valPrevisto}</td>
+                <td class="p-3 font-mono text-right text-red-600">${valRealizado}</td>
                 <td class="p-3 text-xs text-center">${saude.html}</td>
             </tr>
         `;
@@ -127,8 +127,8 @@ async function renderConsultaProjetos() {
                     <div><span class="text-gray-400">Tipo:</span> <b>${p.tipo_orcamento || '-'}</b></div>
                     <div><span class="text-gray-400">Fase:</span> <b>${p.etapa_atual || 'BUSINESS CASE'}</b></div>
                     <div><span class="text-gray-400">Status:</span> <b>${p.sub_status || '-'}</b></div>
-                    <div><span class="text-gray-400">Previsto:</span> <b>R$ ${valPrevisto}</b></div>
-                    <div><span class="text-gray-400">Realizado:</span> <b class="text-red-600">R$ ${valRealizado}</b></div>
+                    <div><span class="text-gray-400">Previsto:</span> <b>${valPrevisto}</b></div>
+                    <div><span class="text-gray-400">Realizado:</span> <b class="text-red-600">${valRealizado}</b></div>
                 </div>
             </div>
         `;

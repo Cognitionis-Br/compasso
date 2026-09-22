@@ -36,9 +36,9 @@ async function renderReturnBenefitView() {
     tbody.innerHTML = returnBenefitCache.map(rb => `
         <tr class="${!rb.ativo ? 'opacity-50' : ''}">
             <td class="p-3 font-semibold">${escapeHtml(rb.nome)}</td>
-            <td class="p-3 text-center">${rb.permite_valor ? '<span class="bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Sim</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Não</span>'}</td>
-            <td class="p-3 text-[10px] text-gray-400">${rb.atualizado_por || rb.criado_por || '-'} · ${(rb.atualizado_em || rb.criado_em) ? new Date(rb.atualizado_em || rb.criado_em).toLocaleString('pt-BR') : '-'}</td>
-            <td class="p-3 text-center">${rb.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
+            <td class="p-3 text-center">${rb.permite_valor ? renderBadgeStatus('blue', null, 'Sim') : renderBadgeStatus('gray', null, 'Não')}</td>
+            <td class="p-3 text-[10px] text-gray-400">${rb.atualizado_por || rb.criado_por || '-'} · ${formatDateTime(rb.atualizado_em || rb.criado_em)}</td>
+            <td class="p-3 text-center">${rb.ativo ? renderBadgeStatus('emerald', null, 'Ativo') : renderBadgeStatus('gray', null, 'Inativo')}</td>
             <td class="p-3 text-center space-x-2">
                 ${botaoSePodeAlterar('return_benefit', `<button onclick="editarReturnBenefit(${rb.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>`)}
                 ${botaoSePodeAtivarInativar('return_benefit', `<button onclick="alternarAtivoReturnBenefit(${rb.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>`)}

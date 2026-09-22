@@ -65,8 +65,8 @@ async function carregarPilares() {
             <td class="p-3 font-mono font-bold">${p.ano_fiscal}</td>
             <td class="p-3 font-semibold">${escapeHtml(p.nome)}</td>
             <td class="p-3 text-gray-500">${escapeHtml(p.descricao) || '-'}</td>
-            <td class="p-3 text-[10px] text-gray-400">${escapeHtml(p.atualizado_por) || '-'} · ${p.atualizado_em ? new Date(p.atualizado_em).toLocaleString('pt-BR') : '-'}</td>
-            <td class="p-3 text-center">${p.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
+            <td class="p-3 text-[10px] text-gray-400">${escapeHtml(p.atualizado_por) || '-'} · ${formatDateTime(p.atualizado_em)}</td>
+            <td class="p-3 text-center">${p.ativo ? renderBadgeStatus('emerald', null, 'Ativo') : renderBadgeStatus('gray', null, 'Inativo')}</td>
             <td class="p-3 text-center space-x-2">
                 ${botaoSePodeAlterar('planejamento_estrategico', `<button onclick="editarPilar(${p.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>`)}
                 ${botaoSePodeAtivarInativar('planejamento_estrategico', `<button onclick="alternarAtivoPilar(${p.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>`)}
@@ -108,8 +108,8 @@ async function carregarIniciativas() {
                 <td class="p-3 text-xs">${pilar ? escapeHtml(pilar.nome) : '(pilar não encontrado)'}</td>
                 <td class="p-3 font-semibold">${escapeHtml(ini.nome)}</td>
                 <td class="p-3 text-gray-500">${escapeHtml(ini.descricao) || '-'}</td>
-                <td class="p-3 text-[10px] text-gray-400">${escapeHtml(ini.atualizado_por) || '-'} · ${ini.atualizado_em ? new Date(ini.atualizado_em).toLocaleString('pt-BR') : '-'}</td>
-                <td class="p-3 text-center">${ini.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
+                <td class="p-3 text-[10px] text-gray-400">${escapeHtml(ini.atualizado_por) || '-'} · ${formatDateTime(ini.atualizado_em)}</td>
+                <td class="p-3 text-center">${ini.ativo ? renderBadgeStatus('emerald', null, 'Ativo') : renderBadgeStatus('gray', null, 'Inativo')}</td>
                 <td class="p-3 text-center space-x-2">
                     ${botaoSePodeAlterar('planejamento_estrategico', `<button onclick="editarIniciativa(${ini.id})" class="text-indigo-600 hover:text-indigo-800 font-bold"><i class="fa-solid fa-pen-to-square"></i></button>`)}
                     ${botaoSePodeAtivarInativar('planejamento_estrategico', `<button onclick="alternarAtivoIniciativa(${ini.id})" class="text-amber-600 hover:text-amber-800 font-bold"><i class="fa-solid fa-power-off"></i></button>`)}

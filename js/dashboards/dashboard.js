@@ -215,8 +215,8 @@ async function renderDashboardMetrics() {
             projetosComSaude.forEach(({ p, saude }) => {
                 const qualif = (p.tipo_qualificacao || 'REG').toUpperCase();
                 const badgeQualif = qualif === 'GROW' ? 'bg-purple-100 text-purple-800' : qualif === 'RUN' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
-                const valPrevisto = (Number(p.val_bc) || Number(p.previsto) || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
-                const valRealizado = (Number(p.realizado) || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+                const valPrevisto = formatCurrency(Number(p.val_bc) || Number(p.previsto) || 0);
+                const valRealizado = formatCurrency(Number(p.realizado) || 0);
 
                 linhasTabela += `
                     <tr>
@@ -226,8 +226,8 @@ async function renderDashboardMetrics() {
                         <td class="p-3 text-xs"><span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${badgeQualif}">${qualif}</span></td>
                         <td class="p-3 text-xs font-bold">${p.etapa_atual || 'BUSINESS CASE'}</td>
                         <td class="p-3 text-xs">${p.sub_status || '-'}</td>
-                        <td class="p-3 font-mono text-right">R$ ${valPrevisto}</td>
-                        <td class="p-3 font-mono text-right text-red-600">R$ ${valRealizado}</td>
+                        <td class="p-3 font-mono text-right">${valPrevisto}</td>
+                        <td class="p-3 font-mono text-right text-red-600">${valRealizado}</td>
                         <td class="p-3 text-xs text-center">${saude.html}</td>
                     </tr>
                 `;
@@ -245,8 +245,8 @@ async function renderDashboardMetrics() {
                             <div><span class="text-gray-400">Tipo:</span> <b>${p.tipo_orcamento || '-'}</b></div>
                             <div><span class="text-gray-400">Fase:</span> <b>${p.etapa_atual || 'BUSINESS CASE'}</b></div>
                             <div><span class="text-gray-400">Status:</span> <b>${p.sub_status || '-'}</b></div>
-                            <div><span class="text-gray-400">Previsto:</span> <b>R$ ${valPrevisto}</b></div>
-                            <div><span class="text-gray-400">Realizado:</span> <b class="text-red-600">R$ ${valRealizado}</b></div>
+                            <div><span class="text-gray-400">Previsto:</span> <b>${valPrevisto}</b></div>
+                            <div><span class="text-gray-400">Realizado:</span> <b class="text-red-600">${valRealizado}</b></div>
                         </div>
                     </div>
                 `;
@@ -280,7 +280,7 @@ function renderTabelaCarryoverDashboard(listaFiltrada) {
             <td class="p-3 font-mono font-bold text-orange-700">${p.codigo}</td>
             <td class="p-3 font-semibold">${escapeHtml(p.nome)}</td>
             <td class="p-3 text-xs font-bold">${p.etapa_atual || 'BUSINESS CASE'} <br><span class="text-gray-500 font-normal">${p.sub_status || '-'}</span></td>
-            <td class="p-3 text-right font-mono font-bold text-orange-700">R$ ${Number(p.valor_carryover || 0).toLocaleString('pt-BR', {minimumFractionDigits:2})}</td>
+            <td class="p-3 text-right font-mono font-bold text-orange-700">${formatCurrency(p.valor_carryover)}</td>
             <td class="p-3 text-xs text-gray-500">${escapeHtml(p.carryover_marcado_por) || '-'}</td>
         </tr>
     `).join('');

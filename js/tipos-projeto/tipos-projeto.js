@@ -42,8 +42,8 @@ async function renderTiposProjetoView() {
         <tr class="${!t.ativo ? 'opacity-50' : ''}">
             <td class="p-3 font-mono font-bold">${t.codigo}</td>
             <td class="p-3 font-semibold">${escapeHtml(t.descricao)}</td>
-            <td class="p-3 text-[10px] text-gray-400">${escapeHtml(t.criado_por) || '-'} · ${t.criado_em ? new Date(t.criado_em).toLocaleString('pt-BR') : '-'}</td>
-            <td class="p-3 text-center">${t.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
+            <td class="p-3 text-[10px] text-gray-400">${escapeHtml(t.criado_por) || '-'} · ${formatDateTime(t.criado_em)}</td>
+            <td class="p-3 text-center">${t.ativo ? renderBadgeStatus('emerald', null, 'Ativo') : renderBadgeStatus('gray', null, 'Inativo')}</td>
             <td class="p-3 text-center">
                 ${botaoSePodeAlterar('tipos_projeto', `<button onclick="editarTipoProjeto(${t.id})" class="text-indigo-600 hover:text-indigo-800 font-bold text-xs mr-2"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`)}
                 ${botaoSePodeAtivarInativar('tipos_projeto', `<button onclick="alternarAtivoTipoProjeto(${t.id})" class="text-amber-600 hover:text-amber-800 font-bold text-xs"><i class="fa-solid fa-power-off"></i> ${t.ativo ? 'Inativar' : 'Reativar'}</button>`)}

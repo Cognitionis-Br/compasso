@@ -1011,7 +1011,7 @@ async function confirmarEvolucaoGenerica() {
             if (valorOrcado > 0 && valor_gasto_execucao > valorOrcado) {
                 const diferenca = valor_gasto_execucao - valorOrcado;
                 const confirmouDivergencia = confirm(
-                    `⚠️ O valor gasto (R$ ${valor_gasto_execucao.toLocaleString('pt-BR', {minimumFractionDigits:2})}) é MAIOR que o valor orçado pro projeto (R$ ${valorOrcado.toLocaleString('pt-BR', {minimumFractionDigits:2})}) — diferença de R$ ${diferenca.toLocaleString('pt-BR', {minimumFractionDigits:2})}.\n\nConfirma e aprova essa divergência, ciente de que ela vai ficar registrada?`
+                    `⚠️ O valor gasto (${formatCurrency(valor_gasto_execucao)}) é MAIOR que o valor orçado pro projeto (${formatCurrency(valorOrcado)}) — diferença de ${formatCurrency(diferenca)}.\n\nConfirma e aprova essa divergência, ciente de que ela vai ficar registrada?`
                 );
                 if (!confirmouDivergencia) {
                     return alert('Conclusão cancelada — o valor gasto não pode exceder o orçado sem aprovação da divergência.');

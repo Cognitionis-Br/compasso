@@ -62,7 +62,7 @@ function _fmtDataMenos1(iso) {
     if (!iso) return '-';
     const d = new Date(String(iso).split('T')[0] + 'T00:00:00');
     d.setDate(d.getDate() - 1);
-    return d.toLocaleDateString('pt-BR');
+    return formatDate(d);
 }
 
 async function renderPeriodoAnoFiscalView() {
@@ -87,7 +87,7 @@ async function renderPeriodoAnoFiscalView() {
     if (elFim) elFim.innerText = NOMES_MESES_PT[mesEncerramentoAnoFiscal(mesAtual) - 1];
 
     const elVig = document.getElementById('periodoAnoFiscalVigenciaInfo');
-    if (elVig) elVig.innerText = new Date(_primeiroDiaMesAtualISO() + 'T00:00:00').toLocaleDateString('pt-BR');
+    if (elVig) elVig.innerText = formatDate(_primeiroDiaMesAtualISO());
 
     const elHist = document.getElementById('periodoAnoFiscalHistorico');
     if (elHist) {
@@ -96,7 +96,7 @@ async function renderPeriodoAnoFiscalView() {
         // mais antigo.
         const asc = (configPeriodoAFCache || []).slice().sort((a, b) => String(a.vigencia_de).localeCompare(String(b.vigencia_de)));
         const linhas = asc.map((l, i) => {
-            const ini = l.vigencia_de ? new Date(String(l.vigencia_de).split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR') : '-';
+            const ini = formatDate(l.vigencia_de);
             const fim = (i < asc.length - 1) ? _fmtDataMenos1(asc[i + 1].vigencia_de) : 'atual';
             return { l, ini, fim };
         }).reverse();
@@ -107,7 +107,7 @@ async function renderPeriodoAnoFiscalView() {
                     <td class="p-2">${ini} <span class="text-gray-400">→</span> ${fim}</td>
                     <td class="p-2 font-bold">${NOMES_MESES_PT[(Number(l.mes_inicio) || 4) - 1]}</td>
                     <td class="p-2">${l.mes_inicio_anterior ? NOMES_MESES_PT[(Number(l.mes_inicio_anterior)) - 1] : '-'}</td>
-                    <td class="p-2 uppercase font-bold">${escapeHtml(l.alterado_por || '-')}<span class="block text-[9px] text-gray-400">${l.alterado_em ? new Date(l.alterado_em).toLocaleString('pt-BR') : ''}</span></td>
+                    <td class="p-2 uppercase font-bold">${escapeHtml(l.alterado_por || '-')}<span class="block text-[9px] text-gray-400">${formatDateTime(l.alterado_em)}</span></td>
                 </tr>`).join('');
     }
 }
@@ -140,7 +140,7 @@ async function salvarPeriodoAnoFiscal() {
     if ((configPeriodoAFCache || []).some(l => String(l.vigencia_de).split('T')[0] === vigencia)) {
         return alert('Já existe um período com vigência neste mês. Só é possível registrar uma alteração por mês.');
     }
-    if (!confirm(`Confirmar: o Ano Fiscal passa a começar em ${NOMES_MESES_PT[novoMes - 1]} a partir de ${new Date(vigencia + 'T00:00:00').toLocaleDateString('pt-BR')}?\n\nDatas anteriores a essa vigência continuam apuradas no período antigo. Quarters e rótulos "AFxxxx" das telas passam a refletir o novo período.`)) return;
+    if (!confirm(`Confirmar: o Ano Fiscal passa a começar em ${NOMES_MESES_PT[novoMes - 1]} a partir de ${formatDate(vigencia)}?\n\nDatas anteriores a essa vigência continuam apuradas no período antigo. Quarters e rótulos "AFxxxx" das telas passam a refletir o novo período.`)) return;
 
     const payload = {
         mes_inicio: novoMes,

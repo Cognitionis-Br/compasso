@@ -12,9 +12,18 @@ function formatCurrency(val) {
 // formatavam data ad-hoc (toLocaleString/toLocaleDateString/split('T')[0]
 // espalhados, cada uma decidindo por conta própria) — pontos únicos de
 // verdade aqui, aceitando Date, string ISO ou timestamp.
+// Descarta a hora e força meia-noite LOCAL (split('T')[0] + 'T00:00:00')
+// — mesmo truque que já existia espalhado pelo código: sem isso,
+// `new Date('2026-01-15')` é interpretado como UTC, e em fuso negativo
+// (Brasil) a data exibida "volta" um dia.
 function formatDate(val) {
     if (!val) return '-';
-    const d = (val instanceof Date) ? val : new Date(val);
+    let d;
+    if (val instanceof Date) {
+        d = val;
+    } else {
+        d = new Date(String(val).split('T')[0] + 'T00:00:00');
+    }
     if (isNaN(d.getTime())) return '-';
     return d.toLocaleDateString('pt-BR');
 }

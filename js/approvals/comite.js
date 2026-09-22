@@ -45,7 +45,7 @@ function renderAprovComiteView() {
             <td class="p-3 font-semibold">${escapeHtml(p.nome)}</td>
             <td class="p-3 font-bold">${p.area || '-'}</td>
             <td class="p-3">${p.tipo_orcamento || 'CAPEX'}</td>
-            <td class="p-3 font-mono font-bold text-right text-red-700">R$ ${(Number(p.previsto)||Number(p.val_bc)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+            <td class="p-3 font-mono font-bold text-right text-red-700">${formatCurrency(Number(p.previsto)||Number(p.val_bc)||0)}</td>
             <td class="p-3 text-gray-600">
                 ${p.dt_aprovacao ? `<b>Aprovado em:</b> ${p.dt_aprovacao}<br><b>Comitê:</b> ${p.dt_comite || '-'}<br><b>Por:</b> ${escapeHtml(p.aprovador_nome) || '-'}` : '<span class="italic text-gray-400">Pendente registro</span>'}
             </td>

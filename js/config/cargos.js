@@ -56,7 +56,7 @@ function renderCargosTable() {
         return `
         <tr class="${!c.ativo ? 'opacity-50' : ''}">
             <td class="p-3 font-semibold">${escapeHtml(c.nome)}${reservado ? ' <span class="text-[9px] bg-gray-200 text-gray-500 px-1 rounded uppercase">reservado</span>' : ''}</td>
-            <td class="p-3 text-[10px] text-gray-400">${escapeHtml(c.criado_por) || '-'} · ${c.criado_em ? new Date(c.criado_em).toLocaleString('pt-BR') : '-'}</td>
+            <td class="p-3 text-[10px] text-gray-400">${escapeHtml(c.criado_por) || '-'} · ${formatDateTime(c.criado_em)}</td>
             <td class="p-3 text-center">${c.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
             <td class="p-3 text-center">
                 ${reservado ? '' : botaoSePodeAlterar('cargos', `<button onclick="editarCargo(${c.id})" class="text-indigo-600 hover:text-indigo-800 font-bold text-xs mr-2"><i class="fa-solid fa-pen-to-square"></i> Editar</button>`)}

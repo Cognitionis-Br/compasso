@@ -226,7 +226,7 @@ function renderTabelaBeneficiosDemanda() {
         <tr class="border-b border-gray-100">
             <td class="p-2">${escapeHtml(b.nome)}</td>
             <td class="p-2">${b.metrica || '-'}</td>
-            <td class="p-2 text-right font-mono">${b.valor !== null ? 'R$ ' + b.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}</td>
+            <td class="p-2 text-right font-mono">${b.valor !== null ? formatCurrency(b.valor) : '-'}</td>
             <td class="p-2 text-center"><button type="button" onclick="removerBeneficioDemanda(${idx})" class="text-danger-600 hover:text-danger-800"><i class="fa-solid fa-trash"></i></button></td>
         </tr>
     `).join('');

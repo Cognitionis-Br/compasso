@@ -85,7 +85,7 @@ async function renderContratosVinculosView() {
                 <td class="p-3 font-mono font-bold text-red-700">${v.projeto_codigo}${projeto ? ' - ' + escapeHtml(projeto.nome) : ''}</td>
                 <td class="p-3 text-xs">${escapeHtml(contrato ? contrato.numero_contrato : '-')}</td>
                 <td class="p-3 text-xs">${escapeHtml(empresa ? empresa.nome : (contrato ? contrato.empresa_codigo : '-'))}</td>
-                <td class="p-3 text-right font-mono">R$ ${Number(v.valor_vinculo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="p-3 text-right font-mono">${formatCurrency(v.valor_vinculo)}</td>
                 <td class="p-3 text-center">
                     ${editavel
                         ? botaoSePodeDeletar('contratos_vinculos', `<button onclick="excluirVinculoContrato(${v.id})" class="text-danger-600 hover:text-danger-800 font-bold text-xs"><i class="fa-solid fa-trash-can"></i> Excluir</button>`)
@@ -221,13 +221,13 @@ async function adicionarDistribuicaoContrato() {
     const contrato = contratosProjetoCache.find(c => c.id === contratoId);
     const saldoContrato = Number(contrato.valor_total || 0) - somaVinculosDoContrato(contratoId, null);
     if (valorVinculo > saldoContrato + 0.005) {
-        return alert(`⛔ O valor (${valorVinculo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) supera o saldo a distribuir do contrato (R$ ${saldoContrato.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`);
+        return alert(`⛔ O valor (${formatCurrency(valorVinculo)}) supera o saldo a distribuir do contrato (${formatCurrency(saldoContrato)}).`);
     }
     const projeto = (projectsData || []).find(p => p.codigo === projetoCodigo);
     const orc = projeto ? obterOrcamentoProjeto(projeto) : 0;
     const totalProjeto = somaVinculosDoProjeto(projetoCodigo, null) + valorVinculo;
     if (orc > 0 && totalProjeto > orc + 0.005) {
-        return alert(`⛔ A soma dos vínculos do projeto (R$ ${totalProjeto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) superaria o orçamento dele (R$ ${orc.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`);
+        return alert(`⛔ A soma dos vínculos do projeto (${formatCurrency(totalProjeto)}) superaria o orçamento dele (${formatCurrency(orc)}).`);
     }
     const { error } = await _supabase.from('contratos_vinculos_projeto').insert([{
         contrato_id: contratoId, projeto_codigo: projetoCodigo, valor_vinculo: valorVinculo,
@@ -372,7 +372,7 @@ async function salvarVinculoContrato() {
     // menos o que já está vinculado a outros projetos.
     const saldoContrato = Number(contrato.valor_total) - somaVinculosDoContrato(contratoId, null);
     if (valorVinculo > saldoContrato) {
-        return alert(`⛔ O valor do vínculo (R$ ${valorVinculo.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) supera o saldo disponível deste contrato (R$ ${saldoContrato.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}, já considerando outros vínculos).`);
+        return alert(`⛔ O valor do vínculo (${formatCurrency(valorVinculo)}) supera o saldo disponível deste contrato (${formatCurrency(saldoContrato)}, já considerando outros vínculos).`);
     }
 
     // Regra: soma dos vínculos do projeto não pode superar o orçamento dele.
@@ -380,7 +380,7 @@ async function salvarVinculoContrato() {
     const orcamentoProjeto = projeto ? obterOrcamentoProjeto(projeto) : 0;
     const totalVinculadoProjeto = somaVinculosDoProjeto(projetoCodigo, null) + valorVinculo;
     if (orcamentoProjeto > 0 && totalVinculadoProjeto > orcamentoProjeto) {
-        return alert(`⛔ A soma dos vínculos deste projeto (R$ ${totalVinculadoProjeto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}) superaria o orçamento dele (R$ ${orcamentoProjeto.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`);
+        return alert(`⛔ A soma dos vínculos deste projeto (${formatCurrency(totalVinculadoProjeto)}) superaria o orçamento dele (${formatCurrency(orcamentoProjeto)}).`);
     }
 
     const { error } = await _supabase.from('contratos_vinculos_projeto').insert([{

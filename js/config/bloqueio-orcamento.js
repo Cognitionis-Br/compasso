@@ -39,7 +39,7 @@ async function renderPercentualBloqueioOrcamentoView() {
     if (elLog) {
         const vigente = bloqueioPercentualCache === null ? 'sem bloqueio (em branco)' : `${bloqueioPercentualCache}%`;
         elLog.innerHTML = cfg.atualizado_em
-            ? `Percentual vigente: <b>${vigente}</b> · última alteração por <b class="uppercase">${escapeHtml(cfg.atualizado_por || '-')}</b> em ${new Date(cfg.atualizado_em).toLocaleString('pt-BR')}.`
+            ? `Percentual vigente: <b>${vigente}</b> · última alteração por <b class="uppercase">${escapeHtml(cfg.atualizado_por || '-')}</b> em ${formatDateTime(cfg.atualizado_em)}.`
             : `Percentual vigente: <b>${vigente}</b> (nunca alterado).`;
     }
 
@@ -61,7 +61,7 @@ async function _renderHistoricoBloqueioOrcamento() {
             <tr>
                 <td class="p-2 font-bold">${_fmtPercentualBloqueio(l.percentual_novo)} <span class="text-gray-400 font-normal">(anterior: ${_fmtPercentualBloqueio(l.percentual_anterior)})</span></td>
                 <td class="p-2 uppercase font-bold">${escapeHtml(l.alterado_por || '-')}</td>
-                <td class="p-2">${l.alterado_em ? new Date(l.alterado_em).toLocaleString('pt-BR') : '-'}</td>
+                <td class="p-2">${formatDateTime(l.alterado_em)}</td>
             </tr>`).join('');
 }
 

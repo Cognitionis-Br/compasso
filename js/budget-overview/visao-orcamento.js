@@ -120,16 +120,16 @@ async function renderVisaoOrcamentoView() {
             corCartao = 'border-l-4 border-l-danger-500';
         }
 
-        const valBcFmt = valBc.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-        const valReqFmt = valReq > 0 ? 'R$ ' + valReq.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '-';
-        const valTechFmt = valTech > 0 ? 'R$ ' + valTech.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '-';
+        const valBcFmt = formatCurrency(valBc);
+        const valReqFmt = valReq > 0 ? formatCurrency(valReq) : '-';
+        const valTechFmt = valTech > 0 ? formatCurrency(valTech) : '-';
 
         linhasTabela += `
             <tr>
                 <td class="p-3 font-bold text-red-700">${p.codigo}</td>
                 <td class="p-3 font-semibold text-gray-900">${escapeHtml(p.nome)}</td>
                 <td class="p-3 text-center font-bold">${p.tamanho || 'M'}<div class="text-[10px] font-normal text-gray-500">${horasAtuaisDoProjeto(p)}h</div></td>
-                <td class="p-3 text-right">R$ ${valBcFmt}</td>
+                <td class="p-3 text-right">${valBcFmt}</td>
                 <td class="p-3 text-right text-purple-800">${valReqFmt}</td>
                 <td class="p-3 text-right text-blue-800">${valTechFmt}</td>
                 <td class="p-3 text-right font-bold">${diffPct > 0 ? '+' : ''}${diffPct.toFixed(1)}%</td>
@@ -145,7 +145,7 @@ async function renderVisaoOrcamentoView() {
                 </div>
                 <div class="font-semibold text-sm text-gray-800 mb-2">${escapeHtml(p.nome)}</div>
                 <div class="grid grid-cols-3 gap-2 text-xs text-gray-600 border-t pt-2 mb-2">
-                    <div><span class="text-gray-400 block">BC</span><b>R$ ${valBcFmt}</b></div>
+                    <div><span class="text-gray-400 block">BC</span><b>${valBcFmt}</b></div>
                     <div><span class="text-gray-400 block">Req</span><b class="text-purple-800">${valReqFmt}</b></div>
                     <div><span class="text-gray-400 block">Tech</span><b class="text-blue-800">${valTechFmt}</b></div>
                 </div>

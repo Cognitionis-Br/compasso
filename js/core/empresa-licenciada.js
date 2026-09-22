@@ -166,7 +166,7 @@ function mostrarTelaLicencaExpirada() {
     const e = empresaLicenciadaCache || {};
     const elInfo = document.getElementById('licencaExpiradaInfo');
     if (elInfo) elInfo.textContent = e.vigencia_termino
-        ? `Vigência encerrada em ${new Date(String(e.vigencia_termino).split('T')[0] + 'T00:00:00').toLocaleDateString('pt-BR')}.`
+        ? `Vigência encerrada em ${formatDate(e.vigencia_termino)}.`
         : '';
     const bloco = document.getElementById('licencaExpiradaRenovacao');
     const semPerm = document.getElementById('licencaExpiradaSemPermissao');

@@ -49,16 +49,16 @@ function renderAlertasOrcamentoView() {
         const valBc = Number(p.val_bc) || Number(p.previsto) || 0;
         const valReq = Number(p.val_req) || 0;
         const valTech = Number(p.val_tech) || 0;
-        const valBcFmt = valBc.toLocaleString('pt-BR', {minimumFractionDigits: 2});
-        const valReqFmt = valReq > 0 ? 'R$ ' + valReq.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '-';
-        const valTechFmt = valTech > 0 ? 'R$ ' + valTech.toLocaleString('pt-BR', {minimumFractionDigits: 2}) : '-';
+        const valBcFmt = formatCurrency(valBc);
+        const valReqFmt = valReq > 0 ? formatCurrency(valReq) : '-';
+        const valTechFmt = valTech > 0 ? formatCurrency(valTech) : '-';
 
         linhasTabela += `
             <tr>
                 <td class="p-3 font-mono font-bold text-red-700">${p.codigo}</td>
                 <td class="p-3 font-semibold">${escapeHtml(p.nome)}</td>
                 <td class="p-3 text-center font-bold">${p.tamanho || 'M'}<div class="text-[10px] font-normal text-gray-500">${horasAtuaisDoProjeto(p)}h</div></td>
-                <td class="p-3 text-right">R$ ${valBcFmt}</td>
+                <td class="p-3 text-right">${valBcFmt}</td>
                 <td class="p-3 text-right text-purple-800">${valReqFmt}</td>
                 <td class="p-3 text-right text-blue-800">${valTechFmt}</td>
                 <td class="p-3 text-xs font-bold">${fase}</td>

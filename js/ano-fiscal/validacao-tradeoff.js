@@ -53,7 +53,7 @@ async function renderValidacaoTradeoffView() {
             ? `<tr><td colspan="6" class="p-4 text-center text-gray-400 font-bold">Nenhuma pendência de validação.</td></tr>`
             : validacaoTradeoffCache.map(p => `
                 <tr>
-                    <td class="p-2 whitespace-nowrap">${p.criado_em ? new Date(p.criado_em).toLocaleString('pt-BR') : '-'}<span class="block text-[9px] text-gray-400 uppercase">${escapeHtml(p.criado_por || '-')}</span></td>
+                    <td class="p-2 whitespace-nowrap">${formatDateTime(p.criado_em)}<span class="block text-[9px] text-gray-400 uppercase">${escapeHtml(p.criado_por || '-')}</span></td>
                     <td class="p-2 font-mono font-bold text-red-700">${escapeHtml(p.projeto_adhoc_codigo)}</td>
                     <td class="p-2 font-bold">${p.modo_controle === 'AREA' ? 'Área' : 'Produto'}</td>
                     <td class="p-2 text-right font-mono">${formatCurrency(Number(p.valor_adhoc) || 0)}</td>

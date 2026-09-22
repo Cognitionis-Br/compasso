@@ -79,8 +79,8 @@ async function renderFechamentoAfView() {
     const elCtx = document.getElementById('fechamentoAfContextoAF');
     if (elCtx) {
         const badge = fechamentoAfJaFechado()
-            ? `<span class="bg-green-100 text-green-800 font-bold px-2 py-1 rounded text-[10px]">🔒 Ano Fiscal fechado por ${escapeHtml(cfgAlvo.af_fechado_por) || '-'}${cfgAlvo.af_fechado_em ? ' em ' + new Date(cfgAlvo.af_fechado_em).toLocaleDateString('pt-BR') : ''}</span>`
-            : `<span class="bg-amber-100 text-amber-800 font-bold px-2 py-1 rounded text-[10px]">⏳ Ano Fiscal em fechamento</span>`;
+            ? renderBadgeStatus('emerald', 'fa-lock', `Ano Fiscal fechado por ${cfgAlvo.af_fechado_por || '-'}${cfgAlvo.af_fechado_em ? ' em ' + formatDate(cfgAlvo.af_fechado_em) : ''}`)
+            : renderBadgeStatus('amber', 'fa-hourglass-half', 'Ano Fiscal em fechamento');
         elCtx.innerHTML = `<b>Ano Fiscal sendo encerrado:</b> <span class="font-mono font-bold">${alvo || '-'}</span> &nbsp; ${badge} <span class="text-[10px] text-gray-400 ml-2">(quarter atual: ${info.quarterAtual || '-'})</span>`;
     }
 
@@ -97,9 +97,9 @@ function renderFechamentoAfAcaoFechar() {
 
     if (fechamentoAfJaFechado()) {
         el.innerHTML = `
-            <div class="bg-green-50 border border-green-300 rounded-lg p-4 text-xs text-green-800">
-                <b>🔒 ${alvo} já foi fechado.</b> por ${escapeHtml(cfgAlvo.af_fechado_por) || '-'}${cfgAlvo.af_fechado_em ? ' em ' + new Date(cfgAlvo.af_fechado_em).toLocaleString('pt-BR') : ''}.
-                ${cfgAlvo.af_fechado_observacao ? `<div class="mt-1 text-green-700">Comentário: ${escapeHtml(cfgAlvo.af_fechado_observacao)}</div>` : ''}
+            <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-4 text-xs text-emerald-800">
+                <b><i class="fa-solid fa-lock mr-1"></i>${alvo} já foi fechado.</b> por ${escapeHtml(cfgAlvo.af_fechado_por) || '-'}${cfgAlvo.af_fechado_em ? ' em ' + formatDate(cfgAlvo.af_fechado_em) : ''}.
+                ${cfgAlvo.af_fechado_observacao ? `<div class="mt-1 text-emerald-700">Comentário: ${escapeHtml(cfgAlvo.af_fechado_observacao)}</div>` : ''}
             </div>`;
         return;
     }

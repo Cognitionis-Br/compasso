@@ -53,7 +53,7 @@ function voltarDoDetalheProjeto() {
 async function renderDetalheProjeto(codigo) {
     const container = document.getElementById('projetoDetalheConteudo');
     if (!container) return;
-    container.innerHTML = `<div class="p-8 text-center text-gray-400 font-bold">Carregando...</div>`;
+    container.innerHTML = renderLoadingState();
 
     const p = projectsData.find(x => x.codigo === codigo);
     if (!p) {
@@ -219,7 +219,7 @@ async function renderDetalheProjeto(codigo) {
                         ${beneficiosDoProjeto.length === 0
                             ? '<span class="italic text-gray-400">Nenhum benefício cadastrado</span>'
                             : beneficiosDoProjeto.map(b => `
-                                <div>${(escapeHtml((b.tipos_return_benefit || {}).nome) || '-').toUpperCase()}${b.metrica ? ` — ${escapeHtml(b.metrica)}: R$ ${Number(b.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : ''}</div>
+                                <div>${(escapeHtml((b.tipos_return_benefit || {}).nome) || '-').toUpperCase()}${b.metrica ? ` — ${escapeHtml(b.metrica)}: ${formatCurrency(b.valor)}` : ''}</div>
                             `).join('')}
                     </div>
                     ${p.descricao_projeto ? `
@@ -386,7 +386,7 @@ function renderSecaoVinculosContrato(vinculos, contratos, empresas, historico) {
             <tr class="border-b border-purple-100">
                 <td class="p-2 font-bold">${contrato ? escapeHtml(contrato.numero_contrato) : `#${v.contrato_id}`}</td>
                 <td class="p-2">${empresa ? escapeHtml(empresa.nome) : (contrato ? contrato.empresa_codigo : '-')}</td>
-                <td class="p-2 text-right font-mono">R$ ${Number(v.valor_vinculo).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                <td class="p-2 text-right font-mono">${formatCurrency(v.valor_vinculo)}</td>
             </tr>
         `;
     }).join('');
@@ -399,8 +399,8 @@ function renderSecaoVinculosContrato(vinculos, contratos, empresas, historico) {
     const linhasHistorico = (historico || []).map(h => `
         <tr class="border-b border-purple-100">
             <td class="p-2">${ROTULO_ACAO_VINCULO[h.acao] || h.acao}</td>
-            <td class="p-2 text-right font-mono">${h.valor_anterior != null ? 'R$ ' + Number(h.valor_anterior).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}</td>
-            <td class="p-2 text-right font-mono">${h.valor_novo != null ? 'R$ ' + Number(h.valor_novo).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '-'}</td>
+            <td class="p-2 text-right font-mono">${h.valor_anterior != null ? formatCurrency(h.valor_anterior) : '-'}</td>
+            <td class="p-2 text-right font-mono">${h.valor_novo != null ? formatCurrency(h.valor_novo) : '-'}</td>
             <td class="p-2 uppercase">${escapeHtml(h.alterado_por) || '-'}</td>
             <td class="p-2">${h.alterado_em ? h.alterado_em.split('T')[0] : '-'}</td>
         </tr>
@@ -722,7 +722,7 @@ function renderSecaoDecisoesFechamento(historico) {
                 <tbody class="divide-y divide-gray-100">
                     ${historico.map(d => `
                         <tr>
-                            <td class="p-2 whitespace-nowrap">${d.decidido_em ? new Date(d.decidido_em).toLocaleString('pt-BR') : '-'}</td>
+                            <td class="p-2 whitespace-nowrap">${formatDateTime(d.decidido_em)}</td>
                             <td class="p-2 font-mono">${d.ano_fiscal || '-'}</td>
                             <td class="p-2 font-bold">${rot[d.decisao] || d.decisao}</td>
                             <td class="p-2 text-right font-mono">${fmt(d.valor_remanescente)}</td>

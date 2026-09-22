@@ -89,7 +89,7 @@ function renderF1OrcamentoConcluidoView() {
             <td class="p-3 font-mono font-bold text-green-800">${p.codigo}</td>
             <td class="p-3 font-semibold">${escapeHtml(p.nome)}</td>
             <td class="p-3 text-xs font-bold text-blue-900">${p.tipo_orcamento || 'CAPEX'}</td>
-            <td class="p-3 font-mono font-bold text-right text-green-700">R$ ${(Number(p.val_bc)||Number(p.previsto)||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+            <td class="p-3 font-mono font-bold text-right text-emerald-700">${formatCurrency(Number(p.val_bc)||Number(p.previsto)||0)}</td>
             <td class="p-3 text-xs"><span class="${cor} font-bold px-2 py-1 rounded">${escapeHtml(sub)}</span></td>
         </tr>`;
     }).join('');

@@ -59,7 +59,7 @@ async function renderProdutosView() {
         <tr class="${!p.ativo ? 'opacity-50' : ''}">
             <td class="p-3 font-mono font-bold">${escapeHtml(p.codigo)}</td>
             <td class="p-3 font-semibold">${escapeHtml(p.nome)}${sentinela ? ' <span class="text-[9px] bg-gray-200 text-gray-500 px-1 rounded uppercase">sentinela</span>' : ''}</td>
-            <td class="p-3 text-[10px] text-gray-400">${escapeHtml(p.criado_por) || '-'} · ${p.criado_em ? new Date(p.criado_em).toLocaleString('pt-BR') : '-'}</td>
+            <td class="p-3 text-[10px] text-gray-400">${escapeHtml(p.criado_por) || '-'} · ${formatDateTime(p.criado_em)}</td>
             <td class="p-3 text-center">${p.ativo ? '<span class="bg-green-100 text-green-800 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Ativo</span>' : '<span class="bg-gray-200 text-gray-500 font-bold px-2 py-0.5 rounded text-[10px] uppercase">Inativo</span>'}</td>
             <td class="p-3 text-center">
                 ${sentinela ? '<span class="text-gray-300 text-[10px]">—</span>'

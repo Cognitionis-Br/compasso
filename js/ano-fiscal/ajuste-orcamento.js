@@ -35,12 +35,12 @@ async function renderAjusteOrcamentoView() {
     }
     tbody.innerHTML = ajusteOrcamentoCache.map(a => `
         <tr>
-            <td class="p-2 whitespace-nowrap">${a.autorizado_em ? new Date(a.autorizado_em).toLocaleString('pt-BR') : '-'}</td>
+            <td class="p-2 whitespace-nowrap">${formatDateTime(a.autorizado_em)}</td>
             <td class="p-2">${escapeHtml(a.tipo_processo)}</td>
             <td class="p-2">${escapeHtml(a.agrupamento)}</td>
             <td class="p-2 font-mono">${escapeHtml(a.projeto_origem_codigo)}${a.subgrupo_origem ? `<span class="block text-[9px] text-gray-400">${escapeHtml(a.subgrupo_origem)}</span>` : ''}</td>
             <td class="p-2 font-mono">${escapeHtml(a.projeto_destino_codigo)}${a.subgrupo_destino ? `<span class="block text-[9px] text-gray-400">${escapeHtml(a.subgrupo_destino)}</span>` : ''}</td>
-            <td class="p-2 text-right font-mono">R$ ${Number(a.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+            <td class="p-2 text-right font-mono">${formatCurrency(a.valor)}</td>
             <td class="p-2 uppercase font-bold">${escapeHtml(a.autorizado_por)}</td>
             <td class="p-2 text-gray-500">${escapeHtml(a.justificativa)}</td>
         </tr>
