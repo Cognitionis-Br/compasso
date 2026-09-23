@@ -384,6 +384,11 @@ async function entrarNoSistema() {
     await atualizarCodigoProjetoAutomatico();
 
     switchTab('home');
+    // NOVO (Compasso 2.0 Release 1, 2026-09-23): contador do sino de
+    // notificações — o sino fica no topbar, visível em qualquer tab, então
+    // precisa de uma atualização própria aqui (switchTab só redesenha a
+    // aba corrente).
+    if (typeof atualizarContadorNotificacoes === 'function') atualizarContadorNotificacoes();
 
     // G3: senha provisória — força a troca antes de liberar o uso normal
     // do sistema (o modal fica por cima de tudo, bloqueando interação com

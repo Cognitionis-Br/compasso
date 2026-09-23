@@ -165,6 +165,11 @@ function switchTab(tabId) {
     // mesmo padrão — as views se auto-restringem (restrito/conteudo).
     if (tabId === 'ia_templates') renderIaTemplatesView();
     if (tabId === 'ia_config') renderIaConfigView();
+    // NOVO (Compasso 2.0 Release 1 — Fundação e Trabalho Pessoal, 2026-09-23).
+    if (tabId === 'home') renderHomePessoalView();
+    if (tabId === 'meu_trabalho') renderMeuTrabalhoView();
+    if (tabId === 'meus_projetos') renderMeusProjetosView();
+    if (tabId === 'notificacoes') renderNotificacoesView();
     if (tabId === 'periodo_ano_fiscal') {
         const restrito = document.getElementById('periodoAnoFiscalRestrito');
         const conteudo = document.getElementById('periodoAnoFiscalConteudo');

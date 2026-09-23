@@ -25,7 +25,11 @@ const PROJETO_DETALHE_ORIGENS = {
     mudanca_orcamento: { tab: 'mudanca_orcamento', texto: 'Voltar para Aprovar Diferenças de Orçamento' },
     // NOVO (Fechamento de Ano Fiscal, 2026-09-02): zoom a partir da tela de
     // Fechamento Ano Fiscal (js/ano-fiscal/fechamento-projetos.js).
-    fechamento_af: { tab: 'fechamento_af', texto: 'Voltar ao Fechamento Ano Fiscal' }
+    fechamento_af: { tab: 'fechamento_af', texto: 'Voltar ao Fechamento Ano Fiscal' },
+    // NOVO (Compasso 2.0 Release 1, 2026-09-23): zoom a partir das telas
+    // pessoais novas (js/home/home-pessoal.js, js/meus-projetos/meus-projetos.js).
+    home: { tab: 'home', texto: 'Voltar ao Início' },
+    meus_projetos: { tab: 'meus_projetos', texto: 'Voltar a Meus Projetos' }
 };
 
 // NOVO (a pedido do usuário): linha "RÓTULO : valor" com rótulo em

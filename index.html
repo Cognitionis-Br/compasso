@@ -173,6 +173,25 @@
             <!-- Navegação Principal -->
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
 
+                <!-- GRUPO: TRABALHO PESSOAL (Compasso 2.0 Release 1, 2026-09-23) —
+                     vem primeiro no menu de propósito (UX010 do pacote: "o
+                     sistema prioriza ação sobre consulta"). Sem submenu
+                     colapsável — são só 4 links diretos, sempre visíveis. -->
+                <div class="mb-2 space-y-1">
+                    <button onclick="switchTab('home')" id="link-home" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-house w-4 text-center"></i> Início
+                    </button>
+                    <button onclick="switchTab('meu_trabalho')" id="link-meu_trabalho" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-list-check w-4 text-center"></i> Meu Trabalho
+                    </button>
+                    <button onclick="switchTab('meus_projetos')" id="link-meus_projetos" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-diagram-project w-4 text-center"></i> Meus Projetos
+                    </button>
+                    <button onclick="switchTab('notificacoes')" id="link-notificacoes" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-bell w-4 text-center"></i> Notificações
+                    </button>
+                </div>
+
                 <!-- GRUPO: FISCAL YEAR (item 3, Fase 1) — leva "Ano Fiscal"
                      (que estava em Administração) e "Carry Over" (que
                      estava em Projetos) pra cá, com nomes atualizados.
@@ -467,6 +486,13 @@
                     <div id="userInfoAvatar" class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border border-gray-300">
                         --
                     </div>
+                    <!-- NOVO (Compasso 2.0 Release 1, 2026-09-23): sino de
+                         notificações in-app — contador atualizado por
+                         atualizarContadorNotificacoes() (js/notificacoes/notificacoes.js). -->
+                    <button onclick="switchTab('notificacoes')" class="relative text-gray-400 hover:text-gray-700 transition" title="Notificações">
+                        <i class="fa-solid fa-bell"></i>
+                        <span id="notifSinoContador" class="hidden absolute -top-1.5 -right-1.5 bg-danger-600 text-white text-[9px] font-bold rounded-full h-4 min-w-[16px] px-0.5 flex items-center justify-center leading-none">0</span>
+                    </button>
                     <!-- NOVO (evolução visual — dark mode): alterna [data-theme="dark"]
                          no <html>, persistido em localStorage — ver
                          alternarTemaEscuro() em js/ui/navigation.js. -->
@@ -483,7 +509,9 @@
             </header>
 
             <!-- CONTEÚDO DINÂMICO (Área de Trabalho) -->
-            <main class="flex-1 overflow-y-auto p-4 md:p-6 relative">
+            <!-- pb-20 no mobile: espaço pra bottom nav fixa não cobrir o
+                 fim do conteúdo (Compasso 2.0 Release 1, ver bottomNavMobile). -->
+            <main class="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6 relative">
 
                 <!-- FASE 3 — banner preventivo de vencimento da licença -->
                 <div id="bannerVencimentoLicenca" class="hidden mb-4 bg-amber-50 border border-amber-300 rounded-lg px-4 py-2 flex items-center justify-between gap-3">
@@ -491,48 +519,84 @@
                     <button onclick="dispensarBannerVencimentoLicenca()" class="text-amber-600 hover:text-amber-900 text-xs font-bold">dispensar</button>
                 </div>
 
-                <!-- TELA HOME / BEM-VINDO -->
-                <div id="view-home" class="tab-content max-w-4xl mx-auto mt-10">
-                    <div class="text-center space-y-4 mb-10">
-                        <!-- SUBSTITUÍDO (papel Proprietário, 28/08/2026): ícone de raio
-                             trocado pela logo oficial acima do título — testei como
-                             fundo do círculo antes e a logo (é um logotipo com texto,
-                             não um ícone) ficava ilegível espremida num quadrado
-                             pequeno; em tamanho maior acima do título ela funciona
-                             como uma tela de abertura de verdade. -->
-                        <img src="img/compasso-logo-principal.png" alt="Compasso" class="mx-auto max-h-14 object-contain mb-2">
-                        <img id="empresaLogoHome" class="hidden mx-auto max-h-12 object-contain mb-1" alt="">
-                        <p id="empresaMarcaHome" class="hidden text-xs font-bold uppercase tracking-wider"></p>
-                        <h2 class="text-2xl font-bold text-gray-900">Workspace de Governança</h2>
-                        <p class="text-[11px] text-gray-400" data-compasso-versao="longa">Versão 1.0.0 · Release 0</p>
-                        <p class="text-sm text-gray-500 max-w-lg mx-auto">
-                            Selecione um módulo no menu lateral para atuar na esteira de projetos, ou utilize as visões no topo para acessar relatórios gerenciais e roadmaps.
-                        </p>
+                <!-- TELA HOME / BEM-VINDO — Compasso 2.0 Release 1 (23/09/2026):
+                     deixou de ser um placeholder estático e virou a Home
+                     pessoal (js/home/home-pessoal.js, renderHomePessoalView),
+                     com KPIs, prioridades, meus projetos e atividade recente
+                     do usuário logado. Ver plano "Compasso 2.0 — Release 1". -->
+                <div id="view-home" class="tab-content max-w-6xl mx-auto space-y-6">
+                    <div>
+                        <h2 id="homeSaudacao" class="text-xl font-bold text-gray-900">Olá</h2>
+                        <p class="text-xs text-gray-500">Resumo do que precisa da sua atenção hoje.</p>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:border-gray-300 transition" onclick="switchTab('f1_orcamento')">
-                            <div class="p-3 bg-amber-50 text-amber-600 rounded-lg"><i class="fa-solid fa-clock"></i></div>
-                            <div>
-                                <div class="text-sm font-bold text-gray-800">Ações Pendentes</div>
-                                <div class="text-xs text-gray-500">Business Case & Requisitos</div>
-                            </div>
+                    <div id="homeMetricCards" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="lg:col-span-2 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            <h3 class="text-xs font-black uppercase text-gray-500 mb-3">Prioridades</h3>
+                            <div id="homePrioridades" class="space-y-2"></div>
                         </div>
-                        <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:border-gray-300 transition" onclick="switchTab('dashboard')">
-                            <div class="p-3 bg-green-50 text-green-600 rounded-lg"><i class="fa-solid fa-chart-pie"></i></div>
-                            <div>
-                                <div class="text-sm font-bold text-gray-800">Saúde do Portfólio</div>
-                                <div class="text-xs text-gray-500">Acessar Dashboard Global</div>
+                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-xs font-black uppercase text-gray-500">Meus Projetos</h3>
+                                <button onclick="switchTab('meus_projetos')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900">Ver todos</button>
                             </div>
-                        </div>
-                        <div class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm flex items-center gap-4 cursor-pointer hover:border-gray-300 transition" onclick="switchTab('f1_formalizacao')">
-                            <div class="p-3 bg-blue-50 text-blue-600 rounded-lg"><i class="fa-solid fa-plus"></i></div>
-                            <div>
-                                <div class="text-sm font-bold text-gray-800">Nova Demanda</div>
-                                <div class="text-xs text-gray-500">Formalizar Business Case</div>
-                            </div>
+                            <div id="homeMeusProjetos" class="space-y-2"></div>
                         </div>
                     </div>
+
+                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                        <h3 class="text-xs font-black uppercase text-gray-500 mb-3">Atividade Recente</h3>
+                        <div id="homeAtividadeRecente" class="space-y-2"></div>
+                    </div>
+                </div>
+
+                <!-- TELA MEU TRABALHO — Compasso 2.0 Release 1, R1-UX02/UX03
+                     (js/meu-trabalho/meu-trabalho.js). Toggle Lista/Kanban,
+                     preferência salva em user_preferences. -->
+                <div id="view-meu_trabalho" class="tab-content hidden max-w-6xl mx-auto space-y-4">
+                    <div class="flex items-center justify-between flex-wrap gap-2">
+                        <h2 class="text-lg font-bold text-gray-900">Meu Trabalho</h2>
+                        <div class="flex items-center gap-2">
+                            <select id="mtFiltroStatus" onchange="onMudarFiltroStatusMeuTrabalho()" class="text-xs border border-gray-300 rounded px-2 py-1.5 bg-white">
+                                <option value="">Todos os status</option>
+                                <option value="A_FAZER">A Fazer</option>
+                                <option value="EM_ANDAMENTO">Em Andamento</option>
+                                <option value="AGUARDANDO">Aguardando</option>
+                                <option value="CONCLUIDO">Concluído</option>
+                            </select>
+                            <div class="flex rounded-md overflow-hidden border border-gray-200">
+                                <button id="mtBtnView_lista" onclick="mudarViewMeuTrabalho('lista')" class="px-3 py-1.5 text-xs font-bold text-gray-600"><i class="fa-solid fa-list"></i> Lista</button>
+                                <button id="mtBtnView_kanban" onclick="mudarViewMeuTrabalho('kanban')" class="px-3 py-1.5 text-xs font-bold text-gray-600"><i class="fa-solid fa-table-columns"></i> Kanban</button>
+                            </div>
+                            <button onclick="abrirModalNovaTarefa()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-3 py-1.5 rounded"><i class="fa-solid fa-plus"></i> Nova Tarefa</button>
+                        </div>
+                    </div>
+
+                    <div id="meuTrabalhoListaContainer" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                        <div id="meuTrabalhoListaBody" class="space-y-2"></div>
+                    </div>
+                    <div id="meuTrabalhoKanbanContainer" class="hidden">
+                        <div id="meuTrabalhoKanbanBody" class="flex gap-3 overflow-x-auto pb-2"></div>
+                    </div>
+                </div>
+
+                <!-- TELA MEUS PROJETOS — Compasso 2.0 Release 1, R1-UX04
+                     (js/meus-projetos/meus-projetos.js). -->
+                <div id="view-meus_projetos" class="tab-content hidden max-w-6xl mx-auto space-y-4">
+                    <h2 class="text-lg font-bold text-gray-900">Meus Projetos</h2>
+                    <div id="meusProjetosCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </div>
+
+                <!-- TELA NOTIFICAÇÕES — Compasso 2.0 Release 1, R1-UX05
+                     (js/notificacoes/notificacoes.js). -->
+                <div id="view-notificacoes" class="tab-content hidden max-w-3xl mx-auto space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-gray-900">Notificações</h2>
+                        <button onclick="marcarTodasNotificacoesLidas()" class="text-xs font-bold text-indigo-700 hover:text-indigo-900">Marcar todas como lidas</button>
+                    </div>
+                    <div id="notificacoesLista"></div>
                 </div>
 
                 <!-- VISÃO: DASHBOARD -->
@@ -4070,6 +4134,28 @@
                 </div>
 
             </main>
+
+            <!-- Bottom nav mobile — Compasso 2.0 Release 1: o pacote pede
+                 "tabelas viram cards, ações essenciais permanecem
+                 acessíveis" no mobile; o shell hoje só tinha o drawer via
+                 hambúrguer, sem acesso direto às telas pessoais. -->
+            <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex items-stretch justify-around z-30" style="padding-bottom: env(safe-area-inset-bottom);">
+                <button onclick="switchTab('home')" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-gray-500">
+                    <i class="fa-solid fa-house text-base"></i><span class="text-[9px] font-bold">Início</span>
+                </button>
+                <button onclick="switchTab('meu_trabalho')" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-gray-500">
+                    <i class="fa-solid fa-list-check text-base"></i><span class="text-[9px] font-bold">Trabalho</span>
+                </button>
+                <button onclick="switchTab('meus_projetos')" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-gray-500">
+                    <i class="fa-solid fa-diagram-project text-base"></i><span class="text-[9px] font-bold">Projetos</span>
+                </button>
+                <button onclick="switchTab('notificacoes')" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-gray-500 relative">
+                    <i class="fa-solid fa-bell text-base"></i><span class="text-[9px] font-bold">Alertas</span>
+                </button>
+                <button onclick="toggleSidebarMobile()" class="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-gray-500">
+                    <i class="fa-solid fa-bars text-base"></i><span class="text-[9px] font-bold">Mais</span>
+                </button>
+            </nav>
         </div>
     </div>
 
@@ -4667,6 +4753,47 @@
         </div>
     </div>
 
+    <!-- Meu Trabalho — modal de criar/editar tarefa (Compasso 2.0 Release 1,
+         js/meu-trabalho/meu-trabalho.js) -->
+    <div id="modalTarefa" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-3 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 id="mtModalTitulo" class="font-bold text-gray-800 text-base">Nova Tarefa</h3>
+                <button onclick="fecharModalTarefa()" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Título *</label>
+                <input type="text" id="mtTituloInput" class="w-full p-2 border border-gray-300 rounded text-sm">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Descrição</label>
+                <textarea id="mtDescricaoInput" rows="3" class="w-full p-2 border border-gray-300 rounded text-sm"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Prioridade</label>
+                    <select id="mtPrioridadeInput" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
+                        <option value="BAIXA">Baixa</option>
+                        <option value="MEDIA" selected>Média</option>
+                        <option value="ALTA">Alta</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Prazo</label>
+                    <input type="date" id="mtPrazoInput" class="w-full p-2 border border-gray-300 rounded text-sm">
+                </div>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Código do Projeto (opcional)</label>
+                <input type="text" id="mtProjetoInput" placeholder="ex.: PRJ-024" class="w-full p-2 border border-gray-300 rounded text-sm">
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="fecharModalTarefa()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700 transition">Cancelar</button>
+                <button onclick="salvarTarefa()" class="px-4 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded text-xs font-bold transition">Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL APROVAÇÃO COMITÊ -->
     <!-- NOVO (item 1): modal de conclusão final do projeto/subprojeto -->
     <div id="modalConclusaoProjeto" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -4986,6 +5113,11 @@
     <script src="./js/tipos-projeto/return-benefit.js"></script>
     <script src="./js/formalizar-v2/detalhe-demanda.js"></script>
     <script src="./js/projeto-detalhe/projeto-detalhe.js"></script>
+    <!-- Compasso 2.0 — Release 1 (Fundação e Trabalho Pessoal), 2026-09-23 -->
+    <script src="./js/home/home-pessoal.js"></script>
+    <script src="./js/meu-trabalho/meu-trabalho.js"></script>
+    <script src="./js/meus-projetos/meus-projetos.js"></script>
+    <script src="./js/notificacoes/notificacoes.js"></script>
     <script src="./js/dashboards/dashboard-filtro.js"></script>
     <script src="./js/dashboards/dashboard-resumo.js"></script>
     <script src="./js/dashboards/dashboard-fases.js"></script>
