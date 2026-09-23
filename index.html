@@ -465,10 +465,13 @@
                     <!-- Busca Global — Compasso 2.0 Release 4, 2026-09-23
                          (js/busca/busca-global.js). Removida em 10/08/2026 por ser só
                          decorativa; esta reintrodução tem lógica de verdade por trás
-                         (projetos/tarefas/RAID, sempre dentro do escopo do usuário). -->
-                    <div class="relative flex-shrink-0 hidden md:block">
-                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
-                        <input type="text" id="buscaGlobalInput" placeholder="Buscar projeto, tarefa..." onkeydown="if(event.key==='Enter') executarBuscaGlobal()" class="w-48 pl-8 pr-2 py-1.5 text-xs border border-gray-300 rounded-md focus:w-64 transition-all">
+                         (projetos/tarefas/RAID, sempre dentro do escopo do usuário).
+                         AJUSTADO (padronização visual, 2026-09-23): vira o elemento
+                         principal do topo (mock: SCR-001/004/007), não mais um campo
+                         pequeno — mesma lógica de sempre (Enter dispara a busca). -->
+                    <div class="relative flex-shrink-0 hidden md:block w-72">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                        <input type="text" id="buscaGlobalInput" placeholder="Buscar projeto, tarefa..." onkeydown="if(event.key==='Enter') executarBuscaGlobal()" class="w-full pl-10 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all">
                     </div>
 
                     <!-- Abas de Visão — com 5 abas, pode não caber em telas médias/estreitas.
@@ -496,15 +499,10 @@
                     </button>
                 </div>
 
-                <!-- Painel do Usuário — flex-shrink-0 garante que nunca fica espremido/sobreposto pelas abas -->
+                <!-- Painel do Usuário — flex-shrink-0 garante que nunca fica espremido/sobreposto pelas abas.
+                     AJUSTADO (padronização visual, 2026-09-23): sino + utilitários primeiro,
+                     avatar+nome+cargo agrupados por último (mesma ordem do mock). -->
                 <div class="flex items-center gap-4 flex-shrink-0">
-                    <div class="text-right hidden sm:block">
-                        <div id="userInfoName" class="text-sm font-bold text-gray-700 leading-tight">Carregando...</div>
-                        <div id="userInfoRole" class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">-</div>
-                    </div>
-                    <div id="userInfoAvatar" class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border border-gray-300">
-                        --
-                    </div>
                     <!-- NOVO (Compasso 2.0 Release 1, 2026-09-23): sino de
                          notificações in-app — contador atualizado por
                          atualizarContadorNotificacoes() (js/notificacoes/notificacoes.js). -->
@@ -521,6 +519,14 @@
                     <button onclick="abrirModalTrocaSenhaVoluntaria()" class="text-gray-400 hover:text-gray-700 transition" title="Trocar Senha">
                         <i class="fa-solid fa-key"></i>
                     </button>
+                    <div class="h-6 w-px bg-gray-200"></div>
+                    <div id="userInfoAvatar" class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 font-bold border border-gray-300 flex-shrink-0">
+                        --
+                    </div>
+                    <div class="text-left hidden sm:block">
+                        <div id="userInfoName" class="text-sm font-bold text-gray-700 leading-tight">Carregando...</div>
+                        <div id="userInfoRole" class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">-</div>
+                    </div>
                     <button onclick="handleLogout()" class="ml-2 text-gray-400 hover:text-red-600 transition" title="Sair do Sistema">
                         <i class="fa-solid fa-power-off"></i>
                     </button>
@@ -538,36 +544,56 @@
                     <button onclick="dispensarBannerVencimentoLicenca()" class="text-amber-600 hover:text-amber-900 text-xs font-bold">dispensar</button>
                 </div>
 
-                <!-- TELA HOME / BEM-VINDO — Compasso 2.0 Release 1 (23/09/2026):
-                     deixou de ser um placeholder estático e virou a Home
-                     pessoal (js/home/home-pessoal.js, renderHomePessoalView),
-                     com KPIs, prioridades, meus projetos e atividade recente
-                     do usuário logado. Ver plano "Compasso 2.0 — Release 1". -->
+                <!-- TELA HOME / BEM-VINDO — Compasso 2.0 (js/home/home-pessoal.js,
+                     renderHomePessoalView). AJUSTADO (padronização visual,
+                     2026-09-23): layout comparado direto contra SCR-001 do
+                     pacote (docs/revisao telas/10_Assets_Visuais.zip) — saudação +
+                     5 KPIs, Projetos em Destaque + Minhas Tarefas (abas),
+                     Atividade Recente + Próximos Compromissos. Todo dado é real
+                     (tasks/raid_items/obterMinhasAprovacoes/notificações) —
+                     nenhuma métrica do mock sem fonte real foi inventada. -->
                 <div id="view-home" class="tab-content max-w-6xl mx-auto space-y-6">
-                    <div>
-                        <h2 id="homeSaudacao" class="text-xl font-bold text-gray-900">Olá</h2>
-                        <p class="text-xs text-gray-500">Resumo do que precisa da sua atenção hoje.</p>
+                    <div class="flex items-end justify-between flex-wrap gap-2">
+                        <div>
+                            <h2 id="homeSaudacao" class="text-2xl font-bold text-gray-900">Olá</h2>
+                            <p class="text-xs text-gray-500">Aqui está o panorama dos seus projetos.</p>
+                        </div>
+                        <p id="homeDataHoje" class="text-xs text-gray-400 font-semibold"></p>
                     </div>
 
-                    <div id="homeMetricCards" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                    <div id="homeMetricCards" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-2 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-                            <h3 class="text-xs font-black uppercase text-gray-500 mb-3">Prioridades</h3>
-                            <div id="homePrioridades" class="space-y-2"></div>
-                        </div>
-                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
                             <div class="flex items-center justify-between mb-3">
-                                <h3 class="text-xs font-black uppercase text-gray-500">Meus Projetos</h3>
-                                <button onclick="switchTab('meus_projetos')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900">Ver todos</button>
+                                <h3 class="text-xs font-black uppercase text-gray-500">Projetos em Destaque</h3>
+                                <button onclick="switchTab('meus_projetos')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900">Ver todos <i class="fa-solid fa-arrow-right"></i></button>
                             </div>
                             <div id="homeMeusProjetos" class="space-y-2"></div>
                         </div>
+                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h3 class="text-xs font-black uppercase text-gray-500">Minhas Tarefas</h3>
+                                <button onclick="switchTab('meu_trabalho')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900">Ver todas <i class="fa-solid fa-arrow-right"></i></button>
+                            </div>
+                            <div class="flex gap-1 mb-2 border-b border-gray-100">
+                                <button id="homeAbaTarefas_hoje" onclick="mudarAbaHomeTarefas('hoje')" class="px-2 py-1.5 text-[11px] font-bold border-b-2"></button>
+                                <button id="homeAbaTarefas_atraso" onclick="mudarAbaHomeTarefas('atraso')" class="px-2 py-1.5 text-[11px] font-bold border-b-2"></button>
+                                <button id="homeAbaTarefas_proximas" onclick="mudarAbaHomeTarefas('proximas')" class="px-2 py-1.5 text-[11px] font-bold border-b-2"></button>
+                            </div>
+                            <div id="homePrioridades" class="space-y-2"></div>
+                        </div>
                     </div>
 
-                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
-                        <h3 class="text-xs font-black uppercase text-gray-500 mb-3">Atividade Recente</h3>
-                        <div id="homeAtividadeRecente" class="space-y-2"></div>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            <h3 class="text-xs font-black uppercase text-gray-500 mb-3">Atividade Recente</h3>
+                            <div id="homeAtividadeRecente" class="space-y-2"></div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            <h3 class="text-xs font-black uppercase text-gray-500 mb-3">Próximos Compromissos</h3>
+                            <div id="homeProximosCompromissos" class="space-y-2"></div>
+                        </div>
                     </div>
                 </div>
 
