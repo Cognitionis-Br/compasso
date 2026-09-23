@@ -176,6 +176,21 @@ function _mtTratarErroRpc(error) {
 // -------------------------------------------------------------------------
 let _mtTarefaEditandoId = null;
 
+// Select de projeto — só os do escopo do usuário (mesma regra de Meus
+// Projetos), pra nunca oferecer um código que a tarefa não poderia
+// referenciar (a tabela tasks tem FK pra projetos.codigo — digitar um
+// código à mão podia violar a constraint, daí o select em vez de texto
+// livre).
+function _mtPopularSelectProjetos(codigoAtual) {
+    const select = document.getElementById('mtProjetoInput');
+    if (!select) return;
+    const meus = (typeof filtrarProjetosPorArea === 'function' && typeof projectsData !== 'undefined')
+        ? filtrarProjetosPorArea(projectsData.filter(p => !p.is_subprojeto), 'meus_projetos')
+        : [];
+    select.innerHTML = '<option value="">-- Nenhum --</option>' +
+        meus.map(p => `<option value="${escapeHtml(p.codigo)}" ${p.codigo === codigoAtual ? 'selected' : ''}>${escapeHtml(p.codigo)} — ${escapeHtml(p.nome || '')}</option>`).join('');
+}
+
 function abrirModalNovaTarefa() {
     _mtTarefaEditandoId = null;
     document.getElementById('mtModalTitulo').innerText = 'Nova Tarefa';
@@ -183,7 +198,7 @@ function abrirModalNovaTarefa() {
     document.getElementById('mtDescricaoInput').value = '';
     document.getElementById('mtPrioridadeInput').value = 'MEDIA';
     document.getElementById('mtPrazoInput').value = '';
-    document.getElementById('mtProjetoInput').value = '';
+    _mtPopularSelectProjetos(null);
     document.getElementById('modalTarefa').classList.remove('hidden');
 }
 
@@ -196,7 +211,7 @@ function abrirModalTarefa(taskId) {
     document.getElementById('mtDescricaoInput').value = t.descricao || '';
     document.getElementById('mtPrioridadeInput').value = t.prioridade;
     document.getElementById('mtPrazoInput').value = t.prazo || '';
-    document.getElementById('mtProjetoInput').value = t.projeto_codigo || '';
+    _mtPopularSelectProjetos(t.projeto_codigo);
     document.getElementById('modalTarefa').classList.remove('hidden');
 }
 
