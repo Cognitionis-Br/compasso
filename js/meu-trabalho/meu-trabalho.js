@@ -31,12 +31,26 @@ const _tarefasCache = {};
 let _mtTarefas = [];
 let _mtView = 'lista';
 let _mtFiltroStatus = '';
+let _mtAcaoPendente = null; // ver abrirMeuTrabalho — mesmo padrão de abrirWorkspaceProjeto, pra deep-link de notificação
+
+// `acaoPendente` (opcional): função async rodada depois que a lista
+// termina de carregar — usado por notificações pra abrir Meu Trabalho já
+// com o modal de uma tarefa específica aberto (tarefa sem projeto).
+function abrirMeuTrabalho(acaoPendente) {
+    _mtAcaoPendente = acaoPendente || null;
+    switchTab('meu_trabalho');
+}
 
 async function renderMeuTrabalhoView() {
     const { data: prefs } = await _supabase.from('user_preferences').select('view_meu_trabalho').eq('usuario_id', currentUser.id).maybeSingle();
     _mtView = (prefs && prefs.view_meu_trabalho) || 'lista';
     _mtAtualizarBotoesView();
     await _mtCarregarTarefas();
+    if (_mtAcaoPendente) {
+        const acao = _mtAcaoPendente;
+        _mtAcaoPendente = null;
+        await acao();
+    }
 }
 
 async function _mtCarregarTarefas() {

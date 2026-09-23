@@ -21,11 +21,18 @@ let _wsAbaAtual = 'visao_geral';
 let _wsCarregado = {};
 let _wsTarefas = [];
 let _wsView = 'lista';
+let _wsAcaoPendente = null; // ver abrirWorkspaceProjeto — usado por notificações pra abrir direto numa tarefa
 
-function abrirWorkspaceProjeto(codigo) {
+// `acaoPendente` (opcional): função async rodada depois que o Workspace
+// termina de renderizar a Visão Geral — usado pra deep-link (ex.: clicar
+// numa notificação de menção e cair direto na aba Tarefas com o Drawer
+// já aberto na tarefa certa), sem precisar duplicar a lógica de
+// carregamento aqui.
+function abrirWorkspaceProjeto(codigo, acaoPendente) {
     _wsProjetoAtual = codigo;
     _wsAbaAtual = 'visao_geral';
     _wsCarregado = {};
+    _wsAcaoPendente = acaoPendente || null;
     switchTab('workspace_projeto');
 }
 
@@ -37,6 +44,12 @@ async function renderWorkspaceProjeto() {
     _wsRenderStepper(projeto);
     _wsRenderAbaBotoes();
     await mudarAbaWorkspace('visao_geral');
+
+    if (_wsAcaoPendente) {
+        const acao = _wsAcaoPendente;
+        _wsAcaoPendente = null;
+        await acao();
+    }
 }
 
 function voltarDoWorkspace() {
