@@ -170,6 +170,8 @@ function switchTab(tabId) {
     if (tabId === 'meu_trabalho') renderMeuTrabalhoView();
     if (tabId === 'meus_projetos') renderMeusProjetosView();
     if (tabId === 'notificacoes') renderNotificacoesView();
+    // NOVO (Compasso 2.0 Release 2 — Workspace Colaborativo do Projeto, 2026-09-23).
+    if (tabId === 'workspace_projeto') renderWorkspaceProjeto();
     if (tabId === 'periodo_ano_fiscal') {
         const restrito = document.getElementById('periodoAnoFiscalRestrito');
         const conteudo = document.getElementById('periodoAnoFiscalConteudo');

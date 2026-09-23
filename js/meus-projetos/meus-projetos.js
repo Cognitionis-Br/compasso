@@ -5,6 +5,11 @@
 // filtrarProjetosPorArea (mesma regra de OPERADOR já usada em Consulta de
 // Projetos, js/consultas/consulta-projetos.js) e calcularSaudeProjeto
 // (js/utils/health.js) pro Farol de Saúde, sem recalcular nada do zero.
+//
+// Release 2: o clique no card abre o Workspace do Projeto
+// (js/workspace-projeto/workspace-projeto.js), não mais direto o Detalhe
+// Completo (governança/financeiro) — o Workspace tem um link cruzado pra
+// lá quando precisar.
 // =========================================================================
 
 async function renderMeusProjetosView() {
@@ -24,7 +29,7 @@ async function renderMeusProjetosView() {
     wrapper.innerHTML = meus.map(p => {
         const saude = calcularSaudeProjeto(p, todasEtapasCache || []);
         return `
-        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 cursor-pointer hover:border-indigo-300 transition" onclick="abrirDetalheProjeto('${p.codigo}', 'meus_projetos')">
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 cursor-pointer hover:border-indigo-300 transition" onclick="abrirWorkspaceProjeto('${p.codigo}')">
             <div class="flex items-start justify-between mb-2 gap-2">
                 <div class="min-w-0">
                     <div class="text-sm font-bold text-gray-800 truncate">${escapeHtml(p.codigo)}</div>

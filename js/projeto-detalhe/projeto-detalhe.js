@@ -17,6 +17,10 @@
 // — o botão "Voltar" precisa levar de volta pra tela de onde o usuário
 // veio, não sempre pro Dashboard.
 let projetoDetalheOrigemTab = 'dashboard';
+// NOVO (Compasso 2.0 Release 2, 2026-09-23): código do projeto sendo
+// exibido — alimenta o botão "Abrir Workspace" (link cruzado com
+// js/workspace-projeto/workspace-projeto.js).
+let projetoDetalheCodigoAtual = null;
 const PROJETO_DETALHE_ORIGENS = {
     dashboard: { tab: 'dashboard', texto: 'Voltar ao Dashboard' },
     consultas: { tab: 'consultas', texto: 'Voltar às Consultas' },
@@ -44,10 +48,15 @@ function linhaDetalhe(rotulo, valor) {
 
 async function abrirDetalheProjeto(codigo, origem) {
     projetoDetalheOrigemTab = PROJETO_DETALHE_ORIGENS[origem] ? origem : 'dashboard';
+    projetoDetalheCodigoAtual = codigo;
     switchTab('projeto_detalhe');
     const textoEl = document.getElementById('btnVoltarDetalheProjetoTexto');
     if (textoEl) textoEl.innerText = PROJETO_DETALHE_ORIGENS[projetoDetalheOrigemTab].texto;
     await renderDetalheProjeto(codigo);
+}
+
+function abrirWorkspaceDoDetalhe() {
+    if (projetoDetalheCodigoAtual && typeof abrirWorkspaceProjeto === 'function') abrirWorkspaceProjeto(projetoDetalheCodigoAtual);
 }
 
 function voltarDoDetalheProjeto() {

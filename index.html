@@ -599,6 +599,60 @@
                     <div id="notificacoesLista"></div>
                 </div>
 
+                <!-- WORKSPACE DO PROJETO — Compasso 2.0 Release 2
+                     (js/workspace-projeto/workspace-projeto.js). Tela nova e
+                     SEPARADA de view-projeto_detalhe (governança/financeiro,
+                     inalterada) — "dia a dia" do projeto: stepper + abas. -->
+                <div id="view-workspace_projeto" class="tab-content hidden max-w-6xl mx-auto space-y-4">
+                    <div class="flex items-center justify-between">
+                        <button onclick="voltarDoWorkspace()" class="text-xs font-bold text-gray-500 hover:text-gray-800"><i class="fa-solid fa-arrow-left"></i> Voltar a Meus Projetos</button>
+                    </div>
+                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                        <h2 id="wsCodigoNomeDisplay" class="text-lg font-bold text-gray-900 mb-3"></h2>
+                        <div id="wsStepper" class="flex items-start"></div>
+                    </div>
+
+                    <div class="flex gap-1 border-b border-gray-200 overflow-x-auto no-scrollbar">
+                        <button id="wsBtnAba_visao_geral" onclick="mudarAbaWorkspace('visao_geral')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
+                        <button id="wsBtnAba_tarefas" onclick="mudarAbaWorkspace('tarefas')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
+                        <button id="wsBtnAba_calendario" onclick="mudarAbaWorkspace('calendario')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
+                        <button id="wsBtnAba_documentos" onclick="mudarAbaWorkspace('documentos')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
+                        <button id="wsBtnAba_historico" onclick="mudarAbaWorkspace('historico')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
+                    </div>
+
+                    <div id="wsAba_visao_geral">
+                        <div id="wsVisaoGeralBody"></div>
+                    </div>
+
+                    <div id="wsAba_tarefas" class="hidden space-y-3">
+                        <div class="flex items-center justify-between flex-wrap gap-2">
+                            <div class="flex rounded-md overflow-hidden border border-gray-200">
+                                <button id="wsBtnViewTarefas_lista" onclick="mudarViewWorkspaceTarefas('lista')" class="px-3 py-1.5 text-xs font-bold text-gray-600"><i class="fa-solid fa-list"></i> Lista</button>
+                                <button id="wsBtnViewTarefas_kanban" onclick="mudarViewWorkspaceTarefas('kanban')" class="px-3 py-1.5 text-xs font-bold text-gray-600"><i class="fa-solid fa-table-columns"></i> Kanban</button>
+                            </div>
+                            <button onclick="abrirModalNovaTarefaWorkspace()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-3 py-1.5 rounded"><i class="fa-solid fa-plus"></i> Nova Tarefa</button>
+                        </div>
+                        <div id="wsTarefasListaContainer" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            <div id="wsTarefasListaBody" class="space-y-2"></div>
+                        </div>
+                        <div id="wsTarefasKanbanContainer" class="hidden">
+                            <div id="wsTarefasKanbanBody" class="flex gap-3 overflow-x-auto pb-2"></div>
+                        </div>
+                    </div>
+
+                    <div id="wsAba_calendario" class="hidden">
+                        <div id="wsCalendarioBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+
+                    <div id="wsAba_documentos" class="hidden">
+                        <div id="wsDocumentosBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+
+                    <div id="wsAba_historico" class="hidden">
+                        <div id="wsHistoricoBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+                </div>
+
                 <!-- VISÃO: DASHBOARD -->
                 <div id="view-dashboard" class="tab-content hidden">
                     <div class="flex justify-between items-end mb-4">
@@ -992,9 +1046,15 @@
 
                 <!-- TELA: DETALHAMENTO DO PROJETO (item 9 — não é aba do menu, só drill-down) -->
                 <div id="view-projeto_detalhe" class="tab-content hidden">
-                    <button id="btnVoltarDetalheProjeto" onclick="voltarDoDetalheProjeto()" class="mb-4 text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1">
-                        <i class="fa-solid fa-arrow-left"></i> <span id="btnVoltarDetalheProjetoTexto">Voltar ao Dashboard</span>
-                    </button>
+                    <div class="flex items-center justify-between mb-4">
+                        <button id="btnVoltarDetalheProjeto" onclick="voltarDoDetalheProjeto()" class="text-xs font-bold text-gray-600 hover:text-gray-900 flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-left"></i> <span id="btnVoltarDetalheProjetoTexto">Voltar ao Dashboard</span>
+                        </button>
+                        <!-- NOVO (Compasso 2.0 Release 2, 2026-09-23): link cruzado pro Workspace. -->
+                        <button onclick="abrirWorkspaceDoDetalhe()" class="text-xs font-bold text-indigo-700 hover:text-indigo-900 flex items-center gap-1">
+                            <i class="fa-solid fa-diagram-project"></i> Abrir Workspace
+                        </button>
+                    </div>
                     <div id="projetoDetalheConteudo"></div>
                 </div>
 
@@ -4794,6 +4854,64 @@
         </div>
     </div>
 
+    <!-- Drawer de Tarefa — Compasso 2.0 Release 2
+         (js/workspace-projeto/drawer-tarefa.js). Painel lateral (não modal
+         central) aberto a partir da aba Tarefas do Workspace — checklist,
+         comentários (com menção opcional), anexos e dependências. -->
+    <div id="drawerTarefa" class="hidden fixed inset-0 z-50">
+        <div class="absolute inset-0 bg-gray-900 bg-opacity-50" onclick="fecharDrawerTarefa()"></div>
+        <div class="absolute right-0 top-0 bottom-0 w-full max-w-md bg-white shadow-xl overflow-y-auto p-5 space-y-4">
+            <div class="flex justify-between items-start border-b pb-3">
+                <div class="min-w-0">
+                    <h3 id="drawerTarefaTitulo" class="font-bold text-gray-800 text-base truncate"></h3>
+                    <span class="text-[10px] font-bold uppercase text-gray-400">Projeto: <span id="drawerTarefaProjeto"></span></span>
+                </div>
+                <button onclick="fecharDrawerTarefa()" class="text-gray-400 hover:text-gray-600 font-bold flex-shrink-0 ml-2">&times;</button>
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Status</label>
+                <select id="drawerTarefaStatusSelect" class="w-full p-2 border border-gray-300 rounded text-sm bg-white"></select>
+            </div>
+            <p id="drawerTarefaDescricao" class="text-xs text-gray-600"></p>
+
+            <div class="border-t pt-3">
+                <h4 class="text-[10px] font-black uppercase text-gray-500 mb-2"><i class="fa-solid fa-list-check"></i> Checklist</h4>
+                <div id="drawerChecklistBody" class="mb-2"></div>
+                <div class="flex gap-1">
+                    <input type="text" id="drawerChecklistNovoInput" placeholder="Novo item..." class="flex-1 p-1.5 border border-gray-300 rounded text-xs">
+                    <button onclick="drawerAdicionarChecklistItem()" class="px-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700">+</button>
+                </div>
+            </div>
+
+            <div class="border-t pt-3">
+                <h4 class="text-[10px] font-black uppercase text-gray-500 mb-2"><i class="fa-solid fa-diagram-project"></i> Dependências (precisa concluir antes)</h4>
+                <div id="drawerDependenciasBody" class="mb-2"></div>
+                <div class="flex gap-1">
+                    <select id="drawerDependenciaSelect" class="flex-1 p-1.5 border border-gray-300 rounded text-xs bg-white"></select>
+                    <button onclick="drawerAdicionarDependencia()" class="px-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700">+</button>
+                </div>
+            </div>
+
+            <div class="border-t pt-3">
+                <h4 class="text-[10px] font-black uppercase text-gray-500 mb-2"><i class="fa-solid fa-paperclip"></i> Anexos</h4>
+                <div id="drawerAnexosBody" class="mb-2"></div>
+                <label class="text-[11px] font-bold text-indigo-700 hover:text-indigo-900 cursor-pointer">
+                    <i class="fa-solid fa-upload"></i> Enviar anexo
+                    <input type="file" class="hidden" onchange="drawerEnviarAnexo(this)">
+                </label>
+            </div>
+
+            <div class="border-t pt-3">
+                <h4 class="text-[10px] font-black uppercase text-gray-500 mb-2"><i class="fa-solid fa-comments"></i> Comentários</h4>
+                <div id="drawerComentariosBody" class="mb-2"></div>
+                <textarea id="drawerComentarioInput" rows="2" placeholder="Escreva um comentário..." class="w-full p-2 border border-gray-300 rounded text-xs mb-1"></textarea>
+                <select id="drawerMencionarSelect" class="w-full p-1.5 border border-gray-300 rounded text-xs bg-white mb-1"></select>
+                <button onclick="drawerAdicionarComentario()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs py-1.5 rounded">Comentar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL APROVAÇÃO COMITÊ -->
     <!-- NOVO (item 1): modal de conclusão final do projeto/subprojeto -->
     <div id="modalConclusaoProjeto" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -5118,6 +5236,12 @@
     <script src="./js/meu-trabalho/meu-trabalho.js"></script>
     <script src="./js/meus-projetos/meus-projetos.js"></script>
     <script src="./js/notificacoes/notificacoes.js"></script>
+    <!-- Compasso 2.0 — Release 2 (Workspace Colaborativo do Projeto), 2026-09-23 -->
+    <script src="./js/workspace-projeto/workspace-projeto.js"></script>
+    <script src="./js/workspace-projeto/drawer-tarefa.js"></script>
+    <script src="./js/workspace-projeto/calendario-projeto.js"></script>
+    <script src="./js/workspace-projeto/documentos-projeto.js"></script>
+    <script src="./js/workspace-projeto/historico-projeto.js"></script>
     <script src="./js/dashboards/dashboard-filtro.js"></script>
     <script src="./js/dashboards/dashboard-resumo.js"></script>
     <script src="./js/dashboards/dashboard-fases.js"></script>
