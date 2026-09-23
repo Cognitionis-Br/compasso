@@ -98,6 +98,21 @@ async function _drawerRenderComentarios() {
     ]);
     if (error) { wrapper.innerHTML = `<p class="text-[11px] text-danger-600">Erro ao carregar comentários: ${escapeHtml(error.message)}</p>`; return; }
     const nomesPorId = Object.fromEntries(usuarios.map(u => [u.id, u.nome]));
+
+    // CORRIGIDO (a pedido do usuário): o comentário mostrava só quem
+    // escreveu (autor_id) — quem foi mencionado (task_mentions) nunca
+    // aparecia em lugar nenhum da UI, só disparava a notificação por
+    // trás. Busca as menções de todos os comentários carregados e mostra
+    // "Mencionou: <nome>" junto de cada comentário que tiver uma.
+    const idsComentarios = (comentarios || []).map(c => c.id);
+    const mencoesPorComentario = {};
+    if (idsComentarios.length > 0) {
+        const { data: mencoes } = await _supabase.from('task_mentions').select('task_comment_id, mentioned_user_id').in('task_comment_id', idsComentarios);
+        (mencoes || []).forEach(m => {
+            (mencoesPorComentario[m.task_comment_id] = mencoesPorComentario[m.task_comment_id] || []).push(nomesPorId[m.mentioned_user_id] || 'Usuário');
+        });
+    }
+
     wrapper.innerHTML = (comentarios || []).length === 0
         ? '<p class="text-[11px] text-gray-400 italic">Nenhum comentário ainda.</p>'
         : comentarios.map(c => `
@@ -107,6 +122,7 @@ async function _drawerRenderComentarios() {
                     <span class="text-[10px] text-gray-400">${formatDateTime(c.criado_em)}</span>
                 </div>
                 <div class="text-gray-600 mt-0.5">${escapeHtml(c.conteudo)}</div>
+                ${mencoesPorComentario[c.id] ? `<div class="text-[10px] text-indigo-600 mt-1"><i class="fa-solid fa-at"></i> Mencionou: ${mencoesPorComentario[c.id].map(n => escapeHtml(n)).join(', ')}</div>` : ''}
             </div>
         `).join('');
 
