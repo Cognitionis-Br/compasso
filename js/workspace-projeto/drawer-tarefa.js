@@ -58,7 +58,8 @@ function fecharDrawerTarefa() {
 async function _drawerRenderChecklist() {
     const wrapper = document.getElementById('drawerChecklistBody');
     if (!wrapper) return;
-    const { data } = await _supabase.from('task_checklist_items').select('*').eq('task_id', _drawerTaskId).order('ordem').order('id');
+    const { data, error } = await _supabase.from('task_checklist_items').select('*').eq('task_id', _drawerTaskId).order('id');
+    if (error) { wrapper.innerHTML = `<p class="text-[11px] text-danger-600">Erro ao carregar checklist: ${escapeHtml(error.message)}</p>`; return; }
     const itens = data || [];
     wrapper.innerHTML = itens.length === 0
         ? '<p class="text-[11px] text-gray-400 italic">Nenhum item ainda.</p>'
@@ -91,10 +92,11 @@ async function drawerAdicionarChecklistItem() {
 async function _drawerRenderComentarios() {
     const wrapper = document.getElementById('drawerComentariosBody');
     if (!wrapper) return;
-    const [{ data: comentarios }, usuarios] = await Promise.all([
+    const [{ data: comentarios, error }, usuarios] = await Promise.all([
         _supabase.from('task_comments').select('*').eq('task_id', _drawerTaskId).order('criado_em'),
         _drawerCarregarUsuarios()
     ]);
+    if (error) { wrapper.innerHTML = `<p class="text-[11px] text-danger-600">Erro ao carregar comentários: ${escapeHtml(error.message)}</p>`; return; }
     const nomesPorId = Object.fromEntries(usuarios.map(u => [u.id, u.nome]));
     wrapper.innerHTML = (comentarios || []).length === 0
         ? '<p class="text-[11px] text-gray-400 italic">Nenhum comentário ainda.</p>'
@@ -141,7 +143,8 @@ async function drawerAdicionarComentario() {
 async function _drawerRenderAnexos() {
     const wrapper = document.getElementById('drawerAnexosBody');
     if (!wrapper) return;
-    const { data } = await _supabase.from('task_attachments').select('*').eq('task_id', _drawerTaskId).order('enviado_em', { ascending: false });
+    const { data, error } = await _supabase.from('task_attachments').select('*').eq('task_id', _drawerTaskId).order('enviado_em', { ascending: false });
+    if (error) { wrapper.innerHTML = `<p class="text-[11px] text-danger-600">Erro ao carregar anexos: ${escapeHtml(error.message)}</p>`; return; }
     const anexos = data || [];
     if (anexos.length === 0) {
         wrapper.innerHTML = '<p class="text-[11px] text-gray-400 italic">Nenhum anexo ainda.</p>';
@@ -181,12 +184,13 @@ async function _drawerRenderDependencias() {
     if (!wrapper) return;
 
     const tarefaAtual = _tarefasCache[_drawerTaskId];
-    const [{ data: dependencias }, { data: tarefasDoProjeto }] = await Promise.all([
+    const [{ data: dependencias, error }, { data: tarefasDoProjeto }] = await Promise.all([
         _supabase.from('task_dependencies').select('id, depende_de_task_id, tasks!task_dependencies_depende_de_task_id_fkey(titulo, status)').eq('task_id', _drawerTaskId),
         tarefaAtual && tarefaAtual.projeto_codigo
             ? _supabase.from('tasks').select('id, titulo').eq('projeto_codigo', tarefaAtual.projeto_codigo).neq('id', _drawerTaskId)
             : Promise.resolve({ data: [] })
     ]);
+    if (error) { wrapper.innerHTML = `<p class="text-[11px] text-danger-600">Erro ao carregar dependências: ${escapeHtml(error.message)}</p>`; return; }
 
     const deps = dependencias || [];
     wrapper.innerHTML = deps.length === 0
