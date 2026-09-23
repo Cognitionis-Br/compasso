@@ -34,8 +34,12 @@ function _resCapexOpex(lista, extrator) {
 //   = Orçamento Atual → −Realizados → = A Realizar
 // Escopo: lista do Ano Fiscal selecionado (NÃO reage ao Filtro Global).
 // -------------------------------------------------------------------------
-function renderResumoOrcamentario(listaAF) {
-    const alvo = document.getElementById('dashResumoOrcamentario');
+// `elId` (Compasso 2.0 Release 3): opcional — permite reaproveitar esta
+// função exata na tela "Financeiro Corporativo"
+// (js/financeiro-corporativo/financeiro-corporativo.js) sem duplicar o
+// cálculo nem colidir com o id fixo usado pelo Dashboard.
+function renderResumoOrcamentario(listaAF, elId) {
+    const alvo = document.getElementById(elId || 'dashResumoOrcamentario');
     if (!alvo) return;
 
     const base = (listaAF || []).filter(p =>

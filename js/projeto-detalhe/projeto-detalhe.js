@@ -39,7 +39,11 @@ const PROJETO_DETALHE_ORIGENS = {
     // essa chave estava faltando aqui, então o fallback pra 'dashboard'
     // sempre disparava e o botão Voltar nunca levava pro Workspace de
     // onde o usuário veio.
-    workspace: { tab: 'workspace_projeto', texto: 'Voltar ao Workspace do Projeto' }
+    workspace: { tab: 'workspace_projeto', texto: 'Voltar ao Workspace do Projeto' },
+    // NOVO (Compasso 2.0 Release 3, 2026-09-23): drill-down do Portfólio
+    // Executivo — modoAFPortfolioExecutivo é module-level (não reseta ao
+    // trocar de tab), então voltar já preserva o filtro de Ano Fiscal.
+    portfolio_executivo: { tab: 'portfolio_executivo', texto: 'Voltar ao Portfólio Executivo' }
 };
 
 // NOVO (a pedido do usuário): linha "RÓTULO : valor" com rótulo em

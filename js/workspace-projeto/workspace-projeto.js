@@ -13,8 +13,14 @@
 // de "minhas tarefas" — mesmo motor de RPC/concorrência do Release 1.
 // =========================================================================
 
-const WS_ABAS = ['visao_geral', 'tarefas', 'calendario', 'documentos', 'historico'];
-const WS_ABA_LABELS = { visao_geral: 'Visão Geral', tarefas: 'Tarefas', calendario: 'Calendário', documentos: 'Documentos', historico: 'Histórico' };
+// Release 3: +cronograma, +financeiro, +raid (reaproveitam motores já
+// existentes — ver js/workspace-projeto/cronograma-projeto.js,
+// financeiro-projeto.js, raid-projeto.js).
+const WS_ABAS = ['visao_geral', 'tarefas', 'cronograma', 'financeiro', 'raid', 'calendario', 'documentos', 'historico'];
+const WS_ABA_LABELS = {
+    visao_geral: 'Visão Geral', tarefas: 'Tarefas', cronograma: 'Cronograma', financeiro: 'Financeiro',
+    raid: 'Riscos e Ocorrências', calendario: 'Calendário', documentos: 'Documentos', historico: 'Histórico'
+};
 
 let _wsProjetoAtual = null;
 let _wsAbaAtual = 'visao_geral';
@@ -112,6 +118,9 @@ async function mudarAbaWorkspace(aba) {
 
     if (aba === 'visao_geral') await _wsRenderVisaoGeral();
     if (aba === 'tarefas') await _wsCarregarTarefas();
+    if (aba === 'cronograma' && typeof renderCronogramaProjeto === 'function') await renderCronogramaProjeto(_wsProjetoAtual, 'wsCronogramaBody');
+    if (aba === 'financeiro' && typeof renderFinanceiroProjeto === 'function') renderFinanceiroProjeto(_wsProjetoAtual, 'wsFinanceiroBody');
+    if (aba === 'raid' && typeof renderRaidProjeto === 'function') await renderRaidProjeto(_wsProjetoAtual, 'wsRaidBody');
     if (aba === 'calendario' && typeof renderCalendarioProjeto === 'function') await renderCalendarioProjeto(_wsProjetoAtual, 'wsCalendarioBody');
     if (aba === 'documentos' && typeof renderDocumentosProjeto === 'function') await renderDocumentosProjeto(_wsProjetoAtual, 'wsDocumentosBody');
     if (aba === 'historico' && typeof renderHistoricoProjeto === 'function') await renderHistoricoProjeto(_wsProjetoAtual, 'wsHistoricoBody');

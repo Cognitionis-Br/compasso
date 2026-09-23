@@ -190,6 +190,10 @@
                     <button onclick="switchTab('notificacoes')" id="link-notificacoes" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
                         <i class="fa-solid fa-bell w-4 text-center"></i> Notificações
                     </button>
+                    <!-- NOVO (Compasso 2.0 Release 3, 2026-09-23) -->
+                    <button onclick="switchTab('minhas_aprovacoes')" id="link-minhas_aprovacoes" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-stamp w-4 text-center"></i> Minhas Aprovações
+                    </button>
                 </div>
 
                 <!-- GRUPO: FISCAL YEAR (item 3, Fase 1) — leva "Ano Fiscal"
@@ -296,6 +300,9 @@
                         <i id="icon-gov" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
                     <div id="menu-gov" class="submenu pl-9 pr-2 mt-1 space-y-1">
+                        <!-- NOVO (Compasso 2.0 Release 3, 2026-09-23): fila unificada — os
+                             4 links abaixo continuam existindo, acessíveis direto. -->
+                        <button onclick="switchTab('governanca_unificada')" id="link-governanca_unificada" class="sidebar-link w-full text-left px-3 py-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 rounded border-l-2 border-transparent transition-colors"><i class="fa-solid fa-list-check mr-1"></i>Fila de Governança</button>
                         <button onclick="switchTab('governanca')" id="link-governanca" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cobrança de Ajustes</button>
                         <button onclick="switchTab('retomar_hold')" id="link-retomar_hold" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Retomar Projetos em Hold</button>
                         <button onclick="switchTab('mudanca_orcamento')" id="link-mudanca_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Diferenças de Orçamento</button>
@@ -471,6 +478,9 @@
                         <button onclick="switchTab('alertas_orcamento')" id="view-btn-alertas_orcamento" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Alertas de Orçamento</button>
                         <button onclick="switchTab('cronograma_evolucao')" id="view-btn-cronograma_evolucao" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Cronograma & Evolução</button>
                         <button onclick="switchTab('consultas')" id="view-btn-consultas" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Consulta de Projetos</button>
+                        <!-- NOVO (Compasso 2.0 Release 3, 2026-09-23) -->
+                        <button onclick="switchTab('portfolio_executivo')" id="view-btn-portfolio_executivo" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Portfólio Executivo</button>
+                        <button onclick="switchTab('financeiro_corporativo')" id="view-btn-financeiro_corporativo" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Financeiro Corporativo</button>
                     </nav>
                     <button onclick="rolarAbasVisao(1)" class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded flex-shrink-0" aria-label="Rolar abas para a direita">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
@@ -599,6 +609,21 @@
                     <div id="notificacoesLista"></div>
                 </div>
 
+                <!-- Minhas Aprovações — Compasso 2.0 Release 3
+                     (js/aprovacoes/minhas-aprovacoes.js). Fila única, sem
+                     duplicar as 7 telas de aprovação originais. -->
+                <div id="view-minhas_aprovacoes" class="tab-content hidden max-w-3xl mx-auto space-y-4">
+                    <h2 class="text-lg font-bold text-gray-900">Minhas Aprovações</h2>
+                    <div id="minhasAprovacoesLista"></div>
+                </div>
+
+                <!-- Fila de Governança — Compasso 2.0 Release 3
+                     (js/governanca/governanca-unificada.js). -->
+                <div id="view-governanca_unificada" class="tab-content hidden max-w-3xl mx-auto space-y-4">
+                    <h2 class="text-lg font-bold text-gray-900">Fila de Governança</h2>
+                    <div id="governancaUnificadaLista"></div>
+                </div>
+
                 <!-- WORKSPACE DO PROJETO — Compasso 2.0 Release 2
                      (js/workspace-projeto/workspace-projeto.js). Tela nova e
                      SEPARADA de view-projeto_detalhe (governança/financeiro,
@@ -615,6 +640,9 @@
                     <div class="flex gap-1 border-b border-gray-200 overflow-x-auto no-scrollbar">
                         <button id="wsBtnAba_visao_geral" onclick="mudarAbaWorkspace('visao_geral')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
                         <button id="wsBtnAba_tarefas" onclick="mudarAbaWorkspace('tarefas')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
+                        <button id="wsBtnAba_cronograma" onclick="mudarAbaWorkspace('cronograma')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
+                        <button id="wsBtnAba_financeiro" onclick="mudarAbaWorkspace('financeiro')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
+                        <button id="wsBtnAba_raid" onclick="mudarAbaWorkspace('raid')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
                         <button id="wsBtnAba_calendario" onclick="mudarAbaWorkspace('calendario')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
                         <button id="wsBtnAba_documentos" onclick="mudarAbaWorkspace('documentos')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
                         <button id="wsBtnAba_historico" onclick="mudarAbaWorkspace('historico')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
@@ -640,6 +668,19 @@
                         </div>
                     </div>
 
+                    <!-- Compasso 2.0 Release 3: abas Cronograma/Financeiro/RAID -->
+                    <div id="wsAba_cronograma" class="hidden">
+                        <div id="wsCronogramaBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+
+                    <div id="wsAba_financeiro" class="hidden">
+                        <div id="wsFinanceiroBody"></div>
+                    </div>
+
+                    <div id="wsAba_raid" class="hidden">
+                        <div id="wsRaidBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+
                     <div id="wsAba_calendario" class="hidden">
                         <div id="wsCalendarioBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
                     </div>
@@ -651,6 +692,44 @@
                     <div id="wsAba_historico" class="hidden">
                         <div id="wsHistoricoBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
                     </div>
+                </div>
+
+                <!-- Portfólio Executivo — Compasso 2.0 Release 3
+                     (js/portfolio/portfolio-executivo.js). Reaproveita
+                     calcularSaudeProjeto/filtro de AF já existentes — não
+                     recalcula nada, só apresenta numa tela dedicada com
+                     drill-down. -->
+                <div id="view-portfolio_executivo" class="tab-content hidden">
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-briefcase brand-red-text"></i> Portfólio Executivo</h2>
+                            <p class="text-xs text-gray-500 mt-1">Visão executiva consolidada do portfólio.</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Ano Fiscal</label>
+                            <select id="portExecSeletorAF" onchange="onMudarSeletorAFPortfolioExecutivo()" class="p-2 border border-gray-300 rounded text-xs font-bold bg-white"></select>
+                        </div>
+                    </div>
+                    <div id="portExecFaixaAF" class="mb-4"></div>
+                    <div id="portExecCorpo"></div>
+                </div>
+
+                <!-- Financeiro Corporativo — Compasso 2.0 Release 3
+                     (js/financeiro-corporativo/financeiro-corporativo.js).
+                     Reaproveita renderResumoOrcamentario (Dashboard). -->
+                <div id="view-financeiro_corporativo" class="tab-content hidden">
+                    <div class="flex justify-between items-end mb-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-sack-dollar brand-red-text"></i> Financeiro Corporativo</h2>
+                            <p class="text-xs text-gray-500 mt-1">Consolidação orçamentária do portfólio.</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Ano Fiscal</label>
+                            <select id="finCorpSeletorAF" onchange="onMudarSeletorAFFinanceiroCorporativo()" class="p-2 border border-gray-300 rounded text-xs font-bold bg-white"></select>
+                        </div>
+                    </div>
+                    <div id="finCorpFaixaAF" class="mb-4"></div>
+                    <div id="finCorpResumoOrcamentario"></div>
                 </div>
 
                 <!-- VISÃO: DASHBOARD -->
@@ -4912,6 +4991,73 @@
         </div>
     </div>
 
+    <!-- RAID — modal de criar/editar item (Compasso 2.0 Release 3,
+         js/workspace-projeto/raid-projeto.js) -->
+    <div id="modalRaid" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-md w-full p-6 space-y-3 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 id="raidModalTitulo" class="font-bold text-gray-800 text-base">Novo Item RAID</h3>
+                <button onclick="fecharModalRaid()" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Tipo</label>
+                <select id="raidTipoInput" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
+                    <option value="RISCO">Risco</option>
+                    <option value="PROBLEMA">Problema</option>
+                    <option value="IMPEDIMENTO">Impedimento</option>
+                    <option value="DECISAO">Decisão</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Título *</label>
+                <input type="text" id="raidTituloInput" class="w-full p-2 border border-gray-300 rounded text-sm">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Descrição</label>
+                <textarea id="raidDescricaoInput" rows="3" class="w-full p-2 border border-gray-300 rounded text-sm"></textarea>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Probabilidade</label>
+                    <select id="raidProbabilidadeInput" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
+                        <option value="">-- N/A --</option>
+                        <option value="BAIXA">Baixa</option>
+                        <option value="MEDIA">Média</option>
+                        <option value="ALTA">Alta</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Impacto</label>
+                    <select id="raidImpactoInput" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
+                        <option value="">-- N/A --</option>
+                        <option value="BAIXA">Baixo</option>
+                        <option value="MEDIA">Médio</option>
+                        <option value="ALTA">Alto</option>
+                    </select>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Status</label>
+                    <select id="raidStatusInput" class="w-full p-2 border border-gray-300 rounded text-sm bg-white">
+                        <option value="ABERTO">Aberto</option>
+                        <option value="EM_ANDAMENTO">Em Andamento</option>
+                        <option value="RESOLVIDO">Resolvido</option>
+                        <option value="CANCELADO">Cancelado</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Prazo</label>
+                    <input type="date" id="raidPrazoInput" class="w-full p-2 border border-gray-300 rounded text-sm">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="fecharModalRaid()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700 transition">Cancelar</button>
+                <button onclick="salvarRaid()" class="px-4 py-2 bg-indigo-700 hover:bg-indigo-800 text-white rounded text-xs font-bold transition">Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL APROVAÇÃO COMITÊ -->
     <!-- NOVO (item 1): modal de conclusão final do projeto/subprojeto -->
     <div id="modalConclusaoProjeto" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -5242,6 +5388,14 @@
     <script src="./js/workspace-projeto/calendario-projeto.js"></script>
     <script src="./js/workspace-projeto/documentos-projeto.js"></script>
     <script src="./js/workspace-projeto/historico-projeto.js"></script>
+    <!-- Compasso 2.0 — Release 3 (Gestão, Financeiro e Governança), 2026-09-23 -->
+    <script src="./js/workspace-projeto/cronograma-projeto.js"></script>
+    <script src="./js/workspace-projeto/financeiro-projeto.js"></script>
+    <script src="./js/workspace-projeto/raid-projeto.js"></script>
+    <script src="./js/portfolio/portfolio-executivo.js"></script>
+    <script src="./js/financeiro-corporativo/financeiro-corporativo.js"></script>
+    <script src="./js/aprovacoes/minhas-aprovacoes.js"></script>
+    <script src="./js/governanca/governanca-unificada.js"></script>
     <script src="./js/dashboards/dashboard-filtro.js"></script>
     <script src="./js/dashboards/dashboard-resumo.js"></script>
     <script src="./js/dashboards/dashboard-fases.js"></script>

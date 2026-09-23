@@ -172,6 +172,11 @@ function switchTab(tabId) {
     if (tabId === 'notificacoes') renderNotificacoesView();
     // NOVO (Compasso 2.0 Release 2 — Workspace Colaborativo do Projeto, 2026-09-23).
     if (tabId === 'workspace_projeto') renderWorkspaceProjeto();
+    // NOVO (Compasso 2.0 Release 3 — Gestão, Financeiro e Governança, 2026-09-23).
+    if (tabId === 'minhas_aprovacoes') renderMinhasAprovacoesView();
+    if (tabId === 'governanca_unificada') renderGovernancaUnificadaView();
+    if (tabId === 'portfolio_executivo') renderPortfolioExecutivoView();
+    if (tabId === 'financeiro_corporativo') renderFinanceiroCorporativoView();
     if (tabId === 'periodo_ano_fiscal') {
         const restrito = document.getElementById('periodoAnoFiscalRestrito');
         const conteudo = document.getElementById('periodoAnoFiscalConteudo');
