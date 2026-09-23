@@ -177,6 +177,9 @@ function switchTab(tabId) {
     if (tabId === 'governanca_unificada') renderGovernancaUnificadaView();
     if (tabId === 'portfolio_executivo') renderPortfolioExecutivoView();
     if (tabId === 'financeiro_corporativo') renderFinanceiroCorporativoView();
+    if (tabId === 'busca_global') renderBuscaGlobalView();
+    if (tabId === 'relatorios') renderRelatoriosView();
+    if (tabId === 'configuracoes') renderConfiguracoesView();
     if (tabId === 'periodo_ano_fiscal') {
         const restrito = document.getElementById('periodoAnoFiscalRestrito');
         const conteudo = document.getElementById('periodoAnoFiscalConteudo');

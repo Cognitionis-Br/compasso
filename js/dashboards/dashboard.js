@@ -67,6 +67,36 @@ function renderQuadroCarryOverCapexOpex(prefixo, lista) {
     if (elOpex) elOpex.innerText = fmt(dados.opex.orcado);
 }
 
+// NOVO (Compasso 2.0 Release 4 — Dashboard por perfil, 2026-09-23): só
+// pra quem NÃO é Administrador/Proprietário — usa a MESMA restrição de
+// OPERADOR já aplicada em `lista` (filtrarProjetosPorArea('dashboard')
+// já rodou antes desta chamada) pra saber se sobrou algo "meu" que vale a
+// pena destacar. Não recalcula nada novo, só reapresenta.
+function _renderDashboardMeusProjetosPerfil(lista) {
+    const wrapper = document.getElementById('dashMeusProjetosPerfil');
+    if (!wrapper) return;
+    if (ehAdministrador || ehProprietario) { wrapper.classList.add('hidden'); return; }
+
+    const meus = (lista || []).filter(p => !p.is_subprojeto &&
+        typeof codigosProjetosComoResponsavel !== 'undefined' && codigosProjetosComoResponsavel.has(p.codigo));
+    if (meus.length === 0) { wrapper.classList.add('hidden'); return; }
+
+    wrapper.classList.remove('hidden');
+    wrapper.innerHTML = `
+        <section class="bg-white rounded-lg border border-gray-200 border-t-4 border-t-indigo-500 p-4">
+            <h3 class="font-extrabold text-gray-900 text-sm mb-3 uppercase tracking-wide">Meus Projetos</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                ${meus.slice(0, 6).map(p => `
+                    <div class="p-2.5 border border-gray-100 rounded hover:bg-gray-50 cursor-pointer" onclick="abrirWorkspaceProjeto('${p.codigo}')">
+                        <div class="text-xs font-bold text-gray-800 truncate">${escapeHtml(p.codigo)} — ${escapeHtml(p.nome || '')}</div>
+                        <div class="text-[10px] text-gray-400">${escapeHtml(p.etapa_atual || 'Business Case')}</div>
+                    </div>
+                `).join('')}
+            </div>
+            ${meus.length > 6 ? `<button onclick="switchTab('meus_projetos')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 mt-2">Ver todos (${meus.length})</button>` : ''}
+        </section>`;
+}
+
 // NOVO (item 2 do relatório de testes): ordenação clicável no Status
 // Detalhado da Carteira, por Farol de Saúde, Área ou Fase.
 // AJUSTADO (a pedido do usuário): "classificar por Farol, Área e Fase"
@@ -129,6 +159,7 @@ async function renderDashboardMetrics() {
     const projectsDataFiltrado = filtrarProjetosPorArea(
         filtrarProjetosPorAnoFiscalSelecionado(projectsData, modoAFDashboard), 'dashboard');
     renderFaixaAFSelecionado('dashFaixaAFSelecionado', modoAFDashboard);
+    _renderDashboardMeusProjetosPerfil(projectsDataFiltrado);
 
     // Filtro Global (Estágio 1) — recorte compartilhado sobre a lista já
     // no escopo do Ano Fiscal. Resumo Orçamentário e Funis seguem com a

@@ -47,7 +47,7 @@ async function renderPortfolioExecutivoView() {
             ${cardKpi('Críticos', contagem.CRITICO, contagem.CRITICO > 0 ? 'border-t-danger-500' : 'border-t-emerald-500')}
         </div>
 
-        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto">
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto hidden md:block">
             <table class="w-full text-left text-xs">
                 <thead><tr class="bg-gray-50 uppercase text-[10px] text-gray-500 border-b">
                     <th class="p-3">Código</th><th class="p-3">Projeto</th><th class="p-3">Área</th>
@@ -66,6 +66,22 @@ async function renderPortfolioExecutivoView() {
                     `).join('')}
                 </tbody>
             </table>
+        </div>
+
+        <!-- Versão em cartão, só em telas estreitas (mesmo padrão de dashCardsBody) -->
+        <div class="md:hidden space-y-2">
+            ${comSaude.length === 0 ? '<p class="text-center text-gray-400 italic p-4">Nenhum projeto no filtro atual.</p>' : comSaude.map(({ p, saude }) => `
+                <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-3 cursor-pointer" onclick="abrirDetalheProjeto('${p.codigo}', 'portfolio_executivo')">
+                    <div class="flex items-start justify-between mb-1 gap-2">
+                        <div class="min-w-0">
+                            <div class="text-xs font-mono font-bold text-gray-800">${escapeHtml(p.codigo)}</div>
+                            <div class="text-xs text-gray-600 truncate">${escapeHtml(p.nome || '')}</div>
+                        </div>
+                        ${saude.html}
+                    </div>
+                    <div class="text-[10px] text-gray-400">${escapeHtml(p.area || '-')} · ${escapeHtml(p.etapa_atual || 'Business Case')} · ${formatCurrency(Number(p.val_tech) || Number(p.val_req) || Number(p.val_bc) || Number(p.previsto) || 0)}</div>
+                </div>
+            `).join('')}
         </div>
     `;
 }

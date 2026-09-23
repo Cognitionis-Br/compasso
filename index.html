@@ -462,8 +462,14 @@
                 <!-- Visões e Busca -->
                 <div class="flex items-center gap-8 flex-1 min-w-0">
                     
-                    <!-- Busca Global removida em 10/08/2026 (a pedido do usuário) — era só
-                         um campo decorativo, nunca teve nenhuma lógica de busca por trás. -->
+                    <!-- Busca Global — Compasso 2.0 Release 4, 2026-09-23
+                         (js/busca/busca-global.js). Removida em 10/08/2026 por ser só
+                         decorativa; esta reintrodução tem lógica de verdade por trás
+                         (projetos/tarefas/RAID, sempre dentro do escopo do usuário). -->
+                    <div class="relative flex-shrink-0 hidden md:block">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs"></i>
+                        <input type="text" id="buscaGlobalInput" placeholder="Buscar projeto, tarefa..." onkeydown="if(event.key==='Enter') executarBuscaGlobal()" class="w-48 pl-8 pr-2 py-1.5 text-xs border border-gray-300 rounded-md focus:w-64 transition-all">
+                    </div>
 
                     <!-- Abas de Visão — com 5 abas, pode não caber em telas médias/estreitas.
                          Setas de navegação em vez de depender só de rolagem (que é invisível e
@@ -481,6 +487,9 @@
                         <!-- NOVO (Compasso 2.0 Release 3, 2026-09-23) -->
                         <button onclick="switchTab('portfolio_executivo')" id="view-btn-portfolio_executivo" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Portfólio Executivo</button>
                         <button onclick="switchTab('financeiro_corporativo')" id="view-btn-financeiro_corporativo" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Financeiro Corporativo</button>
+                        <!-- NOVO (Compasso 2.0 Release 4, 2026-09-23) -->
+                        <button onclick="switchTab('relatorios')" id="view-btn-relatorios" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Relatórios</button>
+                        <button onclick="switchTab('configuracoes')" id="view-btn-configuracoes" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Configurações</button>
                     </nav>
                     <button onclick="rolarAbasVisao(1)" class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded flex-shrink-0" aria-label="Rolar abas para a direita">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
@@ -607,6 +616,24 @@
                         <button onclick="marcarTodasNotificacoesLidas()" class="text-xs font-bold text-indigo-700 hover:text-indigo-900">Marcar todas como lidas</button>
                     </div>
                     <div id="notificacoesLista"></div>
+                </div>
+
+                <!-- Busca Global — Compasso 2.0 Release 4 (js/busca/busca-global.js) -->
+                <div id="view-busca_global" class="tab-content hidden max-w-3xl mx-auto space-y-4">
+                    <h2 class="text-lg font-bold text-gray-900">Resultados da Busca — "<span id="buscaGlobalTermoDisplay"></span>"</h2>
+                    <div id="buscaGlobalResultados"></div>
+                </div>
+
+                <!-- Relatórios — Compasso 2.0 Release 4 (js/relatorios/relatorios.js) -->
+                <div id="view-relatorios" class="tab-content hidden max-w-3xl mx-auto space-y-4">
+                    <h2 class="text-lg font-bold text-gray-900">Relatórios</h2>
+                    <div id="relatoriosLista" class="space-y-2"></div>
+                </div>
+
+                <!-- Configurações — Compasso 2.0 Release 4 (js/configuracoes/configuracoes.js) -->
+                <div id="view-configuracoes" class="tab-content hidden max-w-3xl mx-auto space-y-4">
+                    <h2 class="text-lg font-bold text-gray-900">Configurações</h2>
+                    <div id="configuracoesLista" class="space-y-2"></div>
                 </div>
 
                 <!-- Minhas Aprovações — Compasso 2.0 Release 3
@@ -752,6 +779,14 @@
                     <!-- NOVO (a pedido do usuário): faixa visível indicando qual
                          Ano Fiscal está selecionado, sempre no topo da tela. -->
                     <div id="dashFaixaAFSelecionado" class="mb-4"></div>
+
+                    <!-- NOVO (Compasso 2.0 Release 4 — Dashboard por perfil,
+                         2026-09-23): só aparece pra quem NÃO é Administrador/
+                         Proprietário — lidera a tela com a saúde dos projetos do
+                         próprio usuário antes da visão de portfólio inteira.
+                         Admin/Proprietário continuam vendo o Dashboard exatamente
+                         como sempre foi (sem essa seção). -->
+                    <div id="dashMeusProjetosPerfil" class="hidden mb-4"></div>
 
                     <!-- Filtro Global (spec-dashboard-portfolio.md §4.1) — Área /
                          Fase / Status / Tipo em múltipla seleção; recalcula
@@ -5396,6 +5431,10 @@
     <script src="./js/financeiro-corporativo/financeiro-corporativo.js"></script>
     <script src="./js/aprovacoes/minhas-aprovacoes.js"></script>
     <script src="./js/governanca/governanca-unificada.js"></script>
+    <!-- Compasso 2.0 — Release 4 (Consolidação, Busca, Relatórios e Escala), 2026-09-23 -->
+    <script src="./js/busca/busca-global.js"></script>
+    <script src="./js/relatorios/relatorios.js"></script>
+    <script src="./js/configuracoes/configuracoes.js"></script>
     <script src="./js/dashboards/dashboard-filtro.js"></script>
     <script src="./js/dashboards/dashboard-resumo.js"></script>
     <script src="./js/dashboards/dashboard-fases.js"></script>

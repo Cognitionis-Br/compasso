@@ -19,11 +19,10 @@ const MA_ETAPA_PARA_TAB = {
     'AVALIAR ESPECIFICAÇÃO NEGÓCIO': 'tech_aval_negocio'
 };
 
-async function renderMinhasAprovacoesView() {
-    const wrapper = document.getElementById('minhasAprovacoesLista');
-    if (!wrapper) return;
-    wrapper.innerHTML = renderLoadingState();
-
+// Extraída (Compasso 2.0 Release 4) pra ser reaproveitada também pelo
+// export de Relatórios (js/relatorios/relatorios.js) — mesma lista, sem
+// duplicar os 5 filtros.
+async function obterMinhasAprovacoes() {
     const naoSubSubprojeto = p => !p.is_subprojeto;
     const itens = [];
 
@@ -62,6 +61,16 @@ async function renderMinhasAprovacoesView() {
             if (p) itens.push({ p, origem: e.etapa.charAt(0) + e.etapa.slice(1).toLowerCase(), tab: MA_ETAPA_PARA_TAB[e.etapa] });
         });
     }
+
+    return itens;
+}
+
+async function renderMinhasAprovacoesView() {
+    const wrapper = document.getElementById('minhasAprovacoesLista');
+    if (!wrapper) return;
+    wrapper.innerHTML = renderLoadingState();
+
+    const itens = await obterMinhasAprovacoes();
 
     if (itens.length === 0) {
         wrapper.innerHTML = '<p class="text-xs text-gray-400 italic py-8 text-center">Nenhuma aprovação pendente pra você agora.</p>';
