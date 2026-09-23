@@ -28,7 +28,9 @@ const NOME_EXIBICAO_MODULO = {
     WORKFLOW: 'Workflow de Projetos',
     EMAIL: 'Notificações por E-mail',
     FINANCEIRO: 'Financeiro & Contratos',
-    PLANEJAMENTO_ESTRATEGICO: 'Planejamento Estratégico'
+    PLANEJAMENTO_ESTRATEGICO: 'Planejamento Estratégico',
+    // NOVO (Módulo de Construção de Requerimentos com IA, 23/09/2026).
+    IA: 'Inteligência Artificial'
 };
 
 // Carregado no boot (js/auth/auth.js:entrarNoSistema), mesmo momento em
@@ -129,7 +131,15 @@ const TAB_MODULO_MAP = {
     pagamentos_pendentes_nf: 'FINANCEIRO', // NOVO 2026-09-16 — cobrança de NF pendente
 
     // PLANEJAMENTO_ESTRATEGICO
-    planejamento_estrategico: 'PLANEJAMENTO_ESTRATEGICO'
+    planejamento_estrategico: 'PLANEJAMENTO_ESTRATEGICO',
+
+    // IA — NOVO (Módulo de Construção de Requerimentos com IA,
+    // 23/09/2026). construcao_ia_requerimentos NÃO entra aqui de
+    // propósito: não é uma tab própria (fica embutido em Gerar
+    // Requerimentos), o gate é feito via moduloAtivo('IA') direto no JS
+    // (ver js/phases/generic-workflow-ui.js).
+    ia_templates: 'IA',
+    ia_config: 'IA'
 };
 
 function moduloDoTab(tabId) {
@@ -148,7 +158,7 @@ function moduloDoTab(tabId) {
 // modulosLicenciados) pra sempre mostrar o estado real do banco, mesmo
 // código do padrão já usado em config_email_geral/config_bloqueio_orcamento.
 // -------------------------------------------------------------------------
-const ORDEM_EXIBICAO_MODULO = ['WORKFLOW', 'EMAIL', 'FINANCEIRO', 'PLANEJAMENTO_ESTRATEGICO'];
+const ORDEM_EXIBICAO_MODULO = ['WORKFLOW', 'EMAIL', 'FINANCEIRO', 'PLANEJAMENTO_ESTRATEGICO', 'IA'];
 
 async function renderLicenciamentoModulosView() {
     const lista = document.getElementById('licenciamentoModulosLista');

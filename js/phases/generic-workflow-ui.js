@@ -454,7 +454,18 @@ async function renderFaseGenericaViewPorFase(etapaAtualProjeto, nomeFaseWorkflow
     if (tbodyEmAndamento) {
         tbodyEmAndamento.innerHTML = emAndamento.length === 0
             ? `<tr><td colspan="5" class="p-4 text-center text-gray-400 font-bold">Nenhum projeto em andamento nesta etapa</td></tr>`
-            : emAndamento.map(({ projeto: p, etapa: pe }) => `
+            : emAndamento.map(({ projeto: p, etapa: pe }) => {
+                // NOVO (Módulo de Construção de Requerimentos com IA,
+                // 23/09/2026): botão só nesta etapa específica, só com o
+                // módulo comercial IA licenciado — não afeta as demais
+                // ~40 etapas que reaproveitam esta função genérica.
+                const mostrarBotaoIA = nomeEtapaAlvo === 'GERAR REQUERIMENTOS' &&
+                    typeof moduloAtivo === 'function' && moduloAtivo('IA') &&
+                    typeof abrirModuloConstrucaoIA === 'function';
+                const botaoIA = mostrarBotaoIA
+                    ? `<button onclick="abrirModuloConstrucaoIA('${p.codigo}')" class="ml-1 bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-3 py-1.5 rounded shadow" title="Construção de Requerimentos com IA"><i class="fa-solid fa-wand-magic-sparkles"></i> Construir com IA</button>`
+                    : '';
+                return `
                 <tr>
                     <td class="p-3 font-mono font-bold text-purple-700">${p.codigo}</td>
                     <td class="p-3 font-semibold">${escapeHtml(p.nome)}</td>
@@ -469,10 +480,10 @@ async function renderFaseGenericaViewPorFase(etapaAtualProjeto, nomeFaseWorkflow
                                    <i class="fa-solid fa-chart-line"></i> Evolução (${pe.percentual_evolucao || 0}%)
                                </button>${renderBadgeAlertaEvolucao(pe)}
                                ${!pe.percentual_evolucao ? `<button onclick="abrirModalPlanejamentoGenerico('${p.codigo}', '${nomeEtapaAlvo}')" class="ml-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs px-2 py-1.5 rounded" title="Ratificar/retificar o planejamento — só permitido antes da primeira marcação de evolução"><i class="fa-solid fa-pen"></i></button>` : ''}`
-                        }
+                        }${botaoIA}
                     </td>
                 </tr>
-            `).join('');
+            `;}).join('');
     }
 }
 
@@ -693,6 +704,15 @@ async function confirmarPlanejamentoGenerico() {
 
     const { error } = await _supabase.from('projeto_etapas').upsert(payload, { onConflict: 'projeto_codigo,etapa_id' });
     if (error) return alert('Erro ao salvar planejamento: ' + error.message);
+
+    // NOVO (Módulo de Construção de Requerimentos com IA, 23/09/2026): o
+    // template inicial precisa ser recebido no INÍCIO da execução desta
+    // etapa específica — não mexe no motor genérico usado pelas demais
+    // ~40 etapas do app. _iaInicializarRascunho() já se auto-restringe se
+    // o módulo IA não estiver licenciado.
+    if (nomeEtapa === 'GERAR REQUERIMENTOS' && typeof _iaInicializarRascunho === 'function') {
+        await _iaInicializarRascunho(codigoProjeto, nomeEtapa);
+    }
 
     // NOVO (a pedido do usuário 25/08/2026): loga a decisão de
     // Ratificar/Retificar (só UAT/Go-Live, só quando já existia plano

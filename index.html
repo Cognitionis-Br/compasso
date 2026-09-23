@@ -65,6 +65,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <!-- SheetJS (leitura de planilha Excel — Pendências de Contratos, Release 1) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Módulo de Construção de Requerimentos com IA: marked.js renderiza o
+         Markdown devolvido pela OpenAI; mermaid.js renderiza os diagramas
+         (a IA é instruída a usar EXCLUSIVAMENTE sintaxe Mermaid). -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@12/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <script>
+        // startOnLoad:false — só renderiza quando construcao-ia.js chamar
+        // mermaid.run() explicitamente nos blocos do resultado da IA.
+        if (typeof mermaid !== 'undefined') mermaid.initialize({ startOnLoad: false });
+    </script>
     <!-- Stylesheet customizado -->
     <link rel="stylesheet" href="css/styles.css">
     <style>
@@ -359,6 +369,8 @@
                         <button onclick="switchTab('percentual_bloqueio_orcamento')" id="link-percentual_bloqueio_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Percentual de Bloqueio de Orçamento</button>
                         <button onclick="switchTab('controle_orcamento')" id="link-controle_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Controle Orçamentário</button>
                         <button onclick="switchTab('periodo_ano_fiscal')" id="link-periodo_ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Período do Ano Fiscal</button>
+                        <button onclick="switchTab('ia_templates')" id="link-ia_templates" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Gestão de Templates de IA</button>
+                        <button onclick="switchTab('ia_config')" id="link-ia_config" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Configuração de IA</button>
                     </div>
                 </div>
 
@@ -2785,6 +2797,63 @@
                     </div>
                 </div>
 
+                <!-- NOVO (Módulo de Construção de Requerimentos com IA, 23/09/2026):
+                     Gestão de Templates de IA — CRUD dos prompts (system_prompt +
+                     user_prompt_template) usados em Gerar Requerimentos → Construir
+                     com IA (js/requirements/construcao-ia.js). -->
+                <div id="view-ia_templates" class="tab-content hidden">
+                    <div class="mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Gestão de Templates de IA</h2>
+                        <p class="text-xs text-gray-500 mt-1">Templates de prompt usados pelo Módulo de Construção de Requerimentos com IA — system prompt (instruções fixas) + user prompt template (com {{placeholders}} preenchidos na hora de gerar).</p>
+                    </div>
+                    <div id="iaTemplatesRestrito" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-6 text-amber-800 text-sm font-bold">
+                        <i class="fa-solid fa-lock"></i> Acesso restrito — sua função não tem esta atividade.
+                    </div>
+                    <div id="iaTemplatesConteudo" class="hidden">
+                        <div class="flex justify-end mb-3">
+                            <button onclick="abrirModalIaTemplate(null)" class="bg-gray-800 hover:bg-gray-900 text-white font-bold text-xs px-3 py-1.5 rounded shadow"><i class="fa-solid fa-plus"></i> Novo Template</button>
+                        </div>
+                        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-left border-collapse text-sm">
+                                    <thead><tr class="bg-gray-50 text-gray-700 font-semibold border-b uppercase text-xs">
+                                        <th class="p-3">Título</th><th class="p-3">Campos</th><th class="p-3 text-center">Status</th><th class="p-3"></th>
+                                    </tr></thead>
+                                    <tbody id="iaTemplatesTableBody" class="divide-y divide-gray-100"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOVO (Módulo de Construção de Requerimentos com IA, 23/09/2026):
+                     Configuração de IA — chave geral + modelo, mesmo padrão de
+                     Gestão do Fluxo de E-mail. -->
+                <div id="view-ia_config" class="tab-content hidden">
+                    <div class="mb-4 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800">Configuração de IA</h2>
+                        <p class="text-xs text-gray-500 mt-1">Chave geral e modelo usados pelo Módulo de Construção de Requerimentos com IA. Desligar a chave geral bloqueia toda nova geração até ser religada.</p>
+                    </div>
+                    <div id="iaConfigRestrito" class="hidden bg-amber-50 border border-amber-300 rounded-lg p-6 text-amber-800 text-sm font-bold">
+                        <i class="fa-solid fa-lock"></i> Acesso restrito — sua função não tem esta atividade.
+                    </div>
+                    <div id="iaConfigConteudo" class="hidden">
+                        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 max-w-lg">
+                            <div class="mb-4 flex items-center gap-2">
+                                <input type="checkbox" id="iaConfigAtivoCheckbox" class="w-4 h-4">
+                                <label for="iaConfigAtivoCheckbox" class="text-sm font-bold text-gray-700">Chave Geral de IA ligada</label>
+                            </div>
+                            <div class="mb-4">
+                                <label class="block text-[10px] font-bold uppercase mb-1 text-gray-600">Modelo</label>
+                                <select id="iaConfigModeloSelect" class="w-full p-2 border border-gray-300 rounded text-sm bg-white font-bold"></select>
+                            </div>
+                            <button onclick="salvarIaConfig()" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 rounded transition text-sm">
+                                <i class="fa-solid fa-floppy-disk"></i> Salvar Configuração de IA
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- NOVO (Feature 1.1, 03/09/2026): Validação de Trade-off
                      Extraordinário — fila de simulações de trade-off que
                      envolvem projetos de outro produto/área (quando o modo de
@@ -4540,6 +4609,62 @@
         </div>
     </div>
 
+    <!-- Módulo de Construção de Requerimentos com IA (23/09/2026) —
+         js/requirements/construcao-ia.js. Aberto pelo botão "Construir com
+         IA" na aba Em Andamento de Gerar Requerimentos. -->
+    <div id="modalConstrucaoIA" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-3xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 class="font-bold text-gray-800 text-base"><i class="fa-solid fa-wand-magic-sparkles"></i> Construção de Requerimentos com IA — <span id="iaConstrucaoProjetoNome" class="font-mono"></span></h3>
+                <button onclick="fecharModalConstrucaoIA()" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
+            </div>
+            <input type="hidden" id="iaConstrucaoCodigoHidden">
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Template</label>
+                <select id="iaConstrucaoTemplateSelect" onchange="onMudarTemplateConstrucaoIA()" class="w-full p-2 border border-gray-300 rounded text-sm bg-white font-bold"></select>
+            </div>
+            <div id="iaConstrucaoFormulario"></div>
+            <button id="iaConstrucaoBtnGerar" onclick="gerarComIA()" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-bold py-2.5 rounded transition text-sm">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Gerar com IA
+            </button>
+            <div class="border-t pt-3">
+                <h4 class="text-xs font-black uppercase text-gray-500 mb-2">Resultado</h4>
+                <div id="iaConstrucaoResultado"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gestão de Templates de IA — modal de criar/editar (js/config/ia-templates.js) -->
+    <div id="modalIaTemplate" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b pb-2">
+                <h3 id="iaTemplateModalTitulo" class="font-bold text-gray-800 text-base">Novo Template de IA</h3>
+                <button onclick="fecharModalIaTemplate()" class="text-gray-400 hover:text-gray-600 font-bold">&times;</button>
+            </div>
+            <input type="hidden" id="iaTemplateIdHidden">
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Título *</label>
+                <input type="text" id="iaTemplateTituloInput" class="w-full p-2 border border-gray-300 rounded text-sm">
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">System Prompt (instruções fixas) *</label>
+                <textarea id="iaTemplateSystemInput" rows="4" class="w-full p-2 border border-gray-300 rounded text-xs font-mono"></textarea>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">User Prompt Template (use {{chave}} pros placeholders) *</label>
+                <textarea id="iaTemplateUserInput" rows="6" class="w-full p-2 border border-gray-300 rounded text-xs font-mono"></textarea>
+            </div>
+            <div>
+                <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Campos Obrigatórios (JSON — [{"chave","rotulo","tipo":"texto"|"textarea"}]) *</label>
+                <textarea id="iaTemplateCamposInput" rows="6" class="w-full p-2 border border-gray-300 rounded text-xs font-mono"></textarea>
+            </div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button onclick="fecharModalIaTemplate()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700 transition">Cancelar</button>
+                <button onclick="salvarIaTemplate()" class="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded text-xs font-bold transition">Salvar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL APROVAÇÃO COMITÊ -->
     <!-- NOVO (item 1): modal de conclusão final do projeto/subprojeto -->
     <div id="modalConclusaoProjeto" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center p-4 z-50">
@@ -4805,6 +4930,8 @@
     <script src="./js/ano-fiscal/resultado-af.js"></script>
     <script src="./js/config/periodo-ano-fiscal.js"></script>
     <script src="./js/config/controle-orcamento.js"></script>
+    <script src="./js/config/ia-templates.js"></script>
+    <script src="./js/config/ia-config.js"></script>
     <script src="./js/ano-fiscal/validacao-tradeoff.js"></script>
     <script src="./js/utils/format.js"></script>
     <script src="./js/utils/dates.js"></script>
@@ -4830,6 +4957,7 @@
     <script src="./js/adhoc/tradeoff.js"></script>
     <script src="./js/adhoc/retomar-hold.js"></script>
     <script src="./js/requirements/requirements.js"></script>
+    <script src="./js/requirements/construcao-ia.js"></script>
     <script src="./js/technical/technical.js"></script>
     <script src="./js/budget-overview/alertas-orcamento.js"></script>
     <script src="./js/phases/generic-workflow-ui.js"></script>

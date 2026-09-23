@@ -161,6 +161,10 @@ function switchTab(tabId) {
     // por papel (Administrador OU Proprietário), como licenciamento_modulos.
     if (tabId === 'controle_orcamento') renderControleOrcamentoView();
     if (tabId === 'validacao_tradeoff') renderValidacaoTradeoffView();
+    // NOVO (Módulo de Construção de Requerimentos com IA, 23/09/2026):
+    // mesmo padrão — as views se auto-restringem (restrito/conteudo).
+    if (tabId === 'ia_templates') renderIaTemplatesView();
+    if (tabId === 'ia_config') renderIaConfigView();
     if (tabId === 'periodo_ano_fiscal') {
         const restrito = document.getElementById('periodoAnoFiscalRestrito');
         const conteudo = document.getElementById('periodoAnoFiscalConteudo');
