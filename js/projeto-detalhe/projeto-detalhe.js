@@ -33,7 +33,13 @@ const PROJETO_DETALHE_ORIGENS = {
     // NOVO (Compasso 2.0 Release 1, 2026-09-23): zoom a partir das telas
     // pessoais novas (js/home/home-pessoal.js, js/meus-projetos/meus-projetos.js).
     home: { tab: 'home', texto: 'Voltar ao Início' },
-    meus_projetos: { tab: 'meus_projetos', texto: 'Voltar a Meus Projetos' }
+    meus_projetos: { tab: 'meus_projetos', texto: 'Voltar a Meus Projetos' },
+    // NOVO (Compasso 2.0 Release 2, 2026-09-23): link cruzado a partir do
+    // Workspace do Projeto (botão "Ver Detalhes Completos") — CORRIGIDO:
+    // essa chave estava faltando aqui, então o fallback pra 'dashboard'
+    // sempre disparava e o botão Voltar nunca levava pro Workspace de
+    // onde o usuário veio.
+    workspace: { tab: 'workspace_projeto', texto: 'Voltar ao Workspace do Projeto' }
 };
 
 // NOVO (a pedido do usuário): linha "RÓTULO : valor" com rótulo em
