@@ -1,0 +1,7 @@
+{
+  "name": "compasso",
+  "private": true,
+  "dependencies": {
+    "docx": "^9.0.2"
+  }
+}

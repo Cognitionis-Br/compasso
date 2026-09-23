@@ -881,6 +881,20 @@ function abrirModalEvolucaoGenerica(codigoProjeto, nomeEtapa) {
                 .join('');
     }
 
+    // NOVO (Fase 2 do Módulo de IA, 2026-09-23): o documento gerado por IA
+    // em "Gerar Requerimentos" acompanha o projeto — some registro, exibido
+    // somente-leitura nas etapas de aprovação e em Gerar Especificação
+    // (nesta última, também dá pra continuar pedindo ajustes). Não mostra
+    // nada se o módulo IA estiver desligado ou o projeto nunca ter usado.
+    const ETAPAS_COM_DOCUMENTO_IA = ['APROVAR REQUERIMENTOS NEGÓCIO', 'APROVAR REQUERIMENTOS TI', 'GERAR ESPECIFICAÇÃO', 'AVALIAR ESPECIFICAÇÃO NEGÓCIO'];
+    const wrapperDocumentoIA = document.getElementById('evolGenDocumentoIAWrapper');
+    if (wrapperDocumentoIA) {
+        wrapperDocumentoIA.classList.add('hidden');
+        if (ETAPAS_COM_DOCUMENTO_IA.includes(nomeEtapa) && typeof renderDocumentoIASomenteLeitura === 'function') {
+            renderDocumentoIASomenteLeitura(codigoProjeto, 'evolGenDocumentoIAWrapper', nomeEtapa === ETAPA_GERAR_ESPECIFICACAO);
+        }
+    }
+
     document.getElementById('modalEvolucaoGenerico').classList.remove('hidden');
     onChangePercentualEvolucaoGenerica();
 }
