@@ -1,5 +1,5 @@
 -- =========================================================================
--- 2026-09-25_reset_dados_operacionais_v2.sql
+-- 2026-09-25_reset_dados_operacionais.sql
 -- Compasso — reset operacional para iniciar o ciclo de evolução V1-V6
 -- (Plano de Evolução, doc "Compasso 2.0 — Avaliação Cruzada e Plano de
 -- Evolução"). DIFERENTE de sql/2026-09-03_carga_zero.sql: aquele script
@@ -9,8 +9,9 @@
 -- estreito: mantém cadastros/parâmetros e TODOS os usuários intactos, e
 -- limpa só projetos e dados correlativos (transacionais).
 --
--- >>> FAÇA O BACKUP ANTES (pg_dump --data-only, ou snapshot do Supabase).
---     Isto NÃO tem volta sem o backup. <<<
+-- >>> RODE PRIMEIRO sql/2026-09-25_backup_pre_reset_operacional.sql <<<
+--     Isto NÃO tem volta sem o backup. Pra restaurar depois, ver
+--     sql/2026-09-25_restore_pre_reset_operacional.sql.
 --
 -- MANTÉM (estrutural/parâmetro — cadastros e configuração do produto):
 --   areas_solicitantes, cargos, catalogo_atividades, config_bloqueio_orcamento,
