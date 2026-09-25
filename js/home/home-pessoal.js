@@ -19,63 +19,152 @@ let _homeTarefas = [];
 let _homeAbaTarefas = 'hoje';
 
 async function renderHomePessoalView() {
+    const primeiroNome = (currentUser && currentUser.nome) ? currentUser.nome.split(' ')[0] : '';
     const saudacao = document.getElementById('homeSaudacao');
-    if (saudacao) saudacao.innerText = `Olá, ${(currentUser && currentUser.nome) ? currentUser.nome.split(' ')[0] : ''}!`;
+    if (saudacao) saudacao.innerText = `Olá, ${(currentUser && currentUser.nome) ? currentUser.nome : ''}`;
+    const areaEl = document.getElementById('homeAreaUsuario');
+    if (areaEl) areaEl.innerText = (currentUser && currentUser.area) ? currentUser.area : '';
+    const avatarEl = document.getElementById('homeAvatarUsuario');
+    if (avatarEl) {
+        const base = (currentUser && (currentUser.nome || currentUser.email)) || '??';
+        const partes = base.trim().split(/\s+/);
+        avatarEl.innerText = (partes.length >= 2 ? partes[0][0] + partes[partes.length - 1][0] : base.substring(0, 2)).toUpperCase();
+    }
     const dataHoje = document.getElementById('homeDataHoje');
     if (dataHoje) dataHoje.innerText = new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
 
-    const [tarefasResp, raidResp, aprovacoes] = await Promise.all([
-        _supabase.from('tasks').select('*').neq('status', 'CONCLUIDO').order('prazo', { ascending: true, nullsFirst: false }),
-        _supabase.from('raid_items').select('id').not('status', 'in', '(RESOLVIDO,CANCELADO)'),
-        (typeof obterMinhasAprovacoes === 'function') ? obterMinhasAprovacoes() : Promise.resolve([])
+    const [tarefasResp] = await Promise.all([
+        _supabase.from('tasks').select('*').neq('status', 'CONCLUIDO').order('prazo', { ascending: true, nullsFirst: false })
     ]);
 
     _homeTarefas = tarefasResp.data || [];
-    const hoje = new Date().toISOString().split('T')[0];
-    const dueToday = _homeTarefas.filter(t => t.prazo === hoje).length;
-    const overdue = _homeTarefas.filter(t => t.prazo && t.prazo < hoje).length;
 
     const meusProjetos = (typeof filtrarProjetosPorArea === 'function' && typeof projectsData !== 'undefined')
         ? filtrarProjetosPorArea(projectsData.filter(p => !p.is_subprojeto), 'meus_projetos')
         : [];
 
-    let naoLidas = 0;
-    if (currentUser && currentUser.id) {
-        const { count } = await _supabase.from('notifications').select('id', { count: 'exact', head: true }).eq('destinatario_user_id', currentUser.id).is('lida_em', null);
-        naoLidas = count || 0;
-    }
-
-    _renderHomeMetricCards({
-        meusProjetos: meusProjetos.length, minhasTarefas: _homeTarefas.length,
-        riscosAtivos: (raidResp.data || []).length, decisoesPendentes: aprovacoes.length, naoLidas
-    });
+    _renderHomeMetricCardsEStatus(meusProjetos);
     _renderHomeMeusProjetos(meusProjetos);
     mudarAbaHomeTarefas(_homeAbaTarefas);
     await _renderHomeAtividadeRecente();
     await _renderHomeProximosCompromissos();
+    await _renderHomeEntregasMes();
 }
 
-function _renderHomeMetricCards({ meusProjetos, minhasTarefas, riscosAtivos, decisoesPendentes, naoLidas }) {
+// Estrutura de topo (SCR-02, 2026-09-25): 4 KPIs (Projetos/Em Atenção/
+// Atrasados/Concluídos) + donut "Distribuição por Status" — os dois
+// vindos da MESMA classificação real já usada em Meus Projetos e no
+// Dashboard (calcularSaudeProjeto), sem inventar categoria nova.
+function _renderHomeMetricCardsEStatus(meusProjetos) {
+    const contagem = { SAUDAVEL: 0, ATENCAO: 0, CRITICO: 0, HOLD: 0, INATIVO: 0, CONCLUIDO: 0 };
+    meusProjetos.forEach(p => {
+        if ((p.etapa_atual || '').toUpperCase() === 'CONCLUIDO') { contagem.CONCLUIDO++; return; }
+        const status = (typeof calcularSaudeProjeto === 'function') ? calcularSaudeProjeto(p, []).status : 'SAUDAVEL';
+        contagem[status] = (contagem[status] || 0) + 1;
+    });
+
     const wrapper = document.getElementById('homeMetricCards');
-    if (!wrapper) return;
-    const cards = [
-        { label: 'Meus Projetos', valor: meusProjetos, icone: 'fa-diagram-project', cor: 'text-indigo-600', bg: 'bg-indigo-50', acao: "switchTab('meus_projetos')" },
-        { label: 'Minhas Tarefas', valor: minhasTarefas, icone: 'fa-list-check', cor: 'text-blue-600', bg: 'bg-blue-50', acao: "switchTab('meu_trabalho')" },
-        { label: 'Riscos Ativos', valor: riscosAtivos, icone: 'fa-triangle-exclamation', cor: riscosAtivos > 0 ? 'text-amber-600' : 'text-gray-500', bg: 'bg-amber-50', acao: '' },
-        { label: 'Decisões Pendentes', valor: decisoesPendentes, icone: 'fa-stamp', cor: decisoesPendentes > 0 ? 'text-danger-600' : 'text-gray-500', bg: 'bg-danger-50', acao: "switchTab('minhas_aprovacoes')" },
-        { label: 'Não Lidas', valor: naoLidas, icone: 'fa-bell', cor: naoLidas > 0 ? 'text-indigo-600' : 'text-gray-500', bg: 'bg-indigo-50', acao: "switchTab('notificacoes')" }
-    ];
-    wrapper.innerHTML = cards.map(c => `
-        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 ${c.acao ? 'cursor-pointer hover:border-indigo-200' : ''} transition" ${c.acao ? `onclick="${c.acao}"` : ''}>
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-lg ${c.bg} ${c.cor} flex items-center justify-center flex-shrink-0"><i class="fa-solid ${c.icone}"></i></div>
-                <div class="min-w-0">
-                    <div class="text-xl font-black text-gray-900 leading-none">${c.valor}</div>
-                    <div class="text-[10px] font-bold uppercase text-gray-400 mt-0.5 truncate">${c.label}</div>
-                </div>
+    if (wrapper) {
+        const cards = [
+            { label: 'Projetos', valor: meusProjetos.length, icone: 'fa-diagram-project', cor: 'text-gray-800', bg: 'bg-gray-100', acao: "switchTab('meus_projetos')" },
+            { label: 'Em Atenção', valor: contagem.ATENCAO, icone: 'fa-triangle-exclamation', cor: 'text-amber-600', bg: 'bg-amber-50', acao: "switchTab('meus_projetos')" },
+            { label: 'Atrasados', valor: contagem.CRITICO, icone: 'fa-circle-exclamation', cor: 'text-danger-600', bg: 'bg-danger-50', acao: "switchTab('meus_projetos')" },
+            { label: 'Concluídos', valor: contagem.CONCLUIDO, icone: 'fa-circle-check', cor: 'text-emerald-600', bg: 'bg-emerald-50', acao: "switchTab('meus_projetos')" }
+        ];
+        wrapper.innerHTML = cards.map(c => `
+            <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 cursor-pointer hover:border-indigo-200 transition" onclick="${c.acao}">
+                <div class="text-2xl font-black ${c.cor} leading-none">${c.valor}</div>
+                <div class="text-[11px] font-bold text-gray-400 mt-1">${c.label}</div>
             </div>
-        </div>
-    `).join('');
+        `).join('');
+    }
+
+    _renderHomeDonutStatus(contagem);
+}
+
+// Donut hand-rolled em SVG (stroke-dasharray) — mesmo princípio das
+// barras HTML já usadas em js/dashboards/dashboard-resumo.js (sem lib de
+// gráfico), só que em anel por ser isso que a referência mostra.
+function _renderHomeDonutStatus(contagem) {
+    const wrapper = document.getElementById('homeDistribuicaoStatus');
+    if (!wrapper) return;
+    const segmentos = [
+        { chave: 'SAUDAVEL', rotulo: 'Saudável', cor: '#10b981' },
+        { chave: 'ATENCAO', rotulo: 'Atenção', cor: '#f59e0b' },
+        { chave: 'CRITICO', rotulo: 'Atrasado', cor: '#dc2626' },
+        { chave: 'HOLD', rotulo: 'Em Hold', cor: '#94a3b8' },
+        { chave: 'CONCLUIDO', rotulo: 'Concluído', cor: '#4338ca' },
+        { chave: 'INATIVO', rotulo: 'Inativo', cor: '#d1d5db' }
+    ].map(s => ({ ...s, n: contagem[s.chave] || 0 })).filter(s => s.n > 0);
+
+    const total = segmentos.reduce((acc, s) => acc + s.n, 0);
+    if (total === 0) {
+        wrapper.innerHTML = '<p class="text-xs text-gray-400 italic py-8 text-center">Nenhum projeto no seu escopo.</p>';
+        return;
+    }
+
+    const R = 40, C = 2 * Math.PI * R;
+    let acumulado = 0;
+    const arcos = segmentos.map(s => {
+        const frac = s.n / total;
+        const dash = frac * C;
+        const offset = -acumulado * C;
+        acumulado += frac;
+        return `<circle cx="50" cy="50" r="${R}" fill="none" stroke="${s.cor}" stroke-width="14" stroke-dasharray="${dash} ${C - dash}" stroke-dashoffset="${offset}" transform="rotate(-90 50 50)"></circle>`;
+    }).join('');
+
+    wrapper.innerHTML = `
+        <div class="flex items-center gap-5">
+            <svg viewBox="0 0 100 100" class="w-28 h-28 flex-shrink-0">
+                ${arcos}
+                <text x="50" y="54" text-anchor="middle" class="fill-gray-800" style="font-size:20px; font-weight:800;">${total}</text>
+            </svg>
+            <div class="flex flex-col gap-1.5 text-[11px]">
+                ${segmentos.map(s => `<span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${s.cor}"></span>${s.rotulo} <b class="tabular-nums ml-auto">${s.n}</b></span>`).join('')}
+            </div>
+        </div>`;
+}
+
+// Entregas do mês — tasks concluídas (tasks.concluido_em) nos últimos 6
+// meses, escopo do usuário (mesma regra de Meu Trabalho). Barras HTML,
+// mesmo padrão hand-rolled do resto do dashboard.
+async function _renderHomeEntregasMes() {
+    const wrapper = document.getElementById('homeEntregasMes');
+    if (!wrapper || !currentUser) return;
+
+    const inicio = new Date();
+    inicio.setMonth(inicio.getMonth() - 5, 1);
+    inicio.setHours(0, 0, 0, 0);
+
+    const { data } = await _supabase.from('tasks').select('concluido_em')
+        .or(`assigned_user_id.eq.${currentUser.id},criado_por.eq.${currentUser.id}`)
+        .not('concluido_em', 'is', null)
+        .gte('concluido_em', inicio.toISOString());
+
+    const meses = [];
+    for (let i = 5; i >= 0; i--) {
+        const d = new Date();
+        d.setMonth(d.getMonth() - i, 1);
+        meses.push({ chave: `${d.getFullYear()}-${d.getMonth()}`, rotulo: d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', ''), n: 0 });
+    }
+    (data || []).forEach(t => {
+        const d = new Date(t.concluido_em);
+        const chave = `${d.getFullYear()}-${d.getMonth()}`;
+        const m = meses.find(x => x.chave === chave);
+        if (m) m.n++;
+    });
+
+    const max = Math.max(...meses.map(m => m.n), 1);
+    wrapper.innerHTML = `
+        <div class="flex items-end justify-between gap-2 h-32">
+            ${meses.map(m => `
+                <div class="flex-1 flex flex-col items-center justify-end gap-1 h-full">
+                    <div class="text-[10px] font-bold text-gray-500">${m.n || ''}</div>
+                    <div class="w-full bg-indigo-500 rounded-t" style="height:${Math.max((m.n / max) * 100, m.n > 0 ? 6 : 2)}%"></div>
+                    <div class="text-[10px] font-bold uppercase text-gray-400">${m.rotulo}</div>
+                </div>
+            `).join('')}
+        </div>`;
 }
 
 function _renderHomeMeusProjetos(meus) {

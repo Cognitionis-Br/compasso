@@ -565,23 +565,44 @@
                 </div>
 
                 <!-- TELA HOME / BEM-VINDO — Compasso 2.0 (js/home/home-pessoal.js,
-                     renderHomePessoalView). AJUSTADO (padronização visual,
-                     2026-09-23): layout comparado direto contra SCR-001 do
-                     pacote (docs/revisao telas/10_Assets_Visuais.zip) — saudação +
-                     5 KPIs, Projetos em Destaque + Minhas Tarefas (abas),
-                     Atividade Recente + Próximos Compromissos. Todo dado é real
-                     (tasks/raid_items/obterMinhasAprovacoes/notificações) —
-                     nenhuma métrica do mock sem fonte real foi inventada. -->
+                     renderHomePessoalView). Estrutura de topo refeita
+                     (2026-09-25) pra bater com a referência real SCR-02
+                     (Home/Dashboard) enviada pelo usuário: avatar + saudação +
+                     área, 4 KPIs (Projetos/Em Atenção/Atrasados/Concluídos),
+                     Distribuição por Status (farol de saúde real,
+                     calcularSaudeProjeto) + Entregas do Mês (tasks.concluido_em
+                     dos últimos 6 meses). "Riscos Ativos"/"Decisões
+                     Pendentes"/"Não Lidas" saem do topo (a referência só tem 4
+                     KPIs) mas continuam visíveis: sino do topbar (não lidas),
+                     Minhas Aprovações (decisões) e RAID do Workspace (riscos).
+                     Projetos em Destaque + Minhas Tarefas (abas), Atividade
+                     Recente + Próximos Compromissos continuam abaixo, fora do
+                     escopo desta rodada ("estrutura superior"). Todo dado é
+                     real — nenhuma métrica sem fonte foi inventada. -->
                 <div id="view-home" class="tab-content max-w-6xl mx-auto space-y-6">
-                    <div class="flex items-end justify-between flex-wrap gap-2">
-                        <div>
-                            <h2 id="homeSaudacao" class="text-2xl font-bold text-gray-900">Olá</h2>
-                            <p class="text-xs text-gray-500">Aqui está o panorama dos seus projetos.</p>
+                    <div class="flex items-center justify-between flex-wrap gap-3">
+                        <div class="flex items-center gap-3">
+                            <div id="homeAvatarUsuario" class="h-11 w-11 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm flex-shrink-0">--</div>
+                            <div>
+                                <h2 id="homeSaudacao" class="text-base font-bold text-gray-900 leading-tight">Olá</h2>
+                                <p id="homeAreaUsuario" class="text-xs text-gray-500">-</p>
+                            </div>
                         </div>
                         <p id="homeDataHoje" class="text-xs text-gray-400 font-semibold"></p>
                     </div>
 
-                    <div id="homeMetricCards" class="grid grid-cols-2 md:grid-cols-5 gap-4"></div>
+                    <div id="homeMetricCards" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            <h3 class="text-xs font-black uppercase text-gray-500 mb-3">Distribuição por Status</h3>
+                            <div id="homeDistribuicaoStatus"></div>
+                        </div>
+                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
+                            <h3 class="text-xs font-black uppercase text-gray-500 mb-3">Entregas do Mês</h3>
+                            <div id="homeEntregasMes"></div>
+                        </div>
+                    </div>
 
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div class="lg:col-span-2 bg-white rounded-lg border border-gray-200 shadow-sm p-4">
