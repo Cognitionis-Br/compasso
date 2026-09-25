@@ -270,6 +270,7 @@
                         <button onclick="switchTab('financeiro_corporativo')" id="link-financeiro_corporativo" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Financeiro Corporativo</button>
                         <button onclick="switchTab('visao_orcamento')" id="link-visao_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Visão de Orçamento</button>
                         <button onclick="switchTab('alertas_orcamento')" id="link-alertas_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Alertas de Orçamento</button>
+                        <button onclick="switchTab('rate_card')" id="link-rate_card" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Rate Card</button>
                     </div>
                 </div>
 
@@ -904,6 +905,69 @@
                     </div>
                     <div id="finCorpFaixaAF" class="mb-4"></div>
                     <div id="finCorpResumoOrcamentario"></div>
+
+                    <!-- NOVO (V4 — Estimation, 2026-09-25): histórico dos
+                         Pacotes FY já fechados (pacotes_fy/pacote_fy_itens).
+                         renderFinanceiroCorporativoView() popula. -->
+                    <div class="mt-6">
+                        <h3 class="text-sm font-black uppercase text-gray-600 mb-2">Histórico de Pacotes FY</h3>
+                        <div class="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+                            <table class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
+                                        <th class="p-3">Ano Fiscal</th>
+                                        <th class="p-3">Fechado em</th>
+                                        <th class="p-3">Fechado por</th>
+                                        <th class="p-3 text-center">Qtd. Projetos</th>
+                                        <th class="p-3 text-right">Valor Total</th>
+                                        <th class="p-3 text-center">Ação</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="finCorpPacotesFYBody" class="divide-y divide-gray-100 text-xs"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- NOVO (V4 — Estimation, 2026-09-25): tela "Rate Card"
+                     (js/rate-card/rate-card.js). Leitura livre a quem acessa
+                     a tela; edição restrita a ehProprietario. -->
+                <div id="view-rate_card" class="tab-content hidden">
+                    <div class="mb-6 border-b pb-2">
+                        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-clock brand-red-text"></i> Rate Card</h2>
+                        <p class="text-xs text-gray-500 mt-1">Papéis e valor/hora usados na Estimativa (EST-01) do Business Case.</p>
+                    </div>
+
+                    <div id="rateCardBoxNovo" class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6 hidden">
+                        <h3 class="text-sm font-black uppercase text-gray-600 mb-3">Novo Papel / Editar Papel</h3>
+                        <form onsubmit="saveRateCardPapel(event)" class="flex flex-wrap items-end gap-3">
+                            <input type="hidden" id="rateCardIdInput">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Papel</label>
+                                <input type="text" id="rateCardPapelInput" required class="p-2 border border-gray-300 rounded text-sm w-56" placeholder="Ex: Analista">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Valor / Hora (R$)</label>
+                                <input type="number" id="rateCardValorHoraInput" required min="0" step="0.01" class="p-2 border border-gray-300 rounded text-sm w-40">
+                            </div>
+                            <button type="submit" id="btnSalvarRateCardPapel" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded text-sm">Salvar Papel</button>
+                            <button type="button" onclick="limparFormularioRateCardPapel()" class="text-xs font-bold text-gray-500 hover:text-gray-800">Limpar</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-lg border border-gray-200 overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead>
+                                <tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
+                                    <th class="p-3">Papel</th>
+                                    <th class="p-3 text-right">Valor / Hora</th>
+                                    <th class="p-3">Status</th>
+                                    <th class="p-3 text-right">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rateCardTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- VISÃO: DASHBOARD -->
@@ -5576,6 +5640,7 @@
     <script src="./js/workspace-projeto/raid-projeto.js"></script>
     <script src="./js/portfolio/portfolio-executivo.js"></script>
     <script src="./js/financeiro-corporativo/financeiro-corporativo.js"></script>
+    <script src="./js/rate-card/rate-card.js"></script>
     <script src="./js/aprovacoes/minhas-aprovacoes.js"></script>
     <script src="./js/governanca/governanca-unificada.js"></script>
     <!-- Compasso 2.0 — Release 4 (Consolidação, Busca, Relatórios e Escala), 2026-09-23 -->

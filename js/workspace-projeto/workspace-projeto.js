@@ -119,7 +119,7 @@ async function mudarAbaWorkspace(aba) {
     if (aba === 'visao_geral') await _wsRenderVisaoGeral();
     if (aba === 'tarefas') await _wsCarregarTarefas();
     if (aba === 'cronograma' && typeof renderCronogramaProjeto === 'function') await renderCronogramaProjeto(_wsProjetoAtual, 'wsCronogramaBody');
-    if (aba === 'financeiro' && typeof renderFinanceiroProjeto === 'function') renderFinanceiroProjeto(_wsProjetoAtual, 'wsFinanceiroBody');
+    if (aba === 'financeiro' && typeof renderFinanceiroProjeto === 'function') await renderFinanceiroProjeto(_wsProjetoAtual, 'wsFinanceiroBody');
     if (aba === 'raid' && typeof renderRaidProjeto === 'function') await renderRaidProjeto(_wsProjetoAtual, 'wsRaidBody');
     if (aba === 'calendario' && typeof renderCalendarioProjeto === 'function') await renderCalendarioProjeto(_wsProjetoAtual, 'wsCalendarioBody');
     if (aba === 'documentos' && typeof renderDocumentosProjeto === 'function') await renderDocumentosProjeto(_wsProjetoAtual, 'wsDocumentosBody');

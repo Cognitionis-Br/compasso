@@ -158,6 +158,8 @@ function switchTab(tabId) {
     if (tabId === 'governanca_unificada') renderGovernancaUnificadaView();
     if (tabId === 'portfolio_executivo') renderPortfolioExecutivoView();
     if (tabId === 'financeiro_corporativo') renderFinanceiroCorporativoView();
+    // NOVO (V4 do Plano de Evolução — Estimation, 2026-09-25).
+    if (tabId === 'rate_card') renderRateCardView();
     if (tabId === 'busca_global') renderBuscaGlobalView();
     if (tabId === 'relatorios') renderRelatoriosView();
     if (tabId === 'configuracoes') renderConfiguracoesView();

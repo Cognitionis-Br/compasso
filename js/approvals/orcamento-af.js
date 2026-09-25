@@ -116,6 +116,33 @@ async function executarAprovacaoGlobalOrcamentoAF() {
 
     if (!confirm(mensagemConfirmacao)) return;
 
+    // NOVO (V4 do Plano de Evolução — Estimation, 2026-09-25): antes deste
+    // ponto, o "pacote" era só um filtro recalculado a cada tela — nenhum
+    // registro do fechamento em si ficava gravado. Persiste agora um
+    // Pacote FY (pacotes_fy) + um item por Business Case incluído
+    // (pacote_fy_itens), puramente aditivo — o loop de UPDATE logo abaixo
+    // continua exatamente igual. Falha aqui não bloqueia o fechamento em
+    // si (só perde o registro histórico) — mesmo padrão de "não travar o
+    // fluxo real por causa de um log" já usado em outros pontos do app.
+    const { data: pacoteFyRow, error: errorPacoteFy } = await _supabase.from('pacotes_fy').insert([{
+        ano_fiscal: afStr,
+        status: 'FECHADO',
+        valor_total: valorTotalAF,
+        qtd_projetos: projsAprovados.length,
+        fechado_por: currentUser ? currentUser.nome : 'desconhecido'
+    }]).select('id').single();
+    if (errorPacoteFy) {
+        console.error('Erro ao registrar Pacote FY:', errorPacoteFy.message);
+    } else if (pacoteFyRow) {
+        const itensPacote = projsAprovados.map(p => ({
+            pacote_fy_id: pacoteFyRow.id,
+            business_case_codigo: p.codigo,
+            valor_incluido: Number(p.val_bc) || Number(p.previsto) || 0
+        }));
+        const { error: errorItensPacote } = await _supabase.from('pacote_fy_itens').insert(itensPacote);
+        if (errorItensPacote) console.error('Erro ao registrar itens do Pacote FY:', errorItensPacote.message);
+    }
+
     for (const prj of projsAprovados) {
         const diasSlaReq = obterSlaPorNomeEtapa('GERAR REQUERIMENTOS', prj.tamanho);
         const dt_limite_req = somarDiasUteis(dtAprovacaoHoje, diasSlaReq);

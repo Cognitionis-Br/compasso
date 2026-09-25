@@ -48,3 +48,7 @@ let configEmailGeralAtivo = true;
 // NOVO (evolução de RLS — cargos, 27/08/2026): catálogo de cargos usado
 // como campo obrigatório em perfis_usuarios.cargo_id.
 let cargosData = [];
+// NOVO (V4 do Plano de Evolução — Estimation, 2026-09-25): papéis/valor-hora
+// do Rate Card, usados pela Estimativa (EST-01) dentro do Workspace do
+// Business Case (js/workspace-projeto/financeiro-projeto.js).
+let rateCardData = [];
