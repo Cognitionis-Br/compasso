@@ -97,14 +97,50 @@ async function salvarRaid() {
     };
     if (payload.status === 'RESOLVIDO') payload.resolvido_em = new Date().toISOString();
 
-    let error;
+    let error, itemId = _raidEditandoId;
     if (_raidEditandoId) {
         ({ error } = await _supabase.from('raid_items').update(payload).eq('id', _raidEditandoId));
     } else {
         payload.criado_por = currentUser.id;
-        ({ error } = await _supabase.from('raid_items').insert([payload]));
+        const resp = await _supabase.from('raid_items').insert([payload]).select('id').single();
+        error = resp.error;
+        if (resp.data) itemId = resp.data.id;
     }
     if (error) return alert('Erro ao salvar: ' + error.message);
+    if (itemId) await _raidAvaliarGateCritico(itemId, payload);
     fecharModalRaid();
     await _raidRenderLista();
+}
+
+// V2 do Plano de Evolução (Gate/Exception, fecha RAID-02): "RAID crítico
+// pode bloquear ou exigir exceção governada". Critério de "crítico" —
+// Risco/Problema com probabilidade E impacto ALTA, ainda aberto. Só
+// registra o gate em `gates` (não bloqueia nada na UI ainda — esse é o
+// próximo passo, ligar alguma tela a `resultado='BLOCKED'`); resolve
+// sozinho quando o item deixa de ser crítico ou é encerrado, sem exigir
+// que alguém "aprove" a baixa nesse caso automático.
+async function _raidAvaliarGateCritico(itemId, payload) {
+    const critico = (payload.tipo === 'RISCO' || payload.tipo === 'PROBLEMA')
+        && payload.probabilidade === 'ALTA' && payload.impacto === 'ALTA'
+        && payload.status !== 'RESOLVIDO' && payload.status !== 'CANCELADO';
+
+    const { data: gateAberto } = await _supabase.from('gates').select('id')
+        .eq('origem_tabela', 'raid_items').eq('origem_id', itemId).eq('resultado', 'BLOCKED').maybeSingle();
+
+    if (critico && !gateAberto) {
+        const { error } = await _supabase.from('gates').insert([{
+            projeto_codigo: payload.projeto_codigo, tipo: 'RAID_CRITICO', origem_tabela: 'raid_items', origem_id: itemId,
+            severidade: 'BLOCKER', resultado: 'BLOCKED',
+            contexto: { raid_tipo: payload.tipo, titulo: payload.titulo, probabilidade: payload.probabilidade, impacto: payload.impacto },
+            criado_por: currentUser.id
+        }]);
+        if (error) console.error('Erro ao registrar gate de RAID crítico:', error.message);
+    } else if (!critico && gateAberto) {
+        const { error } = await _supabase.from('gates').update({
+            resultado: 'PASS',
+            justificativa: 'Resolvido automaticamente — item RAID não está mais com probabilidade e impacto ALTA, ou foi encerrado.',
+            aprovado_em: new Date().toISOString()
+        }).eq('id', gateAberto.id);
+        if (error) console.error('Erro ao encerrar gate de RAID crítico:', error.message);
+    }
 }

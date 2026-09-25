@@ -107,6 +107,16 @@ async function aprovarMudancaOrcamento(codigo) {
     const { error } = await _supabase.from('projetos').update(payload).eq('codigo', codigo);
     if (error) return alert('Erro ao aprovar a diferença de orçamento: ' + error.message);
 
+    // V2 do Plano de Evolução (Gate/Exception): fecha o gate formal aberto
+    // em paralelo por confirmarConclusaoFaseGenerica — mesma
+    // justificativa/aprovador desta aprovação de sempre, não muda nada do
+    // fluxo em produção (log_aprovacao_mudanca_orcamento continua sendo a
+    // fonte de verdade).
+    const { error: errorGate } = await _supabase.from('gates').update({
+        resultado: 'PASS', justificativa: motivo, aprovado_por: currentUser ? currentUser.id : null, aprovado_em: agora
+    }).eq('projeto_codigo', codigo).eq('tipo', 'VARIACAO_ORCAMENTO').eq('resultado', 'BLOCKED');
+    if (errorGate) console.error('Erro ao encerrar gate de variação de orçamento:', errorGate.message);
+
     // NOVO (a pedido do usuário 27/08/2026): histórico completo, exibido
     // no zoom de Detalhamento do Projeto — os campos mudanca_orcamento_*
     // em cima só guardam a ÚLTIMA aprovação; esta linha preserva todas

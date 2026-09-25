@@ -395,6 +395,20 @@ async function confirmarConclusaoFaseGenerica() {
     const { error } = await _supabase.from('projetos').update(payload).eq('codigo', codigo);
     if (error) return alert('Erro ao migrar de fase: ' + error.message);
 
+    // V2 do Plano de Evolução (Gate/Exception, fecha parte do WF-04):
+    // registra o bloqueio como um GATE formal em paralelo ao mecanismo
+    // já existente (bloqueado_mudanca_orcamento + aprovação em Governança,
+    // que continua sendo a fonte de verdade e não muda em nada) — aditivo,
+    // sem risco pro fluxo já em produção.
+    if (vaiBloquear) {
+        const { error: errorGate } = await _supabase.from('gates').insert([{
+            projeto_codigo: codigo, tipo: 'VARIACAO_ORCAMENTO', severidade: 'BLOCKER', resultado: 'BLOCKED',
+            contexto: { fase: config.labelApos, percentual_valor: alerta.percentual, percentual_horas: alertaHoras.percentual },
+            criado_por: currentUser ? currentUser.id : null
+        }]);
+        if (errorGate) console.error('Erro ao registrar gate de variação de orçamento:', errorGate.message);
+    }
+
     // NOVO (a pedido do usuário 24/08/2026): registra a alteração de
     // horas num log dedicado (log_alteracoes_horas), lido na tela de
     // Detalhe do Projeto — só aqui (checkpoints 2/3), porque só aqui
