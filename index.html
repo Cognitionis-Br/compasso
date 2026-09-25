@@ -207,6 +207,17 @@
                     <button onclick="switchTab('meus_projetos')" id="link-meus_projetos" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
                         <i class="fa-solid fa-diagram-project w-4 text-center"></i> Meus Projetos
                     </button>
+                    <!-- NOVO (V2 do Plano de Evolução — Calendário Global, 2026-09-25):
+                         fecha SCR-05. Unifica Task + Approval (v_approvals, V1) +
+                         Milestone (etapas onde sou responsável) + Gate (tabela `gates`,
+                         V2) numa lista só, sem duplicar nenhum dos objetos de origem —
+                         clicar num item continua levando pra tela real dele.
+                         WORKFLOW_ACTION do catálogo oficial não entrou: mesma razão do
+                         filtro "Atividades" em Meu Trabalho — não existe esse objeto
+                         no Compasso hoje (decisão pendente, G5). -->
+                    <button onclick="switchTab('calendario')" id="link-calendario" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-calendar-day w-4 text-center"></i> Calendário
+                    </button>
                     <button onclick="switchTab('notificacoes')" id="link-notificacoes" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
                         <i class="fa-solid fa-bell w-4 text-center"></i> Notificações
                     </button>
@@ -728,6 +739,20 @@
                 <div id="view-meus_projetos" class="tab-content hidden max-w-6xl mx-auto space-y-4">
                     <h2 class="text-lg font-bold text-gray-900">Meus Projetos</h2>
                     <div id="meusProjetosCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+                </div>
+
+                <!-- TELA CALENDÁRIO GLOBAL — V2 do Plano de Evolução (SCR-05),
+                     js/calendario/calendario-global.js. Task + Approval + Milestone +
+                     Gate numa lista só (sem grid mensal nesta 1ª versão — sem
+                     referência visual pra essa tela específica ainda; lista
+                     cronológica reaproveita o mesmo padrão de "Próximos
+                     Compromissos" da Home). -->
+                <div id="view-calendario" class="tab-content hidden max-w-3xl mx-auto space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-lg font-bold text-gray-900">Calendário</h2>
+                        <p class="text-xs text-gray-400">Próximos 30 dias</p>
+                    </div>
+                    <div id="calendarioGlobalLista" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4 space-y-2"></div>
                 </div>
 
                 <!-- TELA NOTIFICAÇÕES — Compasso 2.0 Release 1, R1-UX05
@@ -5557,6 +5582,8 @@
     <script src="./js/busca/busca-global.js"></script>
     <script src="./js/relatorios/relatorios.js"></script>
     <script src="./js/configuracoes/configuracoes.js"></script>
+    <!-- Compasso 2.0 — V2 do Plano de Evolução (Calendário Global + Gate/Exception), 2026-09-25 -->
+    <script src="./js/calendario/calendario-global.js"></script>
     <script src="./js/dashboards/dashboard-filtro.js"></script>
     <script src="./js/dashboards/dashboard-resumo.js"></script>
     <script src="./js/dashboards/dashboard-fases.js"></script>

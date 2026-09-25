@@ -149,6 +149,8 @@ function switchTab(tabId) {
     if (tabId === 'meu_trabalho') renderMeuTrabalhoView();
     if (tabId === 'meus_projetos') renderMeusProjetosView();
     if (tabId === 'notificacoes') renderNotificacoesView();
+    // NOVO (V2 do Plano de Evolução — Calendário Global, 2026-09-25).
+    if (tabId === 'calendario') renderCalendarioGlobalView();
     // NOVO (Compasso 2.0 Release 2 — Workspace Colaborativo do Projeto, 2026-09-23).
     if (tabId === 'workspace_projeto') renderWorkspaceProjeto();
     // NOVO (Compasso 2.0 Release 3 — Gestão, Financeiro e Governança, 2026-09-23).
