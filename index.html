@@ -84,73 +84,58 @@
 </head>
 <body class="text-gray-800 antialiased h-screen flex flex-col">
 
-    <!-- LOGIN BLOQUEANTE — padronização visual (proposta "Compasso 2.0 —
-         Padrão Visual", aba Login): painel dividido, navy à esquerda
-         (mesma identidade #0f1e3d já aplicada na sidebar) + formulário à
-         direita. Mesmos ids/handlers de antes — só a casca visual mudou. -->
-    <div id="loginScreen" class="fixed inset-0 bg-gray-900 flex items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-2xl max-w-3xl w-full overflow-hidden flex flex-col md:flex-row">
+    <!-- LOGIN BLOQUEANTE — refeito pra bater com a referência real SCR-01
+         (imagem enviada pelo usuário, 2026-09-25): foto de fundo em tela
+         cheia, marca à esquerda, card de formulário flutuando à direita.
+         Substitui a versão anterior (painel navy dividido), que não
+         correspondia à proposta. Foto: img/login-fundo-montanha.jpg,
+         Unsplash (licença livre, sem exigência de atribuição), decisão do
+         usuário quando não havia o asset original. Mesmos ids/handlers de
+         sempre — só a casca visual mudou. -->
+    <div id="loginScreen" class="fixed inset-0 flex items-center justify-center p-4 z-50 bg-cover bg-center" style="background-image:linear-gradient(180deg, rgba(10,20,40,0.55) 0%, rgba(10,20,40,0.35) 45%, rgba(10,20,40,0.6) 100%), url('img/login-fundo-montanha.jpg');">
 
-            <!-- PAINEL ESQUERDO — identidade -->
-            <div class="w-full md:w-[42%] p-8 flex flex-col justify-between text-white" style="background:#0f1e3d;">
-                <div class="flex flex-col gap-5">
-                    <!-- SUBSTITUÍDO (Licenciamento de Módulos, 28/08/2026): wordmark em
-                         texto trocado pela logo oficial (img/compasso-logo-principal.png).
-                         max-h + object-contain mantêm a proporção original da imagem,
-                         max-w limita a largura pro logo nunca encostar nas bordas. -->
-                    <div>
-                        <img src="img/compasso-logo-principal.png" alt="Compasso" class="max-h-14 max-w-[85%] object-contain">
-                        <p class="text-[11px] font-semibold uppercase tracking-wider mt-2" style="color:#93a4c3;">Cloud Governance · Cognitionis</p>
-                        <!-- empresaLogoLogin/empresaMarcaLogin (marca da empresa licenciada)
-                             não estavam no mockup aprovado — comentados até decisão (ver
-                             js/core/empresa-licenciada.js:aplicarIdentidadeEmpresa, que só
-                             faz .getElementById e ignora se não achar, sem quebrar nada):
-                        <img id="empresaLogoLogin" class="hidden max-h-10 max-w-[70%] object-contain mt-3" alt="">
-                        <p id="empresaMarcaLogin" class="hidden text-[11px] font-bold uppercase tracking-wider mt-1"></p>
-                        -->
-                    </div>
-                    <div class="h-px" style="background:rgba(255,255,255,0.12);"></div>
-                    <p class="text-[13px] leading-relaxed" style="color:#c3cee3;">Gestão de Business Case, projetos, portfólio, orçamento e governança — do planejamento inicial ao encerramento.</p>
-                    <div class="hidden md:flex flex-col gap-3 mt-1 text-[12px]" style="color:#dbe3f4;">
-                        <div class="flex items-center gap-2.5"><span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:#818cf8;"></span>Business Case → Requerimentos → Especificação → Execução</div>
-                        <div class="flex items-center gap-2.5"><span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:#818cf8;"></span>UAT → Go Live → Aceite → Encerramento</div>
-                        <div class="flex items-center gap-2.5"><span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background:#818cf8;"></span>Portfólio, Financeiro e Governança em um único lugar</div>
-                    </div>
-                </div>
-                <p class="text-[10.5px] mt-6" style="color:#6b7ea6;">Compasso — um produto Cognitionis.<br>Todos os direitos reservados.</p>
+        <!-- Marca — lado esquerdo, sobre a foto -->
+        <div class="hidden md:flex flex-col items-start justify-center flex-1 max-w-md px-8">
+            <img src="img/compasso-logo-principal.png" alt="Compasso" class="max-h-16 max-w-full object-contain drop-shadow-lg">
+            <p class="text-white text-sm font-semibold mt-4 drop-shadow">Projetos que entregam valor ao negócio</p>
+        </div>
+
+        <!-- Card do formulário — lado direito -->
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-7">
+            <div class="md:hidden text-center mb-5">
+                <img src="img/compasso-logo-principal.png" alt="Compasso" class="mx-auto max-h-12 max-w-[85%] object-contain">
             </div>
-
-            <!-- PAINEL DIREITO — formulário -->
-            <div class="w-full md:w-[58%] p-8 flex flex-col justify-center gap-5">
+            <h1 class="text-base font-bold text-gray-900">Acesse sua conta</h1>
+            <form onsubmit="handleLogin(event)" class="space-y-4 mt-4">
                 <div>
-                    <h1 class="text-lg font-extrabold text-gray-900">Acessar o Compasso</h1>
-                    <p class="text-xs text-gray-500 mt-0.5">Entre com suas credenciais corporativas.</p>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">E-mail</label>
+                    <input type="email" id="loginEmail" required autocomplete="username" placeholder="seu@empresa.com" class="w-full p-2.5 border border-gray-300 rounded text-sm bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
                 </div>
-                <form onsubmit="handleLogin(event)" class="space-y-4">
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">E-mail</label>
-                        <input type="email" id="loginEmail" required autocomplete="username" class="w-full p-2.5 border border-gray-300 rounded text-sm bg-gray-50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition">
+                <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Senha</label>
+                    <div class="relative">
+                        <input type="password" id="loginSenha" required autocomplete="current-password" class="w-full p-2.5 pr-9 border border-gray-300 rounded text-sm bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition">
+                        <button type="button" onclick="alternarVisibilidadeSenha('loginSenha', this.querySelector('i'))" class="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600" tabindex="-1" aria-label="Mostrar/ocultar senha">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
                     </div>
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Senha</label>
-                        <input type="password" id="loginSenha" required autocomplete="current-password" class="w-full p-2.5 border border-gray-300 rounded text-sm bg-gray-50 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 outline-none transition">
-                    </div>
-                    <button type="submit" id="btnLogin" class="w-full bg-indigo-700 hover:bg-indigo-800 text-white font-semibold py-2.5 px-4 rounded transition-all flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-right-to-bracket"></i> Acessar
-                    </button>
-                </form>
-                <!-- Mensagem de licença/acesso (SCR-01) — do mockup: caixa indigo
-                     informativa. Texto ainda estático (mesmo exemplo do mockup) —
-                     falta decisão se liga em dado real de empresa_licenciada. -->
-                <div class="flex items-start gap-2 p-2.5 rounded-lg" style="background:#eef2ff; border:1px solid #c7d2fe;">
-                    <span class="w-1.5 h-1.5 rounded-full mt-1 flex-shrink-0" style="background:#4338ca;"></span>
-                    <p class="text-[11.5px] leading-snug" style="color:#3730a3;">Licença ativa · válida até 31/12/2026. Módulos: Workflow, Financeiro, IA.</p>
                 </div>
-                <div class="text-center">
-                    <button type="button" onclick="abrirModalEsqueciSenha()" class="text-xs text-gray-400 hover:text-indigo-700 font-semibold transition-colors">Esqueci minha senha</button>
+                <div class="text-right -mt-1">
+                    <button type="button" onclick="abrirModalEsqueciSenha()" class="text-xs text-blue-600 hover:text-blue-800 font-semibold transition-colors">Esqueceu sua senha?</button>
                 </div>
-                <p class="text-[10px] text-gray-300 text-center" data-compasso-versao="longa">Versão 1.0.0 · Release 0</p>
-            </div>
+                <button type="submit" id="btnLogin" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded transition-all flex items-center justify-center gap-2">
+                    Entrar
+                </button>
+            </form>
+            <!-- empresaLogoLogin/empresaMarcaLogin (marca da empresa licenciada) e a
+                 mensagem de licença/acesso (SCR-01) não aparecem na referência real
+                 — retirados daqui até decisão (ver js/core/empresa-licenciada.js:
+                 aplicarIdentidadeEmpresa, que só faz .getElementById e ignora se não
+                 achar, sem quebrar nada):
+            <img id="empresaLogoLogin" class="hidden" alt="">
+            <p id="empresaMarcaLogin" class="hidden"></p>
+            -->
+            <p class="text-[10px] text-gray-300 text-center mt-5" data-compasso-versao="longa">Versão 1.0.0 · Release 0</p>
         </div>
     </div>
 

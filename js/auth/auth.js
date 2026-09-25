@@ -21,6 +21,17 @@
 // RBAC, não desta etapa.
 // =========================================================================
 
+// Padrão visual do Login (SCR-01): alterna type="password"/"text" do campo
+// de senha e o ícone do olho — puramente de exibição, não muda handleLogin.
+function alternarVisibilidadeSenha(inputId, iconEl) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    const mostrando = input.type === 'text';
+    input.type = mostrando ? 'password' : 'text';
+    if (iconEl) iconEl.classList.toggle('fa-eye', mostrando);
+    if (iconEl) iconEl.classList.toggle('fa-eye-slash', !mostrando);
+}
+
 async function handleLogin(e) {
     e.preventDefault();
 
