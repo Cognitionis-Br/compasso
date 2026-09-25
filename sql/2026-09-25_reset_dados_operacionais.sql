@@ -62,8 +62,8 @@ DECLARE
         'task_dependencies','task_attachments','task_mentions','task_comments',
         'task_checklist_items','task_history','tasks',
         'notifications',
-        -- RAID (Release 3)
-        'raid_items',
+        -- RAID (Release 3) + Gate/Exception (V2 do Plano de Evolução)
+        'raid_items', 'gates',
         -- Módulo de Construção de Requerimentos/Especificação com IA
         'ia_especificacoes_mensagens','ia_especificacoes_anexos',
         'ia_especificacoes_historico','ia_especificacoes',
