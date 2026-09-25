@@ -806,10 +806,6 @@ function aplicarVisibilidadeMenu() {
         const temAcesso = usuarioTemAlgumaAtividadeDoTab(tabId) && moduloAtivo(moduloDoTab(tabId));
         const link = document.getElementById(`link-${tabId}`);
         if (link) link.classList.toggle('hidden', !temAcesso);
-        // Abas da barra superior (Dashboard, Consultas, Roadmap etc.) usam
-        // o padrão view-btn-<tabId> em vez de link-<tabId>.
-        const viewBtn = document.getElementById(`view-btn-${tabId}`);
-        if (viewBtn) viewBtn.classList.toggle('hidden', !temAcesso);
     });
 
     // NOVO (papel Proprietário, 28/08/2026): o grupo inteiro do menu

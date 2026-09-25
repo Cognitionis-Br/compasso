@@ -214,6 +214,52 @@
                     <button onclick="switchTab('minhas_aprovacoes')" id="link-minhas_aprovacoes" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
                         <i class="fa-solid fa-stamp w-4 text-center"></i> Minhas Aprovações
                     </button>
+                    <!-- NOVO (2026-09-25): Roadmap sai da barra horizontal de abas do
+                         topo (removida — referência real SCR-02 não tem esse padrão) e
+                         vira link direto aqui, mesma posição da ordem oficial de
+                         navegação (Documento 03: "...Minhas Aprovações | Portfólio |
+                         Roadmap | Financeiro | Governança | Relatórios..."). -->
+                    <button onclick="switchTab('roadmap')" id="link-roadmap" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-timeline w-4 text-center"></i> Roadmap
+                    </button>
+                </div>
+
+                <!-- GRUPO: PORTFÓLIO (2026-09-25) — as telas de portfólio/visão
+                     agregada que viviam soltas na barra horizontal de abas do topo
+                     (removida) agora moram aqui, mesmos switchTab de sempre. -->
+                <div class="mb-2">
+                    <button onclick="toggleSidebarMenu('menu-portfolio', 'icon-portfolio')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-chart-pie text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
+                            <span class="uppercase tracking-wider">Portfólio</span>
+                        </div>
+                        <i id="icon-portfolio" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
+                    </button>
+                    <div id="menu-portfolio" class="submenu pl-9 pr-2 mt-1 space-y-1">
+                        <button onclick="switchTab('dashboard')" id="link-dashboard" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Dashboard</button>
+                        <button onclick="switchTab('portfolio_executivo')" id="link-portfolio_executivo" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Portfólio Executivo</button>
+                        <button onclick="switchTab('cronograma_evolucao')" id="link-cronograma_evolucao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cronograma & Evolução</button>
+                        <button onclick="switchTab('consultas')" id="link-consultas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Consulta de Projetos</button>
+                    </div>
+                </div>
+
+                <!-- GRUPO: FINANCEIRO (2026-09-25) — mesma origem da nota acima;
+                     "Financeiro" (aba antiga) renomeado aqui pra "Visão de
+                     Orçamento" só pra não colidir com o nome do grupo — o
+                     switchTab('visao_orcamento') continua o mesmo. -->
+                <div class="mb-2">
+                    <button onclick="toggleSidebarMenu('menu-financeiro', 'icon-financeiro')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-sack-dollar text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
+                            <span class="uppercase tracking-wider">Financeiro</span>
+                        </div>
+                        <i id="icon-financeiro" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
+                    </button>
+                    <div id="menu-financeiro" class="submenu pl-9 pr-2 mt-1 space-y-1">
+                        <button onclick="switchTab('financeiro_corporativo')" id="link-financeiro_corporativo" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Financeiro Corporativo</button>
+                        <button onclick="switchTab('visao_orcamento')" id="link-visao_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Visão de Orçamento</button>
+                        <button onclick="switchTab('alertas_orcamento')" id="link-alertas_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Alertas de Orçamento</button>
+                    </div>
                 </div>
 
                 <!-- GRUPO: FISCAL YEAR (item 3, Fase 1) — leva "Ano Fiscal"
@@ -330,6 +376,15 @@
                     </div>
                 </div>
 
+                <!-- NOVO (2026-09-25): Relatórios sai da barra horizontal de abas do
+                     topo (removida) — ordem oficial de navegação, logo depois de
+                     Governança. -->
+                <div class="mb-2 space-y-1">
+                    <button onclick="switchTab('relatorios')" id="link-relatorios" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-file-lines w-4 text-center"></i> Relatórios
+                    </button>
+                </div>
+
                 <!-- GRUPO: CONTRATOS & TERCEIROS (item 6, primeiro documento) -->
                 <div class="mb-2">
                     <button onclick="toggleSidebarMenu('menu-contratos', 'icon-contratos')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
@@ -392,6 +447,15 @@
                         <!-- AJUSTADO (a pedido do usuário): "Cargos" veio do grupo Administração. -->
                         <button onclick="switchTab('cargos')" id="link-cargos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cargos</button>
                     </div>
+                </div>
+
+                <!-- NOVO (2026-09-25): Configurações sai da barra horizontal de abas
+                     do topo (removida) — ordem oficial de navegação: Cadastros |
+                     Administração | Configurações, na área inferior do menu. -->
+                <div class="mb-2 space-y-1">
+                    <button onclick="switchTab('configuracoes')" id="link-configuracoes" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-sliders w-4 text-center"></i> Configurações
+                    </button>
                 </div>
 
                 <!-- GRUPO: ADMINISTRAÇÃO -->
@@ -479,44 +543,22 @@
                     <i class="fa-solid fa-bars text-lg"></i>
                 </button>
 
-                <!-- Visões e Busca -->
+                <!-- Busca — estrutura de topo simplificada (2026-09-25, referência
+                     real SCR-02): a barra horizontal de "Abas de Visão" (Dashboard/
+                     Roadmap/Financeiro/Portfólio Executivo/etc.) saiu daqui — a
+                     referência real não tem esse padrão, e o Documento 03 (Design
+                     System P4) já mandava essas telas morarem no menu lateral, não
+                     em abas no topo. Todos os switchTab(...) de cada uma continuam
+                     os mesmos, só mudou de onde são disparados — ver os novos
+                     grupos "Portfólio"/"Financeiro"/links "Roadmap"/"Relatórios"/
+                     "Configurações" na sidebar. -->
                 <div class="flex items-center gap-8 flex-1 min-w-0">
-                    
                     <!-- Busca Global — Compasso 2.0 Release 4, 2026-09-23
-                         (js/busca/busca-global.js). Removida em 10/08/2026 por ser só
-                         decorativa; esta reintrodução tem lógica de verdade por trás
-                         (projetos/tarefas/RAID, sempre dentro do escopo do usuário).
-                         AJUSTADO (padronização visual, 2026-09-23): vira o elemento
-                         principal do topo (mock: SCR-001/004/007), não mais um campo
-                         pequeno — mesma lógica de sempre (Enter dispara a busca). -->
+                         (js/busca/busca-global.js). Enter dispara a busca. -->
                     <div class="relative flex-shrink-0 hidden md:block w-72">
                         <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                         <input type="text" id="buscaGlobalInput" placeholder="Buscar projeto, tarefa..." onkeydown="if(event.key==='Enter') executarBuscaGlobal()" class="w-full pl-10 pr-3 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 outline-none transition-all">
                     </div>
-
-                    <!-- Abas de Visão — com 5 abas, pode não caber em telas médias/estreitas.
-                         Setas de navegação em vez de depender só de rolagem (que é invisível e
-                         não descobrível no desktop com mouse, sem barra de rolagem visível). -->
-                    <button onclick="rolarAbasVisao(-1)" class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded flex-shrink-0" aria-label="Rolar abas para a esquerda">
-                        <i class="fa-solid fa-chevron-left text-xs"></i>
-                    </button>
-                    <nav id="navAbasVisao" class="flex space-x-2 overflow-x-auto no-scrollbar min-w-0 scroll-smooth">
-                        <button onclick="switchTab('dashboard')" id="view-btn-dashboard" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Dashboard</button>
-                        <button onclick="switchTab('roadmap')" id="view-btn-roadmap" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Roadmap</button>
-                        <button onclick="switchTab('visao_orcamento')" id="view-btn-visao_orcamento" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Financeiro</button>
-                        <button onclick="switchTab('alertas_orcamento')" id="view-btn-alertas_orcamento" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Alertas de Orçamento</button>
-                        <button onclick="switchTab('cronograma_evolucao')" id="view-btn-cronograma_evolucao" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Cronograma & Evolução</button>
-                        <button onclick="switchTab('consultas')" id="view-btn-consultas" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Consulta de Projetos</button>
-                        <!-- NOVO (Compasso 2.0 Release 3, 2026-09-23) -->
-                        <button onclick="switchTab('portfolio_executivo')" id="view-btn-portfolio_executivo" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Portfólio Executivo</button>
-                        <button onclick="switchTab('financeiro_corporativo')" id="view-btn-financeiro_corporativo" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Financeiro Corporativo</button>
-                        <!-- NOVO (Compasso 2.0 Release 4, 2026-09-23) -->
-                        <button onclick="switchTab('relatorios')" id="view-btn-relatorios" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Relatórios</button>
-                        <button onclick="switchTab('configuracoes')" id="view-btn-configuracoes" class="view-btn px-4 py-1.5 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition flex-shrink-0 whitespace-nowrap">Configurações</button>
-                    </nav>
-                    <button onclick="rolarAbasVisao(1)" class="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded flex-shrink-0" aria-label="Rolar abas para a direita">
-                        <i class="fa-solid fa-chevron-right text-xs"></i>
-                    </button>
                 </div>
 
                 <!-- Painel do Usuário — flex-shrink-0 garante que nunca fica espremido/sobreposto pelas abas.

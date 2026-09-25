@@ -70,16 +70,6 @@ function fecharSidebarMobileSeAberto() {
     backdrop.classList.add('hidden');
 }
 
-// NOVO 10/08/2026 (bug reportado: abas escondidas sem jeito de acessar
-// no desktop com mouse — rolagem horizontal sem barra visível não é
-// descobrível): rola a nav de abas pelas setas clicáveis, em vez de
-// depender só de rolagem invisível.
-function rolarAbasVisao(direcao) {
-    const nav = document.getElementById('navAbasVisao');
-    if (!nav) return;
-    nav.scrollBy({ left: direcao * 160, behavior: 'smooth' });
-}
-
 function switchTab(tabId) {
     abaAtualId = tabId;
 
@@ -112,17 +102,6 @@ function switchTab(tabId) {
     if (activeSidebarLink) {
         activeSidebarLink.classList.remove('text-gray-500', 'border-transparent');
         activeSidebarLink.classList.add('text-red-600', 'font-bold', 'border-red-600', 'bg-red-50');
-    }
-
-    document.querySelectorAll('.view-btn').forEach(el => {
-        el.classList.remove('bg-gray-100', 'text-gray-900', 'border-b-2', 'border-red-600');
-        el.classList.add('text-gray-500');
-    });
-
-    const activeViewBtn = document.getElementById('view-btn-' + tabId);
-    if (activeViewBtn) {
-        activeViewBtn.classList.remove('text-gray-500');
-        activeViewBtn.classList.add('bg-gray-100', 'text-gray-900', 'border-b-2', 'border-red-600');
     }
 
     if (tabId === 'f1_formalizacao') { mudarAbaFormalizarDemanda('criar'); popularOpcoesAFDemanda(); popularTiposProjetoParaDemanda(); popularProdutosParaDemanda(); popularTiposReturnBenefitParaDemanda(); renderF1Formalizadas(); }
