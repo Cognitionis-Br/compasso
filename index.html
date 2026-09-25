@@ -604,6 +604,19 @@
                     <div class="flex items-center justify-between flex-wrap gap-2">
                         <h2 class="text-lg font-bold text-gray-900">Meu Trabalho</h2>
                         <div class="flex items-center gap-2">
+                            <!-- V1 do Plano de Evolução (WORK_ITEM, fecha SCR-03/04 e WF-05 da
+                                 Matriz de Gaps): "Todos" projeta Tarefas + Aprovações pendentes
+                                 (v_approvals) numa lista só, sem substituir o objeto de origem —
+                                 clicar num item de aprovação continua levando pra tela real dela.
+                                 "Atividades" do catálogo oficial (SCR-03) não entrou: não existe
+                                 hoje um objeto WORKFLOW_ACTION distinto de Task/Approval no
+                                 Compasso — fica registrado como decisão pendente (G5), não como
+                                 filtro fingindo um dado que não existe. -->
+                            <select id="mtFiltroTipo" onchange="onMudarFiltroTipoMeuTrabalho()" class="text-xs border border-gray-300 rounded px-2 py-1.5 bg-white font-semibold">
+                                <option value="todos">Todos</option>
+                                <option value="tarefas">Tarefas</option>
+                                <option value="aprovacoes">Aprovações</option>
+                            </select>
                             <select id="mtFiltroStatus" onchange="onMudarFiltroStatusMeuTrabalho()" class="text-xs border border-gray-300 rounded px-2 py-1.5 bg-white">
                                 <option value="">Todos os status</option>
                                 <option value="A_FAZER">A Fazer</option>
@@ -611,7 +624,7 @@
                                 <option value="AGUARDANDO">Aguardando</option>
                                 <option value="CONCLUIDO">Concluído</option>
                             </select>
-                            <div class="flex rounded-md overflow-hidden border border-gray-200">
+                            <div id="mtViewToggle" class="flex rounded-md overflow-hidden border border-gray-200">
                                 <button id="mtBtnView_lista" onclick="mudarViewMeuTrabalho('lista')" class="px-3 py-1.5 text-xs font-bold text-gray-600"><i class="fa-solid fa-list"></i> Lista</button>
                                 <button id="mtBtnView_kanban" onclick="mudarViewMeuTrabalho('kanban')" class="px-3 py-1.5 text-xs font-bold text-gray-600"><i class="fa-solid fa-table-columns"></i> Kanban</button>
                             </div>

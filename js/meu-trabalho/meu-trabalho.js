@@ -29,8 +29,10 @@ const MT_STATUS_ORDEM = ['A_FAZER', 'EM_ANDAMENTO', 'AGUARDANDO', 'CONCLUIDO'];
 const _tarefasCache = {};
 
 let _mtTarefas = [];
+let _mtAprovacoes = []; // V1 do Plano de Evolução — itens de js/aprovacoes/minhas-aprovacoes.js (v_approvals)
 let _mtView = 'lista';
 let _mtFiltroStatus = '';
+let _mtFiltroTipo = 'todos'; // 'todos' | 'tarefas' | 'aprovacoes' — projeção WORK_ITEM (SCR-03)
 let _mtAcaoPendente = null; // ver abrirMeuTrabalho — mesmo padrão de abrirWorkspaceProjeto, pra deep-link de notificação
 
 // `acaoPendente` (opcional): função async rodada depois que a lista
@@ -45,7 +47,8 @@ async function renderMeuTrabalhoView() {
     const { data: prefs } = await _supabase.from('user_preferences').select('view_meu_trabalho').eq('usuario_id', currentUser.id).maybeSingle();
     _mtView = (prefs && prefs.view_meu_trabalho) || 'lista';
     _mtAtualizarBotoesView();
-    await _mtCarregarTarefas();
+    _mtAtualizarControlesPorTipo();
+    await Promise.all([_mtCarregarTarefas(), _mtCarregarAprovacoes()]);
     if (_mtAcaoPendente) {
         const acao = _mtAcaoPendente;
         _mtAcaoPendente = null;
@@ -62,7 +65,24 @@ async function _mtCarregarTarefas() {
     _mtRender();
 }
 
+// V1 (WORK_ITEM/APPROVAL) — mesma função da tela Minhas Aprovações, sem
+// duplicar os critérios de "pendente".
+async function _mtCarregarAprovacoes() {
+    _mtAprovacoes = (typeof obterMinhasAprovacoes === 'function') ? await obterMinhasAprovacoes() : [];
+    _mtRender();
+}
+
 function _mtRender() {
+    if (_mtFiltroTipo !== 'tarefas') {
+        // "Todos"/"Aprovações" são sempre lista — misturar tipos num board
+        // Kanban (que é por status de Task) não faz sentido.
+        document.getElementById('meuTrabalhoListaContainer').classList.remove('hidden');
+        document.getElementById('meuTrabalhoKanbanContainer').classList.add('hidden');
+        if (_mtFiltroTipo === 'aprovacoes') _mtRenderAprovacoesLista();
+        else _mtRenderTodosLista();
+        return;
+    }
+
     document.getElementById('meuTrabalhoListaContainer').classList.toggle('hidden', _mtView !== 'lista');
     document.getElementById('meuTrabalhoKanbanContainer').classList.toggle('hidden', _mtView !== 'kanban');
     const tarefas = _mtFiltroStatus ? _mtTarefas.filter(t => t.status === _mtFiltroStatus) : _mtTarefas;
@@ -73,7 +93,64 @@ function _mtRender() {
     }
 }
 
+// Linha simples de item não-Task (aprovação) — mesmo padrão visual de
+// renderMinhasAprovacoesView (js/aprovacoes/minhas-aprovacoes.js): não
+// reimplementa a decisão, só leva de volta pra tela original.
+function _mtLinhaAprovacao({ p, origem, tab }) {
+    return `
+        <div class="flex items-center justify-between p-3 border border-gray-100 rounded hover:bg-gray-50 cursor-pointer" onclick="switchTab('${tab}')">
+            <div class="min-w-0 flex-1">
+                <div class="text-sm font-bold text-gray-800 truncate"><i class="fa-solid fa-stamp text-indigo-400 mr-1"></i>${escapeHtml(p.codigo)} — ${escapeHtml(p.nome || '')}</div>
+                <div class="text-[10px] text-gray-400 mt-0.5">${escapeHtml(origem)}</div>
+            </div>
+            <i class="fa-solid fa-chevron-right text-gray-300 flex-shrink-0 ml-2"></i>
+        </div>`;
+}
+
+function _mtRenderAprovacoesLista() {
+    const wrapper = document.getElementById('meuTrabalhoListaBody');
+    if (!wrapper) return;
+    if (_mtAprovacoes.length === 0) {
+        wrapper.innerHTML = '<p class="text-xs text-gray-400 italic py-8 text-center">Nenhuma aprovação pendente pra você agora.</p>';
+        return;
+    }
+    wrapper.innerHTML = `<div class="space-y-2">${_mtAprovacoes.map(_mtLinhaAprovacao).join('')}</div>`;
+}
+
+// "Todos" — projeção WORK_ITEM: Tarefas abertas + Aprovações pendentes
+// numa lista só. Cada item continua sendo o objeto de origem (Task ou
+// Approval); clicar nunca reimplementa a ação, só abre onde ela já
+// acontecia (modal de tarefa / tela de aprovação).
+function _mtRenderTodosLista() {
+    const wrapper = document.getElementById('meuTrabalhoListaBody');
+    if (!wrapper) return;
+    const tarefasAbertas = _mtTarefas.filter(t => t.status !== 'CONCLUIDO');
+    tarefasAbertas.forEach(t => { _tarefasCache[t.id] = t; });
+
+    if (tarefasAbertas.length === 0 && _mtAprovacoes.length === 0) {
+        wrapper.innerHTML = '<p class="text-xs text-gray-400 italic py-8 text-center">Nada pendente pra você agora.</p>';
+        return;
+    }
+
+    const hoje = new Date().toISOString().split('T')[0];
+    const linhasTarefas = tarefasAbertas.map(t => {
+        const atrasada = t.prazo && t.prazo < hoje;
+        return `
+        <div class="flex items-center justify-between p-3 border border-gray-100 rounded hover:bg-gray-50 cursor-pointer" onclick="abrirModalTarefa(${t.id})">
+            <div class="min-w-0 flex-1">
+                <div class="text-sm font-bold text-gray-800 truncate"><i class="fa-solid fa-list-check text-gray-400 mr-1"></i>${escapeHtml(t.titulo)}</div>
+                <div class="text-[10px] text-gray-400 mt-0.5">${t.projeto_codigo ? escapeHtml(t.projeto_codigo) + ' · ' : ''}${t.prazo ? formatDate(t.prazo) : 'Sem prazo'}</div>
+            </div>
+            ${atrasada ? renderBadgeStatus('danger', 'fa-triangle-exclamation', 'Atrasada') : ''}
+        </div>`;
+    }).join('');
+    const linhasAprovacoes = _mtAprovacoes.map(_mtLinhaAprovacao).join('');
+
+    wrapper.innerHTML = `<div class="space-y-2">${linhasTarefas}${linhasAprovacoes}</div>`;
+}
+
 async function mudarViewMeuTrabalho(view) {
+    if (_mtFiltroTipo !== 'tarefas') return; // Kanban só existe pra Tarefas
     _mtView = view;
     _mtAtualizarBotoesView();
     _mtRender();
@@ -88,6 +165,23 @@ function _mtAtualizarBotoesView() {
         btn.classList.toggle('text-white', v === _mtView);
         btn.classList.toggle('text-gray-600', v !== _mtView);
     });
+}
+
+// Kanban e o filtro de status de Task só fazem sentido pro filtro
+// "Tarefas" — escondidos nos outros dois pra não sugerir um controle que
+// não se aplica ao que está sendo mostrado.
+function _mtAtualizarControlesPorTipo() {
+    const ehTarefas = _mtFiltroTipo === 'tarefas';
+    const elStatus = document.getElementById('mtFiltroStatus');
+    const elToggle = document.getElementById('mtViewToggle');
+    if (elStatus) elStatus.classList.toggle('hidden', !ehTarefas);
+    if (elToggle) elToggle.classList.toggle('hidden', !ehTarefas);
+}
+
+function onMudarFiltroTipoMeuTrabalho() {
+    _mtFiltroTipo = document.getElementById('mtFiltroTipo').value;
+    _mtAtualizarControlesPorTipo();
+    _mtRender();
 }
 
 function onMudarFiltroStatusMeuTrabalho() {
