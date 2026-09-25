@@ -47,6 +47,10 @@ async function resetarBaseParaFase1() {
         `⚠️ FERRAMENTA DE DESENVOLVIMENTO\n\n` +
         `Isso vai resetar TODOS os ${principais.length} projeto(s) principais cadastrados de volta para a Fase 1 (Business Case), ` +
         `como demandas incluídas — antes de orçamento, comitê ou aprovação.\n\n` +
+        `NOVO (V3 — separação Business Case/Project, 2026-09-25): pra todo projeto que já tinha avançado além de Business Case, ` +
+        `isso agora apaga de verdade a linha dele em \`projects\` (o Project deixa de existir como objeto — não é mais só um campo ` +
+        `voltando ao valor antigo). O histórico em \`business_cases\` é preservado e resetado pros valores de início, mas o ` +
+        `vínculo/identidade do Project em si não tem mais volta. Continua restrito a ambiente de dev/teste.\n\n` +
         `${subprojetos.length > 0 ? `Os ${subprojetos.length} SUBPROJETO(S) existentes serão APAGADOS por completo (não fazem sentido "voltar pra fase 1" — nascem direto em Execution).\n\n` : ''}` +
         `Serão apagados: orçamento e horas (BC/Req/Tech), status de comitê, datas e nome de aprovador, dados de cancelamento, ` +
         `marcação Extraordinário, alertas de variação (orçamento e horas), carryover, histórico de reprovação (Requerimentos e Comitê), ` +
