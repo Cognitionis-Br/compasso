@@ -384,6 +384,7 @@
                         <button onclick="switchTab('governanca')" id="link-governanca" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cobrança de Ajustes</button>
                         <button onclick="switchTab('retomar_hold')" id="link-retomar_hold" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Retomar Projetos em Hold</button>
                         <button onclick="switchTab('mudanca_orcamento')" id="link-mudanca_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Diferenças de Orçamento</button>
+                        <button onclick="switchTab('auditoria')" id="link-auditoria" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors"><i class="fa-solid fa-shield-halved mr-1"></i>Auditoria</button>
                         <button onclick="switchTab('troca_responsavel_atividade')" id="link-troca_responsavel_atividade" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Troca de Responsável de Atividade</button>
                     </div>
                 </div>
@@ -3909,6 +3910,83 @@
                     </div>
                 </div>
 
+                <!-- V9 — Auditoria / Compliance (M16, 2026-09-28) -->
+                <div id="view-auditoria" class="tab-content hidden">
+                    <div class="mb-4 flex items-center justify-between border-b pb-2">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800">Auditoria</h2>
+                            <p class="text-xs text-gray-500 mt-0.5">Log de eventos automáticos em projetos e Business Cases — fases, status, orçamento e criações.</p>
+                        </div>
+                        <button onclick="auditExportarCSV()" class="flex items-center gap-2 text-xs font-bold text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded px-3 py-1.5">
+                            <i class="fa-solid fa-download"></i> Exportar CSV
+                        </button>
+                    </div>
+
+                    <!-- Filtros -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Código do Projeto</label>
+                                <input id="auditFiltroCodigo" type="text" placeholder="Ex.: PROJ-001" class="w-full p-2 border border-gray-300 rounded text-xs" onkeydown="if(event.key==='Enter') auditFiltrar()">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Tipo de Ação</label>
+                                <select id="auditFiltroAcao" class="w-full p-2 border border-gray-300 rounded text-xs">
+                                    <option value="">Todos</option>
+                                    <option value="CRIADO">Criado</option>
+                                    <option value="PROJECT_CRIADO">Project criado</option>
+                                    <option value="FASE_ALTERADA">Fase alterada</option>
+                                    <option value="STATUS_ALTERADO">Status alterado</option>
+                                    <option value="ORCAMENTO_ALTERADO">Orçamento alterado</option>
+                                    <option value="BLOQUEIO_ALTERADO">Bloqueio alterado</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">De</label>
+                                <input id="auditFiltroDe" type="date" class="w-full p-2 border border-gray-300 rounded text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Até</label>
+                                <input id="auditFiltroAte" type="date" class="w-full p-2 border border-gray-300 rounded text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-400 mb-1">Usuário</label>
+                                <input id="auditFiltroUsuario" type="text" placeholder="Nome..." class="w-full p-2 border border-gray-300 rounded text-xs" onkeydown="if(event.key==='Enter') auditFiltrar()">
+                            </div>
+                        </div>
+                        <div class="flex gap-2 mt-3">
+                            <button onclick="auditFiltrar()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-1.5 rounded"><i class="fa-solid fa-magnifying-glass mr-1"></i>Filtrar</button>
+                            <button onclick="auditLimparFiltros()" class="text-xs font-bold text-gray-500 hover:text-gray-800 px-3 py-1.5 border border-gray-200 rounded">Limpar</button>
+                            <span id="auditCount" class="ml-auto text-[11px] text-gray-400 self-center tabular-nums"></span>
+                        </div>
+                    </div>
+
+                    <!-- Tabela de eventos -->
+                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-[10px] uppercase text-gray-400 border-b">
+                                        <th class="p-2">Data/Hora</th>
+                                        <th class="p-2">Projeto</th>
+                                        <th class="p-2">Ação</th>
+                                        <th class="p-2">Campo</th>
+                                        <th class="p-2">Anterior → Novo</th>
+                                        <th class="p-2">Usuário</th>
+                                        <th class="p-2">Origem</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="auditTableBody" class="text-xs divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                        <div class="p-3 border-t border-gray-100 text-center">
+                            <button id="auditLoadMore" onclick="auditCarregarMais()" class="hidden text-xs font-bold text-indigo-600 hover:text-indigo-800">
+                                <i class="fa-solid fa-chevron-down mr-1"></i>Carregar mais
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Troca de Responsável nas Atividades dos Projetos (Governança) —
                      também é a base de acesso do perfil OPERADOR (ver
                      funcoes.restringe_por_atividade_responsavel). -->
@@ -5643,6 +5721,7 @@
     <script src="./js/rate-card/rate-card.js"></script>
     <script src="./js/aprovacoes/minhas-aprovacoes.js"></script>
     <script src="./js/governanca/governanca-unificada.js"></script>
+    <script src="./js/governanca/auditoria.js"></script>
     <!-- Compasso 2.0 — Release 4 (Consolidação, Busca, Relatórios e Escala), 2026-09-23 -->
     <script src="./js/busca/busca-global.js"></script>
     <script src="./js/relatorios/relatorios.js"></script>

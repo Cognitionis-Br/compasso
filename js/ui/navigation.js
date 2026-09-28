@@ -134,6 +134,7 @@ function switchTab(tabId) {
     if (tabId === 'percentual_bloqueio_orcamento') renderPercentualBloqueioOrcamentoView();
     if (tabId === 'mudanca_orcamento') renderMudancaOrcamentoView();
     if (tabId === 'troca_responsavel_atividade') renderTrocaResponsavelAtividadeView();
+    if (tabId === 'auditoria') renderAuditoriaView();
     // NOVO (Feature 1.1/1.2 — 03/09/2026). controle_orcamento e
     // validacao_tradeoff se auto-restringem dentro da própria view
     // (restrito/conteudo). periodo_ano_fiscal segue o padrão hardcoded
