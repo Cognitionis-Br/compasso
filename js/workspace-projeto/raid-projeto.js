@@ -25,25 +25,45 @@ async function _raidRenderLista(wrapperElId) {
     if (error) { wrapper.innerHTML = `<p class="text-xs text-danger-600 py-4 text-center">Erro ao carregar: ${escapeHtml(error.message)}</p>`; return; }
 
     const lista = itens || [];
+
+    // V12 — RAID-02: banner de bloqueio quando existem gates RAID_CRITICO ativos.
+    const { data: blockers } = await _supabase.from('gates')
+        .select('contexto').eq('projeto_codigo', _raidProjetoCodigo)
+        .eq('tipo', 'RAID_CRITICO').eq('resultado', 'BLOCKED');
+    const bannerCritico = (blockers && blockers.length > 0) ? `
+        <div class="mb-3 p-3 bg-red-50 border border-red-300 rounded-lg flex items-start gap-2">
+            <i class="fa-solid fa-circle-exclamation text-red-600 mt-0.5 shrink-0 text-sm"></i>
+            <div>
+                <p class="text-xs font-bold text-red-800">${blockers.length} item(ns) RAID crítico(s) ativo(s) — avanço de fase bloqueado até resolução.</p>
+                <p class="text-[11px] text-red-600 mt-0.5">Resolva ou cancele os itens marcados como CRÍTICO para desbloquear.</p>
+            </div>
+        </div>` : '';
+
     wrapper.innerHTML = `
+        ${bannerCritico}
         <div class="flex items-center justify-between mb-3">
             <h4 class="text-xs font-black uppercase text-gray-500">Riscos, Problemas, Impedimentos e Decisões</h4>
             <button onclick="abrirModalRaid()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-3 py-1.5 rounded"><i class="fa-solid fa-plus"></i> Novo Item</button>
         </div>
         <div class="space-y-2">
-            ${lista.length === 0 ? '<p class="text-xs text-gray-400 italic py-6 text-center">Nenhum item registrado ainda.</p>' : lista.map(i => `
-                <div class="flex items-center justify-between p-3 border border-gray-100 rounded hover:bg-gray-50 cursor-pointer" onclick="abrirModalRaid(${i.id})">
+            ${lista.length === 0 ? '<p class="text-xs text-gray-400 italic py-6 text-center">Nenhum item registrado ainda.</p>' : lista.map(i => {
+                const ehCritico = (i.tipo === 'RISCO' || i.tipo === 'PROBLEMA')
+                    && i.probabilidade === 'ALTA' && i.impacto === 'ALTA'
+                    && i.status !== 'RESOLVIDO' && i.status !== 'CANCELADO';
+                return `
+                <div class="flex items-center justify-between p-3 border ${ehCritico ? 'border-red-300 bg-red-50' : 'border-gray-100'} rounded hover:bg-gray-50 cursor-pointer" onclick="abrirModalRaid(${i.id})">
                     <div class="min-w-0 flex-1">
-                        <div class="flex items-center gap-2 mb-0.5">
+                        <div class="flex items-center gap-2 mb-0.5 flex-wrap">
                             ${renderBadgeStatus(RAID_TIPO_CORES[i.tipo] || 'gray', null, RAID_TIPO_LABELS[i.tipo] || i.tipo)}
                             ${i.impacto ? renderBadgeStatus(i.impacto === 'ALTA' ? 'danger' : (i.impacto === 'MEDIA' ? 'amber' : 'gray'), null, 'Impacto ' + i.impacto) : ''}
+                            ${ehCritico ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-red-600 text-white uppercase tracking-wide">CRÍTICO</span>' : ''}
                         </div>
                         <div class="text-sm font-bold text-gray-800 truncate">${escapeHtml(i.titulo)}</div>
                         <div class="text-[10px] text-gray-400">${i.prazo ? formatDate(i.prazo) : 'Sem prazo'}</div>
                     </div>
                     ${renderBadgeStatus(i.status === 'RESOLVIDO' ? 'emerald' : (i.status === 'CANCELADO' ? 'gray' : 'blue'), null, RAID_STATUS_LABELS[i.status] || i.status)}
                 </div>
-            `).join('')}
+            `}).join('')}
         </div>
     `;
 }

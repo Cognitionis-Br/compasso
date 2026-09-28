@@ -984,6 +984,29 @@ async function confirmarEvolucaoGenerica() {
     let dadosResponsaveisValidacao = null; // idem — usado após o upsert pra atualizar o projeto
 
     if (percentual === 100) {
+        // V12 — RAID-02: bloqueia conclusão de etapa se existem gates RAID_CRITICO ativos.
+        const { data: raidBlockers } = await _supabase.from('gates')
+            .select('contexto').eq('projeto_codigo', codigoProjeto)
+            .eq('tipo', 'RAID_CRITICO').eq('resultado', 'BLOCKED');
+        if (raidBlockers && raidBlockers.length > 0) {
+            const podeOverride = (typeof ehAdministrador !== 'undefined' && ehAdministrador)
+                              || (typeof ehProprietario !== 'undefined' && ehProprietario);
+            const tipoLabel = typeof RAID_TIPO_LABELS !== 'undefined' ? RAID_TIPO_LABELS : {};
+            const listaRaid = raidBlockers.map(g => {
+                const c = g.contexto || {};
+                return `• ${tipoLabel[c.raid_tipo] || c.raid_tipo || 'Item'}: ${c.titulo || '—'}`;
+            }).join('\n');
+            if (!podeOverride) {
+                return alert(`⛔ Avanço bloqueado — ${raidBlockers.length} item(ns) RAID crítico(s) ativo(s):\n\n${listaRaid}\n\nResolva os itens na aba "Riscos e Ocorrências" antes de avançar.`);
+            }
+            if (!confirm(`⚠️ ${raidBlockers.length} item(ns) RAID crítico(s) ativo(s):\n\n${listaRaid}\n\nComo Administrador/Proprietário, você pode avançar mesmo assim — ficará registrado. Confirma o override?`)) return;
+            await _supabase.from('gates').update({
+                resultado: 'OVERRIDE',
+                justificativa: `Override autorizado por ${currentUser ? currentUser.nome : 'desconhecido'} na conclusão da etapa.`,
+                aprovado_em: new Date().toISOString()
+            }).eq('projeto_codigo', codigoProjeto).eq('tipo', 'RAID_CRITICO').eq('resultado', 'BLOCKED');
+        }
+
         // AJUSTADO (Fase 2, item 1): pra "Realizar Orçamento", a
         // observação agora vem do campo integrado no quadro de
         // "Registro de Encerramento da Atividade" (evita duplicar).
