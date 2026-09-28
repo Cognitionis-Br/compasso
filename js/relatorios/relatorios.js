@@ -19,7 +19,9 @@ const RELATORIOS_CATALOGO = [
     { titulo: 'Gates e Aprovações', descricao: 'Histórico de gates (RAID crítico, orçamento, fase) com resultado e justificativa.', acao: 'relatorioExportarGates' },
     { titulo: 'Histórico de Licenciamento', descricao: 'Auditoria de todas as alterações de entitlements de módulos (desde V13).', acao: 'relatorioExportarHistoricoLicenca' },
     // V16 — M16 Audit Export
-    { titulo: 'Auditoria de Projetos', descricao: 'Histórico completo de alterações em Business Cases e Projects (todas as páginas, não só a visão atual).', acao: 'relatorioExportarAuditoria' }
+    { titulo: 'Auditoria de Projetos', descricao: 'Histórico completo de alterações em Business Cases e Projects (todas as páginas, não só a visão atual).', acao: 'relatorioExportarAuditoria' },
+    // V19 — M12 FY closing decisions
+    { titulo: 'Decisões de Fechamento AF', descricao: 'Histórico de todas as decisões de fechamento de Ano Fiscal por projeto (Carryover, Hold, Cancelar, Absorção).', acao: 'relatorioExportarDecisoesFechamentoAF' }
 ];
 
 function renderRelatoriosView() {
@@ -155,6 +157,30 @@ async function relatorioExportarHistoricoLicenca(btn) {
                 h.alterado_em ? h.alterado_em.split('T')[0] : ''
             ]),
             'historico_licenciamento'
+        );
+    });
+}
+
+// ---- V19: M12 FY Closing Decisions export --------------------------------
+
+async function relatorioExportarDecisoesFechamentoAF(btn) {
+    await _relatorioComFeedback(btn, async () => {
+        const { data, error } = await _supabase.from('fechamento_af_decisoes')
+            .select('ano_fiscal, projeto_codigo, decisao, valor_remanescente, observacao, decidido_por, decidido_em')
+            .order('decidido_em', { ascending: false });
+        if (error) return alert('Erro ao gerar o relatório: ' + error.message);
+        exportarCSV(
+            ['Ano Fiscal', 'Projeto', 'Decisão', 'Orç. Remanescente', 'Observação', 'Decidido por', 'Quando'],
+            (data || []).map(d => [
+                d.ano_fiscal || '',
+                d.projeto_codigo || '',
+                d.decisao || '',
+                d.valor_remanescente != null ? d.valor_remanescente : '',
+                d.observacao || '',
+                d.decidido_por || '',
+                d.decidido_em ? d.decidido_em.replace('T', ' ').substring(0, 19) : ''
+            ]),
+            'decisoes_fechamento_af'
         );
     });
 }
