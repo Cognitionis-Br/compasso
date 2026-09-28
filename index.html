@@ -2536,6 +2536,7 @@
                     <div class="flex flex-wrap gap-2 mb-4">
                         <button id="fechamentoAfBtn-avaliacao" onclick="mudarAbaFechamentoAf('avaliacao')" class="fechamento-af-btn px-4 py-2 rounded-md text-sm font-bold border-2 bg-red-700 text-white border-red-700">Avaliação e Fechamento Ano Fiscal</button>
                         <button id="fechamentoAfBtn-projetos" onclick="mudarAbaFechamentoAf('projetos')" class="fechamento-af-btn px-4 py-2 rounded-md text-sm font-bold border-2 bg-white text-gray-600 border-gray-200 hover:border-gray-300">Avaliação Projetos Fechamento Ano Fiscal</button>
+                        <button id="fechamentoAfBtn-absorcao" onclick="mudarAbaFechamentoAf('absorcao')" class="fechamento-af-btn px-4 py-2 rounded-md text-sm font-bold border-2 bg-white text-gray-600 border-gray-200 hover:border-gray-300">Absorção de Carryover</button>
                     </div>
 
                     <div id="fechamentoAfPainel-avaliacao" class="fechamento-af-painel">
@@ -2564,6 +2565,13 @@
                                     <tbody id="fechamentoProjetosTableBody" class="divide-y divide-gray-100"></tbody>
                                 </table>
                             </div>
+                        </div>
+                    </div>
+
+                    <div id="fechamentoAfPainel-absorcao" class="fechamento-af-painel hidden">
+                        <div id="absorcaoCarryoverContexto"></div>
+                        <div class="bg-white p-5 rounded-lg shadow-sm border border-gray-200">
+                            <div id="absorcaoCarryoverBody"></div>
                         </div>
                     </div>
 
@@ -5646,6 +5654,7 @@
     <script src="./js/ano-fiscal/fechamento-af.js"></script>
     <script src="./js/ano-fiscal/fechamento-projetos.js"></script>
     <script src="./js/ano-fiscal/resultado-af.js"></script>
+    <script src="./js/ano-fiscal/absorcao-carryover.js"></script>
     <script src="./js/config/periodo-ano-fiscal.js"></script>
     <script src="./js/config/controle-orcamento.js"></script>
     <script src="./js/config/ia-templates.js"></script>

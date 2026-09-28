@@ -56,7 +56,7 @@ function fechamentoAfProjetosPendentes() {
 
 function mudarAbaFechamentoAf(aba) {
     fechamentoAfAbaAtiva = aba;
-    ['avaliacao', 'projetos'].forEach(a => {
+    ['avaliacao', 'projetos', 'absorcao'].forEach(a => {
         const btn = document.getElementById(`fechamentoAfBtn-${a}`);
         const painel = document.getElementById(`fechamentoAfPainel-${a}`);
         if (btn) btn.className = `fechamento-af-btn px-4 py-2 rounded-md text-sm font-bold border-2 ${a === aba ? 'bg-red-700 text-white border-red-700' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'}`;
@@ -66,6 +66,7 @@ function mudarAbaFechamentoAf(aba) {
 
     if (aba === 'avaliacao' && typeof renderResultadoAfView === 'function') renderResultadoAfView();
     if (aba === 'projetos' && typeof renderFechamentoProjetosView === 'function') renderFechamentoProjetosView();
+    if (aba === 'absorcao' && typeof renderAbsorcaoCarryoverView === 'function') renderAbsorcaoCarryoverView();
 }
 
 async function renderFechamentoAfView() {

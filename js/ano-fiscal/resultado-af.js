@@ -47,9 +47,23 @@ async function renderResultadoAfView() {
     const modoAgr = (typeof modoAgrupamentoOrcamento !== 'undefined') ? modoAgrupamentoOrcamento : 'AF';
     const valAgr = (typeof valorAgrupamentoSelecionado !== 'undefined') ? valorAgrupamentoSelecionado : null;
 
+    // V15: carryover pendente de absorção aparece só no AF de origem e no
+    // imediatamente seguinte (onde será absorvido). Após absorção o projeto
+    // tem ano_fiscal correto e is_carryover=false, então aparece via match
+    // normal de ano_fiscal — sem floating indefinido em todos os AFs futuros.
+    const afAnteriorDoSelecionado = (typeof proximoAnoFiscal === 'function' && resultadoAfSelecionado)
+        ? (() => {
+            const n = parseInt(String(resultadoAfSelecionado).replace('AF', ''), 10);
+            return isNaN(n) ? null : ('AF' + (n - 1));
+        })()
+        : null;
+
     let lista = (projectsData || []).filter(p =>
         p.is_subprojeto !== true &&
-        (p.ano_fiscal === resultadoAfSelecionado || p.is_carryover === true)
+        (
+            p.ano_fiscal === resultadoAfSelecionado ||
+            (p.is_carryover === true && p.ano_fiscal === afAnteriorDoSelecionado)
+        )
     );
     if (typeof filtrarProjetosPorAgrupamento === 'function') {
         lista = filtrarProjetosPorAgrupamento(lista, modoAgr, valAgr);
