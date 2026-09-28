@@ -21,6 +21,29 @@ rodapé do login, no rodapé do menu lateral e na tela inicial.
 
 ---
 
+## [2.1.0] - 2026-09-28 — Release 2
+
+**Cobertura de Relatórios — 5 novos exports CSV**
+
+### Relatórios Aprimorados (V19 + V20 + V22)
+
+- **Export de Decisões de Fechamento AF** (V19): exporta `fechamento_af_decisoes`
+  completo — Ano Fiscal, Projeto, Decisão (CONTINUAR/HOLD/CANCELAR/REVERTIDO/
+  ABSORVIDO), Orçamento Remanescente, Observação, Decidido por, Quando.
+- **Export de Medições de Custo** (V20): exporta `medicoes` — registros periódicos
+  de custo real por projeto (período, valor, descrição, autor).
+- **Export de Forecasts (EAC)** (V20): exporta `forecasts` — revisões do Estimate
+  at Completion por projeto (valor EAC, premissa, autor).
+- **Export de Rate Card** (V22): exporta `rate_card_papeis` — lista completa de
+  papéis e valores/hora (papel, valor/hora, ativo, atualizado por).
+- **Export de Estimativas EST-01/02/03** (V22): exporta `business_case_estimativas`
+  — histórico versionado de estimativas por projeto e fase (projeto, fase, versão,
+  horas, custo estimado, premissas, autor, data).
+
+O catálogo de Relatórios passa de 9 para 14 entradas desde o lançamento 2.0.0.
+
+---
+
 ## [2.0.0] - 2026-09-28 — Release 2
 
 **Compasso 2.0 — Governança, IA, Compliance e Financeiro Avançado**
