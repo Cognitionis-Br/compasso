@@ -10,6 +10,7 @@ const RAID_TIPO_CORES = { RISCO: 'amber', PROBLEMA: 'danger', IMPEDIMENTO: 'oran
 const RAID_STATUS_LABELS = { ABERTO: 'Aberto', EM_ANDAMENTO: 'Em Andamento', RESOLVIDO: 'Resolvido', CANCELADO: 'Cancelado' };
 
 let _raidProjetoCodigo = null;
+let _raidUltimaLista = []; // V27 — cache para exportação CSV
 
 async function renderRaidProjeto(projetoCodigo, wrapperElId) {
     _raidProjetoCodigo = projetoCodigo;
@@ -25,6 +26,7 @@ async function _raidRenderLista(wrapperElId) {
     if (error) { wrapper.innerHTML = `<p class="text-xs text-danger-600 py-4 text-center">Erro ao carregar: ${escapeHtml(error.message)}</p>`; return; }
 
     const lista = itens || [];
+    _raidUltimaLista = lista; // V27 — mantém lista para exportação
 
     // V12 — RAID-02: banner de bloqueio quando existem gates RAID_CRITICO ativos.
     const { data: blockers } = await _supabase.from('gates')
@@ -43,7 +45,10 @@ async function _raidRenderLista(wrapperElId) {
         ${bannerCritico}
         <div class="flex items-center justify-between mb-3">
             <h4 class="text-xs font-black uppercase text-gray-500">Riscos, Problemas, Impedimentos e Decisões</h4>
-            <button onclick="abrirModalRaid()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-3 py-1.5 rounded"><i class="fa-solid fa-plus"></i> Novo Item</button>
+            <div class="flex items-center gap-2">
+                <button onclick="exportarRaidCSV()" class="text-xs font-bold text-indigo-700 hover:text-indigo-900 border border-indigo-300 hover:border-indigo-500 rounded px-3 py-1.5 bg-white">⬇ CSV</button>
+                <button onclick="abrirModalRaid()" class="bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-3 py-1.5 rounded"><i class="fa-solid fa-plus"></i> Novo Item</button>
+            </div>
         </div>
         <div class="space-y-2">
             ${lista.length === 0 ? '<p class="text-xs text-gray-400 italic py-6 text-center">Nenhum item registrado ainda.</p>' : lista.map(i => {
@@ -163,4 +168,25 @@ async function _raidAvaliarGateCritico(itemId, payload) {
         }).eq('id', gateAberto.id);
         if (error) console.error('Erro ao encerrar gate de RAID crítico:', error.message);
     }
+}
+
+// V27 — Exportação CSV da lista RAID atual do projeto
+function exportarRaidCSV() {
+    if (!_raidUltimaLista.length) return alert('Nenhum item RAID registrado neste projeto.');
+    exportarCSV(
+        ['Tipo', 'Título', 'Descrição', 'Probabilidade', 'Impacto', 'Status', 'Responsável', 'Prazo', 'Aberto em', 'Resolvido em'],
+        _raidUltimaLista.map(i => [
+            RAID_TIPO_LABELS[i.tipo] || i.tipo || '',
+            i.titulo || '',
+            i.descricao || '',
+            i.probabilidade || '',
+            i.impacto || '',
+            RAID_STATUS_LABELS[i.status] || i.status || '',
+            i.criado_por || '',
+            i.prazo || '',
+            i.criado_em ? i.criado_em.split('T')[0] : '',
+            i.resolvido_em ? i.resolvido_em.split('T')[0] : ''
+        ]),
+        `raid_${_raidProjetoCodigo || 'projeto'}`
+    );
 }
