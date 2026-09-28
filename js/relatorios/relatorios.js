@@ -24,7 +24,10 @@ const RELATORIOS_CATALOGO = [
     { titulo: 'Decisões de Fechamento AF', descricao: 'Histórico de todas as decisões de fechamento de Ano Fiscal por projeto (Carryover, Hold, Cancelar, Absorção).', acao: 'relatorioExportarDecisoesFechamentoAF' },
     // V20 — V8 Financial tracking exports
     { titulo: 'Medições de Custo', descricao: 'Registros periódicos de custo real por projeto (EAC / Financeiro Avançado).', acao: 'relatorioExportarMedicoes' },
-    { titulo: 'Forecasts (EAC)', descricao: 'Histórico de revisões de Estimate at Completion por projeto.', acao: 'relatorioExportarForecasts' }
+    { titulo: 'Forecasts (EAC)', descricao: 'Histórico de revisões de Estimate at Completion por projeto.', acao: 'relatorioExportarForecasts' },
+    // V22 — V4/V5 Estimation exports
+    { titulo: 'Rate Card', descricao: 'Lista completa de papéis e valores/hora do Rate Card (referência da Estimativa EST-01/02/03).', acao: 'relatorioExportarRateCard' },
+    { titulo: 'Estimativas (EST-01/02/03)', descricao: 'Histórico versionado de estimativas de Business Case por projeto e fase (EST-01, EST-02, EST-03).', acao: 'relatorioExportarEstimativas' }
 ];
 
 function renderRelatoriosView() {
@@ -227,6 +230,51 @@ async function relatorioExportarDecisoesFechamentoAF(btn) {
                 d.decidido_em ? d.decidido_em.replace('T', ' ').substring(0, 19) : ''
             ]),
             'decisoes_fechamento_af'
+        );
+    });
+}
+
+// ---- V22: V4/V5 Estimation exports ---------------------------------------
+
+async function relatorioExportarRateCard(btn) {
+    await _relatorioComFeedback(btn, async () => {
+        const { data, error } = await _supabase.from('rate_card_papeis')
+            .select('papel, valor_hora, ativo, atualizado_por, atualizado_em')
+            .order('papel');
+        if (error) return alert('Erro ao gerar o relatório: ' + error.message);
+        exportarCSV(
+            ['Papel', 'Valor/Hora (R$)', 'Ativo', 'Atualizado por', 'Quando'],
+            (data || []).map(r => [
+                r.papel || '',
+                r.valor_hora != null ? r.valor_hora : '',
+                r.ativo ? 'Sim' : 'Não',
+                r.atualizado_por || '',
+                r.atualizado_em ? r.atualizado_em.split('T')[0] : ''
+            ]),
+            'rate_card'
+        );
+    });
+}
+
+async function relatorioExportarEstimativas(btn) {
+    await _relatorioComFeedback(btn, async () => {
+        const { data, error } = await _supabase.from('business_case_estimativas')
+            .select('business_case_codigo, fase, versao, total_horas, custo_estimado, premissas, criado_por, criado_em')
+            .order('criado_em', { ascending: false });
+        if (error) return alert('Erro ao gerar o relatório: ' + error.message);
+        exportarCSV(
+            ['Projeto', 'Fase', 'Versão', 'Horas', 'Custo Estimado (R$)', 'Premissas', 'Criado por', 'Quando'],
+            (data || []).map(e => [
+                e.business_case_codigo || '',
+                e.fase || '',
+                e.versao != null ? e.versao : '',
+                e.total_horas != null ? e.total_horas : '',
+                e.custo_estimado != null ? e.custo_estimado : '',
+                e.premissas || '',
+                e.criado_por || '',
+                e.criado_em ? e.criado_em.replace('T', ' ').substring(0, 19) : ''
+            ]),
+            'estimativas_business_case'
         );
     });
 }
