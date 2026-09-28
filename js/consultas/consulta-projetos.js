@@ -27,6 +27,7 @@ function popularFiltrosConsulta() {
 }
 
 let consultaOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' };
+let _consultaUltimaLista = []; // V24 — cache para exportação CSV da lista filtrada atual
 
 function ordenarConsultaProjetos(campo) {
     if (consultaOrdenacaoAtual.campo === campo) {
@@ -136,4 +137,25 @@ async function renderConsultaProjetos() {
 
     tbody.innerHTML = linhasTabela;
     if (cardsBody) cardsBody.innerHTML = cartoes;
+    _consultaUltimaLista = projetosComSaude; // V24 — mantém lista filtrada para exportação
+}
+
+// V24 — Exportação CSV da lista filtrada atual (AF + Área + Fase + Status)
+function exportarConsultaCSV() {
+    if (!_consultaUltimaLista.length) return alert('Nenhum projeto na lista atual para exportar.');
+    exportarCSV(
+        ['Código', 'Nome', 'Área', 'Tipo Orçamento', 'Fase', 'Status', 'Previsto (R$)', 'Realizado (R$)', 'Saúde'],
+        _consultaUltimaLista.map(({ p, saude }) => [
+            p.codigo || '',
+            p.nome || '',
+            p.area || '',
+            p.tipo_orcamento || '',
+            p.etapa_atual || 'BUSINESS CASE',
+            p.sub_status || '',
+            Number(p.val_bc) || Number(p.previsto) || 0,
+            Number(p.realizado) || 0,
+            saude.status || ''
+        ]),
+        'consulta_projetos'
+    );
 }

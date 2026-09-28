@@ -1105,7 +1105,10 @@
                     <div id="consultaFaixaAFSelecionado" class="mb-6"></div>
 
                     <section class="bg-white p-5 rounded-lg border border-gray-200 shadow-sm">
-                        <h3 class="font-bold text-gray-800 text-sm mb-4 border-b pb-2 uppercase tracking-wide">Status Detalhado da Carteira</h3>
+                        <div class="flex items-center justify-between border-b pb-2 mb-4">
+                            <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wide">Status Detalhado da Carteira</h3>
+                            <button onclick="exportarConsultaCSV()" class="text-xs font-bold text-indigo-700 hover:text-indigo-900"><i class="fa-solid fa-file-csv mr-1"></i>Exportar CSV</button>
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Filtrar por Área</label>
