@@ -62,5 +62,7 @@ function calcularSaudeProjeto(p, todasEtapasCache) {
         }
     }
 
-    return { status: 'SAUDAVEL', html: '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold text-xs"><i class="fa-solid fa-circle-check mr-1"></i>Saudável</span>' };
+    // Sem cronograma e sem SLA aplicável: não há dado suficiente para
+    // avaliar saúde — retornar SEM_DADOS em vez de false-positive verde.
+    return { status: 'SEM_DADOS', html: '<span class="px-2 py-0.5 bg-gray-100 text-gray-500 rounded font-bold text-xs"><i class="fa-solid fa-circle-question mr-1"></i>Sem dados</span>' };
 }

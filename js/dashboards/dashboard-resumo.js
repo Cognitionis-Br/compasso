@@ -109,13 +109,14 @@ function renderFarolSaudeDash(listaDash, etapasCache) {
     const alvo = document.getElementById('dashFarolSaude');
     if (!alvo) return;
 
-    let verde = 0, amarelo = 0, vermelho = 0, inativo = 0;
+    let verde = 0, amarelo = 0, vermelho = 0, inativo = 0, semDados = 0;
     (listaDash || []).forEach(p => {
         const s = (typeof calcularSaudeProjeto === 'function')
             ? calcularSaudeProjeto(p, etapasCache || []).status : 'SAUDAVEL';
         if (s === 'CRITICO') vermelho++;
         else if (s === 'ATENCAO' || s === 'HOLD') amarelo++;
         else if (s === 'INATIVO') inativo++;
+        else if (s === 'SEM_DADOS') semDados++;
         else verde++;
     });
     const tot = verde + amarelo + vermelho || 1;
@@ -140,7 +141,7 @@ function renderFarolSaudeDash(listaDash, etapasCache) {
                 <div class="bg-amber-500" style="width:${pct(amarelo)}%"></div>
                 <div class="bg-danger-500" style="width:${pct(vermelho)}%"></div>
             </div>
-            <div class="mt-2 text-[10px] text-gray-400">${tot} projeto(s) no farol${inativo ? ` · ${inativo} inativo(s) fora da conta` : ''}.</div>
+            <div class="mt-2 text-[10px] text-gray-400">${tot} projeto(s) no farol${inativo ? ` · ${inativo} inativo(s)` : ''}${semDados ? ` · ${semDados} sem dados` : ''}.</div>
         </section>`;
 }
 

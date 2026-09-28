@@ -75,7 +75,7 @@ async function renderConsultaProjetos() {
         return;
     }
 
-    const FAROL_ORDEM = { CRITICO: 0, ATENCAO: 1, HOLD: 2, SAUDAVEL: 3, INATIVO: 4 };
+    const FAROL_ORDEM = { CRITICO: 0, ATENCAO: 1, HOLD: 2, SAUDAVEL: 3, SEM_DADOS: 4, INATIVO: 5 };
     let projetosComSaude = projetosFiltrados.map(p => ({ p, saude: calcularSaudeProjeto(p, todasEtapasCache || []) }));
 
     if (consultaOrdenacaoAtual.campo === 'padrao') {

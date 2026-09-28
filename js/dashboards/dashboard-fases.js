@@ -28,7 +28,7 @@ function _cfSaudeFase(projs, etapasCache) {
             ? calcularSaudeProjeto(p, etapasCache || []).status : 'SAUDAVEL';
         if (s === 'CRITICO') temCritico = true;
         else if (s === 'ATENCAO' || s === 'HOLD') temAtencao = true;
-        else if (s !== 'INATIVO') temSaudavel = true;
+        else if (s !== 'INATIVO' && s !== 'SEM_DADOS') temSaudavel = true;
     });
     if (temCritico) return { icone: 'fa-circle-exclamation', barra: 'bg-danger-500', texto: 'text-danger-700' };
     if (temAtencao) return { icone: 'fa-triangle-exclamation', barra: 'bg-amber-500', texto: 'text-amber-700' };
