@@ -13,7 +13,11 @@ const RELATORIOS_CATALOGO = [
     { titulo: 'Consolidação por Fase', descricao: 'Quantidade e orçado por fase da carteira (mesmo export do Dashboard).', acao: 'relatorioExportarConsolidacaoFases' },
     { titulo: 'Orçado × Realizado por Área', descricao: 'Mesmo export já disponível no Dashboard (funis de criação).', acao: 'relatorioExportarOrcadoRealizado' },
     { titulo: 'Minhas Aprovações', descricao: 'Lista de tudo que está pendente de aprovação pra você agora.', acao: 'relatorioExportarMinhasAprovacoes' },
-    { titulo: 'Riscos e Ocorrências (RAID)', descricao: 'Todos os itens RAID dos projetos aos quais você tem acesso.', acao: 'relatorioExportarRaid' }
+    { titulo: 'Riscos e Ocorrências (RAID)', descricao: 'Todos os itens RAID dos projetos aos quais você tem acesso.', acao: 'relatorioExportarRaid' },
+    // V14 — M13 Enhanced Reports
+    { titulo: 'Tarefas da Carteira', descricao: 'Todas as tarefas dos projetos visíveis com status, prioridade e prazo.', acao: 'relatorioExportarTarefas' },
+    { titulo: 'Gates e Aprovações', descricao: 'Histórico de gates (RAID crítico, orçamento, fase) com resultado e justificativa.', acao: 'relatorioExportarGates' },
+    { titulo: 'Histórico de Licenciamento', descricao: 'Auditoria de todas as alterações de entitlements de módulos (desde V13).', acao: 'relatorioExportarHistoricoLicenca' }
 ];
 
 function renderRelatoriosView() {
@@ -85,6 +89,75 @@ async function relatorioExportarRaid(btn) {
         );
     });
 }
+
+// ---- V14: M13 Enhanced Reports ------------------------------------------
+
+async function relatorioExportarTarefas(btn) {
+    await _relatorioComFeedback(btn, async () => {
+        const { data, error } = await _supabase.from('tasks')
+            .select('projeto_codigo, titulo, status, prioridade, prazo, assigned_user_id, criado_por')
+            .order('prazo', { ascending: true, nullsFirst: false });
+        if (error) return alert('Erro ao gerar o relatório: ' + error.message);
+        exportarCSV(
+            ['Projeto', 'Título', 'Status', 'Prioridade', 'Prazo', 'Responsável (ID)', 'Criado por'],
+            (data || []).map(t => [
+                t.projeto_codigo || '',
+                t.titulo || '',
+                t.status || '',
+                t.prioridade || '',
+                t.prazo || '',
+                t.assigned_user_id || '',
+                t.criado_por || ''
+            ]),
+            'tarefas_carteira'
+        );
+    });
+}
+
+async function relatorioExportarGates(btn) {
+    await _relatorioComFeedback(btn, async () => {
+        const { data, error } = await _supabase.from('gates')
+            .select('projeto_codigo, tipo, severidade, resultado, criado_por, aprovado_em, justificativa')
+            .order('criado_em', { ascending: false });
+        if (error) return alert('Erro ao gerar o relatório: ' + error.message);
+        exportarCSV(
+            ['Projeto', 'Tipo', 'Severidade', 'Resultado', 'Criado por', 'Aprovado em', 'Justificativa'],
+            (data || []).map(g => [
+                g.projeto_codigo || '',
+                g.tipo || '',
+                g.severidade || '',
+                g.resultado || '',
+                g.criado_por || '',
+                g.aprovado_em ? g.aprovado_em.split('T')[0] : '',
+                g.justificativa || ''
+            ]),
+            'gates_aprovacoes'
+        );
+    });
+}
+
+async function relatorioExportarHistoricoLicenca(btn) {
+    await _relatorioComFeedback(btn, async () => {
+        const { data, error } = await _supabase.from('licenca_modulos_historico')
+            .select('modulo_codigo, campo_alterado, valor_anterior, valor_novo, alterado_por, alterado_em')
+            .order('alterado_em', { ascending: false });
+        if (error) return alert('Erro ao gerar o relatório: ' + error.message);
+        exportarCSV(
+            ['Módulo', 'Campo', 'Valor Anterior', 'Valor Novo', 'Alterado por', 'Quando'],
+            (data || []).map(h => [
+                h.modulo_codigo || '',
+                h.campo_alterado || '',
+                h.valor_anterior != null ? h.valor_anterior : '',
+                h.valor_novo != null ? h.valor_novo : '',
+                h.alterado_por || '',
+                h.alterado_em ? h.alterado_em.split('T')[0] : ''
+            ]),
+            'historico_licenciamento'
+        );
+    });
+}
+
+// -------------------------------------------------------------------------
 
 async function _relatorioComFeedback(btn, fn) {
     const textoOriginal = btn ? btn.innerHTML : '';
