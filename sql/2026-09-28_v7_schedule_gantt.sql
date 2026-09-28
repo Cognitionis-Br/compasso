@@ -26,14 +26,17 @@ CREATE INDEX IF NOT EXISTS idx_schedule_items_projeto
 -- Ajustar políticas conforme modelo de acesso do tenant quando aplicável.
 ALTER TABLE schedule_items ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY IF NOT EXISTS "schedule_items_select"
-    ON schedule_items FOR SELECT USING (true);
-
-CREATE POLICY IF NOT EXISTS "schedule_items_insert"
-    ON schedule_items FOR INSERT WITH CHECK (true);
-
-CREATE POLICY IF NOT EXISTS "schedule_items_update"
-    ON schedule_items FOR UPDATE USING (true);
-
-CREATE POLICY IF NOT EXISTS "schedule_items_delete"
-    ON schedule_items FOR DELETE USING (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='schedule_items' AND policyname='schedule_items_select') THEN
+    CREATE POLICY "schedule_items_select" ON schedule_items FOR SELECT USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='schedule_items' AND policyname='schedule_items_insert') THEN
+    CREATE POLICY "schedule_items_insert" ON schedule_items FOR INSERT WITH CHECK (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='schedule_items' AND policyname='schedule_items_update') THEN
+    CREATE POLICY "schedule_items_update" ON schedule_items FOR UPDATE USING (true);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE tablename='schedule_items' AND policyname='schedule_items_delete') THEN
+    CREATE POLICY "schedule_items_delete" ON schedule_items FOR DELETE USING (true);
+  END IF;
+END $$;
