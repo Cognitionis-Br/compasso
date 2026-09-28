@@ -252,6 +252,10 @@ async function renderLicenciamentoModulosView() {
                             <input type="number" id="ef_limit_${escapeHtml(codigo)}" value="${m.contractual_limit != null ? m.contractual_limit : ''}" min="0" placeholder="ilimitado" class="w-full p-2 border border-gray-300 rounded text-xs">
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <button onclick="toggleHistoricoLicenca('${escapeJsAttr(codigo)}')" class="text-[11px] text-gray-400 hover:text-indigo-600 underline">ver histórico de alterações</button>
+                        <div id="licHistorico_${escapeHtml(codigo)}" class="hidden mt-2"></div>
+                    </div>
                     <div class="flex justify-end gap-2">
                         <button onclick="toggleEntitlementEdit('${escapeJsAttr(codigo)}')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700">Cancelar</button>
                         <button onclick="salvarEntitlementDatas('${escapeJsAttr(codigo)}')" class="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-800 text-white rounded text-xs font-bold">Salvar</button>
@@ -307,6 +311,59 @@ function toggleEntitlementEdit(codigo) {
     const el = document.getElementById('entitlementEdit_' + codigo);
     if (el) el.classList.toggle('hidden');
 }
+
+// ---- histórico de entitlements (V13 W1-S20) --------------------------------
+
+function toggleHistoricoLicenca(codigo) {
+    const el = document.getElementById('licHistorico_' + codigo);
+    if (!el) return;
+    if (!el.classList.contains('hidden')) { el.classList.add('hidden'); return; }
+    el.classList.remove('hidden');
+    if (!el.dataset.carregado) _carregarHistoricoLicenca(codigo);
+}
+
+async function _carregarHistoricoLicenca(codigo) {
+    const el = document.getElementById('licHistorico_' + codigo);
+    if (!el) return;
+    el.innerHTML = '<p class="text-[11px] text-gray-400 italic">Carregando…</p>';
+    const { data, error } = await _supabase.from('licenca_modulos_historico')
+        .select('campo_alterado, valor_anterior, valor_novo, alterado_por, alterado_em')
+        .eq('modulo_codigo', codigo)
+        .order('alterado_em', { ascending: false })
+        .limit(20);
+    if (error) { el.innerHTML = `<p class="text-[11px] text-danger-600">Erro: ${escapeHtml(error.message)}</p>`; return; }
+    const rows = data || [];
+    if (rows.length === 0) {
+        el.innerHTML = '<p class="text-[11px] text-gray-400 italic">Nenhuma alteração registrada ainda.</p>';
+        el.dataset.carregado = '1';
+        return;
+    }
+    const CAMPO_LABEL = { status: 'Status', ativo: 'Ativo', valid_from: 'Início vigência', valid_until: 'Fim vigência', contractual_limit: 'Limite' };
+    el.innerHTML = `
+        <div class="overflow-x-auto rounded border border-gray-200">
+            <table class="w-full text-[11px] border-collapse">
+                <thead><tr class="bg-gray-100">
+                    <th class="text-left px-2 py-1 font-bold text-[10px] uppercase text-gray-500">Campo</th>
+                    <th class="text-left px-2 py-1 font-bold text-[10px] uppercase text-gray-500">Anterior</th>
+                    <th class="text-left px-2 py-1 font-bold text-[10px] uppercase text-gray-500">Novo</th>
+                    <th class="text-left px-2 py-1 font-bold text-[10px] uppercase text-gray-500">Por</th>
+                    <th class="text-left px-2 py-1 font-bold text-[10px] uppercase text-gray-500">Quando</th>
+                </tr></thead>
+                <tbody>${rows.map(r => `
+                    <tr class="border-t border-gray-100 hover:bg-gray-50">
+                        <td class="px-2 py-1 text-gray-700">${escapeHtml(CAMPO_LABEL[r.campo_alterado] || r.campo_alterado)}</td>
+                        <td class="px-2 py-1 text-gray-400">${r.valor_anterior != null ? escapeHtml(r.valor_anterior) : '—'}</td>
+                        <td class="px-2 py-1 text-gray-700 font-medium">${r.valor_novo != null ? escapeHtml(r.valor_novo) : '—'}</td>
+                        <td class="px-2 py-1 text-gray-500">${escapeHtml(r.alterado_por || '—')}</td>
+                        <td class="px-2 py-1 text-gray-400">${r.alterado_em ? formatDate(r.alterado_em) : '—'}</td>
+                    </tr>`).join('')}
+                </tbody>
+            </table>
+        </div>`;
+    el.dataset.carregado = '1';
+}
+
+// ----------------------------------------------------------------------------
 
 async function salvarEntitlementDatas(codigo) {
     const fromEl = document.getElementById('ef_from_' + codigo);
