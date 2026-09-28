@@ -10,6 +10,8 @@
 // não bloqueia nada. A trava de bloqueio de verdade continua no gap
 // registrado na auditoria, ainda não implementada.
 // =========================================================================
+let _visaoOrcUltimaLista = []; // V25 — cache para exportação CSV
+
 async function renderVisaoOrcamentoView() {
     const tbody = document.getElementById('visaoOrcamentoTableBody');
     if (!tbody) return;
@@ -157,4 +159,34 @@ async function renderVisaoOrcamentoView() {
     tbody.innerHTML = linhasTabela;
     const cardsBody = document.getElementById('visaoOrcamentoCardsBody');
     if (cardsBody) cardsBody.innerHTML = cartoes;
+    _visaoOrcUltimaLista = projetosVisiveis; // V25
+}
+
+// V25 — Exportação CSV da lista filtrada atual
+function exportarVisaoOrcamentoCSV() {
+    if (!_visaoOrcUltimaLista.length) return alert('Nenhum projeto na lista atual para exportar.');
+    exportarCSV(
+        ['Código', 'Nome', 'Porte', 'Horas', 'Business Case (R$)', 'Requerimentos (R$)', 'Especificação (R$)', 'Variação (%)', 'Semáforo'],
+        _visaoOrcUltimaLista.map(p => {
+            const valBc = Number(p.val_bc) || Number(p.previsto) || 0;
+            const valReq = Number(p.val_req) || 0;
+            const valTech = Number(p.val_tech) || 0;
+            const valFinal = valTech > 0 ? valTech : (valReq > 0 ? valReq : valBc);
+            const diffPct = valBc > 0 ? ((valFinal - valBc) / valBc) * 100 : 0;
+            const absDiff = Math.abs(diffPct);
+            const semaforo = absDiff < 10 ? 'VERDE' : absDiff <= 20 ? 'AMARELO' : 'VERMELHO';
+            return [
+                p.codigo || '',
+                p.nome || '',
+                p.tamanho || 'M',
+                typeof horasAtuaisDoProjeto === 'function' ? horasAtuaisDoProjeto(p) : '',
+                valBc,
+                valReq || '',
+                valTech || '',
+                diffPct.toFixed(1),
+                semaforo
+            ];
+        }),
+        'visao_orcamento'
+    );
 }

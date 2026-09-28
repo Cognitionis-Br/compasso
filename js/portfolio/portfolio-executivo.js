@@ -10,6 +10,7 @@
 // =========================================================================
 
 let modoAFPortfolioExecutivo = null;
+let _portExecUltimaLista = []; // V25 — cache para exportação CSV
 
 async function renderPortfolioExecutivoView() {
     if (typeof montarSeletorAF === 'function') modoAFPortfolioExecutivo = montarSeletorAF('portExecSeletorAF', modoAFPortfolioExecutivo);
@@ -84,6 +85,25 @@ async function renderPortfolioExecutivoView() {
             `).join('')}
         </div>
     `;
+    _portExecUltimaLista = comSaude; // V25
+}
+
+// V25 — Exportação CSV da lista filtrada atual
+function exportarPortfolioExecutivoCSV() {
+    if (!_portExecUltimaLista.length) return alert('Nenhum projeto na lista atual para exportar.');
+    exportarCSV(
+        ['Código', 'Nome', 'Área', 'Fase', 'Investimento (R$)', 'Realizado (R$)', 'Saúde'],
+        _portExecUltimaLista.map(({ p, saude }) => [
+            p.codigo || '',
+            p.nome || '',
+            p.area || '',
+            p.etapa_atual || 'BUSINESS CASE',
+            Number(p.val_tech) || Number(p.val_req) || Number(p.val_bc) || Number(p.previsto) || 0,
+            Number(p.realizado) || 0,
+            saude.status || ''
+        ]),
+        'portfolio_executivo'
+    );
 }
 
 function onMudarSeletorAFPortfolioExecutivo() {

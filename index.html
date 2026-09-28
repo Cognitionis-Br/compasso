@@ -879,7 +879,7 @@
                     <div class="flex justify-between items-end mb-4">
                         <div>
                             <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-briefcase brand-red-text"></i> Portfólio Executivo</h2>
-                            <p class="text-xs text-gray-500 mt-1">Visão executiva consolidada do portfólio.</p>
+                            <p class="text-xs text-gray-500 mt-1">Visão executiva consolidada do portfólio. <button onclick="exportarPortfolioExecutivoCSV()" class="ml-2 text-indigo-700 hover:text-indigo-900 font-bold"><i class="fa-solid fa-file-csv mr-1"></i>Exportar CSV</button></p>
                         </div>
                         <div>
                             <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Ano Fiscal</label>
@@ -1229,6 +1229,7 @@
                                 <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> &lt; 10%</span>
                                 <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span> 10% - 20%</span>
                                 <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-danger-500 inline-block"></span> &gt; 20%</span>
+                                <button onclick="exportarVisaoOrcamentoCSV()" class="text-indigo-700 hover:text-indigo-900 font-bold"><i class="fa-solid fa-file-csv mr-1"></i>Exportar CSV</button>
                             </div>
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Ano Fiscal</label>
