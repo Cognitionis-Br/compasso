@@ -81,22 +81,26 @@ function filtrarProjetosPorAnoFiscalSelecionado(lista, modoAF) {
         return lista.filter(p => p.ano_fiscal === af && (p.etapa_atual || 'BUSINESS CASE').toUpperCase() === 'BUSINESS CASE');
     }
 
-    // AF específico: projetos daquele Ano Fiscal + todos os Carryover.
-    // CORRIGIDO (bug reportado 2026-09-13: subprojeto de um projeto pai
-    // marcado como Carryover sumia do Roadmap ao ver o AF pro qual o pai
-    // foi "carregado"): a marcação de Carryover é feita sempre no projeto
-    // PRINCIPAL — o subprojeto nasce com o ano_fiscal do pai mas nunca
-    // recebe `is_carryover` ele mesmo. Nas telas que escondem subprojeto
-    // (Dashboard, Visão de Orçamento) isso não importa; no Roadmap, onde o
-    // subprojeto é sempre exibido aninhado dentro da linha do pai, ele
-    // precisa herdar a mesma liberação de AF do pai, senão o pai aparece
-    // (pela própria marcação) e o subprojeto some da lista usada pra
-    // montar essa linha.
+    // AF específico: projetos daquele Ano Fiscal + carryover do AF anterior
+    // pendente de absorção (is_carryover=true e ano_fiscal=AF-1).
+    // V17: corrige o "floating" — antes `is_carryover===true` sem escopo
+    // de AF fazia projetos aparecerem em TODOS os AFs futuros. O carryover
+    // só é relevante no AF de origem e no imediatamente seguinte (onde é
+    // absorvido); após absorção o projeto tem ano_fiscal=novoAF e
+    // is_carryover=false, então aparece normalmente pelo primeiro `if`.
+    //
+    // Herança de subprojeto (corrigido 2026-09-13): subprojeto de pai
+    // marcado como Carryover herda a liberação de AF do pai — a marcação
+    // de Carryover é sempre no PRINCIPAL, nunca no subprojeto.
+    const _nAF = parseInt(String(modoAF).replace('AF', ''), 10);
+    const _afAnterior = isNaN(_nAF) ? null : ('AF' + (_nAF - 1));
+
     return lista.filter(p => {
-        if (p.ano_fiscal === modoAF || p.is_carryover === true) return true;
+        if (p.ano_fiscal === modoAF) return true;
+        if (p.is_carryover === true && _afAnterior !== null && p.ano_fiscal === _afAnterior) return true;
         if (p.is_subprojeto === true && p.projeto_pai_codigo) {
             const pai = lista.find(x => x.codigo === p.projeto_pai_codigo);
-            return !!(pai && pai.is_carryover === true);
+            return !!(pai && pai.is_carryover === true && _afAnterior !== null && pai.ano_fiscal === _afAnterior);
         }
         return false;
     });
