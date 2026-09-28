@@ -1,5 +1,11 @@
 // =========================================================================
 // workspace-projeto/financeiro-projeto.js
+// NOVO (V8 — Financeiro Avançado, 2026-09-28): Medições de Custo e
+// Forecasts (EAC). Medições registram realizados por período ('YYYY-MM'),
+// complementando o campo único `realizado`; forecasts registram revisões
+// da projeção de custo ao término (Estimate at Completion). Ambas as
+// tabelas (`medicoes`, `forecasts`) são append-only — sem UPDATE, apenas
+// INSERT e DELETE.
 // Compasso 2.0 — Release 3, aba Financeiro do Workspace ("Projeto -
 // Financeiro" do pacote). Não cria nenhum conceito novo de orçamento —
 // só apresenta, numa aba dedicada, os MESMOS campos já usados em
@@ -31,9 +37,15 @@ const ESTIMATIVA_FASES = {
 };
 
 let _estProjetoAtual = null;
-let _estFaseAtual = null; // uma das chaves de ESTIMATIVA_FASES[x].fase ('BC'/'REQ'/'TECH')
-let _estLinhas = []; // [{papel, horas}] — rascunho em edição, não salvo ainda
-let _estHistorico = []; // business_case_estimativas do projeto+fase atual, mais recente primeiro
+let _estFaseAtual = null;
+let _estLinhas = [];
+let _estHistorico = [];
+
+// V8 — Medições de Custo
+let _medItens = [];    // medições carregadas para o projeto atual
+
+// V8 — Forecasts (EAC)
+let _fcItens = [];     // forecasts carregados para o projeto atual
 
 async function renderFinanceiroProjeto(projetoCodigo, wrapperElId) {
     const wrapper = document.getElementById(wrapperElId);
@@ -46,6 +58,9 @@ async function renderFinanceiroProjeto(projetoCodigo, wrapperElId) {
     if (estConfig) {
         await _estCarregar(projetoCodigo, estConfig.fase);
     }
+
+    await _medCarregar(projetoCodigo);
+    await _fcCarregar(projetoCodigo);
 
     const valBc = Number(p.val_bc) || Number(p.previsto) || 0;
     const valReq = Number(p.val_req) || 0;
@@ -87,11 +102,14 @@ async function renderFinanceiroProjeto(projetoCodigo, wrapperElId) {
 
         ${(horasBc || horasReq || horasTech) ? `
         <h4 class="text-xs font-black uppercase text-gray-500 mb-2">Evolução do Orçamento (Horas)</h4>
-        <div class="grid grid-cols-3 gap-3">
+        <div class="grid grid-cols-3 gap-3 mb-6">
             <div class="bg-white rounded-lg border border-gray-200 p-4"><div class="text-[10px] font-bold uppercase text-gray-400">Business Case</div><div class="text-lg font-extrabold text-gray-900">${horasBc}h</div></div>
             <div class="bg-white rounded-lg border border-gray-200 p-4"><div class="text-[10px] font-bold uppercase text-gray-400">Requerimentos</div><div class="text-lg font-extrabold text-gray-900">${horasReq || horasBc}h</div></div>
             <div class="bg-white rounded-lg border border-gray-200 p-4"><div class="text-[10px] font-bold uppercase text-gray-400">Especificação</div><div class="text-lg font-extrabold text-gray-900">${horasTech || horasReq || horasBc}h</div></div>
         </div>` : ''}
+
+        ${_fcRenderBloco(projetoCodigo, valAtual)}
+        ${(p.etapa_atual && p.etapa_atual !== 'BUSINESS CASE') ? _medRenderBloco(projetoCodigo, valUtilizado) : ''}
     `;
 }
 
@@ -274,5 +292,237 @@ async function salvarEstimativa(projetoCodigo) {
 
     alert(`✅ ESTIMATIVA (${estConfig.label}, versão ${novaVersao}) SALVA COM SUCESSO!\n\nTotal de Horas: ${totalHoras}h\nCusto Estimado: ${formatCurrency(custoEstimado)}`);
     _estLinhas = [];
+    await renderFinanceiroProjeto(projetoCodigo, 'wsFinanceiroBody');
+}
+
+// =========================================================================
+// V8 — Medições de Custo
+// =========================================================================
+
+async function _medCarregar(projetoCodigo) {
+    const { data } = await _supabase
+        .from('medicoes')
+        .select('*')
+        .eq('projeto_codigo', projetoCodigo)
+        .order('periodo', { ascending: false });
+    _medItens = data || [];
+}
+
+function _medRenderBloco(projetoCodigo, realizadoLegado) {
+    const totalMed = _medItens.reduce((acc, m) => acc + Number(m.valor), 0);
+    const divergencia = realizadoLegado > 0 && Math.abs(totalMed - realizadoLegado) > 0.01;
+
+    const linhas = _medItens.length === 0
+        ? '<tr><td colspan="5" class="p-3 text-center text-gray-400 italic text-xs">Nenhuma medição lançada ainda.</td></tr>'
+        : _medItens.map(m => `
+            <tr class="border-t border-gray-100">
+                <td class="p-2 font-mono text-xs font-bold">${escapeHtml(m.periodo)}</td>
+                <td class="p-2 text-right font-mono text-xs font-bold text-emerald-700">${formatCurrency(Number(m.valor))}</td>
+                <td class="p-2 text-xs text-gray-600">${escapeHtml(m.descricao || '—')}</td>
+                <td class="p-2 text-xs text-gray-400">${escapeHtml(m.criado_por || '—')}</td>
+                <td class="p-2 text-center">
+                    <button onclick="_medDeletar(${m.id}, '${projetoCodigo}')" class="text-danger-500 hover:text-danger-700 text-xs" title="Excluir medição"><i class="fa-solid fa-trash"></i></button>
+                </td>
+            </tr>`).join('');
+
+    return `
+        <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="text-xs font-black uppercase text-gray-700">Medições de Custo</h4>
+                <div class="flex items-center gap-3">
+                    ${totalMed > 0 ? `<span class="text-xs font-bold tabular-nums text-emerald-700">Total lançado: ${formatCurrency(totalMed)}</span>` : ''}
+                    <button onclick="_medAbrirModal('${projetoCodigo}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded">
+                        <i class="fa-solid fa-plus mr-1"></i>Lançar Medição
+                    </button>
+                </div>
+            </div>
+            ${divergencia ? `<div class="bg-amber-50 border border-amber-200 rounded p-2 mb-3 text-[11px] text-amber-800"><i class="fa-solid fa-triangle-exclamation mr-1"></i>O campo "Realizado" do projeto (${formatCurrency(realizadoLegado)}) difere do total das medições. Para maior precisão, use medições granulares.</div>` : ''}
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="text-[10px] uppercase text-gray-400 bg-gray-50">
+                        <th class="p-2">Período</th>
+                        <th class="p-2 text-right">Valor</th>
+                        <th class="p-2">Descrição</th>
+                        <th class="p-2">Por</th>
+                        <th class="p-2 w-8"></th>
+                    </tr>
+                </thead>
+                <tbody>${linhas}</tbody>
+            </table>
+            <div id="medModalOverlay" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+                <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+                    <h5 class="font-black text-gray-900 mb-4">Nova Medição de Custo</h5>
+                    <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Período (AAAA-MM)</label>
+                    <input id="medPeriodoInput" type="month" class="w-full p-2 border border-gray-300 rounded text-sm mb-3">
+                    <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Valor (R$)</label>
+                    <input id="medValorInput" type="number" min="0.01" step="0.01" placeholder="0,00" class="w-full p-2 border border-gray-300 rounded text-sm mb-3">
+                    <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Descrição (opcional)</label>
+                    <input id="medDescricaoInput" type="text" placeholder="Ex.: Sprint 3, NF 12345..." class="w-full p-2 border border-gray-300 rounded text-sm mb-4">
+                    <div class="flex gap-2 justify-end">
+                        <button onclick="_medFecharModal()" class="px-4 py-2 text-xs font-bold text-gray-600 hover:text-gray-800">Cancelar</button>
+                        <button id="medSalvarBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded text-xs">Salvar</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function _medAbrirModal(projetoCodigo) {
+    const ov = document.getElementById('medModalOverlay');
+    if (!ov) return;
+    // Define o mês atual como padrão
+    const hoje = new Date();
+    const mesAtual = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, '0')}`;
+    const periodoEl = document.getElementById('medPeriodoInput');
+    if (periodoEl) periodoEl.value = mesAtual;
+    const valorEl = document.getElementById('medValorInput');
+    if (valorEl) valorEl.value = '';
+    const descEl = document.getElementById('medDescricaoInput');
+    if (descEl) descEl.value = '';
+    const btn = document.getElementById('medSalvarBtn');
+    if (btn) btn.onclick = () => _medSalvar(projetoCodigo);
+    ov.classList.remove('hidden');
+}
+
+function _medFecharModal() {
+    const ov = document.getElementById('medModalOverlay');
+    if (ov) ov.classList.add('hidden');
+}
+
+async function _medSalvar(projetoCodigo) {
+    const periodo = (document.getElementById('medPeriodoInput') || {}).value || '';
+    const valorRaw = (document.getElementById('medValorInput') || {}).value || '';
+    const descricao = ((document.getElementById('medDescricaoInput') || {}).value || '').trim();
+
+    if (!periodo) return alert('Informe o período da medição.');
+    const valor = parseFloat(valorRaw);
+    if (!valor || valor <= 0) return alert('Informe um valor maior que zero.');
+
+    const { error } = await _supabase.from('medicoes').insert([{
+        projeto_codigo: projetoCodigo,
+        periodo,
+        valor,
+        descricao: descricao || null,
+        criado_por: currentUser ? currentUser.nome : 'desconhecido'
+    }]);
+    if (error) return alert('Erro ao salvar medição: ' + error.message);
+
+    _medFecharModal();
+    await renderFinanceiroProjeto(projetoCodigo, 'wsFinanceiroBody');
+}
+
+async function _medDeletar(id, projetoCodigo) {
+    if (!confirm('Excluir esta medição?')) return;
+    const { error } = await _supabase.from('medicoes').delete().eq('id', id);
+    if (error) return alert('Erro ao excluir: ' + error.message);
+    await renderFinanceiroProjeto(projetoCodigo, 'wsFinanceiroBody');
+}
+
+// =========================================================================
+// V8 — Forecasts (EAC — Estimate at Completion)
+// =========================================================================
+
+async function _fcCarregar(projetoCodigo) {
+    const { data } = await _supabase
+        .from('forecasts')
+        .select('*')
+        .eq('projeto_codigo', projetoCodigo)
+        .order('criado_em', { ascending: false });
+    _fcItens = data || [];
+}
+
+function _fcRenderBloco(projetoCodigo, orcamentoAtual) {
+    const ultimoFc = _fcItens[0] || null;
+    const eac = ultimoFc ? Number(ultimoFc.valor_eac) : null;
+    const variacao = eac !== null && orcamentoAtual > 0 ? ((eac - orcamentoAtual) / orcamentoAtual) * 100 : null;
+
+    let variacaoHtml = '';
+    if (variacao !== null) {
+        const cor = variacao <= 0 ? 'text-emerald-600' : variacao <= 10 ? 'text-amber-600' : 'text-danger-600';
+        const icone = variacao <= 0 ? 'fa-arrow-trend-down' : 'fa-arrow-trend-up';
+        variacaoHtml = `<span class="${cor} font-bold tabular-nums text-xs"><i class="fa-solid ${icone} mr-1"></i>${variacao > 0 ? '+' : ''}${variacao.toFixed(1)}% vs. orçamento</span>`;
+    }
+
+    const historicoHtml = _fcItens.length <= 1 ? '' : `
+        <div class="mt-3 border-t pt-3">
+            <p class="text-[10px] font-bold uppercase text-gray-400 mb-1">Histórico de Revisões</p>
+            <div class="space-y-1">
+                ${_fcItens.slice(1).map(fc => `
+                    <div class="flex justify-between items-center text-[11px] py-1 border-b border-gray-50">
+                        <span class="text-gray-500">${new Date(fc.criado_em).toLocaleDateString('pt-BR')} — ${escapeHtml(fc.criado_por || '—')}</span>
+                        <span class="font-mono font-bold text-gray-700">${formatCurrency(Number(fc.valor_eac))}</span>
+                    </div>`).join('')}
+            </div>
+        </div>`;
+
+    return `
+        <div class="bg-white border border-gray-200 rounded-lg p-4 mb-4">
+            <div class="flex items-center justify-between mb-3">
+                <h4 class="text-xs font-black uppercase text-gray-700">Forecast (EAC)</h4>
+                <button onclick="_fcAbrirModal('${projetoCodigo}')" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded">
+                    <i class="fa-solid fa-plus mr-1"></i>Registrar Forecast
+                </button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 mb-2">
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="text-[10px] font-bold uppercase text-gray-400">Orçamento Atual</div>
+                    <div class="text-base font-extrabold text-gray-900 tabular-nums">${formatCurrency(orcamentoAtual)}</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="text-[10px] font-bold uppercase text-gray-400">Último EAC</div>
+                    <div class="text-base font-extrabold text-gray-900 tabular-nums">${eac !== null ? formatCurrency(eac) : '<span class="text-gray-400 text-sm font-normal italic">Não registrado</span>'}</div>
+                    ${variacaoHtml}
+                </div>
+            </div>
+            ${ultimoFc && ultimoFc.premissa ? `<p class="text-[11px] text-gray-500 italic mt-1">"${escapeHtml(ultimoFc.premissa)}"</p>` : ''}
+            ${historicoHtml}
+            <div id="fcModalOverlay" class="hidden fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+                <div class="bg-white rounded-xl shadow-xl w-full max-w-sm mx-4 p-6">
+                    <h5 class="font-black text-gray-900 mb-4">Registrar Forecast (EAC)</h5>
+                    <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Valor EAC (R$)</label>
+                    <input id="fcEacInput" type="number" min="0" step="0.01" placeholder="0,00" class="w-full p-2 border border-gray-300 rounded text-sm mb-3">
+                    <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Premissa (opcional)</label>
+                    <textarea id="fcPremissaInput" rows="2" placeholder="Motivo da revisão do EAC..." class="w-full p-2 border border-gray-300 rounded text-sm mb-4"></textarea>
+                    <div class="flex gap-2 justify-end">
+                        <button onclick="_fcFecharModal()" class="px-4 py-2 text-xs font-bold text-gray-600 hover:text-gray-800">Cancelar</button>
+                        <button id="fcSalvarBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2 rounded text-xs">Salvar</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+}
+
+function _fcAbrirModal(projetoCodigo) {
+    const ov = document.getElementById('fcModalOverlay');
+    if (!ov) return;
+    const eacEl = document.getElementById('fcEacInput');
+    if (eacEl) eacEl.value = '';
+    const premEl = document.getElementById('fcPremissaInput');
+    if (premEl) premEl.value = '';
+    const btn = document.getElementById('fcSalvarBtn');
+    if (btn) btn.onclick = () => _fcSalvar(projetoCodigo);
+    ov.classList.remove('hidden');
+}
+
+function _fcFecharModal() {
+    const ov = document.getElementById('fcModalOverlay');
+    if (ov) ov.classList.add('hidden');
+}
+
+async function _fcSalvar(projetoCodigo) {
+    const eacRaw = (document.getElementById('fcEacInput') || {}).value || '';
+    const premissa = ((document.getElementById('fcPremissaInput') || {}).value || '').trim();
+    const eac = parseFloat(eacRaw);
+    if (isNaN(eac) || eac < 0) return alert('Informe um valor EAC válido (≥ 0).');
+
+    const { error } = await _supabase.from('forecasts').insert([{
+        projeto_codigo: projetoCodigo,
+        valor_eac: eac,
+        premissa: premissa || null,
+        criado_por: currentUser ? currentUser.nome : 'desconhecido'
+    }]);
+    if (error) return alert('Erro ao salvar forecast: ' + error.message);
+
+    _fcFecharModal();
     await renderFinanceiroProjeto(projetoCodigo, 'wsFinanceiroBody');
 }
