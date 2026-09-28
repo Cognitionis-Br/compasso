@@ -21,7 +21,10 @@ const RELATORIOS_CATALOGO = [
     // V16 — M16 Audit Export
     { titulo: 'Auditoria de Projetos', descricao: 'Histórico completo de alterações em Business Cases e Projects (todas as páginas, não só a visão atual).', acao: 'relatorioExportarAuditoria' },
     // V19 — M12 FY closing decisions
-    { titulo: 'Decisões de Fechamento AF', descricao: 'Histórico de todas as decisões de fechamento de Ano Fiscal por projeto (Carryover, Hold, Cancelar, Absorção).', acao: 'relatorioExportarDecisoesFechamentoAF' }
+    { titulo: 'Decisões de Fechamento AF', descricao: 'Histórico de todas as decisões de fechamento de Ano Fiscal por projeto (Carryover, Hold, Cancelar, Absorção).', acao: 'relatorioExportarDecisoesFechamentoAF' },
+    // V20 — V8 Financial tracking exports
+    { titulo: 'Medições de Custo', descricao: 'Registros periódicos de custo real por projeto (EAC / Financeiro Avançado).', acao: 'relatorioExportarMedicoes' },
+    { titulo: 'Forecasts (EAC)', descricao: 'Histórico de revisões de Estimate at Completion por projeto.', acao: 'relatorioExportarForecasts' }
 ];
 
 function renderRelatoriosView() {
@@ -157,6 +160,49 @@ async function relatorioExportarHistoricoLicenca(btn) {
                 h.alterado_em ? h.alterado_em.split('T')[0] : ''
             ]),
             'historico_licenciamento'
+        );
+    });
+}
+
+// ---- V20: V8 Financial Tracking exports ----------------------------------
+
+async function relatorioExportarMedicoes(btn) {
+    await _relatorioComFeedback(btn, async () => {
+        const { data, error } = await _supabase.from('medicoes')
+            .select('projeto_codigo, periodo, valor, descricao, criado_por, criado_em')
+            .order('criado_em', { ascending: false });
+        if (error) return alert('Erro ao gerar o relatório: ' + error.message);
+        exportarCSV(
+            ['Projeto', 'Período', 'Valor', 'Descrição', 'Registrado por', 'Quando'],
+            (data || []).map(m => [
+                m.projeto_codigo || '',
+                m.periodo || '',
+                m.valor != null ? m.valor : '',
+                m.descricao || '',
+                m.criado_por || '',
+                m.criado_em ? m.criado_em.replace('T', ' ').substring(0, 19) : ''
+            ]),
+            'medicoes_custo'
+        );
+    });
+}
+
+async function relatorioExportarForecasts(btn) {
+    await _relatorioComFeedback(btn, async () => {
+        const { data, error } = await _supabase.from('forecasts')
+            .select('projeto_codigo, valor_eac, premissa, criado_por, criado_em')
+            .order('criado_em', { ascending: false });
+        if (error) return alert('Erro ao gerar o relatório: ' + error.message);
+        exportarCSV(
+            ['Projeto', 'EAC (R$)', 'Premissa', 'Registrado por', 'Quando'],
+            (data || []).map(f => [
+                f.projeto_codigo || '',
+                f.valor_eac != null ? f.valor_eac : '',
+                f.premissa || '',
+                f.criado_por || '',
+                f.criado_em ? f.criado_em.replace('T', ' ').substring(0, 19) : ''
+            ]),
+            'forecasts_eac'
         );
     });
 }
