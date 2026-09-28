@@ -15,6 +15,7 @@
 // =========================================================================
 
 let roadmapVisaoAtual = 'fase';
+let _roadmapUltimaLista = []; // V26 — cache para exportação CSV da lista filtrada atual
 
 // NOVO (filtros do Roadmap, a pedido do usuário): busca de projeto por
 // código/nome (disponível em qualquer visão) e um filtro pelo VALOR da
@@ -127,12 +128,14 @@ function renderRoadmap() {
     popularBuscaProjetoRoadmap(baseFiltrada);
 
     if (baseFiltrada.length === 0) {
+        _roadmapUltimaLista = [];
         const motivo = (!currentUser || !currentUser.area) && !(typeof ehAdministrador !== 'undefined' && ehAdministrador)
             ? 'Seu usuário não tem uma área definida — fale com um administrador.'
             : 'Nenhum projeto para exibir no roadmap.';
         container.innerHTML = `<div class="p-6 text-center text-gray-400 font-bold">${motivo}</div>`;
         return;
     }
+    _roadmapUltimaLista = baseFiltrada; // V26 — mantém lista filtrada para exportação
 
     if (roadmapVisaoAtual === 'area') {
         renderRoadmapAgrupado(container, baseFiltrada, 'area', 'Área');
@@ -810,5 +813,35 @@ function renderRoadmapPorIniciativa(container, lista) {
             </div>
         `;
     });
+}
+
+// V26 — Exportação CSV da lista filtrada atual (AF + visão + dimensão + busca)
+async function exportarRoadmapCSV(btn) {
+    if (!_roadmapUltimaLista.length) return alert('Nenhum projeto no roadmap atual para exportar.');
+    if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Exportando...'; }
+    try {
+        const { data: todasEtapas } = await _supabase.from('projeto_etapas').select('*');
+        exportarCSV(
+            ['Código', 'Nome', 'Área', 'Responsável', 'Fase Atual', 'Sub-status', 'Ano Fiscal', 'Saúde'],
+            _roadmapUltimaLista.map(p => {
+                const saude = typeof calcularSaudeProjeto === 'function'
+                    ? calcularSaudeProjeto(p, todasEtapas || []).status
+                    : '';
+                return [
+                    p.codigo || '',
+                    p.nome || '',
+                    p.area || '',
+                    p.pessoa_solicitante || '',
+                    p.etapa_atual || 'BUSINESS CASE',
+                    p.sub_status || '',
+                    p.ano_fiscal || '',
+                    saude
+                ];
+            }),
+            'roadmap'
+        );
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '⬇ CSV'; }
+    }
 }
 
