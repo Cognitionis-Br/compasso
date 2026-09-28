@@ -14,9 +14,9 @@
 // =========================================================================
 
 const COMPASSO_VERSAO = {
-    numero: '1.2.0',
-    release: 'Release 1',
-    data: '2026-09-10'
+    numero: '2.0.0',
+    release: 'Release 2',
+    data: '2026-09-28'
 };
 
 // "v1.0.0" — rótulo curto para cabeçalhos.

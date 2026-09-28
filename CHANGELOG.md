@@ -19,21 +19,91 @@ rodapé do login, no rodapé do menu lateral e na tela inicial.
 
 ## [Não lançado]
 
-**Perfil OPERADOR — restrição por atividade responsável**
+---
 
-- Nova chave por função, **Funções e Permissões**: "Restringe por Atividade
-  Responsável" (`funcoes.restringe_por_atividade_responsavel`). Perfil
-  marcado assim só enxerga projeto onde o usuário está registrado como
-  responsável de alguma atividade/etapa planejada
-  (`projeto_etapas.responsavel_etapa_email`) — não afeta Business Case, que
-  ainda não gera etapa. Filtro dentro de `filtrarProjetosPorArea` (mesmo
-  ponto único já usado pela Restrição de Área em ~25 telas).
-- Nova tela **"Troca de Responsável de Atividade"** (menu Governança):
-  lista atividades/etapas não concluídas com o responsável atual, permite
-  reatribuir uma a uma ou em lote (mesma etapa) — para quando alguém sai do
-  time ou muda de função. Auditoria em `log_troca_responsavel_atividade`.
-  Acesso delegável via catálogo (`troca_responsavel_atividade`).
-- SQL: `sql/2026-09-11_perfil_operador_restricao_atividade.sql`.
+## [2.0.0] - 2026-09-28 — Release 2
+
+**Compasso 2.0 — Governança, IA, Compliance e Financeiro Avançado**
+
+### Governança de Perfis e Acesso
+
+- **Perfil OPERADOR — restrição por atividade responsável** (V8 prep / 2026-09-11).
+  Nova chave por função "Restringe por Atividade Responsável": perfil marcado assim
+  só enxerga projeto onde está registrado como responsável de etapa
+  (`projeto_etapas.responsavel_etapa_email`). Filtro dentro de
+  `filtrarProjetosPorArea` (ponto único compartilhado por ~25 telas).
+- **Troca de Responsável de Atividade** (menu Governança): reatribuição uma a uma
+  ou em lote, com auditoria em `log_troca_responsavel_atividade`.
+  SQL: `sql/2026-09-11_perfil_operador_restricao_atividade.sql`.
+
+### Financeiro Avançado (V8)
+
+- **Medições de Custo e Forecasts (EAC)**: registros periódicos de custo real
+  (`medicoes_custo`), cálculo de EAC/CPI/SPI, gráfico de tendência e projeção
+  de custo final. Nova aba "Medições / EAC" no Workspace Financeiro.
+  SQL: `sql/2026-09-28_v8_medicoes_custo.sql`.
+
+### Auditoria e Compliance (V9)
+
+- **Trilha de auditoria `audit_events`**: triggers `SECURITY DEFINER` em
+  `business_cases` e `projects` gravam automaticamente CRIADO, PROJECT\_CRIADO,
+  FASE\_ALTERADA, STATUS\_ALTERADO, ORCAMENTO\_ALTERADO, BLOQUEIO\_ALTERADO.
+- **Tela Auditoria** (menu Governança): timeline tabular com filtros (projeto,
+  ação, período, usuário), paginação de 100 e exportação CSV da página atual.
+  SQL: `sql/2026-09-28_v9_audit_events.sql`.
+
+### Inteligência Artificial (V10)
+
+- **Especificação Técnica com IA** (Workspace Projeto, aba IA — M06 + M07):
+  geração assistida de especificação técnica, refinamento iterativo e persistência
+  em `ia_especificacoes`. Orquestrador com chamada a `/.netlify/functions/ia-orquestrador`.
+  SQL: `sql/2026-09-28_v10_ia_especificacoes.sql`.
+
+### Entitlements de Módulos (V11 + V13)
+
+- **`licenca_modulos`**: tabela de entitlements por módulo (WORKFLOW, EMAIL,
+  FINANCEIRO, PLANEJAMENTO\_ESTRATEGICO, IA) com `status`, `ativo`, `valid_from`,
+  `valid_until`, `contractual_limit`. Tela de gestão em Licença da Empresa.
+  SQL: `sql/2026-09-28_v11_licenca_modulos.sql`.
+- **Histórico de alterações de entitlements** (`licenca_modulos_historico`):
+  trigger `SECURITY DEFINER` registra toda mudança de `status`, `ativo`,
+  `valid_from`, `valid_until` e `contractual_limit`. Toggle "ver histórico"
+  na tela de entitlements.
+  SQL: `sql/2026-09-28_v13_licenca_historico.sql`.
+
+### RAID — Gate de Conclusão (V12)
+
+- **RAID-02 enforcement**: ao concluir uma etapa, o sistema bloqueia se existir
+  item RAID crítico em aberto vinculado ao projeto. Modal de confirmação lista
+  os itens bloqueantes; a conclusão só prossegue após tratar ou overriding
+  com justificativa registrada.
+
+### Relatórios Aprimorados (V14 + V16)
+
+- **3 novos exports CSV** no catálogo de Relatórios: Tarefas da Carteira
+  (todos os projetos visíveis), Gates e Aprovações (histórico de gates),
+  Histórico de Licenciamento (`licenca_modulos_historico`).
+- **Export de Auditoria de Projetos**: exporta `audit_events` completo via
+  query direta — sem limite de página, ao contrário do export da tela de Auditoria
+  (que exporta só a página atual do DOM).
+
+### Fechamento de Ano Fiscal — Absorção de Carryover (V15)
+
+- **FY-02 — Absorção operacional de carryover**: nova aba "Absorção de Carryover"
+  na tela Fechamento Ano Fiscal. Lista projetos com `is_carryover=true` do AF
+  anterior; botão "Absorver" migra `ano_fiscal` para o AF atual, limpa os campos
+  de carryover e grava `decisao='ABSORVIDO'` em `fechamento_af_decisoes`.
+- Novo campo `carryover_ano_origem` em `business_cases` para rastreabilidade.
+  SQL: `sql/2026-09-28_v15_carryover_absorcao.sql`.
+- **Correção de exibição**: `resultado-af.js` scoped carryover ao AF de origem
+  + imediatamente o próximo AF, eliminando o "floating" em todos os AFs futuros.
+
+### Correção de Escopo de Carryover (V17)
+
+- **`filtrar­Projetos­Por­Ano­Fiscal­Selecionado`** corrigido: projetos com
+  `is_carryover=true` aparecem apenas no AF de origem e no AF imediatamente
+  seguinte — não em todos os AFs futuros. Afeta Dashboard, Visão de Orçamento,
+  Roadmap, Portfólio Executivo, Consulta de Projetos e Financeiro Corporativo.
 
 ---
 
