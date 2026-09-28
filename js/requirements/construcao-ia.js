@@ -71,12 +71,15 @@ async function _iaInicializarRascunho(codigoProjeto, etapaNome) {
 // -------------------------------------------------------------------------
 // Modal de construção
 // -------------------------------------------------------------------------
-async function abrirModuloConstrucaoIA(codigoProjeto) {
+// V10: etapaNome aceita 'GERAR REQUERIMENTOS' (padrão M06) ou
+// 'GERAR ESPECIFICAÇÃO' (M07). Chamadas antigas sem o parâmetro continuam funcionando.
+async function abrirModuloConstrucaoIA(codigoProjeto, etapaNome) {
+    const etapa = etapaNome || 'GERAR REQUERIMENTOS';
     const { data: esp, error } = await _supabase
         .from('ia_especificacoes')
         .select('*')
         .eq('projeto_codigo', codigoProjeto)
-        .eq('etapa_nome', 'GERAR REQUERIMENTOS')
+        .eq('etapa_nome', etapa)
         .maybeSingle();
     if (error || !esp) {
         return alert('Não foi possível carregar o módulo de construção — tente planejar a etapa novamente antes de usar a IA.');
@@ -212,7 +215,12 @@ function _iaRenderResultado() {
 // Avaliar Especificação Negócio) — mesmo registro ia_especificacoes,
 // sem duplicar dado. Se o projeto nunca usou o módulo de IA, não mostra
 // nada (a IA é sempre opcional).
-async function renderDocumentoIASomenteLeitura(codigoProjeto, elementoWrapperId, permitirAjusteAqui) {
+// V10: etapaNomeDocumento especifica qual documento IA exibir.
+// Padrão = 'GERAR REQUERIMENTOS' (M06) para compatibilidade total com
+// todas as chamadas anteriores. Passar 'GERAR ESPECIFICAÇÃO' exibe o
+// documento técnico (M07).
+async function renderDocumentoIASomenteLeitura(codigoProjeto, elementoWrapperId, permitirAjusteAqui, etapaNomeDocumento) {
+    const etapaDoc = etapaNomeDocumento || 'GERAR REQUERIMENTOS';
     const wrapperExterno = document.getElementById(elementoWrapperId);
     if (!wrapperExterno) return;
     if (typeof moduloAtivo === 'function' && !moduloAtivo('IA')) {
@@ -223,20 +231,20 @@ async function renderDocumentoIASomenteLeitura(codigoProjeto, elementoWrapperId,
         .from('ia_especificacoes')
         .select('*')
         .eq('projeto_codigo', codigoProjeto)
-        .eq('etapa_nome', 'GERAR REQUERIMENTOS')
+        .eq('etapa_nome', etapaDoc)
         .maybeSingle();
     if (!esp || !esp.resultado_ia) {
         wrapperExterno.classList.add('hidden');
         return;
     }
     wrapperExterno.classList.remove('hidden');
-    // Só na etapa Gerar Especificação faz sentido continuar ajustando o
-    // documento (nas etapas de aprovação é só leitura, pra não deixar o
-    // aprovador reescrever o que está sendo avaliado).
+    const labelDoc = etapaDoc === 'GERAR ESPECIFICAÇÃO' ? 'Especificação Técnica' : 'Requerimentos';
     const botaoAjustarAqui = permitirAjusteAqui
-        ? `<button onclick="abrirModuloConstrucaoIA('${codigoProjeto}')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 mb-2"><i class="fa-solid fa-wand-magic-sparkles"></i> Ajustar no Módulo de Construção com IA</button>`
+        ? `<button onclick="abrirModuloConstrucaoIA('${codigoProjeto}', '${etapaDoc}')" class="text-[10px] font-bold text-indigo-700 hover:text-indigo-900 mb-2"><i class="fa-solid fa-wand-magic-sparkles"></i> Ajustar ${labelDoc} no Módulo de IA</button>`
         : '';
-    wrapperExterno.innerHTML = `${botaoAjustarAqui}<div data-ia-conteudo></div>`;
+    wrapperExterno.innerHTML = `
+        <div class="text-[10px] font-bold uppercase text-gray-400 mb-1 mt-3"><i class="fa-solid fa-file-lines mr-1"></i>Documento IA — ${labelDoc}</div>
+        ${botaoAjustarAqui}<div data-ia-conteudo></div>`;
     await _iaRenderResultadoEm(wrapperExterno.querySelector('[data-ia-conteudo]'), esp, true);
 }
 

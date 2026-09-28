@@ -459,11 +459,11 @@ async function renderFaseGenericaViewPorFase(etapaAtualProjeto, nomeFaseWorkflow
                 // 23/09/2026): botão só nesta etapa específica, só com o
                 // módulo comercial IA licenciado — não afeta as demais
                 // ~40 etapas que reaproveitam esta função genérica.
-                const mostrarBotaoIA = nomeEtapaAlvo === 'GERAR REQUERIMENTOS' &&
-                    typeof moduloAtivo === 'function' && moduloAtivo('IA') &&
-                    typeof abrirModuloConstrucaoIA === 'function';
-                const botaoIA = mostrarBotaoIA
-                    ? `<button onclick="abrirModuloConstrucaoIA('${p.codigo}')" class="ml-1 bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-3 py-1.5 rounded shadow" title="Construção de Requerimentos com IA"><i class="fa-solid fa-wand-magic-sparkles"></i> Construir com IA</button>`
+                const _iaModuloOk = typeof moduloAtivo === 'function' && moduloAtivo('IA') && typeof abrirModuloConstrucaoIA === 'function';
+                const botaoIA = nomeEtapaAlvo === 'GERAR REQUERIMENTOS' && _iaModuloOk
+                    ? `<button onclick="abrirModuloConstrucaoIA('${p.codigo}', 'GERAR REQUERIMENTOS')" class="ml-1 bg-indigo-700 hover:bg-indigo-800 text-white font-bold text-xs px-3 py-1.5 rounded shadow" title="Construção de Requerimentos com IA"><i class="fa-solid fa-wand-magic-sparkles"></i> Construir com IA</button>`
+                    : nomeEtapaAlvo === 'GERAR ESPECIFICAÇÃO' && _iaModuloOk
+                    ? `<button onclick="abrirModuloConstrucaoIA('${p.codigo}', 'GERAR ESPECIFICAÇÃO')" class="ml-1 bg-purple-700 hover:bg-purple-800 text-white font-bold text-xs px-3 py-1.5 rounded shadow" title="Construção de Especificação Técnica com IA"><i class="fa-solid fa-wand-magic-sparkles"></i> Construir Especificação com IA</button>`
                     : '';
                 return `
                 <tr>
@@ -710,7 +710,8 @@ async function confirmarPlanejamentoGenerico() {
     // etapa específica — não mexe no motor genérico usado pelas demais
     // ~40 etapas do app. _iaInicializarRascunho() já se auto-restringe se
     // o módulo IA não estiver licenciado.
-    if (nomeEtapa === 'GERAR REQUERIMENTOS' && typeof _iaInicializarRascunho === 'function') {
+    // V10: também inicializa rascunho para GERAR ESPECIFICAÇÃO (M07)
+    if ((nomeEtapa === 'GERAR REQUERIMENTOS' || nomeEtapa === 'GERAR ESPECIFICAÇÃO') && typeof _iaInicializarRascunho === 'function') {
         await _iaInicializarRascunho(codigoProjeto, nomeEtapa);
     }
 
@@ -881,17 +882,31 @@ function abrirModalEvolucaoGenerica(codigoProjeto, nomeEtapa) {
                 .join('');
     }
 
-    // NOVO (Fase 2 do Módulo de IA, 2026-09-23): o documento gerado por IA
-    // em "Gerar Requerimentos" acompanha o projeto — some registro, exibido
-    // somente-leitura nas etapas de aprovação e em Gerar Especificação
-    // (nesta última, também dá pra continuar pedindo ajustes). Não mostra
-    // nada se o módulo IA estiver desligado ou o projeto nunca ter usado.
-    const ETAPAS_COM_DOCUMENTO_IA = ['APROVAR REQUERIMENTOS NEGÓCIO', 'APROVAR REQUERIMENTOS TI', 'GERAR ESPECIFICAÇÃO', 'AVALIAR ESPECIFICAÇÃO NEGÓCIO'];
-    const wrapperDocumentoIA = document.getElementById('evolGenDocumentoIAWrapper');
-    if (wrapperDocumentoIA) {
-        wrapperDocumentoIA.classList.add('hidden');
-        if (ETAPAS_COM_DOCUMENTO_IA.includes(nomeEtapa) && typeof renderDocumentoIASomenteLeitura === 'function') {
-            renderDocumentoIASomenteLeitura(codigoProjeto, 'evolGenDocumentoIAWrapper', nomeEtapa === ETAPA_GERAR_ESPECIFICACAO);
+    // V9 (Fase 2): documento de Requerimentos acompanha o projeto nas etapas
+    // downstream. V10: adiciona documento de Especificação Técnica (M07) nas
+    // etapas de avaliação/aprovação da especificação.
+    if (typeof renderDocumentoIASomenteLeitura === 'function') {
+        // Wrapper principal — documento de Requerimentos (M06)
+        const ETAPAS_DOC_REQ = ['APROVAR REQUERIMENTOS NEGÓCIO', 'APROVAR REQUERIMENTOS TI',
+                                 'GERAR ESPECIFICAÇÃO', 'AVALIAR ESPECIFICAÇÃO NEGÓCIO',
+                                 'APROVAR ESPECIFICAÇÃO'];
+        const wrapperReq = document.getElementById('evolGenDocumentoIAWrapper');
+        if (wrapperReq) {
+            wrapperReq.classList.add('hidden');
+            if (ETAPAS_DOC_REQ.includes(nomeEtapa)) {
+                renderDocumentoIASomenteLeitura(codigoProjeto, 'evolGenDocumentoIAWrapper',
+                    nomeEtapa === ETAPA_GERAR_ESPECIFICACAO, 'GERAR REQUERIMENTOS');
+            }
+        }
+        // Wrapper secundário — documento de Especificação Técnica (M07, V10)
+        const ETAPAS_DOC_ESPEC = ['AVALIAR ESPECIFICAÇÃO NEGÓCIO', 'APROVAR ESPECIFICAÇÃO'];
+        const wrapperEspec = document.getElementById('evolGenDocumentoIAEspecWrapper');
+        if (wrapperEspec) {
+            wrapperEspec.classList.add('hidden');
+            if (ETAPAS_DOC_ESPEC.includes(nomeEtapa)) {
+                renderDocumentoIASomenteLeitura(codigoProjeto, 'evolGenDocumentoIAEspecWrapper',
+                    false, 'GERAR ESPECIFICAÇÃO');
+            }
         }
     }
 
