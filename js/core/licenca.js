@@ -37,10 +37,11 @@ const NOME_EXIBICAO_MODULO = {
 // que outros dados de configuração (funções, cargos, e-mail geral) já são
 // carregados.
 async function carregarLicenca() {
-    const { data, error } = await _supabase.from('licenca_modulos').select('modulo_codigo, ativo');
+    const { data, error } = await _supabase.from('licenca_modulos')
+        .select('modulo_codigo, ativo, status, valid_from, valid_until, contractual_limit');
     modulosLicenciados = {};
     if (!error && data) {
-        data.forEach(m => { modulosLicenciados[m.modulo_codigo] = m.ativo === true; });
+        data.forEach(m => { modulosLicenciados[m.modulo_codigo] = m; });
     }
 
     // NOVO (Fase 1 licenciamento): mapa tela -> módulo vindo do banco
@@ -54,12 +55,37 @@ async function carregarLicenca() {
 }
 
 // codigo === null/undefined/'NUCLEO' -> sempre ativo (tela núcleo, sem
-// módulo). Módulo sem registro na tabela (nunca deveria acontecer depois
-// da carga inicial, mas por segurança) também não bloqueia.
+// módulo). Módulo sem registro na tabela também não bloqueia.
+// V11: checa status + faixa de datas além do flag ativo.
 function moduloAtivo(codigo) {
     if (!codigo || codigo === 'NUCLEO') return true;
     if (!(codigo in modulosLicenciados)) return true;
-    return modulosLicenciados[codigo] === true;
+    return _entitlementAtivo(modulosLicenciados[codigo]);
+}
+
+// Retorna true somente se status=ACTIVE e hoje está dentro da faixa de datas.
+// Retrocede para ativo bool caso a coluna status ainda não exista (antes do
+// SQL da V11 rodar em produção).
+function _entitlementAtivo(m) {
+    if (!m) return true;
+    const hoje = new Date().toISOString().split('T')[0];
+    const status = m.status || (m.ativo === true ? 'ACTIVE' : 'SUSPENDED');
+    if (status !== 'ACTIVE') return false;
+    if (m.valid_from && hoje < m.valid_from) return false;
+    if (m.valid_until && hoje > m.valid_until) return false;
+    return true;
+}
+
+// Label de exibição do status efetivo de um entitlement.
+function _entitlementStatusLabel(m) {
+    if (!m) return 'ATIVO';
+    const hoje = new Date().toISOString().split('T')[0];
+    const status = m.status || (m.ativo === true ? 'ACTIVE' : 'SUSPENDED');
+    if (status === 'SUSPENDED') return 'SUSPENSO';
+    if (status === 'CANCELLED') return 'CANCELADO';
+    if (m.valid_from && hoje < m.valid_from) return 'PENDENTE';
+    if (m.valid_until && hoje > m.valid_until) return 'EXPIRADO';
+    return 'ATIVO';
 }
 
 // Fallback / documentação do mapa tela -> módulo. A VERDADE em runtime é a
@@ -172,20 +198,65 @@ async function renderLicenciamentoModulosView() {
     const porCodigo = {};
     (data || []).forEach(m => { porCodigo[m.modulo_codigo] = m; });
 
+    const BADGE_CLS = {
+        'ATIVO':     'bg-green-100 text-green-800',
+        'SUSPENSO':  'bg-amber-100 text-amber-800',
+        'EXPIRADO':  'bg-red-100 text-red-800',
+        'PENDENTE':  'bg-blue-100 text-blue-800',
+        'CANCELADO': 'bg-gray-100 text-gray-600'
+    };
+
     lista.innerHTML = ORDEM_EXIBICAO_MODULO.map(codigo => {
-        const m = porCodigo[codigo] || { modulo_codigo: codigo, nome_exibicao: NOME_EXIBICAO_MODULO[codigo] || codigo, ativo: true };
-        const ativo = m.ativo === true;
+        const m = porCodigo[codigo] || { modulo_codigo: codigo, nome_exibicao: NOME_EXIBICAO_MODULO[codigo] || codigo, ativo: true, status: 'ACTIVE' };
+        const ativo = _entitlementAtivo(m);
+        const statusLabel = _entitlementStatusLabel(m);
+        const badgeCls = BADGE_CLS[statusLabel] || BADGE_CLS['ATIVO'];
+        const partes = [
+            m.valid_from ? `desde ${formatDate(m.valid_from)}` : null,
+            m.valid_until ? `vence ${formatDate(m.valid_until)}` : null,
+            m.contractual_limit != null ? `lim.: ${m.contractual_limit}` : null
+        ].filter(Boolean);
+        const dataInfo = partes.join(' • ');
         return `
-            <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-                <div>
-                    <p class="font-bold text-sm text-gray-800">${escapeHtml(m.nome_exibicao)}</p>
-                    <p class="text-[11px] text-gray-400 uppercase tracking-wider">${escapeHtml(m.modulo_codigo)}</p>
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                <div class="flex items-start justify-between p-4 gap-4">
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <p class="font-bold text-sm text-gray-800">${escapeHtml(m.nome_exibicao || NOME_EXIBICAO_MODULO[codigo] || codigo)}</p>
+                            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${badgeCls}">${escapeHtml(statusLabel)}</span>
+                        </div>
+                        <p class="text-[11px] text-gray-400 uppercase tracking-wider mt-0.5">${escapeHtml(m.modulo_codigo)}</p>
+                        ${dataInfo ? `<p class="text-[11px] text-gray-500 mt-1">${escapeHtml(dataInfo)}</p>` : ''}
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <button onclick="toggleEntitlementEdit('${escapeJsAttr(codigo)}')" class="text-[11px] text-indigo-600 hover:underline font-medium">editar</button>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" ${ativo ? 'checked' : ''} onchange="alternarModuloLicenciado('${escapeJsAttr(m.modulo_codigo)}', this.checked)">
+                            <div class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-600 transition-colors"></div>
+                            <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-5"></div>
+                        </label>
+                    </div>
                 </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" class="sr-only peer" ${ativo ? 'checked' : ''} onchange="alternarModuloLicenciado('${escapeJsAttr(m.modulo_codigo)}', this.checked)">
-                    <div class="w-11 h-6 bg-gray-300 rounded-full peer peer-checked:bg-green-600 transition-colors"></div>
-                    <div class="absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition-transform peer-checked:translate-x-5"></div>
-                </label>
+                <div id="entitlementEdit_${escapeHtml(codigo)}" class="hidden border-t border-gray-100 p-4 bg-gray-50">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Início da Vigência</label>
+                            <input type="date" id="ef_from_${escapeHtml(codigo)}" value="${m.valid_from ? String(m.valid_from).split('T')[0] : ''}" class="w-full p-2 border border-gray-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Fim da Vigência</label>
+                            <input type="date" id="ef_until_${escapeHtml(codigo)}" value="${m.valid_until ? String(m.valid_until).split('T')[0] : ''}" class="w-full p-2 border border-gray-300 rounded text-xs">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-600 mb-1">Limite contratual <span class="font-normal normal-case text-gray-400">(opcional)</span></label>
+                            <input type="number" id="ef_limit_${escapeHtml(codigo)}" value="${m.contractual_limit != null ? m.contractual_limit : ''}" min="0" placeholder="ilimitado" class="w-full p-2 border border-gray-300 rounded text-xs">
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-2">
+                        <button onclick="toggleEntitlementEdit('${escapeJsAttr(codigo)}')" class="px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded text-xs font-bold text-gray-700">Cancelar</button>
+                        <button onclick="salvarEntitlementDatas('${escapeJsAttr(codigo)}')" class="px-3 py-1.5 bg-indigo-700 hover:bg-indigo-800 text-white rounded text-xs font-bold">Salvar</button>
+                    </div>
+                </div>
             </div>
         `;
     }).join('');
@@ -216,6 +287,7 @@ async function alternarModuloLicenciado(codigo, novoValor) {
 
     const { error } = await _supabase.from('licenca_modulos').update({
         ativo: novoValor,
+        status: novoValor ? 'ACTIVE' : 'SUSPENDED',
         atualizado_por: currentUser ? currentUser.nome : 'desconhecido',
         atualizado_em: new Date().toISOString()
     }).eq('modulo_codigo', codigo);
@@ -224,6 +296,43 @@ async function alternarModuloLicenciado(codigo, novoValor) {
     // Atualiza o cache local imediatamente — pra esta sessão já refletir
     // a mudança sem precisar relogar (outras sessões abertas só veem no
     // próximo login, já que não há realtime aqui).
+    await carregarLicenca();
+    aplicarVisibilidadeMenu();
+    await renderLicenciamentoModulosView();
+}
+
+// ---- funções de edição inline de entitlement (V11) -------------------------
+
+function toggleEntitlementEdit(codigo) {
+    const el = document.getElementById('entitlementEdit_' + codigo);
+    if (el) el.classList.toggle('hidden');
+}
+
+async function salvarEntitlementDatas(codigo) {
+    const fromEl = document.getElementById('ef_from_' + codigo);
+    const untilEl = document.getElementById('ef_until_' + codigo);
+    const limitEl = document.getElementById('ef_limit_' + codigo);
+    if (!fromEl || !untilEl || !limitEl) return;
+
+    const valid_from = fromEl.value || null;
+    const valid_until = untilEl.value || null;
+    const contractual_limit = limitEl.value !== '' ? parseInt(limitEl.value, 10) : null;
+
+    if (valid_from && valid_until && valid_from > valid_until) {
+        alert('A data de início deve ser anterior ao fim da vigência.');
+        return;
+    }
+
+    const { error } = await _supabase.from('licenca_modulos').update({
+        valid_from,
+        valid_until,
+        contractual_limit,
+        atualizado_por: currentUser ? currentUser.nome : 'desconhecido',
+        atualizado_em: new Date().toISOString()
+    }).eq('modulo_codigo', codigo);
+
+    if (error) { alert('Erro ao salvar: ' + error.message); return; }
+
     await carregarLicenca();
     aplicarVisibilidadeMenu();
     await renderLicenciamentoModulosView();
