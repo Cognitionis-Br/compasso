@@ -17,7 +17,9 @@ const RELATORIOS_CATALOGO = [
     // V14 — M13 Enhanced Reports
     { titulo: 'Tarefas da Carteira', descricao: 'Todas as tarefas dos projetos visíveis com status, prioridade e prazo.', acao: 'relatorioExportarTarefas' },
     { titulo: 'Gates e Aprovações', descricao: 'Histórico de gates (RAID crítico, orçamento, fase) com resultado e justificativa.', acao: 'relatorioExportarGates' },
-    { titulo: 'Histórico de Licenciamento', descricao: 'Auditoria de todas as alterações de entitlements de módulos (desde V13).', acao: 'relatorioExportarHistoricoLicenca' }
+    { titulo: 'Histórico de Licenciamento', descricao: 'Auditoria de todas as alterações de entitlements de módulos (desde V13).', acao: 'relatorioExportarHistoricoLicenca' },
+    // V16 — M16 Audit Export
+    { titulo: 'Auditoria de Projetos', descricao: 'Histórico completo de alterações em Business Cases e Projects (todas as páginas, não só a visão atual).', acao: 'relatorioExportarAuditoria' }
 ];
 
 function renderRelatoriosView() {
@@ -153,6 +155,34 @@ async function relatorioExportarHistoricoLicenca(btn) {
                 h.alterado_em ? h.alterado_em.split('T')[0] : ''
             ]),
             'historico_licenciamento'
+        );
+    });
+}
+
+// ---- V16: M16 Audit Export -----------------------------------------------
+
+async function relatorioExportarAuditoria(btn) {
+    await _relatorioComFeedback(btn, async () => {
+        // Exporta audit_events completo (sem limite de página), ao contrário
+        // de auditExportarCSV em auditoria.js que lê só a página renderizada.
+        const { data, error } = await _supabase.from('audit_events')
+            .select('criado_em, entidade, entidade_id, acao, campo, valor_anterior, valor_novo, usuario, origem')
+            .order('criado_em', { ascending: false });
+        if (error) return alert('Erro ao gerar o relatório: ' + error.message);
+        exportarCSV(
+            ['Data/Hora', 'Entidade', 'Projeto/ID', 'Ação', 'Campo', 'Anterior', 'Novo', 'Usuário', 'Origem'],
+            (data || []).map(ev => [
+                ev.criado_em ? ev.criado_em.replace('T', ' ').substring(0, 19) : '',
+                ev.entidade || '',
+                ev.entidade_id || '',
+                ev.acao || '',
+                ev.campo || '',
+                ev.valor_anterior != null ? ev.valor_anterior : '',
+                ev.valor_novo != null ? ev.valor_novo : '',
+                ev.usuario || '',
+                ev.origem || ''
+            ]),
+            'auditoria_projetos'
         );
     });
 }
