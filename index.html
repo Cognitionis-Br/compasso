@@ -1258,6 +1258,17 @@
                             </select>
                         </div>
                         <div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Filtrar por Fase</label>
+                            <select id="roadmapFiltroFase" onchange="renderRoadmap()" class="p-2 border border-gray-300 rounded text-xs bg-white">
+                                <option value="">-- Todas --</option>
+                                <option value="BUSINESS CASE">Business Case</option>
+                                <option value="REQUIREMENTS">Requirements</option>
+                                <option value="TECHNICAL">Technical</option>
+                                <option value="EXECUTION">Execution</option>
+                                <option value="GOLIVE">Golive</option>
+                            </select>
+                        </div>
+                        <div>
                             <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Buscar Projeto (código ou nome)</label>
                             <input type="text" id="roadmapFiltroBuscaProjeto" list="roadmapFiltroBuscaProjetoLista" oninput="onMudarFiltroRoadmap()" placeholder="Digite o código ou nome..." class="p-2 border border-gray-300 rounded text-xs w-72">
                             <datalist id="roadmapFiltroBuscaProjetoLista"></datalist>

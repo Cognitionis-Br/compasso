@@ -88,6 +88,8 @@ function limparFiltrosRoadmap() {
     if (inputBusca) inputBusca.value = '';
     const selectSaude = document.getElementById('roadmapFiltroSaude');
     if (selectSaude) selectSaude.value = '';
+    const selectFase = document.getElementById('roadmapFiltroFase');
+    if (selectFase) selectFase.value = '';
     renderRoadmap();
 }
 
@@ -132,6 +134,12 @@ async function renderRoadmap() {
     if (filtroSaudeRoadmap) {
         const { data: etapas } = await _supabase.from('projeto_etapas').select('*');
         baseFiltrada = baseFiltrada.filter(p => calcularSaudeProjeto(p, etapas || []).status === filtroSaudeRoadmap);
+    }
+
+    // V46 — filtro de fase
+    const filtroFaseRoadmap = (document.getElementById('roadmapFiltroFase') || {}).value || '';
+    if (filtroFaseRoadmap) {
+        baseFiltrada = baseFiltrada.filter(p => (p.etapa_atual || 'BUSINESS CASE').toUpperCase() === filtroFaseRoadmap);
     }
 
     popularBuscaProjetoRoadmap(baseFiltrada);
