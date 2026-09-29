@@ -151,6 +151,8 @@ async function _wsRenderVisaoGeral() {
     const etapaCorrente = etapas.find(e => (e.situacao || '').startsWith('EXECUCAO')) || etapas[etapas.length - 1];
     const saude = (typeof calcularSaudeProjeto === 'function') ? calcularSaudeProjeto(projeto, etapas) : null;
     const abertas = tarefas.filter(t => t.status !== 'CONCLUIDO').length;
+    const btnTarefas = document.getElementById('wsBtnAba_tarefas'); // V73 — badge de tarefas abertas
+    if (btnTarefas) btnTarefas.innerText = abertas > 0 ? `Tarefas (${abertas})` : 'Tarefas';
 
     wrapper.innerHTML = `
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
