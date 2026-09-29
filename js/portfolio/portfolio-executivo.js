@@ -49,6 +49,8 @@ async function renderPortfolioExecutivoView() {
     popularFiltroAreaPortfolio();
     const filtroArea = (document.getElementById('portExecFiltroArea') || {}).value || '';
     if (filtroArea) lista = lista.filter(p => (p.area || '') === filtroArea);
+    const filtroFase = (document.getElementById('portExecFiltroFase') || {}).value || '';
+    if (filtroFase) lista = lista.filter(p => (p.etapa_atual || 'BUSINESS CASE').toUpperCase() === filtroFase);
 
     const filtroSaude = (document.getElementById('portExecFiltroSaude') || {}).value || '';
     let comSaude = lista.map(p => ({ p, saude: calcularSaudeProjeto(p, todasEtapasCache || []) }));
