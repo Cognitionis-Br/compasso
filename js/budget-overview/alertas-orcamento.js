@@ -42,6 +42,7 @@ function renderAlertasOrcamentoView() {
         }
     });
 
+    renderKPIBarAlertas(linhas); // V53
     popularFiltrosAlertas(linhas);
     popularBuscaAlertas(linhas); // V52
     const filtroArea = (document.getElementById('alertasFiltroArea') || {}).value || '';
@@ -143,6 +144,24 @@ function renderAlertasOrcamentoView() {
     const cardsBody = document.getElementById('alertasOrcamentoCardsBody');
     if (cardsBody) cardsBody.innerHTML = cartoes;
     _alertasUltimaLista = linhasFiltradas; // V44
+}
+
+function renderKPIBarAlertas(linhas) { // V53
+    const el = document.getElementById('alertasKPIBar');
+    if (!el) return;
+    const total = linhas.length;
+    const amarelo = linhas.filter(l => l.nivel === 'amarelo').length;
+    const vermelho = linhas.filter(l => l.nivel === 'vermelho').length;
+    const tile = (num, label, cor, borda) => `
+        <div class="bg-white rounded-lg border border-gray-200 border-t-4 ${borda} p-3 text-center shadow-sm">
+            <div class="text-2xl font-black ${cor}">${num}</div>
+            <div class="text-[10px] font-bold uppercase text-gray-500 mt-0.5 leading-tight">${label}</div>
+        </div>`;
+    el.innerHTML = `<div class="grid grid-cols-3 gap-2">
+        ${tile(total, 'Total de Alertas', 'text-gray-800', 'border-t-gray-400')}
+        ${tile(amarelo, 'Amarelo', 'text-amber-600', 'border-t-amber-400')}
+        ${tile(vermelho, 'Vermelho', 'text-danger-600', 'border-t-danger-500')}
+    </div>`;
 }
 
 function popularBuscaAlertas(linhas) { // V52
