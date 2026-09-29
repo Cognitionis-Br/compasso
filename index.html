@@ -1354,6 +1354,22 @@
                             <button onclick="exportarAlertasOrcamentoCSV()" class="shrink-0 text-xs font-bold text-indigo-700 hover:text-indigo-900 border border-indigo-300 hover:border-indigo-500 rounded px-3 py-1.5 bg-white mt-1">⬇ CSV</button>
                         </div>
                     </div>
+                    <div class="flex flex-wrap items-end gap-3 mb-4">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Área</label>
+                            <select id="alertasFiltroArea" onchange="onFiltroAlertasChange()" class="p-2 border border-gray-300 rounded text-xs bg-white">
+                                <option value="">-- Todas --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Nível</label>
+                            <select id="alertasFiltroNivel" onchange="onFiltroAlertasChange()" class="p-2 border border-gray-300 rounded text-xs bg-white">
+                                <option value="">-- Todos --</option>
+                                <option value="amarelo">Amarelo</option>
+                                <option value="vermelho">Vermelho</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div class="overflow-x-auto hidden md:block">
                             <table class="w-full text-left border-collapse text-sm">

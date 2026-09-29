@@ -27,21 +27,33 @@ function renderAlertasOrcamentoView() {
         }
     });
 
-    if (linhas.length === 0) {
-        const msgVazia = 'Nenhum alerta de variação de orçamento no momento';
+    popularFiltrosAlertas(linhas);
+    const filtroArea = (document.getElementById('alertasFiltroArea') || {}).value || '';
+    const filtroNivel = (document.getElementById('alertasFiltroNivel') || {}).value || '';
+    const linhasFiltradas = linhas.filter(l => {
+        if (filtroArea && (l.p.area || '') !== filtroArea) return false;
+        if (filtroNivel && l.nivel !== filtroNivel) return false;
+        return true;
+    });
+
+    if (linhasFiltradas.length === 0) {
+        const msgVazia = linhas.length === 0
+            ? 'Nenhum alerta de variação de orçamento no momento'
+            : 'Nenhum alerta com esses filtros';
         tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-gray-400 font-bold">${msgVazia}</td></tr>`;
         const cardsVazio = document.getElementById('alertasOrcamentoCardsBody');
         if (cardsVazio) cardsVazio.innerHTML = `<div class="p-4 text-center text-gray-400 font-bold text-sm">${msgVazia}</div>`;
+        _alertasUltimaLista = [];
         return;
     }
 
     // Vermelho primeiro, depois amarelo.
-    linhas.sort((a, b) => (a.nivel === 'vermelho' ? 0 : 1) - (b.nivel === 'vermelho' ? 0 : 1));
+    linhasFiltradas.sort((a, b) => (a.nivel === 'vermelho' ? 0 : 1) - (b.nivel === 'vermelho' ? 0 : 1));
 
     let linhasTabela = '';
     let cartoes = '';
 
-    linhas.forEach(({ p, fase, nivel, percentual }) => {
+    linhasFiltradas.forEach(({ p, fase, nivel, percentual }) => {
         const corKey = nivel === 'vermelho' ? 'danger' : 'amber';
         const icone = nivel === 'vermelho' ? 'fa-circle-exclamation' : 'fa-triangle-exclamation';
         const corCartao = nivel === 'vermelho' ? 'border-l-4 border-l-danger-500' : 'border-l-4 border-l-amber-500';
@@ -89,7 +101,19 @@ function renderAlertasOrcamentoView() {
     tbody.innerHTML = linhasTabela;
     const cardsBody = document.getElementById('alertasOrcamentoCardsBody');
     if (cardsBody) cardsBody.innerHTML = cartoes;
-    _alertasUltimaLista = linhas; // V29 — mantém lista para exportação
+    _alertasUltimaLista = linhasFiltradas; // V44
+}
+
+function popularFiltrosAlertas(linhas) {
+    const sel = document.getElementById('alertasFiltroArea');
+    if (!sel) return;
+    const atual = sel.value;
+    const areas = [...new Set(linhas.map(l => l.p.area).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    sel.innerHTML = '<option value="">-- Todas --</option>' + areas.map(a => `<option value="${escapeHtml(a)}" ${a === atual ? 'selected' : ''}>${escapeHtml(a)}</option>`).join('');
+}
+
+function onFiltroAlertasChange() {
+    renderAlertasOrcamentoView();
 }
 
 // V29 — Exportação CSV da lista de alertas atual
