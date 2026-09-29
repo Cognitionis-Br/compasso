@@ -20,7 +20,9 @@ function exportarCSV(cabecalhos, linhas, nomeArquivo) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = nomeArquivo.endsWith('.csv') ? nomeArquivo : nomeArquivo + '.csv';
+    const data = new Date().toISOString().slice(0, 10); // V67 — sufixo YYYY-MM-DD
+    const base = nomeArquivo.endsWith('.csv') ? nomeArquivo.slice(0, -4) : nomeArquivo;
+    a.download = `${base}_${data}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
