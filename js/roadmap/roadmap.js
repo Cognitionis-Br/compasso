@@ -24,6 +24,7 @@ let _roadmapUltimaLista = []; // V26 — cache para exportação CSV da lista fi
 // a busca por código/nome.
 let filtroDimensaoRoadmap = '';
 let filtroBuscaProjetoRoadmap = '';
+let _roadmapRenderandoDoFiltro = false; // V62 — semáforo: não restaurar sessão durante interação do usuário
 
 const CONFIG_FILTRO_DIMENSAO_ROADMAP = {
     area: { label: 'Área', campo: 'area' },
@@ -74,9 +75,11 @@ function popularFiltroDimensaoRoadmap(visao, configDimensao) {
 }
 
 function onMudarFiltroRoadmap() {
+    _roadmapRenderandoDoFiltro = true; // V62
     filtroDimensaoRoadmap = document.getElementById('roadmapFiltroDimensaoSelect').value;
     filtroBuscaProjetoRoadmap = document.getElementById('roadmapFiltroBuscaProjeto').value.trim();
     renderRoadmap();
+    _roadmapRenderandoDoFiltro = false; // V62
 }
 
 function limparFiltrosRoadmap() {
@@ -90,6 +93,7 @@ function limparFiltrosRoadmap() {
     if (selectSaude) selectSaude.value = '';
     const selectFase = document.getElementById('roadmapFiltroFase');
     if (selectFase) selectFase.value = '';
+    try { sessionStorage.removeItem('compassoFiltros_roadmap'); } catch(e) {} // V62
     renderRoadmap();
 }
 
@@ -126,6 +130,11 @@ async function renderRoadmap() {
     // aplicado antes do filtro de acesso por área/perfil.
     if (typeof montarSeletorAF === 'function') modoAFRoadmap = montarSeletorAF('roadmapSeletorAF', modoAFRoadmap);
     renderFaixaAFSelecionado('roadmapFaixaAFSelecionado', modoAFRoadmap);
+    if (!_roadmapRenderandoDoFiltro) { // V62 — restaurar filtros salvos ao voltar pra aba (não durante interação do usuário)
+        restaurarFiltrosSession('compassoFiltros_roadmap', ['roadmapFiltroDimensaoSelect','roadmapFiltroSaude','roadmapFiltroFase','roadmapFiltroBuscaProjeto']);
+        filtroDimensaoRoadmap = (document.getElementById('roadmapFiltroDimensaoSelect') || {}).value || '';
+        filtroBuscaProjetoRoadmap = ((document.getElementById('roadmapFiltroBuscaProjeto') || {}).value || '').trim();
+    }
     const baseAF = filtrarProjetosPorAnoFiscalSelecionado(projectsData || [], modoAFRoadmap);
     let baseFiltrada = filtrarProjetosPorAcessoRoadmap(baseAF);
     const roadmapTotal = baseFiltrada.length; // V57
@@ -145,6 +154,7 @@ async function renderRoadmap() {
 
     renderKPIBarRoadmap(baseFiltrada); // V48
     popularBuscaProjetoRoadmap(baseFiltrada);
+    salvarFiltrosSession('compassoFiltros_roadmap', ['roadmapFiltroDimensaoSelect','roadmapFiltroSaude','roadmapFiltroFase','roadmapFiltroBuscaProjeto']); // V62
 
     if (baseFiltrada.length === 0) {
         _roadmapUltimaLista = [];
@@ -157,6 +167,7 @@ async function renderRoadmap() {
     _roadmapUltimaLista = baseFiltrada; // V26 — mantém lista filtrada para exportação
     atualizarContador('roadmapContador', baseFiltrada.length, roadmapTotal, 'projetos'); // V57
     marcarFiltrosAtivos(['roadmapFiltroDimensaoSelect','roadmapFiltroSaude','roadmapFiltroFase'], ['roadmapFiltroBuscaProjeto']); // V58
+    salvarFiltrosSession('compassoFiltros_roadmap', ['roadmapFiltroDimensaoSelect','roadmapFiltroSaude','roadmapFiltroFase','roadmapFiltroBuscaProjeto']); // V62
 
     if (roadmapVisaoAtual === 'area') {
         renderRoadmapAgrupado(container, baseFiltrada, 'area', 'Área');
