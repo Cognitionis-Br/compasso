@@ -13,6 +13,14 @@ let modoAFPortfolioExecutivo = null;
 let _portExecUltimaLista = []; // V25 — cache para exportação CSV
 let portExecOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V35
 
+function popularFiltroAreaPortfolio() {
+    const sel = document.getElementById('portExecFiltroArea');
+    if (!sel) return;
+    const atual = sel.value;
+    const areas = [...new Set((projectsData || []).map(p => p.area).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    sel.innerHTML = '<option value="">-- Todas --</option>' + areas.map(a => `<option value="${a}" ${a === atual ? 'selected' : ''}>${a}</option>`).join('');
+}
+
 function ordenarPortfolioExecutivo(campo) {
     if (portExecOrdenacaoAtual.campo === campo) {
         portExecOrdenacaoAtual.direcao = portExecOrdenacaoAtual.direcao === 'asc' ? 'desc' : 'asc';
@@ -37,6 +45,10 @@ async function renderPortfolioExecutivoView() {
     let lista = projectsData.filter(p => !p.is_subprojeto);
     if (typeof filtrarProjetosPorAnoFiscalSelecionado === 'function') lista = filtrarProjetosPorAnoFiscalSelecionado(lista, modoAFPortfolioExecutivo);
     lista = filtrarProjetosPorArea(lista, 'portfolio_executivo');
+
+    popularFiltroAreaPortfolio();
+    const filtroArea = (document.getElementById('portExecFiltroArea') || {}).value || '';
+    if (filtroArea) lista = lista.filter(p => (p.area || '') === filtroArea);
 
     const filtroSaude = (document.getElementById('portExecFiltroSaude') || {}).value || '';
     let comSaude = lista.map(p => ({ p, saude: calcularSaudeProjeto(p, todasEtapasCache || []) }));
