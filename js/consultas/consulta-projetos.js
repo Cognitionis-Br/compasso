@@ -59,6 +59,7 @@ async function renderConsultaProjetos() {
     const filtroArea = (document.getElementById('consultaFiltroArea') || {}).value || '';
     const filtroFase = (document.getElementById('consultaFiltroFase') || {}).value || '';
     const filtroStatus = (document.getElementById('consultaFiltroStatus') || {}).value || '';
+    const filtroSaude = (document.getElementById('consultaFiltroSaude') || {}).value || '';
 
     const projetosFiltrados = projectsDataFiltrado.filter(p => {
         if (filtroArea && (p.area || '') !== filtroArea) return false;
@@ -78,6 +79,14 @@ async function renderConsultaProjetos() {
 
     const FAROL_ORDEM = { CRITICO: 0, ATENCAO: 1, HOLD: 2, SAUDAVEL: 3, SEM_DADOS: 4, INATIVO: 5 };
     let projetosComSaude = projetosFiltrados.map(p => ({ p, saude: calcularSaudeProjeto(p, todasEtapasCache || []) }));
+    if (filtroSaude) projetosComSaude = projetosComSaude.filter(({ saude }) => saude.status === filtroSaude);
+
+    if (projetosComSaude.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-gray-400 font-bold">Nenhum projeto encontrado com esses filtros</td></tr>`;
+        if (cardsBody) cardsBody.innerHTML = `<div class="p-4 text-center text-gray-400 font-bold text-sm">Nenhum projeto encontrado com esses filtros</div>`;
+        _consultaUltimaLista = [];
+        return;
+    }
 
     if (consultaOrdenacaoAtual.campo === 'padrao') {
         projetosComSaude.sort((a, b) => extrairNumeroSequencialCodigo(a.p.codigo) - extrairNumeroSequencialCodigo(b.p.codigo));
