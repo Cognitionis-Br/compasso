@@ -11,6 +11,17 @@
 
 let modoAFPortfolioExecutivo = null;
 let _portExecUltimaLista = []; // V25 — cache para exportação CSV
+let portExecOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V35
+
+function ordenarPortfolioExecutivo(campo) {
+    if (portExecOrdenacaoAtual.campo === campo) {
+        portExecOrdenacaoAtual.direcao = portExecOrdenacaoAtual.direcao === 'asc' ? 'desc' : 'asc';
+    } else {
+        portExecOrdenacaoAtual.campo = campo;
+        portExecOrdenacaoAtual.direcao = campo === 'investimento' ? 'desc' : 'asc';
+    }
+    renderPortfolioExecutivoView();
+}
 
 async function renderPortfolioExecutivoView() {
     if (typeof montarSeletorAF === 'function') modoAFPortfolioExecutivo = montarSeletorAF('portExecSeletorAF', modoAFPortfolioExecutivo);
@@ -33,6 +44,25 @@ async function renderPortfolioExecutivoView() {
     const contagem = { SAUDAVEL: 0, ATENCAO: 0, CRITICO: 0, HOLD: 0, INATIVO: 0 };
     comSaude.forEach(({ saude }) => { contagem[saude.status] = (contagem[saude.status] || 0) + 1; });
 
+    // V35 — ordenação clicável
+    const FAROL_ORDEM = { CRITICO: 0, ATENCAO: 1, HOLD: 2, SAUDAVEL: 3, SEM_DADOS: 4, INATIVO: 5 };
+    if (portExecOrdenacaoAtual.campo === 'padrao') {
+        comSaude.sort((a, b) => extrairNumeroSequencialCodigo(a.p.codigo) - extrairNumeroSequencialCodigo(b.p.codigo));
+    } else {
+        comSaude.sort((a, b) => {
+            let va, vb;
+            if (portExecOrdenacaoAtual.campo === 'area') { va = (a.p.area || '').toUpperCase(); vb = (b.p.area || '').toUpperCase(); }
+            else if (portExecOrdenacaoAtual.campo === 'responsavel') { va = (a.p.pessoa_solicitante || '').toUpperCase(); vb = (b.p.pessoa_solicitante || '').toUpperCase(); }
+            else if (portExecOrdenacaoAtual.campo === 'fase') { va = (a.p.etapa_atual || 'BUSINESS CASE').toUpperCase(); vb = (b.p.etapa_atual || 'BUSINESS CASE').toUpperCase(); }
+            else if (portExecOrdenacaoAtual.campo === 'investimento') { va = Number(a.p.val_tech) || Number(a.p.val_req) || Number(a.p.val_bc) || Number(a.p.previsto) || 0; vb = Number(b.p.val_tech) || Number(b.p.val_req) || Number(b.p.val_bc) || Number(b.p.previsto) || 0; }
+            else if (portExecOrdenacaoAtual.campo === 'saude') { va = FAROL_ORDEM[a.saude.status] ?? 99; vb = FAROL_ORDEM[b.saude.status] ?? 99; }
+            if (va < vb) return portExecOrdenacaoAtual.direcao === 'asc' ? -1 : 1;
+            if (va > vb) return portExecOrdenacaoAtual.direcao === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
+    const arr = c => portExecOrdenacaoAtual.campo === c ? (portExecOrdenacaoAtual.direcao === 'asc' ? ' ▲' : ' ▼') : '';
+
     const investimentoTotal = lista.reduce((acc, p) => acc + (Number(p.val_tech) || Number(p.val_req) || Number(p.val_bc) || Number(p.previsto) || 0), 0);
     const realizadoTotal = lista.reduce((acc, p) => acc + (Number(p.realizado) || 0), 0);
 
@@ -52,9 +82,14 @@ async function renderPortfolioExecutivoView() {
 
         <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-x-auto hidden md:block">
             <table class="w-full text-left text-xs">
-                <thead><tr class="bg-gray-50 uppercase text-[10px] text-gray-500 border-b">
-                    <th class="p-3">Código</th><th class="p-3">Projeto</th><th class="p-3">Área</th>
-                    <th class="p-3">Responsável</th><th class="p-3">Fase</th><th class="p-3 text-right">Investimento</th><th class="p-3">Saúde</th>
+                <thead><tr class="bg-gray-50 uppercase text-[10px] text-gray-500 border-b select-none">
+                    <th class="p-3">Código</th>
+                    <th class="p-3">Projeto</th>
+                    <th class="p-3 cursor-pointer hover:text-gray-800" onclick="ordenarPortfolioExecutivo('area')">Área${arr('area')}</th>
+                    <th class="p-3 cursor-pointer hover:text-gray-800" onclick="ordenarPortfolioExecutivo('responsavel')">Responsável${arr('responsavel')}</th>
+                    <th class="p-3 cursor-pointer hover:text-gray-800" onclick="ordenarPortfolioExecutivo('fase')">Fase${arr('fase')}</th>
+                    <th class="p-3 text-right cursor-pointer hover:text-gray-800" onclick="ordenarPortfolioExecutivo('investimento')">Investimento${arr('investimento')}</th>
+                    <th class="p-3 cursor-pointer hover:text-gray-800" onclick="ordenarPortfolioExecutivo('saude')">Saúde${arr('saude')}</th>
                 </tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     ${comSaude.length === 0 ? '<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Nenhum projeto no filtro atual.</td></tr>' : comSaude.map(({ p, saude }) => `
