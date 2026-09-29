@@ -136,7 +136,7 @@ async function renderVisaoOrcamentoView() {
         const nAmarelo = projetosComSemaforo.filter(x => x.semaforo === 'AMARELO').length;
         const nVermelho = projetosComSemaforo.filter(x => x.semaforo === 'VERMELHO').length;
         const kpi = (label, n, corTopo, corDot) => `<div class="bg-white rounded-lg border border-gray-200 border-t-4 ${corTopo} p-3 flex items-center gap-2"><span class="w-3 h-3 rounded-full ${corDot} flex-shrink-0"></span><div><div class="text-[10px] font-bold uppercase text-gray-400">${label}</div><div class="text-lg font-extrabold text-gray-900">${n}</div></div></div>`;
-        kpiSem.innerHTML = `<div class="grid grid-cols-3 gap-3">${kpi('Verde', nVerde, 'border-t-emerald-500', 'bg-emerald-500')}${kpi('Amarelo', nAmarelo, 'border-t-amber-500', 'bg-amber-500')}${kpi('Vermelho', nVermelho, 'border-t-danger-500', 'bg-danger-500')}</div>`;
+        kpiSem.innerHTML = `<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">${kpi('Total', projetosComSemaforo.length, 'border-t-gray-400', 'bg-gray-400')}${kpi('Verde', nVerde, 'border-t-emerald-500', 'bg-emerald-500')}${kpi('Amarelo', nAmarelo, 'border-t-amber-500', 'bg-amber-500')}${kpi('Vermelho', nVermelho, 'border-t-danger-500', 'bg-danger-500')}</div>`; // V69
     }
 
     // V52 — datalist de sugestões + filtro de busca por código/nome
