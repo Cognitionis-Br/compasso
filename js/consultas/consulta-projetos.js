@@ -71,7 +71,7 @@ async function renderConsultaProjetos() {
 
     if (projetosFiltrados.length === 0) {
         const msgVazia = projectsDataFiltrado.length === 0 ? 'Nenhum projeto cadastrado no portfólio' : 'Nenhum projeto encontrado com esses filtros';
-        tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-gray-400 font-bold">${msgVazia}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-gray-400 font-bold">${msgVazia}</td></tr>`;
         if (cardsBody) cardsBody.innerHTML = `<div class="p-4 text-center text-gray-400 font-bold text-sm">${msgVazia}</div>`;
         return;
     }
@@ -106,6 +106,7 @@ async function renderConsultaProjetos() {
                 <td class="p-3 font-bold font-mono"><button onclick="abrirDetalheProjeto('${p.codigo}', 'consultas')" class="text-red-700 hover:text-red-900 hover:underline" title="Ver detalhamento completo">${p.codigo}</button></td>
                 <td class="p-3 font-semibold">${escapeHtml(p.nome)} <br><span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${badgeQualif}">${qualif}</span>${p.is_adhoc ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-purple-100 text-purple-800 ml-1">Extraordinário</span>' : ''}${p.is_carryover ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-orange-100 text-orange-800 ml-1">Carryover</span>' : ''}${p.is_subprojeto ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-cyan-100 text-cyan-800 ml-1">Subprojeto de ' + escapeHtml(p.projeto_pai_codigo) + '</span>' : ''}${p.projeto_concluido ? '<span class="text-[10px] px-1.5 py-0.5 rounded font-bold bg-emerald-100 text-emerald-800 ml-1">🏁 Concluído</span>' : ''}</td>
                 <td class="p-3 text-xs font-bold">${p.area || '-'}</td>
+                <td class="p-3 text-xs">${escapeHtml(p.pessoa_solicitante || '-')}</td>
                 <td class="p-3 text-xs">${p.tipo_orcamento || '-'}</td>
                 <td class="p-3 text-xs font-bold">${p.etapa_atual || 'BUSINESS CASE'}</td>
                 <td class="p-3 text-xs">${p.sub_status || '-'}</td>
@@ -125,6 +126,7 @@ async function renderConsultaProjetos() {
                 <span class="text-[10px] px-1.5 py-0.5 rounded font-bold ${badgeQualif} inline-block mb-2">${qualif}</span>
                 <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-gray-600 border-t pt-2">
                     <div><span class="text-gray-400">Área:</span> <b>${p.area || '-'}</b></div>
+                    <div><span class="text-gray-400">Responsável:</span> <b>${escapeHtml(p.pessoa_solicitante || '-')}</b></div>
                     <div><span class="text-gray-400">Tipo:</span> <b>${p.tipo_orcamento || '-'}</b></div>
                     <div><span class="text-gray-400">Fase:</span> <b>${p.etapa_atual || 'BUSINESS CASE'}</b></div>
                     <div><span class="text-gray-400">Status:</span> <b>${p.sub_status || '-'}</b></div>
@@ -144,11 +146,12 @@ async function renderConsultaProjetos() {
 function exportarConsultaCSV() {
     if (!_consultaUltimaLista.length) return alert('Nenhum projeto na lista atual para exportar.');
     exportarCSV(
-        ['Código', 'Nome', 'Área', 'Tipo Orçamento', 'Fase', 'Status', 'Previsto (R$)', 'Realizado (R$)', 'Saúde'],
+        ['Código', 'Nome', 'Área', 'Responsável', 'Tipo Orçamento', 'Fase', 'Status', 'Previsto (R$)', 'Realizado (R$)', 'Saúde'],
         _consultaUltimaLista.map(({ p, saude }) => [
             p.codigo || '',
             p.nome || '',
             p.area || '',
+            p.pessoa_solicitante || '',
             p.tipo_orcamento || '',
             p.etapa_atual || 'BUSINESS CASE',
             p.sub_status || '',
