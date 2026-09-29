@@ -157,6 +157,8 @@ function renderCronogramaConteudo() {
         return { ...l, farolNivel: nivel, farolAlerta: alerta };
     });
 
+    const elTotal = document.getElementById('cronogramaFarolTotal'); // V65
+    if (elTotal) elTotal.innerText = linhasFiltradas.length;
     const elNoPrazo = document.getElementById('cronogramaFarolNoPrazo');
     if (elNoPrazo) elNoPrazo.innerText = noPrazo;
     const elAtencao = document.getElementById('cronogramaFarolAtencao');
