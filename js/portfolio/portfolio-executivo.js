@@ -19,6 +19,7 @@ function limparFiltrosPortfolioExecutivo() { // V56
     });
     const b = document.getElementById('portExecBuscaInput'); if (b) b.value = '';
     portExecOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V59 — arrows são injetados no innerHTML, resetam no próximo render
+    try { sessionStorage.removeItem('compassoFiltros_portfolio'); } catch(e) {} // V60
     renderPortfolioExecutivoView();
 }
 
@@ -63,6 +64,7 @@ async function renderPortfolioExecutivoView() {
 
     const portExecTotal = lista.length; // V57 — total antes dos filtros de conteúdo
     popularFiltroAreaPortfolio();
+    restaurarFiltrosSession('compassoFiltros_portfolio', ['portExecFiltroArea','portExecFiltroFase','portExecFiltroSaude','portExecBuscaInput']); // V60
     const filtroArea = (document.getElementById('portExecFiltroArea') || {}).value || '';
     if (filtroArea) lista = lista.filter(p => (p.area || '') === filtroArea);
     const filtroFase = (document.getElementById('portExecFiltroFase') || {}).value || '';
@@ -167,6 +169,7 @@ async function renderPortfolioExecutivoView() {
     _portExecUltimaLista = comSaude; // V25
     atualizarContador('portExecContador', comSaude.length, portExecTotal, 'projetos'); // V57
     marcarFiltrosAtivos(['portExecFiltroArea','portExecFiltroFase','portExecFiltroSaude'], ['portExecBuscaInput']); // V58
+    salvarFiltrosSession('compassoFiltros_portfolio', ['portExecFiltroArea','portExecFiltroFase','portExecFiltroSaude','portExecBuscaInput']); // V60
 }
 
 // V25 — Exportação CSV da lista filtrada atual

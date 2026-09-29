@@ -92,6 +92,23 @@ function atualizarContador(id, filtrado, total, unidade) {
         : `${total} ${unidade}`;
 }
 
+// V60 — persistência de filtros por view via sessionStorage
+function salvarFiltrosSession(chave, ids) {
+    try {
+        const vals = {};
+        ids.forEach(id => { const el = document.getElementById(id); if (el) vals[id] = el.value || ''; });
+        sessionStorage.setItem(chave, JSON.stringify(vals));
+    } catch(e) {}
+}
+function restaurarFiltrosSession(chave, ids) {
+    try {
+        const raw = sessionStorage.getItem(chave);
+        if (!raw) return;
+        const vals = JSON.parse(raw);
+        ids.forEach(id => { const el = document.getElementById(id); if (el && vals[id] !== undefined) el.value = vals[id]; });
+    } catch(e) {}
+}
+
 function escapeJsAttr(valor) {
     if (valor === null || valor === undefined) return '';
     const jsEscapado = String(valor).replace(/\\/g, '\\\\').replace(/'/g, "\\'");

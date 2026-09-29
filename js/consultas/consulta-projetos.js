@@ -17,6 +17,7 @@ function limparFiltrosConsulta() { // V56
     const b = document.getElementById('consultaBuscaInput'); if (b) b.value = '';
     consultaOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V59
     ['nome','area','fase','farol','responsavel','previsto'].forEach(c => { const el = document.getElementById(`ordArrowConsulta-${c}`); if (el) el.innerText = ''; }); // V59
+    try { sessionStorage.removeItem('compassoFiltros_consulta'); } catch(e) {} // V60
     renderConsultaProjetos();
 }
 
@@ -73,6 +74,7 @@ async function renderConsultaProjetos() {
 
     popularFiltrosConsulta();
     popularBuscaConsulta(projectsDataFiltrado); // V50 — datalist de sugestões
+    restaurarFiltrosSession('compassoFiltros_consulta', ['consultaFiltroArea','consultaFiltroFase','consultaFiltroStatus','consultaFiltroSaude','consultaBuscaInput']); // V60
     const filtroArea = (document.getElementById('consultaFiltroArea') || {}).value || '';
     const filtroFase = (document.getElementById('consultaFiltroFase') || {}).value || '';
     const filtroStatus = (document.getElementById('consultaFiltroStatus') || {}).value || '';
@@ -189,6 +191,7 @@ async function renderConsultaProjetos() {
     _consultaUltimaLista = projetosComSaude; // V24 — mantém lista filtrada para exportação
     atualizarContador('consultaContador', projetosComSaude.length, projectsDataFiltrado.length, 'projetos'); // V57
     marcarFiltrosAtivos(['consultaFiltroArea','consultaFiltroFase','consultaFiltroStatus','consultaFiltroSaude'], ['consultaBuscaInput']); // V58
+    salvarFiltrosSession('compassoFiltros_consulta', ['consultaFiltroArea','consultaFiltroFase','consultaFiltroStatus','consultaFiltroSaude','consultaBuscaInput']); // V60
 }
 
 // V24 — Exportação CSV da lista filtrada atual (AF + Área + Fase + Status)

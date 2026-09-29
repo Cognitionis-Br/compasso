@@ -22,6 +22,7 @@ let cronogramaFiltroBusca = ''; // V51
 let cronogramaLinhasCache = [];
 let _cronogramaUltimaLista = []; // V41 — cache para exportação CSV
 let cronogramaOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V47
+let _cronogramaRenderandoDoFiltro = false; // V60 — semáforo para não restaurar sessão em interação do usuário
 
 function ordenarCronograma(campo) {
     if (cronogramaOrdenacaoAtual.campo === campo) {
@@ -87,12 +88,14 @@ function popularFiltrosCronograma(linhas) {
 }
 
 function onFiltroCronogramaChange() {
+    _cronogramaRenderandoDoFiltro = true; // V60
     cronogramaFiltroArea = (document.getElementById('cronogramaFiltroAreaSelect') || {}).value || '';
     cronogramaFiltroFase = (document.getElementById('cronogramaFiltroFaseSelect') || {}).value || '';
     cronogramaFiltroResponsavel = (document.getElementById('cronogramaFiltroResponsavelSelect') || {}).value || '';
     cronogramaFiltroFarol = (document.getElementById('cronogramaFiltroFarolSelect') || {}).value || '';
     cronogramaFiltroBusca = ((document.getElementById('cronogramaFiltroBuscaInput') || {}).value || '').trim().toUpperCase(); // V51
     renderCronogramaConteudo();
+    _cronogramaRenderandoDoFiltro = false; // V60
 }
 
 function limparFiltrosCronograma() { // V56
@@ -102,6 +105,7 @@ function limparFiltrosCronograma() { // V56
     const b = document.getElementById('cronogramaFiltroBuscaInput'); if (b) b.value = '';
     cronogramaOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V59
     ['nome','responsavel','farol'].forEach(c => { const el = document.getElementById(`ordArrowCronograma-${c}`); if (el) el.innerText = ''; }); // V59
+    try { sessionStorage.removeItem('compassoFiltros_cronograma'); } catch(e) {} // V60
     onFiltroCronogramaChange();
 }
 
@@ -116,6 +120,14 @@ function popularBuscaCronograma(linhas) { // V51
 }
 
 function renderCronogramaConteudo() {
+    if (!_cronogramaRenderandoDoFiltro) { // V60 — restaurar ao abrir a aba (não em interação do usuário)
+        restaurarFiltrosSession('compassoFiltros_cronograma', ['cronogramaFiltroAreaSelect','cronogramaFiltroFaseSelect','cronogramaFiltroResponsavelSelect','cronogramaFiltroFarolSelect','cronogramaFiltroBuscaInput']);
+        cronogramaFiltroArea = (document.getElementById('cronogramaFiltroAreaSelect') || {}).value || '';
+        cronogramaFiltroFase = (document.getElementById('cronogramaFiltroFaseSelect') || {}).value || '';
+        cronogramaFiltroResponsavel = (document.getElementById('cronogramaFiltroResponsavelSelect') || {}).value || '';
+        cronogramaFiltroFarol = (document.getElementById('cronogramaFiltroFarolSelect') || {}).value || '';
+        cronogramaFiltroBusca = ((document.getElementById('cronogramaFiltroBuscaInput') || {}).value || '').trim().toUpperCase();
+    }
     popularBuscaCronograma(cronogramaLinhasCache); // V51 — datalist antes do filtro de texto
     const linhasFiltradas = cronogramaLinhasCache.filter(l => {
         if (cronogramaFiltroArea && (l.projeto.area || '') !== cronogramaFiltroArea) return false;
@@ -246,6 +258,7 @@ function renderCronogramaConteudo() {
     _cronogramaUltimaLista = linhasParaExibir; // V41
     atualizarContador('cronogramaContador', linhasParaExibir.length, cronogramaLinhasCache.length, 'etapas'); // V57
     marcarFiltrosAtivos(['cronogramaFiltroAreaSelect','cronogramaFiltroFaseSelect','cronogramaFiltroResponsavelSelect','cronogramaFiltroFarolSelect'], ['cronogramaFiltroBuscaInput']); // V58
+    salvarFiltrosSession('compassoFiltros_cronograma', ['cronogramaFiltroAreaSelect','cronogramaFiltroFaseSelect','cronogramaFiltroResponsavelSelect','cronogramaFiltroFarolSelect','cronogramaFiltroBuscaInput']); // V60
 
     renderResponsaveisSemAtualizacao(linhasFiltradas);
 }

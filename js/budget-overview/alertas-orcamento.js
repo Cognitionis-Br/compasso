@@ -45,6 +45,8 @@ function renderAlertasOrcamentoView() {
     renderKPIBarAlertas(linhas); // V53
     popularFiltrosAlertas(linhas);
     popularBuscaAlertas(linhas); // V52
+    restaurarFiltrosSession('compassoFiltros_alertas', ['alertasFiltroArea','alertasFiltroNivel','alertasBuscaInput']); // V60
+    salvarFiltrosSession('compassoFiltros_alertas', ['alertasFiltroArea','alertasFiltroNivel','alertasBuscaInput']); // V60 — antes do early return
     const filtroArea = (document.getElementById('alertasFiltroArea') || {}).value || '';
     const filtroNivel = (document.getElementById('alertasFiltroNivel') || {}).value || '';
     const filtroBuscaAlertas = ((document.getElementById('alertasBuscaInput') || {}).value || '').trim().toUpperCase(); // V52
@@ -155,6 +157,7 @@ function limparFiltrosAlertas() { // V56
     const b = document.getElementById('alertasBuscaInput'); if (b) b.value = '';
     alertasOrdenacaoAtual = { campo: 'padrao', direcao: 'desc' }; // V59 — default é desc
     ['projeto','variacao','nivel'].forEach(c => { const el = document.getElementById(`ordArrowAlertas-${c}`); if (el) el.innerText = ''; }); // V59
+    try { sessionStorage.removeItem('compassoFiltros_alertas'); } catch(e) {} // V60
     onFiltroAlertasChange();
 }
 

@@ -18,6 +18,7 @@ function limparFiltrosVisaoOrcamento() { // V56
     const b = document.getElementById('visaoOrcBuscaInput'); if (b) b.value = '';
     visaoOrcOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V59
     ['projeto','variacao','semaforo'].forEach(c => { const el = document.getElementById(`ordArrowVisaoOrc-${c}`); if (el) el.innerText = ''; }); // V59
+    try { sessionStorage.removeItem('compassoFiltros_visaoOrc'); } catch(e) {} // V60
     renderVisaoOrcamentoView();
 }
 
@@ -140,6 +141,7 @@ async function renderVisaoOrcamentoView() {
 
     // V52 — datalist de sugestões + filtro de busca por código/nome
     popularBuscaVisaoOrc(projetosVisiveis);
+    restaurarFiltrosSession('compassoFiltros_visaoOrc', ['visaoOrcFiltroSemaforo','visaoOrcBuscaInput']); // V60
     const filtroBuscaOrc = ((document.getElementById('visaoOrcBuscaInput') || {}).value || '').trim().toUpperCase();
     const filtroSemaforoAtual = (document.getElementById('visaoOrcFiltroSemaforo') || {}).value || '';
     let projetosFiltrados = filtroSemaforoAtual
@@ -235,6 +237,7 @@ async function renderVisaoOrcamentoView() {
     _visaoOrcUltimaLista = projetosFiltrados.map(x => x.p); // V43
     atualizarContador('visaoOrcContador', projetosFiltrados.length, projetosComSemaforo.length, 'projetos'); // V57
     marcarFiltrosAtivos(['visaoOrcFiltroSemaforo'], ['visaoOrcBuscaInput']); // V58
+    salvarFiltrosSession('compassoFiltros_visaoOrc', ['visaoOrcFiltroSemaforo','visaoOrcBuscaInput']); // V60
 }
 
 function popularBuscaVisaoOrc(lista) { // V52
