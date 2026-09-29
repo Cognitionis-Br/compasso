@@ -3914,8 +3914,13 @@
                      Orçamento). -->
                 <div id="view-mudanca_orcamento" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800">Aprovar Diferenças de Orçamento</h2>
-                        <p class="text-xs text-gray-500 mt-1">Projetos bloqueados na conclusão de Requerimentos ou Especificação por variação de orçamento acima do percentual parametrizado. Clique em "Analisar" pra ver os valores em detalhe e aprovar a continuidade.</p>
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-800">Aprovar Diferenças de Orçamento</h2>
+                                <p class="text-xs text-gray-500 mt-1">Projetos bloqueados na conclusão de Requerimentos ou Especificação por variação de orçamento acima do percentual parametrizado. Clique em "Analisar" pra ver os valores em detalhe e aprovar a continuidade.</p>
+                            </div>
+                            <button onclick="exportarMudancaOrcamentoCSV()" class="shrink-0 text-xs font-bold text-indigo-700 hover:text-indigo-900 border border-indigo-300 hover:border-indigo-500 rounded px-3 py-1.5 bg-white mt-1">⬇ CSV</button>
+                        </div>
                     </div>
 
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">

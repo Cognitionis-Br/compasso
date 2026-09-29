@@ -29,6 +29,8 @@ function obterValoresMudancaOrcamento(p) {
     };
 }
 
+let _mudancaOrcUltimaLista = []; // V30 — cache para exportação CSV
+
 async function renderMudancaOrcamentoView() {
     const tbody = document.getElementById('mudancaOrcamentoTableBody');
     if (!tbody) return;
@@ -37,6 +39,8 @@ async function renderMudancaOrcamentoView() {
     // NOVO (Controle de acesso por atividade, Fase 5 — mesmo padrão): restrição de área.
     const pendentes = filtrarProjetosPorArea(candidatos, 'mudanca_orcamento')
         .sort((a, b) => (a.codigo || '').localeCompare(b.codigo || '', 'pt-BR'));
+
+    _mudancaOrcUltimaLista = pendentes; // V30
 
     if (pendentes.length === 0) {
         tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-gray-400 font-bold">Nenhum projeto aguardando aprovação de diferenças de orçamento</td></tr>`;
@@ -138,4 +142,27 @@ async function aprovarMudancaOrcamento(codigo) {
     alert(`✅ Continuidade aprovada! Projeto migrado para ${proximaFase}.`);
     await loadProjects();
     switchTab('mudanca_orcamento');
+}
+
+// V30 — Exportação CSV da lista de pendências de aprovação atual
+function exportarMudancaOrcamentoCSV() {
+    if (!_mudancaOrcUltimaLista.length) return alert('Nenhum projeto aguardando aprovação de diferenças de orçamento.');
+    exportarCSV(
+        ['Código', 'Nome', 'Área', 'Fase Bloqueada', 'Comparação', 'Valor Referência (R$)', 'Valor Novo (R$)', 'Variação (%)'],
+        _mudancaOrcUltimaLista.map(p => {
+            const v = obterValoresMudancaOrcamento(p);
+            const alerta = calcularAlertaVariacaoOrcamento(v.valorReferencia, v.valorNovo);
+            return [
+                p.codigo || '',
+                p.nome || '',
+                p.area || '',
+                p.etapa_atual || '',
+                v.labelFase || '',
+                v.valorReferencia,
+                v.valorNovo,
+                alerta.percentual || 0
+            ];
+        }),
+        'aprovacao_variacao_orcamento'
+    );
 }
