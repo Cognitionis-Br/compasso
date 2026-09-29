@@ -90,3 +90,43 @@ function onMudarSeletorAFFinanceiroCorporativo() {
     modoAFFinanceiroCorporativo = document.getElementById('finCorpSeletorAF').value;
     renderFinanceiroCorporativoView();
 }
+
+// V28 — Export CSV flat: um item BC por linha, com dados do pacote repetidos por linha
+async function exportarPacotesFYCSV(btn) {
+    if (btn) { btn.disabled = true; btn.innerHTML = '⏳ Exportando...'; }
+    try {
+        const { data: pacotes, error: errPac } = await _supabase.from('pacotes_fy').select('*').order('fechado_em', { ascending: false });
+        if (errPac || !pacotes || pacotes.length === 0) { alert('Nenhum Pacote FY encontrado.'); return; }
+
+        const ids = pacotes.map(p => p.id);
+        const { data: itens, error: errItens } = await _supabase.from('pacote_fy_itens').select('*').in('pacote_fy_id', ids);
+
+        const mapPac = Object.fromEntries(pacotes.map(p => [p.id, p]));
+        const mapProjeto = typeof projectsData !== 'undefined'
+            ? Object.fromEntries(projectsData.map(p => [p.codigo, p.nome]))
+            : {};
+
+        const linhas = (itens || []).map(it => {
+            const pac = mapPac[it.pacote_fy_id] || {};
+            return [
+                pac.ano_fiscal || '',
+                pac.fechado_em ? pac.fechado_em.split('T')[0] : '',
+                pac.fechado_por || '',
+                it.business_case_codigo || '',
+                mapProjeto[it.business_case_codigo] || '',
+                Number(it.valor_incluido) || 0,
+                Number(pac.valor_total) || 0
+            ];
+        });
+
+        if (linhas.length === 0) { alert('Nenhum item nos Pacotes FY.'); return; }
+
+        exportarCSV(
+            ['Ano Fiscal', 'Fechado em', 'Fechado por', 'Código BC', 'Nome Projeto', 'Valor Incluído (R$)', 'Total do Pacote (R$)'],
+            linhas,
+            'pacotes_fy'
+        );
+    } finally {
+        if (btn) { btn.disabled = false; btn.innerHTML = '⬇ CSV Pacotes FY'; }
+    }
+}

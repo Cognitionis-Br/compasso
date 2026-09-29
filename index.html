@@ -911,7 +911,10 @@
                          Pacotes FY já fechados (pacotes_fy/pacote_fy_itens).
                          renderFinanceiroCorporativoView() popula. -->
                     <div class="mt-6">
-                        <h3 class="text-sm font-black uppercase text-gray-600 mb-2">Histórico de Pacotes FY</h3>
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="text-sm font-black uppercase text-gray-600">Histórico de Pacotes FY</h3>
+                            <button onclick="exportarPacotesFYCSV(this)" class="text-xs font-bold text-indigo-700 hover:text-indigo-900 border border-indigo-300 hover:border-indigo-500 rounded px-3 py-1.5 bg-white">⬇ CSV Pacotes FY</button>
+                        </div>
                         <div class="bg-white rounded-lg border border-gray-200 overflow-x-auto">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead>
