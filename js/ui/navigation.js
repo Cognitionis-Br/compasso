@@ -159,6 +159,7 @@ function switchTab(tabId) {
     if (tabId === 'minhas_aprovacoes') renderMinhasAprovacoesView();
     if (tabId === 'governanca_unificada') renderGovernancaUnificadaView();
     if (tabId === 'portfolio_executivo') renderPortfolioExecutivoView();
+    if (tabId === 'portfolio_business_cases') renderPortfolioBCView();
     if (tabId === 'financeiro_corporativo') renderFinanceiroCorporativoView();
     // NOVO (V4 do Plano de Evolução — Estimation, 2026-09-25).
     if (tabId === 'rate_card') renderRateCardView();

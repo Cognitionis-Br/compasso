@@ -249,6 +249,7 @@
                     <div id="menu-portfolio" class="submenu pl-9 pr-2 mt-1 space-y-1">
                         <button onclick="switchTab('dashboard')" id="link-dashboard" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Dashboard</button>
                         <button onclick="switchTab('portfolio_executivo')" id="link-portfolio_executivo" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Portfólio Executivo</button>
+                        <button onclick="switchTab('portfolio_business_cases')" id="link-portfolio_business_cases" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Business Cases</button>
                         <button onclick="switchTab('cronograma_evolucao')" id="link-cronograma_evolucao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cronograma & Evolução</button>
                         <button onclick="switchTab('consultas')" id="link-consultas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Consulta de Projetos</button>
                     </div>
@@ -920,6 +921,33 @@
                     <div id="wsAba_governanca_proj" class="hidden">
                         <div id="wsGovernancaBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
                     </div>
+                </div>
+
+                <!-- TELA: PORTFOLIO BUSINESS CASES (Fase 2 — D-01) -->
+                <div id="view-portfolio_business_cases" class="tab-content hidden"></div>
+
+                <!-- WORKSPACE BC: SCR-01 (Fase 2 — D-01) -->
+                <div id="view-workspace_bc" class="tab-content hidden">
+                    <!-- Header BC -->
+                    <div id="bcWorkspaceHeader" class="mb-2 flex items-center gap-3 pb-2 border-b border-gray-200">
+                        <button onclick="fecharWorkspaceBC()" class="text-xs font-bold text-gray-500 hover:text-gray-800 flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-left"></i> Voltar
+                        </button>
+                        <span id="bcHeaderBreadcrumb" class="text-xs text-gray-500"></span>
+                    </div>
+                    <!-- Tab bar D-01 -->
+                    <div id="bcAbaBar" class="flex items-end border-b border-gray-200 overflow-x-auto no-scrollbar mb-4"></div>
+                    <!-- Painéis de aba -->
+                    <div id="bcBody_resumo"         class="hidden"></div>
+                    <div id="bcBody_estrategia"     class="hidden"></div>
+                    <div id="bcBody_escopo"         class="hidden"></div>
+                    <div id="bcBody_dependencias"   class="hidden"></div>
+                    <div id="bcBody_documentos_bc"  class="hidden"></div>
+                    <div id="bcBody_estimativa"     class="hidden"></div>
+                    <div id="bcBody_orcamento_bc"   class="hidden"></div>
+                    <div id="bcBody_aprovacoes"     class="hidden"></div>
+                    <div id="bcBody_versoes"        class="hidden"></div>
+                    <div id="bcBody_historico_bc"   class="hidden"></div>
                 </div>
 
                 <!-- Portfólio Executivo — Compasso 2.0 Release 3
@@ -1964,15 +1992,15 @@
                     </div>
                 </div>
 
-                <!-- TELA: APROVAÇÃO ANO FISCAL -->
+                <!-- TELA: APROVAÇÃO ANO FISCAL (SCR-02 · Pacote FY) -->
                 <div id="view-aprov_orcamento_af" class="tab-content hidden">
-                    <div class="mb-6 border-b pb-2 flex justify-between items-end">
+                    <div class="mb-4 border-b pb-2 flex justify-between items-end">
                         <div>
-                            <h2 class="text-xl font-bold text-gray-800">Aprovar Orçamento Ano Fiscal</h2>
-                            <p class="text-xs text-gray-500 mt-1">Transição em lote de todos os projetos aprovados para a fase de Requisitos.</p>
+                            <h2 class="text-xl font-bold text-gray-800">Pacote FY — Aprovação do Orçamento</h2>
+                            <p class="text-xs text-gray-500 mt-1">SCR-02 · D-02: aprovar valor integral ou devolver para reavaliação. Não existe aprovação com valor ajustado.</p>
                         </div>
                         <div class="text-right">
-                            <span class="text-[10px] font-bold text-gray-500 uppercase block">Total do AF Selecionado (<span id="afLabelDisplay"></span>)</span>
+                            <span class="text-[10px] font-bold text-gray-500 uppercase block">AF: <span id="afLabelDisplay"></span></span>
                             <div class="flex items-baseline gap-4 justify-end">
                                 <div class="text-right">
                                     <span class="text-[10px] font-bold text-blue-600 uppercase block">CAPEX</span>
@@ -1990,30 +2018,71 @@
                         </div>
                     </div>
 
-                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-                        <div class="overflow-x-auto mb-6">
-                            <table class="w-full text-left border-collapse text-sm">
+                    <!-- Business Cases do ciclo regular (D-05) -->
+                    <div class="bg-white rounded-lg border border-gray-200 shadow-sm mb-4 overflow-hidden">
+                        <div class="px-4 py-2.5 border-b border-gray-100">
+                            <span class="text-sm font-bold text-gray-800">Business Cases do ciclo regular</span>
+                            <span class="text-xs text-gray-400 ml-2">· colunas independentes: Status no FY · Situação · Provisioning (D-05)</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
                                 <thead>
-                                    <tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
+                                    <tr class="bg-gray-50 text-gray-600 border-b text-[10px] uppercase font-bold tracking-wider">
                                         <th class="p-3">Código</th>
-                                        <th class="p-3">Projeto</th>
-                                        <th class="p-3">Área</th>
-                                        <th class="p-3">Tipo</th>
-                                        <th class="p-3">Qualificação</th>
-                                        <th class="p-3">Data Aprovação</th>
-                                        <th class="p-3">Comitê</th>
-                                        <th class="p-3">Aprovador</th>
-                                        <th class="p-3 text-right">Valor ($)</th>
+                                        <th class="p-3">Nome</th>
+                                        <th class="p-3">Qualif.</th>
+                                        <th class="p-3 text-right">Valor aceito</th>
+                                        <th class="p-3">Status no FY</th>
+                                        <th class="p-3">Situação</th>
+                                        <th class="p-3">Provisioning</th>
+                                        <th class="p-3"></th>
                                     </tr>
                                 </thead>
-                                <tbody id="afOrcamentoTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
+                                <tbody id="afOrcamentoTableBody" class="divide-y divide-gray-50"></tbody>
                             </table>
                         </div>
-                        <div class="flex justify-end">
-                            <button onclick="executarAprovacaoGlobalOrcamentoAF()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded transition shadow-sm text-sm">
-                                Fechar Orçamento & Iniciar Fase de Requisitos
-                            </button>
+                    </div>
+
+                    <!-- Extraordinários (D-07) -->
+                    <div class="bg-white rounded-lg border border-indigo-200 shadow-sm mb-4 overflow-hidden">
+                        <div class="px-4 py-2.5 border-b border-indigo-100 flex justify-between items-center">
+                            <span class="text-sm font-bold text-indigo-800">Extraordinários (D-07)</span>
+                            <span class="text-xs text-gray-400">Seção separada com totais próprios</span>
                         </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-gray-50 text-gray-600 border-b text-[10px] uppercase font-bold tracking-wider">
+                                        <th class="p-3">Código</th>
+                                        <th class="p-3">Nome</th>
+                                        <th class="p-3 text-right">Valor</th>
+                                        <th class="p-3">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="afExtraTableBody" class="divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                        <!-- Totais D-07 -->
+                        <div class="grid grid-cols-3 border-t border-gray-100">
+                            <div class="px-4 py-2.5">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Total regular</span>
+                                <span id="afTotRegular" class="text-sm font-bold text-gray-700">R$ 0,00</span>
+                            </div>
+                            <div class="px-4 py-2.5">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Total extraordinário</span>
+                                <span id="afTotExtra" class="text-sm font-bold text-gray-700">R$ 0,00</span>
+                            </div>
+                            <div class="px-4 py-2.5">
+                                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400 block">Total do FY</span>
+                                <span id="afTotFY" class="text-sm font-black text-indigo-700">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button onclick="executarAprovacaoGlobalOrcamentoAF()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 px-6 rounded transition shadow-sm text-sm">
+                            Fechar Orçamento & Iniciar Fase de Requisitos
+                        </button>
                     </div>
                 </div>
 
@@ -5946,6 +6015,8 @@
     <script src="./js/notificacoes/notificacoes.js"></script>
     <!-- Fase 1 — D-11: filas de etapa + base de conhecimento -->
     <script src="./js/projetos/fila-etapa.js"></script>
+    <!-- Fase 2 — D-01/D-02/D-10: portfolio BC + workspace BC -->
+    <script src="./js/business-case/portfolio-bc.js"></script>
     <!-- Compasso 2.0 — Release 2 (Workspace Colaborativo do Projeto), 2026-09-23 -->
     <script src="./js/workspace-projeto/workspace-projeto.js"></script>
     <script src="./js/workspace-projeto/drawer-tarefa.js"></script>

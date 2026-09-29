@@ -1,13 +1,17 @@
 // =========================================================================
 // approvals/orcamento-af.js
-// Aprovação/fechamento global do Orçamento do Ano Fiscal: consolida os
-// projetos aprovados no comitê, bloqueia o fechamento se ainda houver
-// projetos pendentes de avaliação, e promove os aprovados para a fase
-// de Requerimentos.
+// Aprovação do Orçamento do Ano Fiscal (SCR-02 · Pacote FY).
+//
+// D-02: FY aprova o valor integral ou devolve com motivo. Não existe
+//       "Ajustado" — o valor aceito pelo Owner é imutável neste fluxo.
+// D-05: Status no FY / Situação / Provisioning são colunas independentes
+//       (gravadas em pacote_fy_itens via Fase 1 SQL).
+// D-07: Extraordinários têm seção e totais próprios.
+// D-10: Baseline V1 = valor gravado em business_cases.val_aprovado_fy
+//       no momento do fechamento do FY.
 // =========================================================================
+
 async function renderAprovOrcamentoAFView() {
-    // Mesma correção: mostra o AF que está de fato aberto, não o "próximo"
-    // calculado cegamente pela data.
     const afAberto = await obterAFAbertoParaDemandas();
     const infoAF = getInfoAnoFiscal();
     const afStr = afAberto || infoAF.proximoAFStr;
@@ -15,67 +19,183 @@ async function renderAprovOrcamentoAFView() {
     const elAfLabel = document.getElementById('afLabelDisplay');
     if (elAfLabel) elAfLabel.innerText = afAberto ? afStr : `${afStr} (nenhum AF aberto no momento)`;
 
-    // CORRIGIDO 10/08/2026 (bug reportado pelo usuário): demandas Extraordinárias
-    // não podem entrar na aprovação em lote do AF — elas têm seu próprio
-    // fluxo de aprovação (simulação de trade-off, js/adhoc/tradeoff.js).
-    // CORRIGIDO 2026-09-01: mesma coisa pra Carryover — tem processo
-    // exclusivo (Projetos Carry Over) e o valor já entra pelo pool do AF
-    // seguinte, não pela aprovação do AF corrente.
-    const projsAprovados = projectsData.filter(p =>
+    // Regulares: BUSINESS CASE + APROVADO, excluindo adhoc e carryover
+    const projsRegulares = projectsData.filter(p =>
         p.etapa_atual === 'BUSINESS CASE' &&
         p.sub_status === 'APROVADO' &&
         p.is_adhoc !== true &&
         p.is_carryover !== true
     );
 
-    const valorTotalAF = projsAprovados.reduce((acc, p) => acc + (Number(p.val_bc) || Number(p.previsto) || 0), 0);
+    // Extraordinários: adhoc aprovados ainda em BUSINESS CASE
+    const projsExtra = projectsData.filter(p =>
+        p.etapa_atual === 'BUSINESS CASE' &&
+        p.sub_status === 'APROVADO' &&
+        p.is_adhoc === true
+    );
 
-    // NOVO 10/08/2026 (itens 3/4/6 do relatório de testes): abre o total
-    // em CAPEX/OPEX, além do total geral.
-    const valorCapex = projsAprovados.filter(p => (p.tipo_orcamento || '').toUpperCase() === 'CAPEX').reduce((acc, p) => acc + (Number(p.val_bc) || Number(p.previsto) || 0), 0);
-    const valorOpex = projsAprovados.filter(p => (p.tipo_orcamento || '').toUpperCase() === 'OPEX').reduce((acc, p) => acc + (Number(p.val_bc) || Number(p.previsto) || 0), 0);
+    const soma = (arr) => arr.reduce((acc, p) => acc + (Number(p.val_bc)||Number(p.previsto)||0), 0);
+    const valorRegular = soma(projsRegulares);
+    const valorExtra   = soma(projsExtra);
+    const valorTotal   = valorRegular + valorExtra;
+
+    const valorCapex = projsRegulares
+        .filter(p => (p.tipo_orcamento||'').toUpperCase() === 'CAPEX')
+        .reduce((acc, p) => acc + (Number(p.val_bc)||Number(p.previsto)||0), 0);
+    const valorOpex = valorRegular - valorCapex;
 
     const elValTotal = document.getElementById('afValTotalDisplay');
-    if (elValTotal) elValTotal.innerText = formatCurrency(valorTotalAF);
+    if (elValTotal) elValTotal.innerText = formatCurrency(valorTotal);
     const elValCapex = document.getElementById('afValCapexDisplay');
     if (elValCapex) elValCapex.innerText = formatCurrency(valorCapex);
     const elValOpex = document.getElementById('afValOpexDisplay');
     if (elValOpex) elValOpex.innerText = formatCurrency(valorOpex);
 
+    // Buscar status_fy dos itens persistidos (se o pacote já foi fechado antes)
+    let fyItemMap = {};
+    try {
+        const { data: fyItems } = await _supabase
+            .from('pacote_fy_itens')
+            .select('business_case_codigo, status_fy, situacao, provisioning, motivo_devolucao')
+            .in('business_case_codigo', [...projsRegulares, ...projsExtra].map(p => p.codigo));
+        (fyItems || []).forEach(i => { fyItemMap[i.business_case_codigo] = i; });
+    } catch(_) {}
+
+    // Helper: badges das colunas D-05
+    const badgeStatusFy = (item) => {
+        if (!item) return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">Em análise</span>';
+        const s = (item.status_fy || 'INCLUIDO').toUpperCase();
+        if (s === 'APROVADO')   return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800">Aprovado</span>';
+        if (s === 'DEVOLVIDO')  return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-800">Devolvido</span>';
+        if (s === 'REJEITADO')  return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-800">Rejeitado</span>';
+        if (s === 'POSTERGADO') return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-700">Postergado</span>';
+        return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-700">Em análise</span>';
+    };
+    const badgeSituacao = (item) => {
+        if (!item || !item.situacao) return '<span class="text-xs text-gray-400">—</span>';
+        const s = (item.situacao || '').toUpperCase();
+        if (s === 'ATIVO')        return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800">Atual</span>';
+        if (s === 'DESATUALIZADO') return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-800">Desatualizado</span>';
+        return '<span class="text-xs text-gray-500">' + escapeHtml(item.situacao) + '</span>';
+    };
+    const badgeProvisioning = (item) => {
+        if (!item) return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">Não provisionado</span>';
+        if (item.provisioning === true || item.provisioning === 'true')
+            return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800">Provisionado</span>';
+        return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500">Não provisionado</span>';
+    };
+
+    // Linha de tabela regular (com D-05)
+    const rowRegular = (p) => {
+        const item = fyItemMap[p.codigo];
+        const qualif = (p.tipo_qualificacao || 'REG').toUpperCase();
+        const badgeQ = qualif === 'GROW' ? 'bg-purple-100 text-purple-800' : qualif === 'RUN' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
+        const valor = Number(p.val_bc)||Number(p.previsto)||0;
+        return `
+            <tr class="hover:bg-gray-50">
+                <td class="p-3 font-mono font-bold text-green-800 text-xs">${escapeHtml(p.codigo)}</td>
+                <td class="p-3 font-semibold text-xs">${escapeHtml(p.nome)}</td>
+                <td class="p-3 text-xs"><span class="text-[10px] px-2 py-0.5 rounded font-bold ${badgeQ}">${qualif}</span></td>
+                <td class="p-3 text-xs text-right font-mono font-bold text-emerald-700">${formatCurrency(valor)}</td>
+                <td class="p-3 text-xs">${badgeStatusFy(item)}</td>
+                <td class="p-3 text-xs">${badgeSituacao(item)}</td>
+                <td class="p-3 text-xs">${badgeProvisioning(item)}</td>
+                <td class="p-3 text-xs text-right">
+                    <button onclick="devolverBCDoFY('${escapeHtml(p.codigo)}')"
+                        class="text-xs font-bold text-red-600 hover:text-red-800 border border-red-200 rounded px-2 py-1 mr-1">
+                        Devolver
+                    </button>
+                </td>
+            </tr>`;
+    };
+
     const tbody = document.getElementById('afOrcamentoTableBody');
     if (tbody) {
-        if (projsAprovados.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="9" class="p-4 text-center text-gray-400 font-bold">Nenhum projeto em Business Case com status APROVADO para compor o Orçamento ${afStr}</td></tr>`;
-            return;
+        if (projsRegulares.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-400 font-bold text-xs">Nenhum BC com status APROVADO para o Pacote ${afStr}</td></tr>`;
+        } else {
+            tbody.innerHTML = projsRegulares.map(rowRegular).join('');
         }
-
-        tbody.innerHTML = projsAprovados.map(p => {
-            const qualif = (p.tipo_qualificacao || 'REG').toUpperCase();
-            const badgeQualif = qualif === 'GROW' ? 'bg-purple-100 text-purple-800' : qualif === 'RUN' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800';
-
-            return `
-                <tr>
-                    <td class="p-3 font-mono font-bold text-green-800">${p.codigo}</td>
-                    <td class="p-3 font-semibold">${escapeHtml(p.nome)}</td>
-                    <td class="p-3 font-bold">${p.area || '-'}</td>
-                    <td class="p-3 font-bold text-blue-900">${p.tipo_orcamento || 'CAPEX'}</td>
-                    <td class="p-3"><span class="text-[10px] px-2 py-0.5 rounded font-bold ${badgeQualif}">${qualif}</span></td>
-                    <td class="p-3 font-mono">${p.dt_aprovacao || '<span class="text-gray-400 italic">Não informada</span>'}</td>
-                    <td class="p-3 font-mono">${p.dt_comite || '<span class="text-gray-400 italic">Não informada</span>'}</td>
-                    <td class="p-3 font-bold uppercase text-gray-700">${escapeHtml(p.aprovador_nome) || '<span class="text-gray-400 italic">Não informado</span>'}</td>
-                    <td class="p-3 font-mono font-bold text-right text-emerald-700">${formatCurrency(Number(p.val_bc)||Number(p.previsto)||0)}</td>
-                </tr>
-            `;
-        }).join('');
     }
+
+    // D-07: Extraordinários
+    const tbodyExtra = document.getElementById('afExtraTableBody');
+    if (tbodyExtra) {
+        if (projsExtra.length === 0) {
+            tbodyExtra.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-gray-400 font-bold text-xs">Nenhum extraordinário aprovado no momento.</td></tr>`;
+        } else {
+            tbodyExtra.innerHTML = projsExtra.map(p => {
+                const item = fyItemMap[p.codigo];
+                const valor = Number(p.val_bc)||Number(p.previsto)||0;
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3 font-mono font-bold text-xs text-indigo-800">${escapeHtml(p.codigo)}</td>
+                        <td class="p-3 text-xs font-semibold">${escapeHtml(p.nome)}</td>
+                        <td class="p-3 text-xs text-right font-mono font-bold text-emerald-700">${formatCurrency(valor)}</td>
+                        <td class="p-3 text-xs">${badgeStatusFy(item)}</td>
+                    </tr>`;
+            }).join('');
+        }
+    }
+
+    // Totais D-07
+    const elTotRegular = document.getElementById('afTotRegular');
+    const elTotExtra   = document.getElementById('afTotExtra');
+    const elTotFY      = document.getElementById('afTotFY');
+    if (elTotRegular) elTotRegular.innerText = formatCurrency(valorRegular);
+    if (elTotExtra)   elTotExtra.innerText   = formatCurrency(valorExtra);
+    if (elTotFY)      elTotFY.innerText      = formatCurrency(valorTotal);
 }
 
+// -------------------------------------------------------------------------
+// AÇÃO: Devolver BC ao Owner (D-02)
+// -------------------------------------------------------------------------
+async function devolverBCDoFY(codigo) {
+    if (!usuarioPodeAlterarTela('aprov_orcamento_af'))
+        return alert('Você não tem permissão para devolver um BC do Pacote FY.');
+
+    const motivo = prompt(`Devolver BC ${codigo} para reavaliação.\n\nInforme o motivo (obrigatório):`);
+    if (!motivo || !motivo.trim()) return;
+
+    const hoje = new Date().toISOString().split('T')[0];
+
+    // Atualiza o BC para DEVOLVIDO_FY com motivo
+    const { error } = await _supabase.from('projetos').update({
+        sub_status: 'DEVOLVIDO_FY',
+        motivo_devolucao_fy: motivo.trim(),
+        dt_devolucao_fy: hoje,
+    }).eq('codigo', codigo);
+
+    if (error) {
+        console.error('Erro ao devolver BC:', error.message);
+        return alert('Erro ao devolver BC: ' + error.message);
+    }
+
+    // Atualiza o item do pacote FY se já existe linha
+    await _supabase.from('pacote_fy_itens').update({
+        status_fy: 'DEVOLVIDO',
+        motivo_devolucao: motivo.trim(),
+    }).eq('business_case_codigo', codigo);
+
+    // Atualiza cache local
+    const prj = projectsData.find(p => p.codigo === codigo);
+    if (prj) {
+        prj.sub_status = 'DEVOLVIDO_FY';
+        prj.motivo_devolucao_fy = motivo.trim();
+        prj.dt_devolucao_fy = hoje;
+    }
+
+    await renderAprovOrcamentoAFView();
+    alert(`BC ${codigo} devolvido para reavaliação.\nMotivo registrado.`);
+}
+
+// -------------------------------------------------------------------------
+// FECHAR ORÇAMENTO AF (batch)
+// -------------------------------------------------------------------------
 async function executarAprovacaoGlobalOrcamentoAF() {
-    if (!usuarioPodeAlterarTela('aprov_orcamento_af')) return alert('Você não tem permissão para fechar o Orçamento do Ano Fiscal.');
-    // CORRIGIDO 10/08/2026 (junto com G11): usa o AF que está de fato
-    // aberto para demandas (mesma fonte de verdade do G10), não mais o
-    // "próximo AF" calculado cegamente pela data — evita fechar o AF
-    // errado quando o AF realmente aberto não coincide com o cálculo.
+    if (!usuarioPodeAlterarTela('aprov_orcamento_af'))
+        return alert('Você não tem permissão para fechar o Orçamento do Ano Fiscal.');
+
     const afStr = await obterAFAbertoParaDemandas();
     if (!afStr) {
         return alert('⛔ Nenhum Ano Fiscal está aberto para recebimento de demandas no momento — não há o que fechar.');
@@ -94,7 +214,6 @@ async function executarAprovacaoGlobalOrcamentoAF() {
         return;
     }
 
-    // Mesma exclusão de Extraordinário + Carryover do renderAprovOrcamentoAFView acima.
     const projsAprovados = projectsData.filter(p =>
         p.etapa_atual === 'BUSINESS CASE' &&
         p.sub_status === 'APROVADO' &&
@@ -106,24 +225,17 @@ async function executarAprovacaoGlobalOrcamentoAF() {
         return alert("Não há projetos qualificados com status 'APROVADO' para fechamento do orçamento!");
     }
 
-    const valorTotalAF = projsAprovados.reduce((acc, p) => acc + (Number(p.val_bc) || Number(p.previsto) || 0), 0);
+    const valorTotalAF = projsAprovados.reduce((acc, p) => acc + (Number(p.val_bc)||Number(p.previsto)||0), 0);
     const dtAprovacaoHoje = new Date().toISOString().split('T')[0];
 
     const mensagemConfirmacao = `CONFIRMAÇÃO DE APROVAÇÃO DO ORÇAMENTO AF:\n\n` +
         `• Projetos Qualificados: ${projsAprovados.length}\n` +
         `• Valor Total do Orçamento Homologado: ${formatCurrency(valorTotalAF)}\n\n` +
-        `Ao confirmar, o orçamento será oficialmente FECHADO e novas demandas comuns serão bloqueadas (permitidas apenas via Extraordinário). Deseja prosseguir?`;
+        `Ao confirmar, o orçamento será oficialmente FECHADO e novas demandas comuns serão bloqueadas. Deseja prosseguir?`;
 
     if (!confirm(mensagemConfirmacao)) return;
 
-    // NOVO (V4 do Plano de Evolução — Estimation, 2026-09-25): antes deste
-    // ponto, o "pacote" era só um filtro recalculado a cada tela — nenhum
-    // registro do fechamento em si ficava gravado. Persiste agora um
-    // Pacote FY (pacotes_fy) + um item por Business Case incluído
-    // (pacote_fy_itens), puramente aditivo — o loop de UPDATE logo abaixo
-    // continua exatamente igual. Falha aqui não bloqueia o fechamento em
-    // si (só perde o registro histórico) — mesmo padrão de "não travar o
-    // fluxo real por causa de um log" já usado em outros pontos do app.
+    // Persiste Pacote FY (V4 — registro histórico)
     const { data: pacoteFyRow, error: errorPacoteFy } = await _supabase.from('pacotes_fy').insert([{
         ano_fiscal: afStr,
         status: 'FECHADO',
@@ -137,7 +249,10 @@ async function executarAprovacaoGlobalOrcamentoAF() {
         const itensPacote = projsAprovados.map(p => ({
             pacote_fy_id: pacoteFyRow.id,
             business_case_codigo: p.codigo,
-            valor_incluido: Number(p.val_bc) || Number(p.previsto) || 0
+            valor_incluido: Number(p.val_bc)||Number(p.previsto)||0,
+            status_fy: 'APROVADO',
+            situacao: 'ATIVO',
+            provisioning: false,
         }));
         const { error: errorItensPacote } = await _supabase.from('pacote_fy_itens').insert(itensPacote);
         if (errorItensPacote) console.error('Erro ao registrar itens do Pacote FY:', errorItensPacote.message);
@@ -146,42 +261,35 @@ async function executarAprovacaoGlobalOrcamentoAF() {
     for (const prj of projsAprovados) {
         const diasSlaReq = obterSlaPorNomeEtapa('GERAR REQUERIMENTOS', prj.tamanho);
         const dt_limite_req = somarDiasUteis(dtAprovacaoHoje, diasSlaReq);
+        const valorAprovado = Number(prj.val_bc)||Number(prj.previsto)||0;
 
         const payloadUpdate = {
             etapa_atual: 'REQUIREMENTS',
             sub_status: 'A PLANEJAR',
             data_solicitacao_req: dtAprovacaoHoje,
-            dt_limite_req: dt_limite_req
+            dt_limite_req: dt_limite_req,
+            val_aprovado_fy: valorAprovado,  // D-10: baseline V1
         };
 
         let { error } = await _supabase.from('projetos').update(payloadUpdate).eq('codigo', prj.codigo);
         if (error) {
-            await _supabase.from('projetos').update({ etapa_atual: 'REQUIREMENTS', sub_status: 'A PLANEJAR' }).eq('codigo', prj.codigo);
+            await _supabase.from('projetos').update({
+                etapa_atual: 'REQUIREMENTS', sub_status: 'A PLANEJAR'
+            }).eq('codigo', prj.codigo);
         }
 
         prj.etapa_atual = 'REQUIREMENTS';
         prj.sub_status = 'A PLANEJAR';
         prj.data_solicitacao_req = dtAprovacaoHoje;
         prj.dt_limite_req = dt_limite_req;
+        prj.val_aprovado_fy = valorAprovado;
 
-        // NOVO (item 1, novos ajustes): disparo de e-mail — ponto 5
-        // ("Após aprovar orçamento Fiscal Year"), um por projeto
-        // promovido no fechamento em lote.
         await dispararEmailFluxo('BUSINESS CASE', 'APROVAR ORÇAMENTO ANO FISCAL', 'Após aprovar orçamento Fiscal Year', prj, {});
     }
 
     alert(`✅ Orçamento do Ano Fiscal APROVADO e FECHADO com sucesso!\n\n${projsAprovados.length} projetos promovidos para a fase de REQUERIMENTOS.`);
 
-    // CORRIGIDO 10/08/2026 (G11): loga formalmente o fechamento do
-    // orçamento do AF — quem fechou, quando, valor total e quantidade de
-    // projetos — mesmo padrão de log já usado na abertura do próximo AF
-    // (js/config/ano-fiscal.js).
-    //
-    // CORRIGIDO DE NOVO (bug reportado pelo usuário): fechar o orçamento
-    // marcava orcamento_fechado=true, mas NUNCA desligava
-    // recebimento_demandas_aberto — o AF continuava aparecendo como
-    // "aberto pra demandas normais" em Formalizar Demanda, deixando
-    // passar demandas comuns sem exigir o fluxo de Extraordinária.
+    // Log formal do fechamento
     const { error: errorLogFechamento } = await _supabase.from('anos_fiscais_config').upsert({
         ano_fiscal: afStr,
         orcamento_fechado: true,
