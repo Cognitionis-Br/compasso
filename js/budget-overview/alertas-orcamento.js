@@ -144,6 +144,7 @@ function renderAlertasOrcamentoView() {
     const cardsBody = document.getElementById('alertasOrcamentoCardsBody');
     if (cardsBody) cardsBody.innerHTML = cartoes;
     _alertasUltimaLista = linhasFiltradas; // V44
+    atualizarContador('alertasContador', linhasFiltradas.length, linhas.length, 'alertas'); // V57
 }
 
 function limparFiltrosAlertas() { // V56

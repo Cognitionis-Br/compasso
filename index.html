@@ -921,7 +921,8 @@
                                 <input type="text" id="portExecBuscaInput" list="portExecBuscaLista" oninput="renderPortfolioExecutivoView()" placeholder="Código ou nome..." class="p-2 border border-gray-300 rounded text-xs bg-white w-44">
                                 <datalist id="portExecBuscaLista"></datalist>
                             </div>
-                            <div class="pb-2">
+                            <div class="pb-2 flex flex-col items-end gap-1">
+                                <span id="portExecContador" class="text-[10px] text-gray-500"></span>
                                 <button onclick="limparFiltrosPortfolioExecutivo()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar</button>
                             </div>
                         </div>
@@ -1195,7 +1196,8 @@
                                 <datalist id="consultaBuscaLista"></datalist>
                             </div>
                         </div>
-                        <div class="flex justify-end -mt-2 mb-2">
+                        <div class="flex justify-end items-center gap-3 -mt-2 mb-2">
+                            <span id="consultaContador" class="text-[10px] text-gray-500"></span>
                             <button onclick="limparFiltrosConsulta()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar filtros</button>
                         </div>
                         <div id="consultaKPIBar" class="mb-4"></div>
@@ -1289,7 +1291,10 @@
                             <input type="text" id="roadmapFiltroBuscaProjeto" list="roadmapFiltroBuscaProjetoLista" oninput="onMudarFiltroRoadmap()" placeholder="Digite o código ou nome..." class="p-2 border border-gray-300 rounded text-xs w-72">
                             <datalist id="roadmapFiltroBuscaProjetoLista"></datalist>
                         </div>
-                        <button onclick="limparFiltrosRoadmap()" class="text-[10px] font-bold text-gray-500 hover:text-gray-800 uppercase underline pb-2">Limpar filtros</button>
+                        <div class="flex flex-col items-start gap-1 pb-2">
+                            <span id="roadmapContador" class="text-[10px] text-gray-500"></span>
+                            <button onclick="limparFiltrosRoadmap()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar filtros</button>
+                        </div>
                         <button onclick="exportarRoadmapCSV(this)" class="ml-auto text-xs font-bold text-indigo-700 hover:text-indigo-900 border border-indigo-300 hover:border-indigo-500 rounded px-3 py-1.5 bg-white">⬇ CSV</button>
                     </div>
 
@@ -1342,7 +1347,8 @@
                                 <input type="text" id="visaoOrcBuscaInput" list="visaoOrcBuscaLista" oninput="renderVisaoOrcamentoView()" placeholder="Código ou nome..." class="p-2 border border-gray-300 rounded text-xs bg-white w-44">
                                 <datalist id="visaoOrcBuscaLista"></datalist>
                             </div>
-                            <div class="pb-2">
+                            <div class="pb-2 flex flex-col items-end gap-1">
+                                <span id="visaoOrcContador" class="text-[10px] text-gray-500"></span>
                                 <button onclick="limparFiltrosVisaoOrcamento()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar</button>
                             </div>
                         </div>
@@ -1411,7 +1417,8 @@
                             <input type="text" id="alertasBuscaInput" list="alertasBuscaLista" oninput="onFiltroAlertasChange()" placeholder="Código ou nome..." class="p-2 border border-gray-300 rounded text-xs bg-white">
                             <datalist id="alertasBuscaLista"></datalist>
                         </div>
-                        <div class="self-end pb-2">
+                        <div class="self-end pb-2 flex flex-col items-end gap-1">
+                            <span id="alertasContador" class="text-[10px] text-gray-500"></span>
                             <button onclick="limparFiltrosAlertas()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar</button>
                         </div>
                     </div>
@@ -1476,7 +1483,8 @@
                             <datalist id="cronogramaFiltroBuscaLista"></datalist>
                         </div>
                     </div>
-                    <div class="flex justify-end -mt-2 mb-2">
+                    <div class="flex justify-end items-center gap-3 -mt-2 mb-2">
+                        <span id="cronogramaContador" class="text-[10px] text-gray-500"></span>
                         <button onclick="limparFiltrosCronograma()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar filtros</button>
                     </div>
 

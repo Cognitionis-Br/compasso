@@ -128,6 +128,7 @@ async function renderRoadmap() {
     renderFaixaAFSelecionado('roadmapFaixaAFSelecionado', modoAFRoadmap);
     const baseAF = filtrarProjetosPorAnoFiscalSelecionado(projectsData || [], modoAFRoadmap);
     let baseFiltrada = filtrarProjetosPorAcessoRoadmap(baseAF);
+    const roadmapTotal = baseFiltrada.length; // V57
 
     // V36 — filtro de saúde: etapas só buscadas quando o filtro está ativo
     const filtroSaudeRoadmap = (document.getElementById('roadmapFiltroSaude') || {}).value || '';
@@ -154,6 +155,7 @@ async function renderRoadmap() {
         return;
     }
     _roadmapUltimaLista = baseFiltrada; // V26 — mantém lista filtrada para exportação
+    atualizarContador('roadmapContador', baseFiltrada.length, roadmapTotal, 'projetos'); // V57
 
     if (roadmapVisaoAtual === 'area') {
         renderRoadmapAgrupado(container, baseFiltrada, 'area', 'Área');

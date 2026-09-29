@@ -60,6 +60,7 @@ async function renderPortfolioExecutivoView() {
     if (typeof filtrarProjetosPorAnoFiscalSelecionado === 'function') lista = filtrarProjetosPorAnoFiscalSelecionado(lista, modoAFPortfolioExecutivo);
     lista = filtrarProjetosPorArea(lista, 'portfolio_executivo');
 
+    const portExecTotal = lista.length; // V57 — total antes dos filtros de conteúdo
     popularFiltroAreaPortfolio();
     const filtroArea = (document.getElementById('portExecFiltroArea') || {}).value || '';
     if (filtroArea) lista = lista.filter(p => (p.area || '') === filtroArea);
@@ -163,6 +164,7 @@ async function renderPortfolioExecutivoView() {
         </div>
     `;
     _portExecUltimaLista = comSaude; // V25
+    atualizarContador('portExecContador', comSaude.length, portExecTotal, 'projetos'); // V57
 }
 
 // V25 — Exportação CSV da lista filtrada atual

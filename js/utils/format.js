@@ -60,6 +60,18 @@ function escapeHtml(valor) {
 // string JS ao ser interpretado), DEPOIS escapa pra HTML (senão o texto
 // quebra o próprio atributo antes do HTML chegar a virar JS) — sem as
 // duas, dá pra escapar da string e injetar JS arbitrário no clique.
+// V57 — contador de resultados filtrados nos filter bars de portfólio.
+// Mostra "X de Y unidade" quando filtrado < total, ou "Y unidade" quando
+// não há filtro ativo; oculta quando total é zero.
+function atualizarContador(id, filtrado, total, unidade) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    if (total === 0) { el.textContent = ''; return; }
+    el.innerHTML = filtrado < total
+        ? `<b class="text-indigo-700">${filtrado}</b> de ${total} ${unidade}`
+        : `${total} ${unidade}`;
+}
+
 function escapeJsAttr(valor) {
     if (valor === null || valor === undefined) return '';
     const jsEscapado = String(valor).replace(/\\/g, '\\\\').replace(/'/g, "\\'");

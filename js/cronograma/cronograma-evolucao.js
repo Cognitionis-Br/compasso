@@ -242,6 +242,7 @@ function renderCronogramaConteudo() {
     }
 
     _cronogramaUltimaLista = linhasParaExibir; // V41
+    atualizarContador('cronogramaContador', linhasParaExibir.length, cronogramaLinhasCache.length, 'etapas'); // V57
 
     renderResponsaveisSemAtualizacao(linhasFiltradas);
 }
