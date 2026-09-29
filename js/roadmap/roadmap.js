@@ -874,19 +874,19 @@ function renderKPIBarRoadmap(lista) {
     const principais = lista.filter(p => !p.is_subprojeto);
     const total = principais.length;
     const countFase = chave => principais.filter(p => (p.etapa_atual || 'BUSINESS CASE').toUpperCase() === chave).length;
-    const tile = (num, label, cor) => `
-        <div class="bg-white rounded-lg border border-gray-200 p-3 text-center shadow-sm">
+    const tile = (num, label, cor, borda) => `
+        <div class="bg-white rounded-lg border border-gray-200 border-t-4 ${borda} p-3 text-center shadow-sm">
             <div class="text-2xl font-black ${cor}">${num}</div>
             <div class="text-[10px] font-bold uppercase text-gray-500 mt-0.5 leading-tight">${label}</div>
         </div>`;
     el.innerHTML = `<div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
-        ${tile(total, 'Total', 'text-gray-800')}
-        ${tile(countFase('BUSINESS CASE'), 'BC', 'text-danger-700')}
-        ${tile(countFase('REQUERIMENTS'), 'Req', 'text-orange-600')}
-        ${tile(countFase('TECHNICAL'), 'Tech', 'text-pink-600')}
-        ${tile(countFase('EXECUTION'), 'Exec', 'text-violet-600')}
-        ${tile(countFase('UAT'), 'UAT', 'text-blue-600')}
-        ${tile(countFase('GOLIVE'), 'Go-Live', 'text-emerald-600')}
+        ${tile(total,                          'Total',   'text-gray-800',   'border-t-gray-400')}
+        ${tile(countFase('BUSINESS CASE'),     'BC',      'text-danger-700', 'border-t-danger-500')}
+        ${tile(countFase('REQUERIMENTS'),      'Req',     'text-orange-600', 'border-t-orange-400')}
+        ${tile(countFase('TECHNICAL'),         'Tech',    'text-pink-600',   'border-t-pink-500')}
+        ${tile(countFase('EXECUTION'),         'Exec',    'text-violet-600', 'border-t-violet-500')}
+        ${tile(countFase('UAT'),               'UAT',     'text-blue-600',   'border-t-blue-500')}
+        ${tile(countFase('GOLIVE'),            'Go-Live', 'text-emerald-600','border-t-emerald-500')}
     </div>`;
 }
 
