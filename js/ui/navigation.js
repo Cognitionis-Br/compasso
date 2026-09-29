@@ -72,6 +72,7 @@ function fecharSidebarMobileSeAberto() {
 
 function switchTab(tabId) {
     abaAtualId = tabId;
+    if (tabId !== 'workspace_projeto') try { document.title = 'Compasso'; } catch(e) {} // V70
 
     fecharSidebarMobileSeAberto(); // fecha o menu sozinho no celular ao navegar
 

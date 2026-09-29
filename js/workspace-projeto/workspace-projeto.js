@@ -36,6 +36,7 @@ let _wsAcaoPendente = null; // ver abrirWorkspaceProjeto — usado por notifica�
 // carregamento aqui.
 function abrirWorkspaceProjeto(codigo, acaoPendente) {
     _wsProjetoAtual = codigo;
+    try { const p = (projectsData || []).find(x => x.codigo === codigo); document.title = 'Compasso — ' + (p ? p.nome : codigo); } catch(e) {} // V70
     let _savedAba = null; // V68 — recordar última aba visitada por projeto
     if (!acaoPendente) { try { _savedAba = sessionStorage.getItem(`compassoWsAba_${codigo}`); } catch(e) {} }
     _wsAbaAtual = (_savedAba && WS_ABAS.includes(_savedAba)) ? _savedAba : 'visao_geral';
