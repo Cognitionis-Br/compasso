@@ -297,6 +297,26 @@
                 </div>
 
 
+                <!-- GRUPO: PROJETOS (Fase 1 — D-11, filas por etapa do ciclo de vida) -->
+                <div class="mb-2">
+                    <button onclick="toggleSidebarMenu('menu-projetos', 'icon-projetos')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-diagram-project text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
+                            <span class="uppercase tracking-wider">Projetos</span>
+                        </div>
+                        <i id="icon-projetos" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron rotate"></i>
+                    </button>
+                    <div id="menu-projetos" class="submenu open pl-9 pr-2 mt-1 space-y-1">
+                        <button onclick="switchTab('consultas')" id="link-projetos_todos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Todos os Projetos</button>
+                        <button onclick="switchTab('projetos_requerimentos')" id="link-projetos_requerimentos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Requerimentos</button>
+                        <button onclick="switchTab('projetos_especificacao')" id="link-projetos_especificacao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Especificação</button>
+                        <button onclick="switchTab('projetos_execucao')" id="link-projetos_execucao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Execução</button>
+                        <button onclick="switchTab('projetos_uat')" id="link-projetos_uat" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">UAT</button>
+                        <button onclick="switchTab('projetos_golive')" id="link-projetos_golive" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Go Live</button>
+                        <button onclick="switchTab('projetos_encerramento')" id="link-projetos_encerramento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Encerramento</button>
+                    </div>
+                </div>
+
                 <!-- GRUPO: BUSINESS CASE -->
                 <div class="mb-2">
                     <button onclick="toggleSidebarMenu('menu-bc', 'icon-bc')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
@@ -743,6 +763,15 @@
                     <div id="meusProjetosCards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
                 </div>
 
+                <!-- FILAS DE ETAPA — Fase 1 D-11 (js/projetos/fila-etapa.js) -->
+                <div id="view-projetos_requerimentos" class="tab-content hidden max-w-6xl mx-auto space-y-4"></div>
+                <div id="view-projetos_especificacao"  class="tab-content hidden max-w-6xl mx-auto space-y-4"></div>
+                <div id="view-projetos_execucao"       class="tab-content hidden max-w-6xl mx-auto space-y-4"></div>
+                <div id="view-projetos_uat"            class="tab-content hidden max-w-6xl mx-auto space-y-4"></div>
+                <div id="view-projetos_golive"         class="tab-content hidden max-w-6xl mx-auto space-y-4"></div>
+                <div id="view-projetos_encerramento"   class="tab-content hidden max-w-6xl mx-auto space-y-4"></div>
+                <div id="view-conhecimento"            class="tab-content hidden max-w-6xl mx-auto space-y-4"></div>
+
                 <!-- TELA CALENDÁRIO GLOBAL — V2 do Plano de Evolução (SCR-05),
                      js/calendario/calendario-global.js. Task + Approval + Milestone +
                      Gate numa lista só (sem grid mensal nesta 1ª versão — sem
@@ -806,23 +835,15 @@
                      inalterada) — "dia a dia" do projeto: stepper + abas. -->
                 <div id="view-workspace_projeto" class="tab-content hidden max-w-6xl mx-auto space-y-4">
                     <div class="flex items-center justify-between">
-                        <button onclick="voltarDoWorkspace()" class="text-xs font-bold text-gray-500 hover:text-gray-800"><i class="fa-solid fa-arrow-left"></i> Voltar a Meus Projetos</button>
+                        <button onclick="voltarDoWorkspace()" class="text-xs font-bold text-gray-500 hover:text-gray-800"><i class="fa-solid fa-arrow-left"></i> Voltar</button>
                     </div>
                     <div class="bg-white rounded-lg border border-gray-200 shadow-sm p-4">
                         <h2 id="wsCodigoNomeDisplay" class="text-lg font-bold text-gray-900 mb-3"></h2>
                         <div id="wsStepper" class="flex items-start"></div>
                     </div>
 
-                    <div class="flex gap-1 border-b border-gray-200 overflow-x-auto no-scrollbar">
-                        <button id="wsBtnAba_visao_geral" onclick="mudarAbaWorkspace('visao_geral')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
-                        <button id="wsBtnAba_tarefas" onclick="mudarAbaWorkspace('tarefas')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
-                        <button id="wsBtnAba_cronograma" onclick="mudarAbaWorkspace('cronograma')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
-                        <button id="wsBtnAba_financeiro" onclick="mudarAbaWorkspace('financeiro')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
-                        <button id="wsBtnAba_raid" onclick="mudarAbaWorkspace('raid')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
-                        <button id="wsBtnAba_calendario" onclick="mudarAbaWorkspace('calendario')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
-                        <button id="wsBtnAba_documentos" onclick="mudarAbaWorkspace('documentos')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
-                        <button id="wsBtnAba_historico" onclick="mudarAbaWorkspace('historico')" class="px-4 py-2 text-xs font-bold border-b-2 whitespace-nowrap"></button>
-                    </div>
+                    <!-- Tab bar renderizada dinamicamente por _wsRenderAbaBotoes() (workspace-projeto.js) -->
+                    <div id="wsAbaBar" class="flex items-end border-b border-gray-200 overflow-x-auto no-scrollbar"></div>
 
                     <div id="wsAba_visao_geral">
                         <div id="wsVisaoGeralBody"></div>
@@ -867,6 +888,37 @@
 
                     <div id="wsAba_historico" class="hidden">
                         <div id="wsHistoricoBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+
+                    <!-- Fase 1 — D-11 SCR-03: novas abas -->
+                    <div id="wsAba_equipe" class="hidden">
+                        <div id="wsEquipeBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+
+                    <div id="wsAba_etapa_requerimentos" class="hidden">
+                        <div id="wsEtapaBody_etapa_requerimentos" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+                    <div id="wsAba_etapa_especificacao" class="hidden">
+                        <div id="wsEtapaBody_etapa_especificacao" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+                    <div id="wsAba_etapa_execucao" class="hidden">
+                        <div id="wsEtapaBody_etapa_execucao" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+                    <div id="wsAba_etapa_uat" class="hidden">
+                        <div id="wsEtapaBody_etapa_uat" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+                    <div id="wsAba_etapa_golive" class="hidden">
+                        <div id="wsEtapaBody_etapa_golive" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+                    <div id="wsAba_etapa_encerramento" class="hidden">
+                        <div id="wsEtapaBody_etapa_encerramento" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+
+                    <div id="wsAba_contratos" class="hidden">
+                        <div id="wsContratosBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
+                    </div>
+                    <div id="wsAba_governanca_proj" class="hidden">
+                        <div id="wsGovernancaBody" class="bg-white rounded-lg border border-gray-200 shadow-sm p-4"></div>
                     </div>
                 </div>
 
@@ -5892,6 +5944,8 @@
     <script src="./js/meu-trabalho/meu-trabalho.js"></script>
     <script src="./js/meus-projetos/meus-projetos.js"></script>
     <script src="./js/notificacoes/notificacoes.js"></script>
+    <!-- Fase 1 — D-11: filas de etapa + base de conhecimento -->
+    <script src="./js/projetos/fila-etapa.js"></script>
     <!-- Compasso 2.0 — Release 2 (Workspace Colaborativo do Projeto), 2026-09-23 -->
     <script src="./js/workspace-projeto/workspace-projeto.js"></script>
     <script src="./js/workspace-projeto/drawer-tarefa.js"></script>

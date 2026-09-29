@@ -212,6 +212,14 @@ function switchTab(tabId) {
     if (tabId === 'conclusao_projeto') renderConclusaoProjetoView();
     if (tabId === 'fase_golive') { mudarAbaGoLive('ratificar'); renderGoliveView(); }
     if (tabId === 'projetos_adhoc') renderAdhocView();
+    // Fase 1 — D-11: filas de projetos por etapa (js/projetos/fila-etapa.js)
+    if (tabId === 'projetos_requerimentos') renderFilaEtapaView('projetos_requerimentos');
+    if (tabId === 'projetos_especificacao') renderFilaEtapaView('projetos_especificacao');
+    if (tabId === 'projetos_execucao')      renderFilaEtapaView('projetos_execucao');
+    if (tabId === 'projetos_uat')           renderFilaEtapaView('projetos_uat');
+    if (tabId === 'projetos_golive')        renderFilaEtapaView('projetos_golive');
+    if (tabId === 'projetos_encerramento')  renderFilaEtapaView('projetos_encerramento');
+    if (tabId === 'conhecimento')           renderConhecimentoView();
     if (tabId === 'fechamento_af') renderFechamentoAfView();
     if (tabId === 'cronograma_evolucao') renderCronogramaEvolucaoView();
     if (tabId === 'usuarios') { mudarAbaUsuarios('criar'); renderUsuariosView(); }

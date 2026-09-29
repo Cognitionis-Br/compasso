@@ -13,13 +13,37 @@
 // de "minhas tarefas" — mesmo motor de RPC/concorrência do Release 1.
 // =========================================================================
 
-// Release 3: +cronograma, +financeiro, +raid (reaproveitam motores já
-// existentes — ver js/workspace-projeto/cronograma-projeto.js,
-// financeiro-projeto.js, raid-projeto.js).
-const WS_ABAS = ['visao_geral', 'tarefas', 'cronograma', 'financeiro', 'raid', 'calendario', 'documentos', 'historico'];
+// Release 3: +cronograma, +financeiro, +raid.
+// Fase 1 (D-11 SCR-03): estrutura por grupos — Etapas + Controle + Registro.
+// Legacy (tarefas/calendario/documentos): mantidas em WS_ABAS para que
+// sessionStorage antigo e deep-links continuem funcionando; omitidas da
+// barra visual (renderizada dinamicamente em _wsRenderAbaBotoes).
+const WS_ABAS = [
+    'visao_geral', 'equipe',
+    'etapa_requerimentos', 'etapa_especificacao', 'etapa_execucao',
+    'etapa_uat', 'etapa_golive', 'etapa_encerramento',
+    'cronograma', 'financeiro', 'contratos', 'raid', 'governanca_proj',
+    'historico',
+    'tarefas', 'calendario', 'documentos',  // legacy — ocultas na UI
+];
 const WS_ABA_LABELS = {
-    visao_geral: 'Visão Geral', tarefas: 'Tarefas', cronograma: 'Cronograma', financeiro: 'Financeiro',
-    raid: 'Riscos e Ocorrências', calendario: 'Calendário', documentos: 'Documentos', historico: 'Histórico'
+    visao_geral:          'Visão Geral',
+    equipe:               'Equipe',
+    etapa_requerimentos:  'Requerimentos',
+    etapa_especificacao:  'Especificação',
+    etapa_execucao:       'Execução',
+    etapa_uat:            'UAT',
+    etapa_golive:         'Go Live',
+    etapa_encerramento:   'Encerramento',
+    cronograma:           'Cronograma',
+    financeiro:           'Financeiro',
+    contratos:            'Contratos',
+    raid:                 'RAID',
+    governanca_proj:      'Governança',
+    historico:            'Histórico',
+    tarefas:              'Tarefas',
+    calendario:           'Calendário',
+    documentos:           'Documentos',
 };
 
 let _wsProjetoAtual = null;
@@ -98,10 +122,29 @@ function _wsRenderStepper(projeto) {
 }
 
 function _wsRenderAbaBotoes() {
-    WS_ABAS.forEach(a => {
-        const btn = document.getElementById(`wsBtnAba_${a}`);
-        if (btn) btn.innerText = WS_ABA_LABELS[a];
-    });
+    const bar = document.getElementById('wsAbaBar');
+    if (!bar) return;
+
+    const btnCls = (a) => {
+        const ativo = _wsAbaAtual === a;
+        return `px-3 py-2 text-xs font-bold border-b-2 whitespace-nowrap transition-colors ` +
+               (ativo ? 'border-indigo-700 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-800');
+    };
+    const btn = (a) =>
+        `<button id="wsBtnAba_${a}" onclick="mudarAbaWorkspace('${a}')" class="${btnCls(a)}">${WS_ABA_LABELS[a]}</button>`;
+    const sep = (l) =>
+        `<span class="px-2 text-[9px] font-black uppercase tracking-widest text-gray-400 border-b-2 border-transparent self-end pb-2 shrink-0">${l}</span>`;
+
+    bar.innerHTML =
+        btn('visao_geral') +
+        btn('equipe') +
+        sep('Etapas') +
+        btn('etapa_requerimentos') + btn('etapa_especificacao') + btn('etapa_execucao') +
+        btn('etapa_uat') + btn('etapa_golive') + btn('etapa_encerramento') +
+        sep('Controle') +
+        btn('cronograma') + btn('financeiro') + btn('contratos') + btn('raid') + btn('governanca_proj') +
+        sep('Registro') +
+        btn('historico');
 }
 
 async function mudarAbaWorkspace(aba) {
@@ -124,13 +167,39 @@ async function mudarAbaWorkspace(aba) {
     _wsCarregado[aba] = true;
 
     if (aba === 'visao_geral') await _wsRenderVisaoGeral();
+    if (aba === 'equipe' && typeof renderEquipeProjeto === 'function') await renderEquipeProjeto(_wsProjetoAtual, 'wsEquipeBody');
+    else if (aba === 'equipe') _wsRenderAbaStub('wsEquipeBody', 'Equipe', 'fa-users');
+    if (['etapa_requerimentos','etapa_especificacao','etapa_execucao','etapa_uat','etapa_golive','etapa_encerramento'].includes(aba)) {
+        if (typeof renderEtapaProjeto === 'function') await renderEtapaProjeto(_wsProjetoAtual, aba, 'wsEtapaBody_' + aba);
+        else _wsRenderAbaStub('wsEtapaBody_' + aba, WS_ABA_LABELS[aba], 'fa-diagram-project');
+    }
     if (aba === 'tarefas') await _wsCarregarTarefas();
     if (aba === 'cronograma' && typeof renderCronogramaProjeto === 'function') await renderCronogramaProjeto(_wsProjetoAtual, 'wsCronogramaBody');
     if (aba === 'financeiro' && typeof renderFinanceiroProjeto === 'function') await renderFinanceiroProjeto(_wsProjetoAtual, 'wsFinanceiroBody');
+    if (aba === 'contratos') {
+        if (typeof renderContratosWorkspace === 'function') await renderContratosWorkspace(_wsProjetoAtual, 'wsContratosBody');
+        else _wsRenderAbaStub('wsContratosBody', 'Contratos', 'fa-file-signature');
+    }
     if (aba === 'raid' && typeof renderRaidProjeto === 'function') await renderRaidProjeto(_wsProjetoAtual, 'wsRaidBody');
+    if (aba === 'governanca_proj') {
+        if (typeof renderGovernancaWorkspace === 'function') await renderGovernancaWorkspace(_wsProjetoAtual, 'wsGovernancaBody');
+        else _wsRenderAbaStub('wsGovernancaBody', 'Governança', 'fa-gavel');
+    }
     if (aba === 'calendario' && typeof renderCalendarioProjeto === 'function') await renderCalendarioProjeto(_wsProjetoAtual, 'wsCalendarioBody');
     if (aba === 'documentos' && typeof renderDocumentosProjeto === 'function') await renderDocumentosProjeto(_wsProjetoAtual, 'wsDocumentosBody');
     if (aba === 'historico' && typeof renderHistoricoProjeto === 'function') await renderHistoricoProjeto(_wsProjetoAtual, 'wsHistoricoBody');
+}
+
+// Stub para abas ainda não implementadas (Fase 2+)
+function _wsRenderAbaStub(bodyId, label, icon) {
+    const el = document.getElementById(bodyId);
+    if (!el) return;
+    el.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-20 text-center">
+            <i class="fa-solid ${icon} text-3xl text-gray-300 mb-4"></i>
+            <h3 class="text-sm font-bold text-gray-500">${escapeHtml(label)}</h3>
+            <p class="text-xs text-gray-400 mt-1">Em desenvolvimento — disponível nas próximas fases.</p>
+        </div>`;
 }
 
 // -------------------------------------------------------------------------
