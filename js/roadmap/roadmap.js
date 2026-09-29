@@ -142,6 +142,7 @@ async function renderRoadmap() {
         baseFiltrada = baseFiltrada.filter(p => (p.etapa_atual || 'BUSINESS CASE').toUpperCase() === filtroFaseRoadmap);
     }
 
+    renderKPIBarRoadmap(baseFiltrada); // V48
     popularBuscaProjetoRoadmap(baseFiltrada);
 
     if (baseFiltrada.length === 0) {
@@ -830,6 +831,29 @@ function renderRoadmapPorIniciativa(container, lista) {
             </div>
         `;
     });
+}
+
+// V48 — KPI bar: Total + contagem por fase da lista filtrada
+function renderKPIBarRoadmap(lista) {
+    const el = document.getElementById('roadmapKPIBar');
+    if (!el) return;
+    const principais = lista.filter(p => !p.is_subprojeto);
+    const total = principais.length;
+    const countFase = chave => principais.filter(p => (p.etapa_atual || 'BUSINESS CASE').toUpperCase() === chave).length;
+    const tile = (num, label, cor) => `
+        <div class="bg-white rounded-lg border border-gray-200 p-3 text-center shadow-sm">
+            <div class="text-2xl font-black ${cor}">${num}</div>
+            <div class="text-[10px] font-bold uppercase text-gray-500 mt-0.5 leading-tight">${label}</div>
+        </div>`;
+    el.innerHTML = `<div class="grid grid-cols-4 sm:grid-cols-7 gap-2">
+        ${tile(total, 'Total', 'text-gray-800')}
+        ${tile(countFase('BUSINESS CASE'), 'BC', 'text-danger-700')}
+        ${tile(countFase('REQUERIMENTS'), 'Req', 'text-orange-600')}
+        ${tile(countFase('TECHNICAL'), 'Tech', 'text-pink-600')}
+        ${tile(countFase('EXECUTION'), 'Exec', 'text-violet-600')}
+        ${tile(countFase('UAT'), 'UAT', 'text-blue-600')}
+        ${tile(countFase('GOLIVE'), 'Go-Live', 'text-emerald-600')}
+    </div>`;
 }
 
 // V26 — Exportação CSV da lista filtrada atual (AF + visão + dimensão + busca)
