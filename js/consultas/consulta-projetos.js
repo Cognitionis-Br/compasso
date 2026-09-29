@@ -36,7 +36,7 @@ function ordenarConsultaProjetos(campo) {
         consultaOrdenacaoAtual.campo = campo;
         consultaOrdenacaoAtual.direcao = 'asc';
     }
-    ['area', 'fase', 'farol'].forEach(c => {
+    ['area', 'fase', 'farol', 'responsavel', 'previsto'].forEach(c => {
         const el = document.getElementById(`ordArrowConsulta-${c}`);
         if (el) el.innerText = c === campo ? (consultaOrdenacaoAtual.direcao === 'asc' ? '▲' : '▼') : '';
     });
@@ -109,6 +109,8 @@ async function renderConsultaProjetos() {
             if (consultaOrdenacaoAtual.campo === 'area') { va = (a.p.area || '').toUpperCase(); vb = (b.p.area || '').toUpperCase(); }
             else if (consultaOrdenacaoAtual.campo === 'fase') { va = (a.p.etapa_atual || 'BUSINESS CASE').toUpperCase(); vb = (b.p.etapa_atual || 'BUSINESS CASE').toUpperCase(); }
             else if (consultaOrdenacaoAtual.campo === 'farol') { va = FAROL_ORDEM[a.saude.status] ?? 99; vb = FAROL_ORDEM[b.saude.status] ?? 99; }
+            else if (consultaOrdenacaoAtual.campo === 'responsavel') { va = (a.p.pessoa_solicitante || '').toUpperCase(); vb = (b.p.pessoa_solicitante || '').toUpperCase(); }
+            else if (consultaOrdenacaoAtual.campo === 'previsto') { va = Number(a.p.val_bc) || Number(a.p.previsto) || 0; vb = Number(b.p.val_bc) || Number(b.p.previsto) || 0; }
             if (va < vb) return consultaOrdenacaoAtual.direcao === 'asc' ? -1 : 1;
             if (va > vb) return consultaOrdenacaoAtual.direcao === 'asc' ? 1 : -1;
             return 0;
