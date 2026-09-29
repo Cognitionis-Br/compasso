@@ -86,6 +86,8 @@ function limparFiltrosRoadmap() {
     if (selectDimensao) selectDimensao.value = '';
     const inputBusca = document.getElementById('roadmapFiltroBuscaProjeto');
     if (inputBusca) inputBusca.value = '';
+    const selectSaude = document.getElementById('roadmapFiltroSaude');
+    if (selectSaude) selectSaude.value = '';
     renderRoadmap();
 }
 
@@ -114,7 +116,7 @@ function filtrarProjetosPorAcessoRoadmap(lista) {
     return filtrarProjetosPorArea(lista, 'roadmap');
 }
 
-function renderRoadmap() {
+async function renderRoadmap() {
     const container = document.getElementById('roadmapTimelineContainer');
     if (!container) return;
 
@@ -123,7 +125,14 @@ function renderRoadmap() {
     if (typeof montarSeletorAF === 'function') modoAFRoadmap = montarSeletorAF('roadmapSeletorAF', modoAFRoadmap);
     renderFaixaAFSelecionado('roadmapFaixaAFSelecionado', modoAFRoadmap);
     const baseAF = filtrarProjetosPorAnoFiscalSelecionado(projectsData || [], modoAFRoadmap);
-    const baseFiltrada = filtrarProjetosPorAcessoRoadmap(baseAF);
+    let baseFiltrada = filtrarProjetosPorAcessoRoadmap(baseAF);
+
+    // V36 — filtro de saúde: etapas só buscadas quando o filtro está ativo
+    const filtroSaudeRoadmap = (document.getElementById('roadmapFiltroSaude') || {}).value || '';
+    if (filtroSaudeRoadmap) {
+        const { data: etapas } = await _supabase.from('projeto_etapas').select('*');
+        baseFiltrada = baseFiltrada.filter(p => calcularSaudeProjeto(p, etapas || []).status === filtroSaudeRoadmap);
+    }
 
     popularBuscaProjetoRoadmap(baseFiltrada);
 
