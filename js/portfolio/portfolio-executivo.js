@@ -18,6 +18,7 @@ function limparFiltrosPortfolioExecutivo() { // V56
         const el = document.getElementById(id); if (el) el.value = '';
     });
     const b = document.getElementById('portExecBuscaInput'); if (b) b.value = '';
+    portExecOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V59 — arrows são injetados no innerHTML, resetam no próximo render
     renderPortfolioExecutivoView();
 }
 

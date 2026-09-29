@@ -15,6 +15,8 @@ function limparFiltrosConsulta() { // V56
         const el = document.getElementById(id); if (el) el.value = '';
     });
     const b = document.getElementById('consultaBuscaInput'); if (b) b.value = '';
+    consultaOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V59
+    ['nome','area','fase','farol','responsavel','previsto'].forEach(c => { const el = document.getElementById(`ordArrowConsulta-${c}`); if (el) el.innerText = ''; }); // V59
     renderConsultaProjetos();
 }
 

@@ -153,6 +153,8 @@ function limparFiltrosAlertas() { // V56
         const el = document.getElementById(id); if (el) el.value = '';
     });
     const b = document.getElementById('alertasBuscaInput'); if (b) b.value = '';
+    alertasOrdenacaoAtual = { campo: 'padrao', direcao: 'desc' }; // V59 — default é desc
+    ['projeto','variacao','nivel'].forEach(c => { const el = document.getElementById(`ordArrowAlertas-${c}`); if (el) el.innerText = ''; }); // V59
     onFiltroAlertasChange();
 }
 

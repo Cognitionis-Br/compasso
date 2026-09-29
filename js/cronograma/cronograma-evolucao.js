@@ -100,6 +100,8 @@ function limparFiltrosCronograma() { // V56
         const el = document.getElementById(id); if (el) el.value = '';
     });
     const b = document.getElementById('cronogramaFiltroBuscaInput'); if (b) b.value = '';
+    cronogramaOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V59
+    ['nome','responsavel','farol'].forEach(c => { const el = document.getElementById(`ordArrowCronograma-${c}`); if (el) el.innerText = ''; }); // V59
     onFiltroCronogramaChange();
 }
 
