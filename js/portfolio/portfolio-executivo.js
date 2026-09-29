@@ -27,7 +27,9 @@ async function renderPortfolioExecutivoView() {
     if (typeof filtrarProjetosPorAnoFiscalSelecionado === 'function') lista = filtrarProjetosPorAnoFiscalSelecionado(lista, modoAFPortfolioExecutivo);
     lista = filtrarProjetosPorArea(lista, 'portfolio_executivo');
 
-    const comSaude = lista.map(p => ({ p, saude: calcularSaudeProjeto(p, todasEtapasCache || []) }));
+    const filtroSaude = (document.getElementById('portExecFiltroSaude') || {}).value || '';
+    let comSaude = lista.map(p => ({ p, saude: calcularSaudeProjeto(p, todasEtapasCache || []) }));
+    if (filtroSaude) comSaude = comSaude.filter(({ saude }) => saude.status === filtroSaude);
     const contagem = { SAUDAVEL: 0, ATENCAO: 0, CRITICO: 0, HOLD: 0, INATIVO: 0 };
     comSaude.forEach(({ saude }) => { contagem[saude.status] = (contagem[saude.status] || 0) + 1; });
 
