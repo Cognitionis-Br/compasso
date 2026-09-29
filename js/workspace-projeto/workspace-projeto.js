@@ -36,7 +36,9 @@ let _wsAcaoPendente = null; // ver abrirWorkspaceProjeto — usado por notifica�
 // carregamento aqui.
 function abrirWorkspaceProjeto(codigo, acaoPendente) {
     _wsProjetoAtual = codigo;
-    _wsAbaAtual = 'visao_geral';
+    let _savedAba = null; // V68 — recordar última aba visitada por projeto
+    if (!acaoPendente) { try { _savedAba = sessionStorage.getItem(`compassoWsAba_${codigo}`); } catch(e) {} }
+    _wsAbaAtual = (_savedAba && WS_ABAS.includes(_savedAba)) ? _savedAba : 'visao_geral';
     _wsCarregado = {};
     _wsAcaoPendente = acaoPendente || null;
     switchTab('workspace_projeto');
@@ -101,6 +103,7 @@ function _wsRenderAbaBotoes() {
 
 async function mudarAbaWorkspace(aba) {
     _wsAbaAtual = aba;
+    try { if (_wsProjetoAtual) sessionStorage.setItem(`compassoWsAba_${_wsProjetoAtual}`, aba); } catch(e) {} // V68
     WS_ABAS.forEach(a => {
         const painel = document.getElementById(`wsAba_${a}`);
         if (painel) painel.classList.toggle('hidden', a !== aba);
