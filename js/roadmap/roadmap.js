@@ -33,6 +33,7 @@ const CONFIG_FILTRO_DIMENSAO_ROADMAP = {
 };
 
 function switchRoadmapVisao(visao) {
+    _roadmapRenderandoDoFiltro = true; // V64 — evita que renderRoadmap restaure filtros/visão antigos ao trocar visão
     roadmapVisaoAtual = visao;
     ['fase', 'area', 'responsavel', 'iniciativa'].forEach(v => {
         const btn = document.getElementById(`roadmapBtn${v.charAt(0).toUpperCase() + v.slice(1)}`);
@@ -51,7 +52,9 @@ function switchRoadmapVisao(visao) {
         popularFiltroDimensaoRoadmap(visao, configDimensao);
     }
 
+    try { sessionStorage.setItem('compassoRoadmapVisao', visao); } catch(e) {} // V64
     renderRoadmap();
+    _roadmapRenderandoDoFiltro = false; // V64
 }
 
 // Popula o select do valor da dimensão (Área/Responsável/Iniciativa) a
@@ -94,6 +97,7 @@ function limparFiltrosRoadmap() {
     const selectFase = document.getElementById('roadmapFiltroFase');
     if (selectFase) selectFase.value = '';
     try { sessionStorage.removeItem('compassoFiltros_roadmap'); } catch(e) {} // V62
+    try { sessionStorage.removeItem('compassoRoadmapVisao'); } catch(e) {} // V64
     renderRoadmap();
 }
 
@@ -130,7 +134,23 @@ async function renderRoadmap() {
     // aplicado antes do filtro de acesso por área/perfil.
     if (typeof montarSeletorAF === 'function') modoAFRoadmap = montarSeletorAF('roadmapSeletorAF', modoAFRoadmap);
     renderFaixaAFSelecionado('roadmapFaixaAFSelecionado', modoAFRoadmap);
-    if (!_roadmapRenderandoDoFiltro) { // V62 — restaurar filtros salvos ao voltar pra aba (não durante interação do usuário)
+    if (!_roadmapRenderandoDoFiltro) { // V62/V64 — restaurar visão e filtros ao voltar pra aba
+        // V64 — restaurar visão antes de popular options do select de dimensão
+        try {
+            const savedVisao = sessionStorage.getItem('compassoRoadmapVisao');
+            if (savedVisao && savedVisao !== roadmapVisaoAtual && ['fase','area','responsavel','iniciativa'].includes(savedVisao)) {
+                roadmapVisaoAtual = savedVisao;
+                ['fase','area','responsavel','iniciativa'].forEach(v => {
+                    const btn = document.getElementById(`roadmapBtn${v.charAt(0).toUpperCase() + v.slice(1)}`);
+                    if (btn) { btn.classList.toggle('bg-indigo-600', v === savedVisao); btn.classList.toggle('text-white', v === savedVisao); btn.classList.toggle('bg-gray-100', v !== savedVisao); btn.classList.toggle('text-gray-600', v !== savedVisao); }
+                });
+                const wrapDim = document.getElementById('roadmapFiltroDimensaoWrapper');
+                const cfgDim = CONFIG_FILTRO_DIMENSAO_ROADMAP[savedVisao];
+                if (wrapDim) wrapDim.classList.toggle('hidden', !cfgDim);
+                if (cfgDim) { document.getElementById('roadmapFiltroDimensaoLabel').innerText = cfgDim.label; popularFiltroDimensaoRoadmap(savedVisao, cfgDim); }
+            }
+        } catch(e) {}
+        // V62 — restaurar valores dos filtros (após options do select de dimensão estarem prontas)
         restaurarFiltrosSession('compassoFiltros_roadmap', ['roadmapFiltroDimensaoSelect','roadmapFiltroSaude','roadmapFiltroFase','roadmapFiltroBuscaProjeto']);
         filtroDimensaoRoadmap = (document.getElementById('roadmapFiltroDimensaoSelect') || {}).value || '';
         filtroBuscaProjetoRoadmap = ((document.getElementById('roadmapFiltroBuscaProjeto') || {}).value || '').trim();
