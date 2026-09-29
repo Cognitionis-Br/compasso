@@ -105,6 +105,7 @@ function _wsRenderAbaBotoes() {
 async function mudarAbaWorkspace(aba) {
     _wsAbaAtual = aba;
     try { if (_wsProjetoAtual) sessionStorage.setItem(`compassoWsAba_${_wsProjetoAtual}`, aba); } catch(e) {} // V68
+    try { const p = (projectsData || []).find(x => x.codigo === _wsProjetoAtual); const abaLabel = WS_ABA_LABELS[aba] || aba; document.title = p ? `Compasso — ${p.nome} / ${abaLabel}` : 'Compasso'; } catch(e) {} // V71
     WS_ABAS.forEach(a => {
         const painel = document.getElementById(`wsAba_${a}`);
         if (painel) painel.classList.toggle('hidden', a !== aba);
