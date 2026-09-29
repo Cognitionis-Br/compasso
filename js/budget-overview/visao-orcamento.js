@@ -13,6 +13,12 @@
 let _visaoOrcUltimaLista = []; // V25 — cache para exportação CSV
 let visaoOrcOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V45
 
+function limparFiltrosVisaoOrcamento() { // V56
+    const s = document.getElementById('visaoOrcFiltroSemaforo'); if (s) s.value = '';
+    const b = document.getElementById('visaoOrcBuscaInput'); if (b) b.value = '';
+    renderVisaoOrcamentoView();
+}
+
 function ordenarVisaoOrcamento(campo) {
     if (visaoOrcOrdenacaoAtual.campo === campo) {
         visaoOrcOrdenacaoAtual.direcao = visaoOrcOrdenacaoAtual.direcao === 'asc' ? 'desc' : 'asc';

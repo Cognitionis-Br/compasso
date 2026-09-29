@@ -95,6 +95,14 @@ function onFiltroCronogramaChange() {
     renderCronogramaConteudo();
 }
 
+function limparFiltrosCronograma() { // V56
+    ['cronogramaFiltroAreaSelect', 'cronogramaFiltroFaseSelect', 'cronogramaFiltroResponsavelSelect', 'cronogramaFiltroFarolSelect'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    const b = document.getElementById('cronogramaFiltroBuscaInput'); if (b) b.value = '';
+    onFiltroCronogramaChange();
+}
+
 function popularBuscaCronograma(linhas) { // V51
     const dl = document.getElementById('cronogramaFiltroBuscaLista');
     if (!dl) return;

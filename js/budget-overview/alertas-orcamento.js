@@ -146,6 +146,14 @@ function renderAlertasOrcamentoView() {
     _alertasUltimaLista = linhasFiltradas; // V44
 }
 
+function limparFiltrosAlertas() { // V56
+    ['alertasFiltroArea', 'alertasFiltroNivel'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    const b = document.getElementById('alertasBuscaInput'); if (b) b.value = '';
+    onFiltroAlertasChange();
+}
+
 function renderKPIBarAlertas(linhas) { // V53
     const el = document.getElementById('alertasKPIBar');
     if (!el) return;

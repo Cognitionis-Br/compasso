@@ -10,6 +10,14 @@
 // tela de Dashboard.
 // =========================================================================
 
+function limparFiltrosConsulta() { // V56
+    ['consultaFiltroArea', 'consultaFiltroFase', 'consultaFiltroStatus', 'consultaFiltroSaude'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    const b = document.getElementById('consultaBuscaInput'); if (b) b.value = '';
+    renderConsultaProjetos();
+}
+
 function popularBuscaConsulta(lista) { // V50
     const dl = document.getElementById('consultaBuscaLista');
     if (!dl) return;

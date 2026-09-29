@@ -921,6 +921,9 @@
                                 <input type="text" id="portExecBuscaInput" list="portExecBuscaLista" oninput="renderPortfolioExecutivoView()" placeholder="Código ou nome..." class="p-2 border border-gray-300 rounded text-xs bg-white w-44">
                                 <datalist id="portExecBuscaLista"></datalist>
                             </div>
+                            <div class="pb-2">
+                                <button onclick="limparFiltrosPortfolioExecutivo()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar</button>
+                            </div>
                         </div>
                     </div>
                     <div id="portExecFaixaAF" class="mb-4"></div>
@@ -1192,6 +1195,9 @@
                                 <datalist id="consultaBuscaLista"></datalist>
                             </div>
                         </div>
+                        <div class="flex justify-end -mt-2 mb-2">
+                            <button onclick="limparFiltrosConsulta()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar filtros</button>
+                        </div>
                         <div id="consultaKPIBar" class="mb-4"></div>
                         <div class="overflow-x-auto hidden md:block">
                             <table class="w-full text-left border-collapse text-sm">
@@ -1336,6 +1342,9 @@
                                 <input type="text" id="visaoOrcBuscaInput" list="visaoOrcBuscaLista" oninput="renderVisaoOrcamentoView()" placeholder="Código ou nome..." class="p-2 border border-gray-300 rounded text-xs bg-white w-44">
                                 <datalist id="visaoOrcBuscaLista"></datalist>
                             </div>
+                            <div class="pb-2">
+                                <button onclick="limparFiltrosVisaoOrcamento()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar</button>
+                            </div>
                         </div>
                     </div>
 
@@ -1402,6 +1411,9 @@
                             <input type="text" id="alertasBuscaInput" list="alertasBuscaLista" oninput="onFiltroAlertasChange()" placeholder="Código ou nome..." class="p-2 border border-gray-300 rounded text-xs bg-white">
                             <datalist id="alertasBuscaLista"></datalist>
                         </div>
+                        <div class="self-end pb-2">
+                            <button onclick="limparFiltrosAlertas()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar</button>
+                        </div>
                     </div>
                     <div id="alertasKPIBar" class="mb-4"></div>
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
@@ -1463,6 +1475,9 @@
                             <input type="text" id="cronogramaFiltroBuscaInput" list="cronogramaFiltroBuscaLista" oninput="onFiltroCronogramaChange()" placeholder="Código ou nome..." class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
                             <datalist id="cronogramaFiltroBuscaLista"></datalist>
                         </div>
+                    </div>
+                    <div class="flex justify-end -mt-2 mb-2">
+                        <button onclick="limparFiltrosCronograma()" class="text-[10px] font-bold text-gray-400 hover:text-gray-700 uppercase underline">× Limpar filtros</button>
                     </div>
 
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

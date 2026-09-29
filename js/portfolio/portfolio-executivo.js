@@ -13,6 +13,14 @@ let modoAFPortfolioExecutivo = null;
 let _portExecUltimaLista = []; // V25 — cache para exportação CSV
 let portExecOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V35
 
+function limparFiltrosPortfolioExecutivo() { // V56
+    ['portExecFiltroArea', 'portExecFiltroFase', 'portExecFiltroSaude'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    const b = document.getElementById('portExecBuscaInput'); if (b) b.value = '';
+    renderPortfolioExecutivoView();
+}
+
 function popularBuscaPortfolio(lista) { // V50
     const dl = document.getElementById('portExecBuscaLista');
     if (!dl) return;
