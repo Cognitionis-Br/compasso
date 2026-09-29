@@ -18,6 +18,7 @@ let cronogramaFiltroFase = '';
 let cronogramaFiltroResponsavel = '';
 let cronogramaFiltroFarol = '';
 let cronogramaLinhasCache = [];
+let _cronogramaUltimaLista = []; // V41 — cache para exportação CSV
 
 async function renderCronogramaEvolucaoView() {
     const { data, error } = await _supabase.from('projeto_etapas').select('*');
@@ -170,7 +171,36 @@ function renderCronogramaConteudo() {
         if (cardsBody) cardsBody.innerHTML = cartoes;
     }
 
+    _cronogramaUltimaLista = linhasParaExibir; // V41
+
     renderResponsaveisSemAtualizacao(linhasFiltradas);
+}
+
+// V41 — Exportação CSV da lista filtrada atual (Fase + Responsável + Farol)
+function exportarCronogramaCSV() {
+    if (!_cronogramaUltimaLista.length) return alert('Nenhuma linha no cronograma atual para exportar.');
+    exportarCSV(
+        ['Código', 'Projeto', 'Etapa', 'Responsável', 'Início', 'Fim', '% Previsto', '% Real', 'Farol'],
+        _cronogramaUltimaLista.map(l => {
+            const p = l.projeto, pe = l.pe;
+            const farolLabel = l.farolNivel === null ? 'A Planejar'
+                : l.farolNivel === 'vermelho' ? 'Crítico'
+                : l.farolNivel === 'amarelo' ? 'Atenção'
+                : 'No Prazo';
+            return [
+                p.codigo || '',
+                p.nome || '',
+                l.etapa.etapa || '',
+                pe ? (pe.responsavel_etapa_nome || '') : '',
+                pe ? (pe.data_inicio_planejamento || '') : '',
+                pe ? (pe.data_termino_planejamento || '') : '',
+                l.farolAlerta ? l.farolAlerta.percentualPrevisto : '',
+                pe ? (pe.percentual_evolucao || 0) : '',
+                farolLabel
+            ];
+        }),
+        'cronograma_evolucao'
+    );
 }
 
 function renderResponsaveisSemAtualizacao(linhas) {

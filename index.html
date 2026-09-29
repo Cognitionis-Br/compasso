@@ -1361,9 +1361,12 @@
 
                 <!-- TELA: CRONOGRAMA & EVOLUÇÃO -->
                 <div id="view-cronograma_evolucao" class="tab-content hidden">
-                    <div class="mb-6 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-gauge-high text-indigo-600"></i> Cronograma & Evolução</h2>
-                        <p class="text-xs text-gray-500 mt-1">Visão consolidada de todas as fases: compara o % de evolução previsto (pelo período do prazo) com o % registrado.</p>
+                    <div class="mb-6 border-b pb-2 flex items-end justify-between">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-gauge-high text-indigo-600"></i> Cronograma & Evolução</h2>
+                            <p class="text-xs text-gray-500 mt-1">Visão consolidada de todas as fases: compara o % de evolução previsto (pelo período do prazo) com o % registrado.</p>
+                        </div>
+                        <button onclick="exportarCronogramaCSV()" class="shrink-0 text-xs font-bold text-indigo-700 hover:text-indigo-900"><i class="fa-solid fa-file-csv mr-1"></i>Exportar CSV</button>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
