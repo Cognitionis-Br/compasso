@@ -1299,6 +1299,15 @@
                                     <option value="todos">Todos os Anos Fiscais</option>
                                 </select>
                             </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Semáforo</label>
+                                <select id="visaoOrcFiltroSemaforo" onchange="onFiltroSemaforoVisaoOrc()" class="p-2 border border-gray-300 rounded text-xs bg-white">
+                                    <option value="">-- Todos --</option>
+                                    <option value="VERDE">Verde (&lt;10%)</option>
+                                    <option value="AMARELO">Amarelo (10–20%)</option>
+                                    <option value="VERMELHO">Vermelho (&gt;20%)</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
 
@@ -1311,6 +1320,7 @@
                     <div id="visaoSeletorAgrupamento"></div>
                     <div id="visaoQuadroOrcamento" class="mb-6"></div>
 
+                    <div id="visaoOrcKPISemaforo" class="mb-4"></div>
                     <div class="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
                         <div class="overflow-x-auto hidden md:block">
                             <table class="w-full text-left border-collapse text-sm">

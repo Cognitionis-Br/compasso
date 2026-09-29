@@ -85,36 +85,63 @@ async function renderVisaoOrcamentoView() {
         return true;
     });
 
+    const kpiSem = document.getElementById('visaoOrcKPISemaforo');
+
     if (projetosVisiveis.length === 0) {
         tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-400 font-bold">Nenhum projeto com orçamento inicial aprovado</td></tr>`;
         const cardsVazio = document.getElementById('visaoOrcamentoCardsBody');
         if (cardsVazio) cardsVazio.innerHTML = `<div class="p-4 text-center text-gray-400 font-bold text-sm">Nenhum projeto com orçamento inicial aprovado</div>`;
+        if (kpiSem) kpiSem.innerHTML = '';
+        return;
+    }
+
+    // V43 — pré-computar semáforo para todos (KPI de contagem + filtro)
+    const projetosComSemaforo = projetosVisiveis.map(p => {
+        const valBc = Number(p.val_bc) || Number(p.previsto) || 0;
+        const valReq = Number(p.val_req) || 0;
+        const valTech = Number(p.val_tech) || 0;
+        const valFinal = valTech > 0 ? valTech : (valReq > 0 ? valReq : valBc);
+        const diffPct = valBc > 0 ? ((valFinal - valBc) / valBc) * 100 : 0;
+        const absDiff = Math.abs(diffPct);
+        const semaforo = absDiff < 10 ? 'VERDE' : absDiff <= 20 ? 'AMARELO' : 'VERMELHO';
+        return { p, diffPct, semaforo };
+    });
+
+    if (kpiSem) {
+        const nVerde = projetosComSemaforo.filter(x => x.semaforo === 'VERDE').length;
+        const nAmarelo = projetosComSemaforo.filter(x => x.semaforo === 'AMARELO').length;
+        const nVermelho = projetosComSemaforo.filter(x => x.semaforo === 'VERMELHO').length;
+        const kpi = (label, n, corTopo, corDot) => `<div class="bg-white rounded-lg border border-gray-200 border-t-4 ${corTopo} p-3 flex items-center gap-2"><span class="w-3 h-3 rounded-full ${corDot} flex-shrink-0"></span><div><div class="text-[10px] font-bold uppercase text-gray-400">${label}</div><div class="text-lg font-extrabold text-gray-900">${n}</div></div></div>`;
+        kpiSem.innerHTML = `<div class="grid grid-cols-3 gap-3">${kpi('Verde', nVerde, 'border-t-emerald-500', 'bg-emerald-500')}${kpi('Amarelo', nAmarelo, 'border-t-amber-500', 'bg-amber-500')}${kpi('Vermelho', nVermelho, 'border-t-danger-500', 'bg-danger-500')}</div>`;
+    }
+
+    const filtroSemaforoAtual = (document.getElementById('visaoOrcFiltroSemaforo') || {}).value || '';
+    const projetosFiltrados = filtroSemaforoAtual
+        ? projetosComSemaforo.filter(x => x.semaforo === filtroSemaforoAtual)
+        : projetosComSemaforo;
+
+    if (projetosFiltrados.length === 0) {
+        const msgVazia = 'Nenhum projeto com esse semaforo no filtro atual';
+        tbody.innerHTML = `<tr><td colspan="8" class="p-4 text-center text-gray-400 font-bold">${msgVazia}</td></tr>`;
+        const cardsVazio = document.getElementById('visaoOrcamentoCardsBody');
+        if (cardsVazio) cardsVazio.innerHTML = `<div class="p-4 text-center text-gray-400 font-bold text-sm">${msgVazia}</div>`;
+        _visaoOrcUltimaLista = [];
         return;
     }
 
     let linhasTabela = '';
     let cartoes = '';
 
-    projetosVisiveis.forEach(p => {
+    projetosFiltrados.forEach(({ p, diffPct, semaforo }) => {
         const valBc = Number(p.val_bc) || Number(p.previsto) || 0;
         const valReq = Number(p.val_req) || 0;
         const valTech = Number(p.val_tech) || 0;
-
-        const valFinal = valTech > 0 ? valTech : (valReq > 0 ? valReq : valBc);
-
-        let diffPct = 0;
-        if (valBc > 0) {
-            diffPct = ((valFinal - valBc) / valBc) * 100;
-        }
-
-        const absDiffPct = Math.abs(diffPct);
         let semaforoHtml = '';
         let corCartao = '';
-
-        if (absDiffPct < 10) {
+        if (semaforo === 'VERDE') {
             semaforoHtml = `<span class="px-2 py-1 bg-emerald-100 text-emerald-800 rounded font-bold flex items-center justify-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> VERDE (${diffPct.toFixed(1)}%)</span>`;
             corCartao = 'border-l-4 border-l-emerald-500';
-        } else if (absDiffPct >= 10 && absDiffPct <= 20) {
+        } else if (semaforo === 'AMARELO') {
             semaforoHtml = `<span class="px-2 py-1 bg-amber-100 text-amber-800 rounded font-bold flex items-center justify-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> AMARELO (${diffPct.toFixed(1)}%)</span>`;
             corCartao = 'border-l-4 border-l-amber-500';
         } else {
@@ -159,7 +186,11 @@ async function renderVisaoOrcamentoView() {
     tbody.innerHTML = linhasTabela;
     const cardsBody = document.getElementById('visaoOrcamentoCardsBody');
     if (cardsBody) cardsBody.innerHTML = cartoes;
-    _visaoOrcUltimaLista = projetosVisiveis; // V25
+    _visaoOrcUltimaLista = projetosFiltrados.map(x => x.p); // V43
+}
+
+function onFiltroSemaforoVisaoOrc() {
+    renderVisaoOrcamentoView();
 }
 
 // V25 — Exportação CSV da lista filtrada atual
