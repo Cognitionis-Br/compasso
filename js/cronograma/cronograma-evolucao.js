@@ -20,6 +20,21 @@ let cronogramaFiltroResponsavel = '';
 let cronogramaFiltroFarol = '';
 let cronogramaLinhasCache = [];
 let _cronogramaUltimaLista = []; // V41 — cache para exportação CSV
+let cronogramaOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V47
+
+function ordenarCronograma(campo) {
+    if (cronogramaOrdenacaoAtual.campo === campo) {
+        cronogramaOrdenacaoAtual.direcao = cronogramaOrdenacaoAtual.direcao === 'asc' ? 'desc' : 'asc';
+    } else {
+        cronogramaOrdenacaoAtual.campo = campo;
+        cronogramaOrdenacaoAtual.direcao = 'asc';
+    }
+    ['responsavel', 'farol'].forEach(c => {
+        const el = document.getElementById(`ordArrowCronograma-${c}`);
+        if (el) el.innerText = c === campo ? (cronogramaOrdenacaoAtual.direcao === 'asc' ? '▲' : '▼') : '';
+    });
+    renderCronogramaConteudo();
+}
 
 async function renderCronogramaEvolucaoView() {
     const { data, error } = await _supabase.from('projeto_etapas').select('*');
@@ -118,6 +133,24 @@ function renderCronogramaConteudo() {
     const linhasParaExibir = cronogramaFiltroFarol
         ? linhasComFarol.filter(l => (cronogramaFiltroFarol === 'aplanejar' ? l.farolNivel === null : l.farolNivel === cronogramaFiltroFarol))
         : linhasComFarol;
+
+    // V47 — ordenação clicável (Responsável e Farol)
+    const FAROL_ORDEM_CRON = { vermelho: 0, amarelo: 1, ok: 2 };
+    if (cronogramaOrdenacaoAtual.campo !== 'padrao') {
+        linhasParaExibir.sort((a, b) => {
+            let va, vb;
+            if (cronogramaOrdenacaoAtual.campo === 'responsavel') {
+                va = (a.pe ? (a.pe.responsavel_etapa_nome || '') : '').toUpperCase();
+                vb = (b.pe ? (b.pe.responsavel_etapa_nome || '') : '').toUpperCase();
+            } else if (cronogramaOrdenacaoAtual.campo === 'farol') {
+                va = a.farolNivel === null ? 3 : (FAROL_ORDEM_CRON[a.farolNivel] ?? 99);
+                vb = b.farolNivel === null ? 3 : (FAROL_ORDEM_CRON[b.farolNivel] ?? 99);
+            }
+            if (va < vb) return cronogramaOrdenacaoAtual.direcao === 'asc' ? -1 : 1;
+            if (va > vb) return cronogramaOrdenacaoAtual.direcao === 'asc' ? 1 : -1;
+            return 0;
+        });
+    }
 
     const tbody = document.getElementById('cronogramaTableBody');
     if (!tbody) return;
