@@ -11,6 +11,21 @@
 // registrado na auditoria, ainda não implementada.
 // =========================================================================
 let _visaoOrcUltimaLista = []; // V25 — cache para exportação CSV
+let visaoOrcOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V45
+
+function ordenarVisaoOrcamento(campo) {
+    if (visaoOrcOrdenacaoAtual.campo === campo) {
+        visaoOrcOrdenacaoAtual.direcao = visaoOrcOrdenacaoAtual.direcao === 'asc' ? 'desc' : 'asc';
+    } else {
+        visaoOrcOrdenacaoAtual.campo = campo;
+        visaoOrcOrdenacaoAtual.direcao = campo === 'variacao' ? 'desc' : 'asc';
+    }
+    ['projeto', 'variacao', 'semaforo'].forEach(c => {
+        const el = document.getElementById(`ordArrowVisaoOrc-${c}`);
+        if (el) el.innerText = c === campo ? (visaoOrcOrdenacaoAtual.direcao === 'asc' ? '▲' : '▼') : '';
+    });
+    renderVisaoOrcamentoView();
+}
 
 async function renderVisaoOrcamentoView() {
     const tbody = document.getElementById('visaoOrcamentoTableBody');
@@ -127,6 +142,20 @@ async function renderVisaoOrcamentoView() {
         if (cardsVazio) cardsVazio.innerHTML = `<div class="p-4 text-center text-gray-400 font-bold text-sm">${msgVazia}</div>`;
         _visaoOrcUltimaLista = [];
         return;
+    }
+
+    // V45 — ordenação clicável
+    const SEMAFORO_ORDEM = { VERMELHO: 0, AMARELO: 1, VERDE: 2 };
+    if (visaoOrcOrdenacaoAtual.campo !== 'padrao') {
+        projetosFiltrados.sort((a, b) => {
+            let va, vb;
+            if (visaoOrcOrdenacaoAtual.campo === 'projeto') { va = (a.p.nome || '').toUpperCase(); vb = (b.p.nome || '').toUpperCase(); }
+            else if (visaoOrcOrdenacaoAtual.campo === 'variacao') { va = Math.abs(a.diffPct); vb = Math.abs(b.diffPct); }
+            else if (visaoOrcOrdenacaoAtual.campo === 'semaforo') { va = SEMAFORO_ORDEM[a.semaforo] ?? 99; vb = SEMAFORO_ORDEM[b.semaforo] ?? 99; }
+            if (va < vb) return visaoOrcOrdenacaoAtual.direcao === 'asc' ? -1 : 1;
+            if (va > vb) return visaoOrcOrdenacaoAtual.direcao === 'asc' ? 1 : -1;
+            return 0;
+        });
     }
 
     let linhasTabela = '';

@@ -1327,13 +1327,13 @@
                                 <thead>
                                     <tr class="bg-gray-50 text-gray-700 font-semibold border-b text-xs uppercase">
                                         <th class="p-3">Código</th>
-                                        <th class="p-3">Projeto</th>
+                                        <th class="p-3 cursor-pointer hover:text-gray-800 select-none" onclick="ordenarVisaoOrcamento('projeto')">Projeto <span id="ordArrowVisaoOrc-projeto"></span></th>
                                         <th class="p-3 text-center">Porte</th>
                                         <th class="p-3 text-right">Orçamento Original (BC)</th>
                                         <th class="p-3 text-right">Pós-Requisitos</th>
                                         <th class="p-3 text-right">Pós-Especificação</th>
-                                        <th class="p-3 text-right">Variação (%)</th>
-                                        <th class="p-3 text-center">Saúde</th>
+                                        <th class="p-3 text-right cursor-pointer hover:text-gray-800 select-none" onclick="ordenarVisaoOrcamento('variacao')">Variação (%) <span id="ordArrowVisaoOrc-variacao"></span></th>
+                                        <th class="p-3 text-center cursor-pointer hover:text-gray-800 select-none" onclick="ordenarVisaoOrcamento('semaforo')">Saúde <span id="ordArrowVisaoOrc-semaforo"></span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="visaoOrcamentoTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
