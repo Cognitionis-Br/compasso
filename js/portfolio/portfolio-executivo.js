@@ -166,10 +166,33 @@ async function renderPortfolioExecutivoView() {
             `).join('')}
         </div>
     `;
+    renderKPIBarPortfolioExecutivo(comSaude); // V63
     _portExecUltimaLista = comSaude; // V25
     atualizarContador('portExecContador', comSaude.length, portExecTotal, 'projetos'); // V57
     marcarFiltrosAtivos(['portExecFiltroArea','portExecFiltroFase','portExecFiltroSaude'], ['portExecBuscaInput']); // V58
     salvarFiltrosSession('compassoFiltros_portfolio', ['portExecFiltroArea','portExecFiltroFase','portExecFiltroSaude','portExecBuscaInput']); // V60
+}
+
+function renderKPIBarPortfolioExecutivo(lista) { // V63
+    const el = document.getElementById('portExecKPIBar');
+    if (!el) return;
+    const total    = lista.length;
+    const saudavel = lista.filter(({ saude }) => saude.status === 'SAUDAVEL').length;
+    const atencao  = lista.filter(({ saude }) => saude.status === 'ATENCAO').length;
+    const critico  = lista.filter(({ saude }) => saude.status === 'CRITICO').length;
+    const outros   = lista.filter(({ saude }) => ['HOLD','INATIVO'].includes(saude.status)).length;
+    const tile = (num, label, cor, borda) => `
+        <div class="bg-white rounded-lg border border-gray-200 border-t-4 ${borda} p-3 text-center shadow-sm">
+            <div class="text-2xl font-black ${cor}">${num}</div>
+            <div class="text-[10px] font-bold uppercase text-gray-500 mt-0.5 leading-tight">${label}</div>
+        </div>`;
+    el.innerHTML = `<div class="grid grid-cols-5 gap-2">
+        ${tile(total,    'Total',          'text-gray-800',    'border-t-gray-400')}
+        ${tile(saudavel, 'Saudável',       'text-emerald-600', 'border-t-emerald-500')}
+        ${tile(atencao,  'Atenção',        'text-amber-600',   'border-t-amber-400')}
+        ${tile(critico,  'Crítico',        'text-danger-600',  'border-t-danger-500')}
+        ${tile(outros,   'Hold / Inativo', 'text-slate-500',   'border-t-slate-400')}
+    </div>`;
 }
 
 // V25 — Exportação CSV da lista filtrada atual
