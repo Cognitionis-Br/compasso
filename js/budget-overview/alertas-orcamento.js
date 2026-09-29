@@ -5,6 +5,8 @@
 // alertas gravados na conclusão de Requerimentos (req_alerta_variacao) e
 // de Technical (tech_alerta_variacao).
 // =========================================================================
+let _alertasUltimaLista = []; // V29 — cache para exportação CSV
+
 function renderAlertasOrcamentoView() {
     const tbody = document.getElementById('alertasOrcamentoTableBody');
     if (!tbody) return;
@@ -87,4 +89,25 @@ function renderAlertasOrcamentoView() {
     tbody.innerHTML = linhasTabela;
     const cardsBody = document.getElementById('alertasOrcamentoCardsBody');
     if (cardsBody) cardsBody.innerHTML = cartoes;
+    _alertasUltimaLista = linhas; // V29 — mantém lista para exportação
+}
+
+// V29 — Exportação CSV da lista de alertas atual
+function exportarAlertasOrcamentoCSV() {
+    if (!_alertasUltimaLista.length) return alert('Nenhum alerta de variação de orçamento no momento.');
+    exportarCSV(
+        ['Código', 'Nome', 'Área', 'Fase da Revisão', 'Nível', 'Variação (%)', 'BC (R$)', 'Requerimentos (R$)', 'Especificação (R$)'],
+        _alertasUltimaLista.map(({ p, fase, nivel, percentual }) => [
+            p.codigo || '',
+            p.nome || '',
+            p.area || '',
+            fase || '',
+            nivel ? nivel.toUpperCase() : '',
+            percentual || 0,
+            Number(p.val_bc) || Number(p.previsto) || 0,
+            Number(p.val_req) || 0,
+            Number(p.val_tech) || 0
+        ]),
+        'alertas_orcamento'
+    );
 }

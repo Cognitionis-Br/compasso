@@ -1280,8 +1280,13 @@
                 <!-- VISÃO: ALERTAS DE ORÇAMENTO (G7) -->
                 <div id="view-alertas_orcamento" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2">
-                        <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Alertas de Variação de Orçamento</h2>
-                        <p class="text-xs text-gray-500 mt-1">Projetos cuja conclusão de Requerimentos ou Especificação teve variação de orçamento acima de 10% em relação ao valor anterior.</p>
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2"><i class="fa-solid fa-triangle-exclamation text-amber-600"></i> Alertas de Variação de Orçamento</h2>
+                                <p class="text-xs text-gray-500 mt-1">Projetos cuja conclusão de Requerimentos ou Especificação teve variação de orçamento acima de 10% em relação ao valor anterior.</p>
+                            </div>
+                            <button onclick="exportarAlertasOrcamentoCSV()" class="shrink-0 text-xs font-bold text-indigo-700 hover:text-indigo-900 border border-indigo-300 hover:border-indigo-500 rounded px-3 py-1.5 bg-white mt-1">⬇ CSV</button>
+                        </div>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
                         <div class="overflow-x-auto hidden md:block">
