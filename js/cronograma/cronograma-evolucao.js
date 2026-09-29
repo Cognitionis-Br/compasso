@@ -18,6 +18,7 @@ let cronogramaFiltroArea = '';
 let cronogramaFiltroFase = '';
 let cronogramaFiltroResponsavel = '';
 let cronogramaFiltroFarol = '';
+let cronogramaFiltroBusca = ''; // V51
 let cronogramaLinhasCache = [];
 let _cronogramaUltimaLista = []; // V41 — cache para exportação CSV
 let cronogramaOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V47
@@ -90,14 +91,30 @@ function onFiltroCronogramaChange() {
     cronogramaFiltroFase = (document.getElementById('cronogramaFiltroFaseSelect') || {}).value || '';
     cronogramaFiltroResponsavel = (document.getElementById('cronogramaFiltroResponsavelSelect') || {}).value || '';
     cronogramaFiltroFarol = (document.getElementById('cronogramaFiltroFarolSelect') || {}).value || '';
+    cronogramaFiltroBusca = ((document.getElementById('cronogramaFiltroBuscaInput') || {}).value || '').trim().toUpperCase(); // V51
     renderCronogramaConteudo();
 }
 
+function popularBuscaCronograma(linhas) { // V51
+    const dl = document.getElementById('cronogramaFiltroBuscaLista');
+    if (!dl) return;
+    const vistos = new Set();
+    dl.innerHTML = (linhas || []).filter(l => {
+        if (vistos.has(l.projeto.codigo)) return false;
+        vistos.add(l.projeto.codigo); return true;
+    }).map(l => `<option value="${l.projeto.codigo} - ${escapeHtml(l.projeto.nome)}">`).join('');
+}
+
 function renderCronogramaConteudo() {
+    popularBuscaCronograma(cronogramaLinhasCache); // V51 — datalist antes do filtro de texto
     const linhasFiltradas = cronogramaLinhasCache.filter(l => {
         if (cronogramaFiltroArea && (l.projeto.area || '') !== cronogramaFiltroArea) return false;
         if (cronogramaFiltroFase && l.etapa.fase !== cronogramaFiltroFase) return false;
         if (cronogramaFiltroResponsavel && (!l.pe || l.pe.responsavel_etapa_nome !== cronogramaFiltroResponsavel)) return false;
+        if (cronogramaFiltroBusca) { // V51
+            const cod = (l.projeto.codigo || '').toUpperCase(), nom = (l.projeto.nome || '').toUpperCase();
+            if (!cod.includes(cronogramaFiltroBusca) && !nom.includes(cronogramaFiltroBusca) && !cronogramaFiltroBusca.includes(cod)) return false;
+        }
         return true;
     });
 
