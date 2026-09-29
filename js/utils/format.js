@@ -60,6 +60,26 @@ function escapeHtml(valor) {
 // string JS ao ser interpretado), DEPOIS escapa pra HTML (senão o texto
 // quebra o próprio atributo antes do HTML chegar a virar JS) — sem as
 // duas, dá pra escapar da string e injetar JS arbitrário no clique.
+// V58 — destaque visual em selects e inputs com filtro ativo.
+// Adiciona borda indigo + fundo tênue quando tem valor; restaura
+// border-gray-300 quando vazio. Funciona em <select> e <input text>.
+function marcarFiltrosAtivos(seletores, textos) {
+    const ATIVO = ['border-indigo-400', 'bg-indigo-50'];
+    const INATIVO = ['border-gray-300'];
+    [...(seletores || []), ...(textos || [])].forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const temValor = (el.value || '').trim() !== '';
+        if (temValor) {
+            el.classList.remove(...INATIVO);
+            el.classList.add(...ATIVO);
+        } else {
+            el.classList.remove(...ATIVO);
+            el.classList.add(...INATIVO);
+        }
+    });
+}
+
 // V57 — contador de resultados filtrados nos filter bars de portfólio.
 // Mostra "X de Y unidade" quando filtrado < total, ou "Y unidade" quando
 // não há filtro ativo; oculta quando total é zero.

@@ -165,6 +165,7 @@ async function renderPortfolioExecutivoView() {
     `;
     _portExecUltimaLista = comSaude; // V25
     atualizarContador('portExecContador', comSaude.length, portExecTotal, 'projetos'); // V57
+    marcarFiltrosAtivos(['portExecFiltroArea','portExecFiltroFase','portExecFiltroSaude'], ['portExecBuscaInput']); // V58
 }
 
 // V25 — Exportação CSV da lista filtrada atual

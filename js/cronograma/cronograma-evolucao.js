@@ -243,6 +243,7 @@ function renderCronogramaConteudo() {
 
     _cronogramaUltimaLista = linhasParaExibir; // V41
     atualizarContador('cronogramaContador', linhasParaExibir.length, cronogramaLinhasCache.length, 'etapas'); // V57
+    marcarFiltrosAtivos(['cronogramaFiltroAreaSelect','cronogramaFiltroFaseSelect','cronogramaFiltroResponsavelSelect','cronogramaFiltroFarolSelect'], ['cronogramaFiltroBuscaInput']); // V58
 
     renderResponsaveisSemAtualizacao(linhasFiltradas);
 }

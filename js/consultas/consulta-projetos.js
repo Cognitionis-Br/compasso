@@ -186,6 +186,7 @@ async function renderConsultaProjetos() {
     if (cardsBody) cardsBody.innerHTML = cartoes;
     _consultaUltimaLista = projetosComSaude; // V24 — mantém lista filtrada para exportação
     atualizarContador('consultaContador', projetosComSaude.length, projectsDataFiltrado.length, 'projetos'); // V57
+    marcarFiltrosAtivos(['consultaFiltroArea','consultaFiltroFase','consultaFiltroStatus','consultaFiltroSaude'], ['consultaBuscaInput']); // V58
 }
 
 // V24 — Exportação CSV da lista filtrada atual (AF + Área + Fase + Status)

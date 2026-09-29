@@ -156,6 +156,7 @@ async function renderRoadmap() {
     }
     _roadmapUltimaLista = baseFiltrada; // V26 — mantém lista filtrada para exportação
     atualizarContador('roadmapContador', baseFiltrada.length, roadmapTotal, 'projetos'); // V57
+    marcarFiltrosAtivos(['roadmapFiltroDimensaoSelect','roadmapFiltroSaude','roadmapFiltroFase'], ['roadmapFiltroBuscaProjeto']); // V58
 
     if (roadmapVisaoAtual === 'area') {
         renderRoadmapAgrupado(container, baseFiltrada, 'area', 'Área');

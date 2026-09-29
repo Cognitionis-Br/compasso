@@ -232,6 +232,7 @@ async function renderVisaoOrcamentoView() {
     if (cardsBody) cardsBody.innerHTML = cartoes;
     _visaoOrcUltimaLista = projetosFiltrados.map(x => x.p); // V43
     atualizarContador('visaoOrcContador', projetosFiltrados.length, projetosComSemaforo.length, 'projetos'); // V57
+    marcarFiltrosAtivos(['visaoOrcFiltroSemaforo'], ['visaoOrcBuscaInput']); // V58
 }
 
 function popularBuscaVisaoOrc(lista) { // V52

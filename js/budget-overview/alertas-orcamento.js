@@ -145,6 +145,7 @@ function renderAlertasOrcamentoView() {
     if (cardsBody) cardsBody.innerHTML = cartoes;
     _alertasUltimaLista = linhasFiltradas; // V44
     atualizarContador('alertasContador', linhasFiltradas.length, linhas.length, 'alertas'); // V57
+    marcarFiltrosAtivos(['alertasFiltroArea','alertasFiltroNivel'], ['alertasBuscaInput']); // V58
 }
 
 function limparFiltrosAlertas() { // V56
