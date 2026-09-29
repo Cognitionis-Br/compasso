@@ -70,10 +70,13 @@ async function renderConsultaProjetos() {
 
     const cardsBody = document.getElementById('consultaCardsBody');
 
+    const kpiBar = document.getElementById('consultaKPIBar');
+
     if (projetosFiltrados.length === 0) {
         const msgVazia = projectsDataFiltrado.length === 0 ? 'Nenhum projeto cadastrado no portfólio' : 'Nenhum projeto encontrado com esses filtros';
         tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-gray-400 font-bold">${msgVazia}</td></tr>`;
         if (cardsBody) cardsBody.innerHTML = `<div class="p-4 text-center text-gray-400 font-bold text-sm">${msgVazia}</div>`;
+        if (kpiBar) kpiBar.innerHTML = '';
         return;
     }
 
@@ -84,8 +87,18 @@ async function renderConsultaProjetos() {
     if (projetosComSaude.length === 0) {
         tbody.innerHTML = `<tr><td colspan="10" class="p-4 text-center text-gray-400 font-bold">Nenhum projeto encontrado com esses filtros</td></tr>`;
         if (cardsBody) cardsBody.innerHTML = `<div class="p-4 text-center text-gray-400 font-bold text-sm">Nenhum projeto encontrado com esses filtros</div>`;
+        if (kpiBar) kpiBar.innerHTML = '';
         _consultaUltimaLista = [];
         return;
+    }
+
+    // V39 — KPI bar: resumo da lista filtrada atual
+    if (kpiBar) {
+        const totalInv = projetosComSaude.reduce((acc, { p }) => acc + (Number(p.val_tech) || Number(p.val_req) || Number(p.val_bc) || Number(p.previsto) || 0), 0);
+        const totalReal = projetosComSaude.reduce((acc, { p }) => acc + (Number(p.realizado) || 0), 0);
+        const totalCrit = projetosComSaude.filter(({ saude }) => saude.status === 'CRITICO').length;
+        const kpi = (rotulo, valor, cor) => `<div class="bg-white rounded-lg border border-gray-200 border-t-4 ${cor} p-3"><div class="text-[10px] font-bold uppercase text-gray-400">${rotulo}</div><div class="text-lg font-extrabold text-gray-900 mt-1">${valor}</div></div>`;
+        kpiBar.innerHTML = `<div class="grid grid-cols-2 md:grid-cols-4 gap-3">${kpi('Projetos', projetosComSaude.length, 'border-t-gray-400')}${kpi('Investimento', formatCurrency(totalInv), 'border-t-indigo-500')}${kpi('Realizado', formatCurrency(totalReal), 'border-t-blue-500')}${kpi('Críticos', totalCrit, totalCrit > 0 ? 'border-t-danger-500' : 'border-t-emerald-500')}</div>`;
     }
 
     if (consultaOrdenacaoAtual.campo === 'padrao') {
