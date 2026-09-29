@@ -52,14 +52,15 @@ async function renderPortfolioExecutivoView() {
             <table class="w-full text-left text-xs">
                 <thead><tr class="bg-gray-50 uppercase text-[10px] text-gray-500 border-b">
                     <th class="p-3">Código</th><th class="p-3">Projeto</th><th class="p-3">Área</th>
-                    <th class="p-3">Fase</th><th class="p-3 text-right">Investimento</th><th class="p-3">Saúde</th>
+                    <th class="p-3">Responsável</th><th class="p-3">Fase</th><th class="p-3 text-right">Investimento</th><th class="p-3">Saúde</th>
                 </tr></thead>
                 <tbody class="divide-y divide-gray-100">
-                    ${comSaude.length === 0 ? '<tr><td colspan="6" class="p-6 text-center text-gray-400 italic">Nenhum projeto no filtro atual.</td></tr>' : comSaude.map(({ p, saude }) => `
+                    ${comSaude.length === 0 ? '<tr><td colspan="7" class="p-6 text-center text-gray-400 italic">Nenhum projeto no filtro atual.</td></tr>' : comSaude.map(({ p, saude }) => `
                         <tr class="hover:bg-gray-50 cursor-pointer" onclick="abrirDetalheProjeto('${p.codigo}', 'portfolio_executivo')">
                             <td class="p-3 font-mono font-bold">${escapeHtml(p.codigo)}</td>
                             <td class="p-3">${escapeHtml(p.nome || '')}</td>
                             <td class="p-3">${escapeHtml(p.area || '-')}</td>
+                            <td class="p-3">${escapeHtml(p.pessoa_solicitante || '-')}</td>
                             <td class="p-3">${escapeHtml(p.etapa_atual || 'Business Case')}</td>
                             <td class="p-3 text-right font-mono">${formatCurrency(Number(p.val_tech) || Number(p.val_req) || Number(p.val_bc) || Number(p.previsto) || 0)}</td>
                             <td class="p-3">${saude.html}</td>
@@ -80,7 +81,7 @@ async function renderPortfolioExecutivoView() {
                         </div>
                         ${saude.html}
                     </div>
-                    <div class="text-[10px] text-gray-400">${escapeHtml(p.area || '-')} · ${escapeHtml(p.etapa_atual || 'Business Case')} · ${formatCurrency(Number(p.val_tech) || Number(p.val_req) || Number(p.val_bc) || Number(p.previsto) || 0)}</div>
+                    <div class="text-[10px] text-gray-400">${escapeHtml(p.area || '-')} · ${escapeHtml(p.pessoa_solicitante || '-')} · ${escapeHtml(p.etapa_atual || 'Business Case')} · ${formatCurrency(Number(p.val_tech) || Number(p.val_req) || Number(p.val_bc) || Number(p.previsto) || 0)}</div>
                 </div>
             `).join('')}
         </div>
@@ -92,11 +93,12 @@ async function renderPortfolioExecutivoView() {
 function exportarPortfolioExecutivoCSV() {
     if (!_portExecUltimaLista.length) return alert('Nenhum projeto na lista atual para exportar.');
     exportarCSV(
-        ['Código', 'Nome', 'Área', 'Fase', 'Investimento (R$)', 'Realizado (R$)', 'Saúde'],
+        ['Código', 'Nome', 'Área', 'Responsável', 'Fase', 'Investimento (R$)', 'Realizado (R$)', 'Saúde'],
         _portExecUltimaLista.map(({ p, saude }) => [
             p.codigo || '',
             p.nome || '',
             p.area || '',
+            p.pessoa_solicitante || '',
             p.etapa_atual || 'BUSINESS CASE',
             Number(p.val_tech) || Number(p.val_req) || Number(p.val_bc) || Number(p.previsto) || 0,
             Number(p.realizado) || 0,
