@@ -24,6 +24,7 @@ const WS_ABA_LABELS = {
 
 let _wsProjetoAtual = null;
 let _wsAbaAtual = 'visao_geral';
+let _wsOrigemTab = null; // V72 — aba de onde o usuário veio antes de entrar no Workspace
 let _wsCarregado = {};
 let _wsTarefas = [];
 let _wsView = 'lista';
@@ -35,6 +36,7 @@ let _wsAcaoPendente = null; // ver abrirWorkspaceProjeto — usado por notifica�
 // já aberto na tarefa certa), sem precisar duplicar a lógica de
 // carregamento aqui.
 function abrirWorkspaceProjeto(codigo, acaoPendente) {
+    _wsOrigemTab = (typeof abaAtualId !== 'undefined' && abaAtualId && abaAtualId !== 'workspace_projeto') ? abaAtualId : (_wsOrigemTab || 'meus_projetos'); // V72
     _wsProjetoAtual = codigo;
     try { const p = (projectsData || []).find(x => x.codigo === codigo); document.title = 'Compasso — ' + (p ? p.nome : codigo); } catch(e) {} // V70
     let _savedAba = null; // V68 — recordar última aba visitada por projeto
@@ -62,7 +64,7 @@ async function renderWorkspaceProjeto() {
 }
 
 function voltarDoWorkspace() {
-    switchTab('meus_projetos');
+    switchTab(_wsOrigemTab || 'meus_projetos'); // V72 — retorna à aba de origem
 }
 
 // -------------------------------------------------------------------------
