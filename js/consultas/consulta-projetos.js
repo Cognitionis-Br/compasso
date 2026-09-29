@@ -46,6 +46,28 @@ function popularFiltrosConsulta() {
 let consultaOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' };
 let _consultaUltimaLista = []; // V24 — cache para exportação CSV da lista filtrada atual
 
+function renderKPIBarConsulta(lista) { // V61
+    const el = document.getElementById('consultaKPIBar');
+    if (!el) return;
+    const total    = lista.length;
+    const saudavel = lista.filter(({ saude }) => saude.status === 'SAUDAVEL').length;
+    const atencao  = lista.filter(({ saude }) => saude.status === 'ATENCAO').length;
+    const critico  = lista.filter(({ saude }) => saude.status === 'CRITICO').length;
+    const outros   = lista.filter(({ saude }) => ['HOLD','INATIVO'].includes(saude.status)).length;
+    const tile = (num, label, cor, borda) => `
+        <div class="bg-white rounded-lg border border-gray-200 border-t-4 ${borda} p-3 text-center shadow-sm">
+            <div class="text-2xl font-black ${cor}">${num}</div>
+            <div class="text-[10px] font-bold uppercase text-gray-500 mt-0.5 leading-tight">${label}</div>
+        </div>`;
+    el.innerHTML = `<div class="grid grid-cols-5 gap-2">
+        ${tile(total,    'Total',          'text-gray-800',    'border-t-gray-400')}
+        ${tile(saudavel, 'Saudável',       'text-emerald-600', 'border-t-emerald-500')}
+        ${tile(atencao,  'Atenção',        'text-amber-600',   'border-t-amber-400')}
+        ${tile(critico,  'Crítico',        'text-danger-600',  'border-t-danger-500')}
+        ${tile(outros,   'Hold / Inativo', 'text-slate-500',   'border-t-slate-400')}
+    </div>`;
+}
+
 function ordenarConsultaProjetos(campo) {
     if (consultaOrdenacaoAtual.campo === campo) {
         consultaOrdenacaoAtual.direcao = consultaOrdenacaoAtual.direcao === 'asc' ? 'desc' : 'asc';
@@ -188,6 +210,7 @@ async function renderConsultaProjetos() {
 
     tbody.innerHTML = linhasTabela;
     if (cardsBody) cardsBody.innerHTML = cartoes;
+    renderKPIBarConsulta(projetosComSaude); // V61
     _consultaUltimaLista = projetosComSaude; // V24 — mantém lista filtrada para exportação
     atualizarContador('consultaContador', projetosComSaude.length, projectsDataFiltrado.length, 'projetos'); // V57
     marcarFiltrosAtivos(['consultaFiltroArea','consultaFiltroFase','consultaFiltroStatus','consultaFiltroSaude'], ['consultaBuscaInput']); // V58
