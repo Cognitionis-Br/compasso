@@ -1488,7 +1488,7 @@
                         <div class="overflow-x-auto hidden md:block">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead><tr class="bg-gray-50 text-xs uppercase border-b">
-                                    <th class="p-3">Código</th><th class="p-3">Projeto</th><th class="p-3">Etapa</th>
+                                    <th class="p-3">Código</th><th class="p-3 cursor-pointer hover:text-gray-800 select-none" onclick="ordenarCronograma('nome')">Projeto <span id="ordArrowCronograma-nome"></span></th><th class="p-3">Etapa</th>
                                     <th class="p-3 cursor-pointer hover:text-gray-800 select-none" onclick="ordenarCronograma('responsavel')">Responsável <span id="ordArrowCronograma-responsavel"></span></th><th class="p-3">Período</th>
                                     <th class="p-3 text-center">Previsto x Real</th><th class="p-3 text-center cursor-pointer hover:text-gray-800 select-none" onclick="ordenarCronograma('farol')">Farol <span id="ordArrowCronograma-farol"></span></th>
                                 </tr></thead>

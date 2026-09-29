@@ -30,7 +30,7 @@ function ordenarCronograma(campo) {
         cronogramaOrdenacaoAtual.campo = campo;
         cronogramaOrdenacaoAtual.direcao = 'asc';
     }
-    ['responsavel', 'farol'].forEach(c => {
+    ['nome', 'responsavel', 'farol'].forEach(c => {
         const el = document.getElementById(`ordArrowCronograma-${c}`);
         if (el) el.innerText = c === campo ? (cronogramaOrdenacaoAtual.direcao === 'asc' ? '▲' : '▼') : '';
     });
@@ -156,7 +156,10 @@ function renderCronogramaConteudo() {
     if (cronogramaOrdenacaoAtual.campo !== 'padrao') {
         linhasParaExibir.sort((a, b) => {
             let va, vb;
-            if (cronogramaOrdenacaoAtual.campo === 'responsavel') {
+            if (cronogramaOrdenacaoAtual.campo === 'nome') {
+                va = (a.projeto ? (a.projeto.nome || '') : '').toUpperCase();
+                vb = (b.projeto ? (b.projeto.nome || '') : '').toUpperCase();
+            } else if (cronogramaOrdenacaoAtual.campo === 'responsavel') {
                 va = (a.pe ? (a.pe.responsavel_etapa_nome || '') : '').toUpperCase();
                 vb = (b.pe ? (b.pe.responsavel_etapa_nome || '') : '').toUpperCase();
             } else if (cronogramaOrdenacaoAtual.campo === 'farol') {
