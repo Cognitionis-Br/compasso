@@ -1369,7 +1369,13 @@
                         <button onclick="exportarCronogramaCSV()" class="shrink-0 text-xs font-bold text-indigo-700 hover:text-indigo-900"><i class="fa-solid fa-file-csv mr-1"></i>Exportar CSV</button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Filtrar por Área</label>
+                            <select id="cronogramaFiltroAreaSelect" onchange="onFiltroCronogramaChange()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
+                                <option value="">-- Todas --</option>
+                            </select>
+                        </div>
                         <div>
                             <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Filtrar por Fase</label>
                             <select id="cronogramaFiltroFaseSelect" onchange="onFiltroCronogramaChange()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">

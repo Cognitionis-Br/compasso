@@ -14,6 +14,7 @@
 // calcularAlertaEvolucao).
 // =========================================================================
 
+let cronogramaFiltroArea = '';
 let cronogramaFiltroFase = '';
 let cronogramaFiltroResponsavel = '';
 let cronogramaFiltroFarol = '';
@@ -49,6 +50,12 @@ async function renderCronogramaEvolucaoView() {
 }
 
 function popularFiltrosCronograma(linhas) {
+    const selArea = document.getElementById('cronogramaFiltroAreaSelect');
+    if (selArea) {
+        const atual = selArea.value;
+        const areas = [...new Set(linhas.map(l => l.projeto.area).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+        selArea.innerHTML = '<option value="">-- Todas --</option>' + areas.map(a => `<option value="${escapeHtml(a)}" ${a === atual ? 'selected' : ''}>${escapeHtml(a)}</option>`).join('');
+    }
     const selFase = document.getElementById('cronogramaFiltroFaseSelect');
     if (selFase) {
         const atual = selFase.value;
@@ -64,6 +71,7 @@ function popularFiltrosCronograma(linhas) {
 }
 
 function onFiltroCronogramaChange() {
+    cronogramaFiltroArea = (document.getElementById('cronogramaFiltroAreaSelect') || {}).value || '';
     cronogramaFiltroFase = (document.getElementById('cronogramaFiltroFaseSelect') || {}).value || '';
     cronogramaFiltroResponsavel = (document.getElementById('cronogramaFiltroResponsavelSelect') || {}).value || '';
     cronogramaFiltroFarol = (document.getElementById('cronogramaFiltroFarolSelect') || {}).value || '';
@@ -72,6 +80,7 @@ function onFiltroCronogramaChange() {
 
 function renderCronogramaConteudo() {
     const linhasFiltradas = cronogramaLinhasCache.filter(l => {
+        if (cronogramaFiltroArea && (l.projeto.area || '') !== cronogramaFiltroArea) return false;
         if (cronogramaFiltroFase && l.etapa.fase !== cronogramaFiltroFase) return false;
         if (cronogramaFiltroResponsavel && (!l.pe || l.pe.responsavel_etapa_nome !== cronogramaFiltroResponsavel)) return false;
         return true;
