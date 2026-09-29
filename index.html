@@ -1331,6 +1331,11 @@
                                     <option value="VERMELHO">Vermelho (&gt;20%)</option>
                                 </select>
                             </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Busca</label>
+                                <input type="text" id="visaoOrcBuscaInput" list="visaoOrcBuscaLista" oninput="renderVisaoOrcamentoView()" placeholder="Código ou nome..." class="p-2 border border-gray-300 rounded text-xs bg-white w-44">
+                                <datalist id="visaoOrcBuscaLista"></datalist>
+                            </div>
                         </div>
                     </div>
 
@@ -1391,6 +1396,11 @@
                                 <option value="amarelo">Amarelo</option>
                                 <option value="vermelho">Vermelho</option>
                             </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Busca</label>
+                            <input type="text" id="alertasBuscaInput" list="alertasBuscaLista" oninput="onFiltroAlertasChange()" placeholder="Código ou nome..." class="p-2 border border-gray-300 rounded text-xs bg-white">
+                            <datalist id="alertasBuscaLista"></datalist>
                         </div>
                     </div>
                     <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">

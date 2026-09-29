@@ -43,11 +43,17 @@ function renderAlertasOrcamentoView() {
     });
 
     popularFiltrosAlertas(linhas);
+    popularBuscaAlertas(linhas); // V52
     const filtroArea = (document.getElementById('alertasFiltroArea') || {}).value || '';
     const filtroNivel = (document.getElementById('alertasFiltroNivel') || {}).value || '';
+    const filtroBuscaAlertas = ((document.getElementById('alertasBuscaInput') || {}).value || '').trim().toUpperCase(); // V52
     const linhasFiltradas = linhas.filter(l => {
         if (filtroArea && (l.p.area || '') !== filtroArea) return false;
         if (filtroNivel && l.nivel !== filtroNivel) return false;
+        if (filtroBuscaAlertas) { // V52
+            const cod = (l.p.codigo || '').toUpperCase(), nom = (l.p.nome || '').toUpperCase();
+            if (!cod.includes(filtroBuscaAlertas) && !nom.includes(filtroBuscaAlertas) && !filtroBuscaAlertas.includes(cod)) return false;
+        }
         return true;
     });
 
@@ -137,6 +143,16 @@ function renderAlertasOrcamentoView() {
     const cardsBody = document.getElementById('alertasOrcamentoCardsBody');
     if (cardsBody) cardsBody.innerHTML = cartoes;
     _alertasUltimaLista = linhasFiltradas; // V44
+}
+
+function popularBuscaAlertas(linhas) { // V52
+    const dl = document.getElementById('alertasBuscaLista');
+    if (!dl) return;
+    const vistos = new Set();
+    dl.innerHTML = (linhas || []).filter(l => {
+        if (vistos.has(l.p.codigo)) return false;
+        vistos.add(l.p.codigo); return true;
+    }).map(l => `<option value="${l.p.codigo} - ${escapeHtml(l.p.nome)}">`).join('');
 }
 
 function popularFiltrosAlertas(linhas) {

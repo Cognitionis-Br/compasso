@@ -130,10 +130,19 @@ async function renderVisaoOrcamentoView() {
         kpiSem.innerHTML = `<div class="grid grid-cols-3 gap-3">${kpi('Verde', nVerde, 'border-t-emerald-500', 'bg-emerald-500')}${kpi('Amarelo', nAmarelo, 'border-t-amber-500', 'bg-amber-500')}${kpi('Vermelho', nVermelho, 'border-t-danger-500', 'bg-danger-500')}</div>`;
     }
 
+    // V52 — datalist de sugestões + filtro de busca por código/nome
+    popularBuscaVisaoOrc(projetosVisiveis);
+    const filtroBuscaOrc = ((document.getElementById('visaoOrcBuscaInput') || {}).value || '').trim().toUpperCase();
     const filtroSemaforoAtual = (document.getElementById('visaoOrcFiltroSemaforo') || {}).value || '';
-    const projetosFiltrados = filtroSemaforoAtual
+    let projetosFiltrados = filtroSemaforoAtual
         ? projetosComSemaforo.filter(x => x.semaforo === filtroSemaforoAtual)
         : projetosComSemaforo;
+    if (filtroBuscaOrc) {
+        projetosFiltrados = projetosFiltrados.filter(({ p }) => {
+            const cod = (p.codigo || '').toUpperCase(), nom = (p.nome || '').toUpperCase();
+            return cod.includes(filtroBuscaOrc) || nom.includes(filtroBuscaOrc) || filtroBuscaOrc.includes(cod);
+        });
+    }
 
     if (projetosFiltrados.length === 0) {
         const msgVazia = 'Nenhum projeto com esse semaforo no filtro atual';
@@ -216,6 +225,12 @@ async function renderVisaoOrcamentoView() {
     const cardsBody = document.getElementById('visaoOrcamentoCardsBody');
     if (cardsBody) cardsBody.innerHTML = cartoes;
     _visaoOrcUltimaLista = projetosFiltrados.map(x => x.p); // V43
+}
+
+function popularBuscaVisaoOrc(lista) { // V52
+    const dl = document.getElementById('visaoOrcBuscaLista');
+    if (!dl) return;
+    dl.innerHTML = (lista || []).map(p => `<option value="${p.codigo} - ${escapeHtml(p.nome)}">`).join('');
 }
 
 function onFiltroSemaforoVisaoOrc() {
