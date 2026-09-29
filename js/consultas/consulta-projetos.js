@@ -42,7 +42,7 @@ function ordenarConsultaProjetos(campo) {
         consultaOrdenacaoAtual.campo = campo;
         consultaOrdenacaoAtual.direcao = 'asc';
     }
-    ['area', 'fase', 'farol', 'responsavel', 'previsto'].forEach(c => {
+    ['nome', 'area', 'fase', 'farol', 'responsavel', 'previsto'].forEach(c => {
         const el = document.getElementById(`ordArrowConsulta-${c}`);
         if (el) el.innerText = c === campo ? (consultaOrdenacaoAtual.direcao === 'asc' ? '▲' : '▼') : '';
     });
@@ -118,7 +118,8 @@ async function renderConsultaProjetos() {
     } else if (consultaOrdenacaoAtual.campo) {
         projetosComSaude.sort((a, b) => {
             let va, vb;
-            if (consultaOrdenacaoAtual.campo === 'area') { va = (a.p.area || '').toUpperCase(); vb = (b.p.area || '').toUpperCase(); }
+            if (consultaOrdenacaoAtual.campo === 'nome') { va = (a.p.nome || '').toUpperCase(); vb = (b.p.nome || '').toUpperCase(); }
+            else if (consultaOrdenacaoAtual.campo === 'area') { va = (a.p.area || '').toUpperCase(); vb = (b.p.area || '').toUpperCase(); }
             else if (consultaOrdenacaoAtual.campo === 'fase') { va = (a.p.etapa_atual || 'BUSINESS CASE').toUpperCase(); vb = (b.p.etapa_atual || 'BUSINESS CASE').toUpperCase(); }
             else if (consultaOrdenacaoAtual.campo === 'farol') { va = FAROL_ORDEM[a.saude.status] ?? 99; vb = FAROL_ORDEM[b.saude.status] ?? 99; }
             else if (consultaOrdenacaoAtual.campo === 'responsavel') { va = (a.p.pessoa_solicitante || '').toUpperCase(); vb = (b.p.pessoa_solicitante || '').toUpperCase(); }

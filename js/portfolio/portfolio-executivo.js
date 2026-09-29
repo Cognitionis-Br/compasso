@@ -81,7 +81,8 @@ async function renderPortfolioExecutivoView() {
     } else {
         comSaude.sort((a, b) => {
             let va, vb;
-            if (portExecOrdenacaoAtual.campo === 'area') { va = (a.p.area || '').toUpperCase(); vb = (b.p.area || '').toUpperCase(); }
+            if (portExecOrdenacaoAtual.campo === 'nome') { va = (a.p.nome || '').toUpperCase(); vb = (b.p.nome || '').toUpperCase(); }
+            else if (portExecOrdenacaoAtual.campo === 'area') { va = (a.p.area || '').toUpperCase(); vb = (b.p.area || '').toUpperCase(); }
             else if (portExecOrdenacaoAtual.campo === 'responsavel') { va = (a.p.pessoa_solicitante || '').toUpperCase(); vb = (b.p.pessoa_solicitante || '').toUpperCase(); }
             else if (portExecOrdenacaoAtual.campo === 'fase') { va = (a.p.etapa_atual || 'BUSINESS CASE').toUpperCase(); vb = (b.p.etapa_atual || 'BUSINESS CASE').toUpperCase(); }
             else if (portExecOrdenacaoAtual.campo === 'investimento') { va = Number(a.p.val_tech) || Number(a.p.val_req) || Number(a.p.val_bc) || Number(a.p.previsto) || 0; vb = Number(b.p.val_tech) || Number(b.p.val_req) || Number(b.p.val_bc) || Number(b.p.previsto) || 0; }
@@ -114,7 +115,7 @@ async function renderPortfolioExecutivoView() {
             <table class="w-full text-left text-xs">
                 <thead><tr class="bg-gray-50 uppercase text-[10px] text-gray-500 border-b select-none">
                     <th class="p-3">Código</th>
-                    <th class="p-3">Projeto</th>
+                    <th class="p-3 cursor-pointer hover:text-gray-800 select-none" onclick="ordenarPortfolioExecutivo('nome')">Projeto${arr('nome')}</th>
                     <th class="p-3 cursor-pointer hover:text-gray-800" onclick="ordenarPortfolioExecutivo('area')">Área${arr('area')}</th>
                     <th class="p-3 cursor-pointer hover:text-gray-800" onclick="ordenarPortfolioExecutivo('responsavel')">Responsável${arr('responsavel')}</th>
                     <th class="p-3 cursor-pointer hover:text-gray-800" onclick="ordenarPortfolioExecutivo('fase')">Fase${arr('fase')}</th>
