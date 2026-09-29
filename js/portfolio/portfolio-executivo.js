@@ -13,6 +13,12 @@ let modoAFPortfolioExecutivo = null;
 let _portExecUltimaLista = []; // V25 — cache para exportação CSV
 let portExecOrdenacaoAtual = { campo: 'padrao', direcao: 'asc' }; // V35
 
+function popularBuscaPortfolio(lista) { // V50
+    const dl = document.getElementById('portExecBuscaLista');
+    if (!dl) return;
+    dl.innerHTML = (lista || []).map(p => `<option value="${p.codigo} - ${escapeHtml(p.nome)}">`).join('');
+}
+
 function popularFiltroAreaPortfolio() {
     const sel = document.getElementById('portExecFiltroArea');
     if (!sel) return;
@@ -51,6 +57,16 @@ async function renderPortfolioExecutivoView() {
     if (filtroArea) lista = lista.filter(p => (p.area || '') === filtroArea);
     const filtroFase = (document.getElementById('portExecFiltroFase') || {}).value || '';
     if (filtroFase) lista = lista.filter(p => (p.etapa_atual || 'BUSINESS CASE').toUpperCase() === filtroFase);
+
+    // V50 — busca por código/nome (datalist antes de aplicar o filtro de texto)
+    popularBuscaPortfolio(lista);
+    const filtroBuscaPort = ((document.getElementById('portExecBuscaInput') || {}).value || '').trim().toUpperCase();
+    if (filtroBuscaPort) {
+        lista = lista.filter(p => {
+            const cod = (p.codigo || '').toUpperCase(), nom = (p.nome || '').toUpperCase();
+            return cod.includes(filtroBuscaPort) || nom.includes(filtroBuscaPort) || filtroBuscaPort.includes(cod);
+        });
+    }
 
     const filtroSaude = (document.getElementById('portExecFiltroSaude') || {}).value || '';
     let comSaude = lista.map(p => ({ p, saude: calcularSaudeProjeto(p, todasEtapasCache || []) }));

@@ -916,6 +916,11 @@
                                 <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Ano Fiscal</label>
                                 <select id="portExecSeletorAF" onchange="onMudarSeletorAFPortfolioExecutivo()" class="p-2 border border-gray-300 rounded text-xs font-bold bg-white"></select>
                             </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1 text-right">Busca</label>
+                                <input type="text" id="portExecBuscaInput" list="portExecBuscaLista" oninput="renderPortfolioExecutivoView()" placeholder="Código ou nome..." class="p-2 border border-gray-300 rounded text-xs bg-white w-44">
+                                <datalist id="portExecBuscaLista"></datalist>
+                            </div>
                         </div>
                     </div>
                     <div id="portExecFaixaAF" class="mb-4"></div>
@@ -1144,7 +1149,7 @@
                             <h3 class="font-bold text-gray-800 text-sm uppercase tracking-wide">Status Detalhado da Carteira</h3>
                             <button onclick="exportarConsultaCSV()" class="text-xs font-bold text-indigo-700 hover:text-indigo-900"><i class="fa-solid fa-file-csv mr-1"></i>Exportar CSV</button>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-3 mb-4">
                             <div>
                                 <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Filtrar por Área</label>
                                 <select id="consultaFiltroArea" onchange="renderConsultaProjetos()" class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
@@ -1180,6 +1185,11 @@
                                     <option value="HOLD">⏸ Hold</option>
                                     <option value="SEM_DADOS">⚪ Sem Dados</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase text-gray-500 mb-1">Buscar projeto</label>
+                                <input type="text" id="consultaBuscaInput" list="consultaBuscaLista" oninput="renderConsultaProjetos()" placeholder="Código ou nome..." class="w-full p-2 border border-gray-300 rounded text-xs bg-white">
+                                <datalist id="consultaBuscaLista"></datalist>
                             </div>
                         </div>
                         <div id="consultaKPIBar" class="mb-4"></div>

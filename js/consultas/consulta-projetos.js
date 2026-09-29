@@ -10,6 +10,12 @@
 // tela de Dashboard.
 // =========================================================================
 
+function popularBuscaConsulta(lista) { // V50
+    const dl = document.getElementById('consultaBuscaLista');
+    if (!dl) return;
+    dl.innerHTML = (lista || []).map(p => `<option value="${p.codigo} - ${escapeHtml(p.nome)}">`).join('');
+}
+
 function popularFiltrosConsulta() {
     const selArea = document.getElementById('consultaFiltroArea');
     if (selArea) {
@@ -56,15 +62,21 @@ async function renderConsultaProjetos() {
     const { data: todasEtapasCache } = await _supabase.from('projeto_etapas').select('*');
 
     popularFiltrosConsulta();
+    popularBuscaConsulta(projectsDataFiltrado); // V50 — datalist de sugestões
     const filtroArea = (document.getElementById('consultaFiltroArea') || {}).value || '';
     const filtroFase = (document.getElementById('consultaFiltroFase') || {}).value || '';
     const filtroStatus = (document.getElementById('consultaFiltroStatus') || {}).value || '';
     const filtroSaude = (document.getElementById('consultaFiltroSaude') || {}).value || '';
+    const filtroBusca = ((document.getElementById('consultaBuscaInput') || {}).value || '').trim().toUpperCase(); // V50
 
     const projetosFiltrados = projectsDataFiltrado.filter(p => {
         if (filtroArea && (p.area || '') !== filtroArea) return false;
         if (filtroFase && (p.etapa_atual || 'BUSINESS CASE').toUpperCase() !== filtroFase) return false;
         if (filtroStatus && (p.sub_status || '') !== filtroStatus) return false;
+        if (filtroBusca) { // V50
+            const cod = (p.codigo || '').toUpperCase(), nom = (p.nome || '').toUpperCase();
+            if (!cod.includes(filtroBusca) && !nom.includes(filtroBusca) && !filtroBusca.includes(cod)) return false;
+        }
         return true;
     });
 
