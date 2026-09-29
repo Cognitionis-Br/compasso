@@ -6,6 +6,21 @@
 // de Technical (tech_alerta_variacao).
 // =========================================================================
 let _alertasUltimaLista = []; // V29 — cache para exportação CSV
+let alertasOrdenacaoAtual = { campo: 'padrao', direcao: 'desc' }; // V49
+
+function ordenarAlertas(campo) {
+    if (alertasOrdenacaoAtual.campo === campo) {
+        alertasOrdenacaoAtual.direcao = alertasOrdenacaoAtual.direcao === 'asc' ? 'desc' : 'asc';
+    } else {
+        alertasOrdenacaoAtual.campo = campo;
+        alertasOrdenacaoAtual.direcao = campo === 'variacao' ? 'desc' : 'asc';
+    }
+    ['projeto', 'variacao', 'nivel'].forEach(c => {
+        const el = document.getElementById(`ordArrowAlertas-${c}`);
+        if (el) el.innerText = c === campo ? (alertasOrdenacaoAtual.direcao === 'asc' ? '▲' : '▼') : '';
+    });
+    renderAlertasOrcamentoView();
+}
 
 function renderAlertasOrcamentoView() {
     const tbody = document.getElementById('alertasOrcamentoTableBody');
@@ -47,8 +62,28 @@ function renderAlertasOrcamentoView() {
         return;
     }
 
-    // Vermelho primeiro, depois amarelo.
-    linhasFiltradas.sort((a, b) => (a.nivel === 'vermelho' ? 0 : 1) - (b.nivel === 'vermelho' ? 0 : 1));
+    // V49 — ordenação clicável; default: vermelho primeiro, depois amarelo
+    const NIVEL_ORDEM = { vermelho: 0, amarelo: 1 };
+    if (alertasOrdenacaoAtual.campo === 'projeto') {
+        linhasFiltradas.sort((a, b) => {
+            const va = (a.p.nome || '').toUpperCase(), vb = (b.p.nome || '').toUpperCase();
+            if (va < vb) return alertasOrdenacaoAtual.direcao === 'asc' ? -1 : 1;
+            if (va > vb) return alertasOrdenacaoAtual.direcao === 'asc' ? 1 : -1;
+            return 0;
+        });
+    } else if (alertasOrdenacaoAtual.campo === 'variacao') {
+        linhasFiltradas.sort((a, b) => {
+            const va = Math.abs(Number(a.percentual) || 0), vb = Math.abs(Number(b.percentual) || 0);
+            return alertasOrdenacaoAtual.direcao === 'asc' ? va - vb : vb - va;
+        });
+    } else if (alertasOrdenacaoAtual.campo === 'nivel') {
+        linhasFiltradas.sort((a, b) => {
+            const va = NIVEL_ORDEM[a.nivel] ?? 99, vb = NIVEL_ORDEM[b.nivel] ?? 99;
+            return alertasOrdenacaoAtual.direcao === 'asc' ? va - vb : vb - va;
+        });
+    } else {
+        linhasFiltradas.sort((a, b) => (a.nivel === 'vermelho' ? 0 : 1) - (b.nivel === 'vermelho' ? 0 : 1));
+    }
 
     let linhasTabela = '';
     let cartoes = '';

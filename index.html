@@ -1387,9 +1387,9 @@
                         <div class="overflow-x-auto hidden md:block">
                             <table class="w-full text-left border-collapse text-sm">
                                 <thead><tr class="bg-gray-50 text-xs uppercase border-b">
-                                    <th class="p-3">Código</th><th class="p-3">Projeto</th><th class="p-3 text-center">Porte</th>
+                                    <th class="p-3">Código</th><th class="p-3 cursor-pointer hover:text-gray-800 select-none" onclick="ordenarAlertas('projeto')">Projeto <span id="ordArrowAlertas-projeto"></span></th><th class="p-3 text-center">Porte</th>
                                     <th class="p-3 text-right">Orç. BC</th><th class="p-3 text-right">Orç. Req.</th><th class="p-3 text-right">Orç. Tech</th>
-                                    <th class="p-3">Fase da Revisão</th><th class="p-3 text-right">Variação</th><th class="p-3 text-center">Alerta</th>
+                                    <th class="p-3">Fase da Revisão</th><th class="p-3 text-right cursor-pointer hover:text-gray-800 select-none" onclick="ordenarAlertas('variacao')">Variação <span id="ordArrowAlertas-variacao"></span></th><th class="p-3 text-center cursor-pointer hover:text-gray-800 select-none" onclick="ordenarAlertas('nivel')">Alerta <span id="ordArrowAlertas-nivel"></span></th>
                                 </tr></thead>
                                 <tbody id="alertasOrcamentoTableBody" class="divide-y divide-gray-100 text-xs"></tbody>
                             </table>
