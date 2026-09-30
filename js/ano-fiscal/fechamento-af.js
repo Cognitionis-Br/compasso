@@ -176,10 +176,92 @@ async function confirmarFecharAnoFiscal() {
     }]);
     if (errLog) console.error('Ano Fiscal fechado, mas houve erro ao gravar o log:', errLog.message);
 
+    // Fase 3C — registra fiscal_year_closing + itens por projeto (trilha formal M12A)
+    await _registrarFiscalYearClosing(alvo, quem, agora);
+
     fecharModalFecharAnoFiscal();
     alert(`✅ Ano Fiscal ${alvo} fechado.`);
     if (typeof loadProjects === 'function') await loadProjects();
     if (typeof loadAnoFiscalConfig === 'function') await loadAnoFiscalConfig();
     if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
     await renderFechamentoAfView();
+}
+
+// =========================================================================
+// Fase 3C — registra fechamento formal em fiscal_year_closing (M12A D3)
+// =========================================================================
+async function _registrarFiscalYearClosing(afCodigo, quem, agora) {
+    const projetosAF = (projectsData || []).filter(p =>
+        p.ano_fiscal === afCodigo && p.is_subprojeto !== true
+    );
+
+    const snapshot = {
+        total: projetosAF.length,
+        concluidos:  projetosAF.filter(p => p.projeto_concluido === true).length,
+        carryover:   projetosAF.filter(p => p.is_carryover === true).length,
+        hold:        projetosAF.filter(p => (p.sub_status || '').toUpperCase() === 'HOLD').length,
+        cancelados:  projetosAF.filter(p => ['CANCELADO','REPROVADO'].includes((p.sub_status || '').toUpperCase())).length,
+        projetos: projetosAF.map(p => ({
+            codigo:      p.codigo,
+            nome:        p.nome,
+            etapa_atual: p.etapa_atual,
+            sub_status:  p.sub_status,
+            regime_fiscal: p.regime_fiscal || 'FY_BOUND',
+            is_carryover: p.is_carryover || false,
+            projeto_concluido: p.projeto_concluido || false
+        }))
+    };
+
+    const { data: closingRow, error: errClosing } = await _supabase
+        .from('fiscal_year_closing')
+        .insert([{
+            fiscal_year_codigo: afCodigo,
+            status:             'EXECUTADO',
+            total_projetos:     projetosAF.length,
+            total_blockers_hard: 0,
+            total_blockers_soft: 0,
+            iniciado_por:       quem,
+            iniciado_em:        agora,
+            executado_por:      quem,
+            executado_em:       agora,
+            snapshot
+        }])
+        .select('id')
+        .single();
+
+    if (errClosing) {
+        console.error('Erro ao registrar fiscal_year_closing:', errClosing.message);
+        return;
+    }
+
+    const closingId = closingRow.id;
+
+    // Um item INFO por projeto — estado final ao fechamento
+    const itens = projetosAF.map(p => {
+        const sub = (p.sub_status || '').toUpperCase();
+        let categoria = 'OUTRO';
+        if (p.is_carryover)                                    categoria = 'OUTRO'; // carryover tratado via project_fiscal_transition
+        else if (p.projeto_concluido)                          categoria = 'OUTRO';
+        else if (['CANCELADO','REPROVADO'].includes(sub))      categoria = 'OUTRO';
+        else if (sub === 'HOLD')                               categoria = 'OUTRO';
+        else if ((p.regime_fiscal || 'FY_BOUND') === 'FY_BOUND') categoria = 'FY_BOUND_SEM_DESTINACAO';
+        else                                                   categoria = 'CROSS_FY_SEM_CONTINUIDADE';
+
+        return {
+            closing_id:    closingId,
+            projeto_codigo: p.codigo,
+            tipo_blocker:  'INFO',
+            categoria,
+            descricao:     `Estado ao fechamento: etapa=${p.etapa_atual || '-'} sub_status=${p.sub_status || '-'}`,
+            resolvido:     true,
+            resolvido_em:  agora
+        };
+    });
+
+    if (itens.length > 0) {
+        const { error: errItens } = await _supabase
+            .from('fiscal_year_closing_item')
+            .insert(itens);
+        if (errItens) console.error('Erro ao registrar fiscal_year_closing_item:', errItens.message);
+    }
 }
