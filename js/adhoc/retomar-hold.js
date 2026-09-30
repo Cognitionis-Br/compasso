@@ -95,6 +95,22 @@ async function confirmarRetomadaHold() {
     }]);
     if (errorLog) console.error('Retomada concluída, mas houve erro ao gravar o log:', errorLog.message);
 
+    // Fase 3B — registra encerramento formal do HOLD na trilha de transições fiscais
+    if (p.ano_fiscal) {
+        const { error: errTrans } = await _supabase.from('project_fiscal_transition').insert([{
+            projeto_codigo:      p.codigo,
+            fiscal_year_origem:  p.ano_fiscal,
+            fiscal_year_destino: null,
+            tipo:                'HOLD',
+            status:              'CANCELLED',
+            justificativa:       'Retomado — projeto saiu de Hold e voltou a A PLANEJAR',
+            executado_por:       responsavel,
+            executado_em:        agora,
+            criado_por:          responsavel
+        }]);
+        if (errTrans) console.error('Retomada concluída, mas erro ao registrar transição fiscal:', errTrans.message);
+    }
+
     alert(`✅ ${p.codigo} retomado com sucesso — voltou pra "A Planejar" na fase ${p.etapa_atual || 'BUSINESS CASE'}.`);
     renderRetomarHoldView();
 }

@@ -238,6 +238,25 @@ async function marcarComoCarryover(codigo) {
     const { error } = await _supabase.from('projetos').update(payload).eq('codigo', codigo);
     if (error) return alert('Erro ao marcar como carryover: ' + error.message);
 
+    // Fase 3B — registra transição formal CARRYOVER na fronteira do AF
+    if (p.ano_fiscal) {
+        const agora = new Date().toISOString();
+        const responsavel = currentUser ? currentUser.nome : 'desconhecido';
+        const { error: errTrans } = await _supabase.from('project_fiscal_transition').insert([{
+            projeto_codigo:      codigo,
+            fiscal_year_origem:  p.ano_fiscal,
+            fiscal_year_destino: proximoAnoFiscal(p.ano_fiscal),
+            tipo:                'CARRYOVER',
+            status:              'EXECUTED',
+            decidido_por:        responsavel,
+            decidido_em:         agora,
+            executado_por:       responsavel,
+            executado_em:        agora,
+            criado_por:          responsavel
+        }]);
+        if (errTrans) console.error('Carryover marcado, mas erro ao registrar transição:', errTrans.message);
+    }
+
     await loadProjects();
     renderCarryOverView();
 }
@@ -267,6 +286,24 @@ async function desmarcarCarryover(codigo) {
     }).eq('codigo', codigo);
 
     if (error) return alert('Erro ao desmarcar carryover: ' + error.message);
+
+    // Fase 3B — registra cancelamento da transição CARRYOVER (trilha de auditoria)
+    if (p.ano_fiscal) {
+        const agora = new Date().toISOString();
+        const responsavel = currentUser ? currentUser.nome : 'desconhecido';
+        const { error: errTrans } = await _supabase.from('project_fiscal_transition').insert([{
+            projeto_codigo:      codigo,
+            fiscal_year_origem:  p.ano_fiscal,
+            fiscal_year_destino: proximoAnoFiscal(p.ano_fiscal),
+            tipo:                'CARRYOVER',
+            status:              'CANCELLED',
+            justificativa:       'Carryover desmarcado pelo usuário',
+            executado_por:       responsavel,
+            executado_em:        agora,
+            criado_por:          responsavel
+        }]);
+        if (errTrans) console.error('Carryover desmarcado, mas erro ao registrar cancelamento da transição:', errTrans.message);
+    }
 
     await loadProjects();
     renderCarryOverView();
