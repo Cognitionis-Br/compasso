@@ -20,6 +20,10 @@ function executarBuscaGlobal() {
     const input = document.getElementById('buscaGlobalInput');
     _buscaGlobalTermo = (input ? input.value : '').trim();
     if (!_buscaGlobalTermo) return;
+    if (typeof resolveTabRedirect === 'function') {
+        const redirect = resolveTabRedirect(_buscaGlobalTermo);
+        if (redirect) { switchTab(redirect); return; }
+    }
     switchTab('busca_global');
 }
 

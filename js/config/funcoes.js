@@ -815,6 +815,10 @@ function aplicarVisibilidadeMenu() {
     const grupoProprietario = document.getElementById('grupo-proprietario');
     if (grupoProprietario) grupoProprietario.classList.toggle('hidden', !ehProprietario);
 
+    // Conhecimento: módulo não disponível nesta release — sempre oculto.
+    const grupoConhecimento = document.getElementById('grupo-conhecimento');
+    if (grupoConhecimento) grupoConhecimento.classList.add('hidden');
+
     // NOVO (segurança Fase 3, 2026-09-01): estas 3 telas saíram do catálogo
     // comum — não passam mais por tabIdsDoCatalogo() acima. Visibilidade
     // hardcoded por papel: Administrador OU Proprietário. (Licenciamento de

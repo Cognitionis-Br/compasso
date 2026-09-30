@@ -69,6 +69,7 @@ function abrirWorkspaceProjeto(codigo, acaoPendente) {
     _wsCarregado = {};
     _wsAcaoPendente = acaoPendente || null;
     switchTab('workspace_projeto');
+    if (typeof routerPush === 'function') routerPush('workspace_projeto', { id: codigo });
 }
 
 async function renderWorkspaceProjeto() {
