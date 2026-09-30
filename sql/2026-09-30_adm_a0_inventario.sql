@@ -1,166 +1,148 @@
 -- =============================================================================
 -- COMPASSO 2.0 — Fase 1A ADM · A0 Inventário
 -- Data: 2026-09-30
--- Propósito: inventariar o que existe hoje contra as 30 VIEWs da especificação
---            ADM (SCR-23/24/25) e a Matriz de Migração. Este arquivo é
---            SOMENTE LEITURA — todas as queries são SELECT.
---            Rodar no SQL Editor do Supabase para obter as contagens reais.
+-- Propósito: inventariar o que existe hoje contra as 30 VIEWs do SCR-23/24/25
+--            e a Matriz de Migração. SOMENTE LEITURA.
 -- =============================================================================
 
 -- ---------------------------------------------------------------------------
--- SEÇÃO 1 — MAPEAMENTO LEGADO → VIEW DESTINO
--- (Análise de código; contagens reais abaixo na Seção 2)
+-- MAPEAMENTO LEGADO → VIEW DESTINO
 -- ---------------------------------------------------------------------------
---
--- LEGADO (tab/função)               DESTINO                  AÇÃO NECESSÁRIA
+-- Tab legado (código)              Tabela real             VIEW destino
 -- ─────────────────────────────────────────────────────────────────────────────
--- areas                          → VIEW-CAD-ORG           Renomear + expandir para
---                                                          hierarquia (org/empresa/unidade/área)
--- pessoas_solicitantes           → VIEW-CAD-PESSOAS       Renomear label; expandir tipos
--- cargos                         → VIEW-CAD-CARGOS        Label ok; nenhuma mudança estrutural
--- portes                         → VIEW-CAD-PORTES        Renomear para "Portes e Faixas"
--- tipos_projeto                  → VIEW-CAD-CLASSIFICACOES Consolidar com produtos + return_benefit
--- produtos                       → VIEW-CAD-CLASSIFICACOES Consolidar
--- return_benefit                 → VIEW-CAD-CLASSIFICACOES Consolidar (campo allows_value preservado)
--- planejamento_estrategico       → VIEW-CAD-ESTRATEGIA    Renomear para "Estratégia"
--- empresas_terceirizadas         → VIEW-CAD-FORNECEDORES  Renomear para "Fornecedores"
+-- areas                         areas_solicitantes       VIEW-CAD-ORG
+-- pessoas_solicitantes          pessoas_solicitantes     VIEW-CAD-PESSOAS
+-- cargos                        cargos                   VIEW-CAD-CARGOS
+-- portes                        portes                   VIEW-CAD-PORTES
+-- tipos_projeto                 tipos_projeto            VIEW-CAD-CLASSIFICACOES
+-- produtos                      produtos                 VIEW-CAD-CLASSIFICACOES
+-- return_benefit                tipos_return_benefit     VIEW-CAD-CLASSIFICACOES
+-- planejamento_estrategico      pilares_estrategicos +   VIEW-CAD-ESTRATEGIA
+--                               iniciativas_estrategicas
+-- empresas_terceirizadas        empresas_terceirizadas   VIEW-CAD-FORNECEDORES
 -- ─────────────────────────────────────────────────────────────────────────────
--- usuarios                       → VIEW-ADM-USUARIOS      Expandir (perfis com escopo, sessões)
--- funcoes_permissoes             → VIEW-ADM-PERFIS        Renomear; catálogo atual (funcoes +
---                                                          catalogo_atividades) converte para
---                                                          Profile/Role/Permission
--- atribuicao_funcoes             → VIEW-ADM-USUARIOS      Seção de atribuição de perfil com escopo
--- restricao_area_atividades      → VIEW-ADM-PERFIS        Converte para Scope/Context
--- responsaveis                   → VIEW-ADM-EQUIPES       Converte para Team/Assignment
--- workflow_etapas                → VIEW-ADM-WORKFLOW      Renomear; versionamento adicionado
--- prazos                         → VIEW-ADM-SLA           Renomear para "SLA e Prazos"
--- auditoria                      → VIEW-ADM-AUDITORIA     Já compatível; só expandir filtros
--- [NOVO] —                       → VIEW-ADM-SESSOES       Criar (identidades e sessões ativas)
--- [NOVO] —                       → VIEW-ADM-APTIDOES      Criar (skills e vínculos pessoa)
--- [NOVO] —                       → VIEW-ADM-ALCADAS       Criar (matriz de autoridade versionada)
--- [NOVO] —                       → VIEW-ADM-DELEGACOES    Criar (delegações temporárias)
--- [NOVO] —                       → VIEW-ADM-SOD           Criar (segregação de funções)
--- fila_email                     → VIEW-ADM-INTEGRACOES   Mover de Configurações para
---                                                          Administração (fila + monitoramento)
+-- usuarios                      perfis_usuarios          VIEW-ADM-USUARIOS
+-- funcoes_permissoes            funcoes +                VIEW-ADM-PERFIS
+--                               catalogo_atividades +
+--                               funcao_atividades
+-- atribuicao_funcoes            usuario_funcoes          VIEW-ADM-USUARIOS (seção)
+-- restricao_area_atividades     usuario_funcoes          VIEW-ADM-PERFIS (scope)
+-- responsaveis                  usuario_atividades_      VIEW-ADM-EQUIPES
+--                               responsavel +
+--                               responsaveis_atividades
+-- workflow_etapas               (sem tabela própria)     VIEW-ADM-WORKFLOW
+-- prazos                        (sem tabela própria)     VIEW-ADM-SLA
+-- auditoria                     audit_events             VIEW-ADM-AUDITORIA
+-- [NOVO]                        —                        VIEW-ADM-SESSOES
+-- [NOVO]                        —                        VIEW-ADM-APTIDOES
+-- [NOVO]                        —                        VIEW-ADM-ALCADAS
+-- [NOVO]                        —                        VIEW-ADM-DELEGACOES
+-- [NOVO]                        —                        VIEW-ADM-SOD
+-- fila_email                    email_queue              VIEW-ADM-INTEGRACOES
 -- ─────────────────────────────────────────────────────────────────────────────
--- configuracoes (geral)          → VIEW-CFG-ORGANIZACAO   Renomear; separar dados-empresa
--- controle_orcamento +
---   percentual_bloqueio          → VIEW-CFG-FINANCEIRO    Consolidar em política financeira
--- periodo_ano_fiscal             → VIEW-CFG-FY            Renomear para "Configuração do AF"
--- gestao_templates               → VIEW-CFG-TEMPLATES     Renomear; versionamento adicionado
--- gestao_fluxo_email             → VIEW-CFG-EVENTOS       Renomear para "Eventos × Canais"
--- ia_templates + ia_config       → VIEW-CFG-IA            Consolidar em única VIEW
--- rate_card (js/rate-card/)      → VIEW-CFG-RATECARDS     Adicionar ao menu Configurações;
---                                                          tabela rate_card_papeis já existe
--- [NOVO] —                       → VIEW-CFG-ESTIMATIVAS   Criar (políticas de estimativa)
--- [NOVO] —                       → VIEW-CFG-NOTIFICACOES  Criar (configurações de notificação)
--- ─────────────────────────────────────────────────────────────────────────────
--- dados_empresa (Proprietário)   → VIEW-CAD-ORG (parte cadastral)
---                                  VIEW-CFG-LICENCA (parte contrato/licença)
--- licenciamento_modulos          → VIEW-CFG-LICENCA       Mover para Configurações
---   (Proprietário)                                         (restrito a ehProprietario via R-ADM-23)
--- ─────────────────────────────────────────────────────────────────────────────
--- Ferramentas Dev                 → Fora da navegação funcional (R-ADM-09, Matriz de Migração)
+-- configuracoes                 empresa_licenciada       VIEW-CFG-ORGANIZACAO
+-- controle_orcamento +                                   VIEW-CFG-FINANCEIRO
+--   percentual_bloqueio_orcamento
+-- periodo_ano_fiscal                                     VIEW-CFG-FY
+-- gestao_templates              templates_email          VIEW-CFG-TEMPLATES
+-- gestao_fluxo_email                                     VIEW-CFG-EVENTOS
+-- ia_templates + ia_config                               VIEW-CFG-IA
+-- rate_card                     rate_card_papeis         VIEW-CFG-RATECARDS
+-- [NOVO]                        —                        VIEW-CFG-ESTIMATIVAS
+-- [NOVO]                        —                        VIEW-CFG-NOTIFICACOES
+-- dados_empresa (Proprietário)  empresa_licenciada       VIEW-CAD-ORG (parte)
+-- licenciamento_modulos         licenca_modulos +        VIEW-CFG-LICENCA
+--                               modulo_funcao
 -- ─────────────────────────────────────────────────────────────────────────────
 
 -- ---------------------------------------------------------------------------
--- SEÇÃO 2 — QUERIES DE CONTAGEM (rodar para "contagem real" conforme A0)
+-- QUERIES DE CONTAGEM (Seção 2, RESPOSTA_AUDITORIA_FASE0 D5)
 -- ---------------------------------------------------------------------------
 
--- 2.1 — Funções cadastradas (legacy → VIEW-ADM-PERFIS)
+-- Áreas (→ VIEW-CAD-ORG)
+SELECT COUNT(*) AS total_areas, SUM(CASE WHEN ativo THEN 1 ELSE 0 END) AS ativas
+FROM areas_solicitantes;
+
+-- Pessoas (→ VIEW-CAD-PESSOAS)
+SELECT COUNT(*) AS total_pessoas FROM pessoas_solicitantes;
+
+-- Cargos (→ VIEW-CAD-CARGOS)
+SELECT COUNT(*) AS total_cargos FROM cargos;
+
+-- Portes (→ VIEW-CAD-PORTES)
+SELECT COUNT(*) AS total_portes FROM portes;
+
+-- Tipos de projeto (→ VIEW-CAD-CLASSIFICACOES)
+SELECT COUNT(*) AS total_tipos_projeto FROM tipos_projeto;
+
+-- Produtos (→ VIEW-CAD-CLASSIFICACOES)
+SELECT COUNT(*) AS total_produtos FROM produtos;
+
+-- Retorno/Benefícios (→ VIEW-CAD-CLASSIFICACOES)
+SELECT COUNT(*) AS total_beneficios FROM tipos_return_benefit;
+
+-- Pilares e iniciativas (→ VIEW-CAD-ESTRATEGIA)
+SELECT
+    (SELECT COUNT(*) FROM pilares_estrategicos) AS total_pilares,
+    (SELECT COUNT(*) FROM iniciativas_estrategicas) AS total_iniciativas;
+
+-- Fornecedores (→ VIEW-CAD-FORNECEDORES)
+SELECT COUNT(*) AS total_fornecedores FROM empresas_terceirizadas;
+
+-- Usuários (→ VIEW-ADM-USUARIOS)
+SELECT COUNT(*) AS total_usuarios FROM perfis_usuarios;
+
+-- Usuários por função (→ VIEW-ADM-PERFIS)
+SELECT f.nome AS funcao, COUNT(uf.usuario_id) AS qtd_usuarios
+FROM funcoes f
+LEFT JOIN usuario_funcoes uf ON uf.funcao_id = f.id
+GROUP BY f.nome ORDER BY f.nome;
+
+-- Funções cadastradas (→ VIEW-ADM-PERFIS)
 SELECT
     COUNT(*) AS total_funcoes,
     SUM(CASE WHEN acesso_irrestrito THEN 1 ELSE 0 END) AS funcoes_admin,
-    SUM(CASE WHEN eh_proprietario THEN 1 ELSE 0 END)   AS funcoes_proprietario
+    SUM(CASE WHEN eh_proprietario THEN 1 ELSE 0 END) AS funcoes_proprietario
 FROM funcoes;
 
--- 2.2 — Atividades no catálogo (legacy → VIEW-ADM-PERFIS permissions)
+-- Atividades no catálogo (→ VIEW-ADM-PERFIS permissions)
 SELECT COUNT(*) AS total_atividades FROM catalogo_atividades;
 
--- 2.3 — Usuários e atribuições
+-- Responsáveis por atividade (→ VIEW-ADM-EQUIPES)
+SELECT COUNT(*) AS total_responsaveis FROM responsaveis_atividades;
+
+-- Auditoria (→ VIEW-ADM-AUDITORIA)
+SELECT COUNT(*) AS total_eventos FROM audit_events;
+
+-- Rate card (→ VIEW-CFG-RATECARDS)
+SELECT COUNT(*) AS total_papeis, SUM(CASE WHEN ativo THEN 1 ELSE 0 END) AS ativos
+FROM rate_card_papeis;
+
+-- Fila de e-mail (→ VIEW-ADM-INTEGRACOES)
+SELECT status, COUNT(*) AS qtd FROM email_queue GROUP BY status ORDER BY status;
+
+-- modulo_funcao por módulo (D5)
+SELECT modulo, COUNT(*) AS qtd_funcoes
+FROM modulo_funcao
+GROUP BY modulo ORDER BY modulo;
+
+-- Licença / módulos (→ VIEW-CFG-LICENCA)
+SELECT COUNT(*) AS total_modulos FROM licenca_modulos;
+
+-- FYs por status (D5)
 SELECT
-    COUNT(*) AS total_usuarios
-FROM perfis_usuarios;
-
-SELECT
-    COUNT(*) AS total_atribuicoes
-FROM usuario_funcoes;
-
--- 2.4 — Áreas solicitantes (legacy → VIEW-CAD-ORG)
-SELECT COUNT(*) AS total_areas FROM areas;
-
--- 2.5 — Pessoas solicitantes (legacy → VIEW-CAD-PESSOAS)
-SELECT COUNT(*) AS total_pessoas FROM pessoas_solicitantes;
-
--- 2.6 — Cargos (legacy → VIEW-CAD-CARGOS)
-SELECT COUNT(*) AS total_cargos FROM cargos;
-
--- 2.7 — Portes (legacy → VIEW-CAD-PORTES)
-SELECT COUNT(*) AS total_portes FROM portes_projetos;
-
--- 2.8 — Tipos de projeto (legacy → VIEW-CAD-CLASSIFICACOES)
-SELECT COUNT(*) AS total_tipos FROM tipos_projeto;
-
--- 2.9 — Produtos (legacy → VIEW-CAD-CLASSIFICACOES)
-SELECT COUNT(*) AS total_produtos FROM produtos;
-
--- 2.10 — Retorno/Benefícios (legacy → VIEW-CAD-CLASSIFICACOES)
-SELECT COUNT(*) AS total_beneficios FROM retorno_beneficios;
-
--- 2.11 — Pilares e iniciativas estratégicas (legacy → VIEW-CAD-ESTRATEGIA)
-SELECT
-    (SELECT COUNT(*) FROM planejamento_estrategico_pilares) AS total_pilares,
-    (SELECT COUNT(*) FROM planejamento_estrategico_iniciativas) AS total_iniciativas;
-
--- 2.12 — Fornecedores (legacy → VIEW-CAD-FORNECEDORES)
-SELECT COUNT(*) AS total_fornecedores FROM empresas_terceirizadas;
-
--- 2.13 — Rate card (legacy → VIEW-CFG-RATECARDS)
-SELECT COUNT(*) AS total_papeis_rate_card FROM rate_card_papeis;
-
--- 2.14 — Responsáveis por atividade (legacy → VIEW-ADM-EQUIPES)
-SELECT COUNT(*) AS total_responsaveis FROM responsaveis_atividade;
-
--- 2.15 — Auditoria (legacy → VIEW-ADM-AUDITORIA)
-SELECT COUNT(*) AS total_eventos FROM log_auditoria;
-
--- 2.16 — Templates de e-mail (legacy → VIEW-CFG-TEMPLATES)
-SELECT COUNT(*) AS total_templates FROM templates_email;
-
--- 2.17 — Fila de e-mail (legacy → VIEW-ADM-INTEGRACOES)
-SELECT
+    ano_fiscal,
+    ano_fiscal_fechado,
     status,
-    COUNT(*) AS qtd
-FROM email_queue
-GROUP BY status
-ORDER BY status;
+    bc_package_status
+FROM fiscal_years
+ORDER BY ano_fiscal;
 
--- ---------------------------------------------------------------------------
--- SEÇÃO 3 — VERIFICAÇÃO GAPS vs 30 VIEWs
--- ---------------------------------------------------------------------------
---
--- VIEWs NOVAS (sem equivalente no legado — precisam de tabelas novas):
---   VIEW-ADM-SESSOES        → tabelas: identities, sessions
---   VIEW-ADM-APTIDOES       → tabelas: skills, person_skills
---   VIEW-ADM-ALCADAS        → tabelas: authority_matrix, authority_rules
---   VIEW-ADM-DELEGACOES     → tabelas: delegations
---   VIEW-ADM-SOD            → tabelas: sod_rules, sod_conflicts
---   VIEW-CFG-ESTIMATIVAS    → tabelas: estimation_policy, estimation_policy_version
---   VIEW-CFG-NOTIFICACOES   → tabelas: notification_settings
---
--- VIEWs com tabelas existentes mas RENAMING/ESTRUTURA:
---   VIEW-CAD-ORG            → tabela 'areas' precisa de: parent_id, node_type,
---                              company/unit rows (actualmente só AREA)
---   VIEW-CAD-PESSOAS        → tabela 'pessoas_solicitantes' precisa de: person_type,
---                              job_title_id, user_id (vínculo)
---   VIEW-ADM-PERFIS         → funcoes + catalogo_atividades → Profile/Role/Permission
---                              (migração complexa, Fase A3)
---   VIEW-CFG-LICENCA        → modulo_funcao continua como fonte de verdade (R-ADM-42);
---                              License/Capability é camada sobre ela
---
--- ---------------------------------------------------------------------------
--- RESULTADO ESPERADO DA A0:
---   QA-ADM-14: todos os 34 itens legados identificados acima têm destino.
---   Não há duplicidade de mecanismos após a migração.
---   7 VIEWs novas precisam de SQL de criação (Fase A1 SQL).
--- ---------------------------------------------------------------------------
+-- BCs por sub_status e adhoc (D5)
+SELECT
+    sub_status,
+    COALESCE(adhoc, false) AS adhoc,
+    COUNT(*) AS qtd
+FROM business_cases
+GROUP BY sub_status, adhoc
+ORDER BY sub_status;
