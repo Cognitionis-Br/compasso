@@ -345,13 +345,34 @@ function _specRenderResumo() {
 
     const acaoPrincipal = _specAcaoPrincipal(estado, readOnly);
 
+    // D-09 — Prazo da revisão: mostrado quando o estado é de revisão e temos
+    // a data de entrada no estado (spec_estado_desde).
+    const SPEC_REVIEW_ESTADOS = new Set(['INTERNAL_REVIEW','READY_FOR_BUSINESS_REVIEW','BUSINESS_REVIEW']);
+    const dtEnvio = p.spec_estado_desde ? p.spec_estado_desde.split('T')[0] : null;
+    const slaSpec = (typeof slaParaEtapa === 'function') ? slaParaEtapa('TECHNICAL') : null;
+    const timelineHtml = (SPEC_REVIEW_ESTADOS.has(estado) && dtEnvio && typeof timelinePrazoHtml === 'function')
+        ? timelinePrazoHtml(dtEnvio, slaSpec)
+        : '';
+
+    const corpoHtml = timelineHtml
+        ? `<div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
+               <div style="flex:1;min-width:0;" class="space-y-3">
+                   ${stepperHtml}${contextoHtml}${cardsHtml}
+                   ${acaoPrincipal ? `<div class="flex justify-end gap-2">${acaoPrincipal}</div>` : ''}
+               </div>
+               ${timelineHtml}
+           </div>`
+        : `<div class="space-y-3">
+               ${stepperHtml}
+               ${contextoHtml}
+               ${cardsHtml}
+               ${acaoPrincipal ? `<div class="flex justify-end gap-2">${acaoPrincipal}</div>` : ''}
+           </div>`;
+
     el.innerHTML = `
         <div class="space-y-3">
             ${bannerReadOnly}
-            ${stepperHtml}
-            ${contextoHtml}
-            ${cardsHtml}
-            ${acaoPrincipal ? `<div class="flex justify-end gap-2">${acaoPrincipal}</div>` : ''}
+            ${corpoHtml}
         </div>`;
 }
 

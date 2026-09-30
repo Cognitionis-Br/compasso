@@ -48,12 +48,105 @@ async function renderMeuTrabalhoView() {
     _mtView = (prefs && prefs.view_meu_trabalho) || 'lista';
     _mtAtualizarBotoesView();
     _mtAtualizarControlesPorTipo();
+    if (typeof carregarSlaConfig === 'function') await carregarSlaConfig();
+    _mtRenderAlertasPrazo();
     await Promise.all([_mtCarregarTarefas(), _mtCarregarAprovacoes()]);
     if (_mtAcaoPendente) {
         const acao = _mtAcaoPendente;
         _mtAcaoPendente = null;
         await acao();
     }
+}
+
+// D-09 — seção de alertas de prazo no topo de "Meu Trabalho"
+function _mtRenderAlertasPrazo() {
+    const el = document.getElementById('meuTrabalhoAlertasPrazo');
+    if (!el) return;
+
+    const projetos = (typeof projectsData !== 'undefined' ? projectsData : [])
+        .filter(p => p.data_fim_planejamento && p.etapa_atual && p.etapa_atual !== 'BUSINESS CASE');
+
+    if (projetos.length === 0) {
+        el.innerHTML = '';
+        return;
+    }
+
+    const itensPrazo = projetos.map(p => {
+        const sla = (typeof slaParaEtapa === 'function') ? slaParaEtapa(p.etapa_atual) : null;
+        const st  = (typeof prazoStatus === 'function') ? prazoStatus(p.data_fim_planejamento, sla) : '';
+        return { p, sla, st };
+    }).filter(x => x.st === 'cr' || x.st === 'wa');
+
+    const vencidos  = itensPrazo.filter(x => x.st === 'cr').length;
+    const emRisco   = itensPrazo.filter(x => x.st === 'wa').length;
+
+    if (vencidos === 0 && emRisco === 0) {
+        el.innerHTML = '';
+        return;
+    }
+
+    const etapaLabel = (etapaAtual) => {
+        const map = { REQUIREMENTS: 'Requerimentos', TECHNICAL: 'Especificação', EXECUTION: 'Execução', UAT: 'UAT', GOLIVE: 'Go Live', CONCLUIDO: 'Encerramento' };
+        return map[etapaAtual] || etapaAtual;
+    };
+
+    const rows = itensPrazo
+        .sort((a, b) => (a.st === 'cr' ? -1 : 1) - (b.st === 'cr' ? -1 : 1))
+        .map(({ p, sla, st }) => {
+            const badge = (typeof badgeAlertaPrazo === 'function') ? badgeAlertaPrazo(p.data_fim_planejamento, sla) : '';
+            const etapa = etapaLabel(p.etapa_atual);
+            const wsAba = { REQUIREMENTS: 'etapa_requerimentos', TECHNICAL: 'etapa_especificacao', EXECUTION: 'etapa_execucao', UAT: 'etapa_uat', GOLIVE: 'etapa_golive', CONCLUIDO: 'etapa_encerramento' }[p.etapa_atual] || '';
+            return `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-2 text-xs"><span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-600">Prazo da etapa</span></td>
+                    <td class="px-4 py-2 text-xs font-semibold text-gray-800">${escapeHtml(etapa)} · ${escapeHtml(p.nome || '')}</td>
+                    <td class="px-4 py-2 text-xs text-gray-500 font-mono">${escapeHtml(p.codigo)}</td>
+                    <td class="px-4 py-2 text-xs text-gray-600">${etapa}</td>
+                    <td class="px-4 py-2 text-xs">${p.data_fim_planejamento ? formatDate(p.data_fim_planejamento) : '—'}</td>
+                    <td class="px-4 py-2">${badge}</td>
+                    <td class="px-4 py-2 text-right">
+                        ${wsAba ? `<button onclick="abrirWorkspaceNaEtapa('${escapeHtml(p.codigo)}','${wsAba}')"
+                            class="text-xs font-bold text-indigo-700 hover:text-indigo-900 whitespace-nowrap">Abrir <i class="fa-solid fa-arrow-right ml-1"></i></button>` : ''}
+                    </td>
+                </tr>`;
+        }).join('');
+
+    el.innerHTML = `
+        <div class="space-y-3 mb-4">
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                <div class="bg-white border border-gray-200 rounded-lg p-3">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Vencidos</span>
+                    <p class="text-2xl font-black text-red-700 mt-1">${vencidos}</p>
+                    <p class="text-[11px] text-red-500 mt-0.5">Prazo da etapa</p>
+                </div>
+                <div class="bg-white border border-gray-200 rounded-lg p-3">
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Em risco</span>
+                    <p class="text-2xl font-black text-amber-700 mt-1">${emRisco}</p>
+                    <p class="text-[11px] text-amber-500 mt-0.5">Aviso antecipado</p>
+                </div>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg overflow-x-auto">
+                <div class="px-4 py-2.5 border-b border-gray-100 flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-amber-500 text-xs"></i>
+                    <span class="text-sm font-bold text-gray-800">Alertas de Prazo (D-09)</span>
+                    <span class="text-xs text-gray-400 ml-1">${itensPrazo.length} ${itensPrazo.length === 1 ? 'item' : 'itens'}</span>
+                </div>
+                <table class="w-full text-left">
+                    <thead class="border-b border-gray-100">
+                        <tr>
+                            <th class="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Tipo</th>
+                            <th class="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Item</th>
+                            <th class="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Código</th>
+                            <th class="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Etapa</th>
+                            <th class="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Prazo</th>
+                            <th class="px-4 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Alerta</th>
+                            <th class="px-4 py-2"></th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-50">${rows}</tbody>
+                </table>
+            </div>
+        </div>`;
 }
 
 async function _mtCarregarTarefas() {

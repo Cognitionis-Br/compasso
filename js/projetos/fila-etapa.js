@@ -41,6 +41,10 @@ function renderFilaEtapaView(tabId) {
         const prazo = p.data_fim_planejamento
             ? `<span class="text-xs text-gray-600">${formatDate(p.data_fim_planejamento)}</span>`
             : '<span class="text-xs text-gray-400">—</span>';
+        const sla = (typeof slaParaEtapa === 'function') ? slaParaEtapa(p.etapa_atual) : null;
+        const alerta = (typeof badgeAlertaPrazo === 'function')
+            ? badgeAlertaPrazo(p.data_fim_planejamento, sla)
+            : '';
         return `
             <tr class="hover:bg-gray-50 cursor-pointer" onclick="abrirWorkspaceNaEtapa('${escapeHtml(p.codigo)}','${cfg.abaWs}')">
                 <td class="px-4 py-2.5 text-xs font-mono text-gray-500 whitespace-nowrap">${escapeHtml(p.codigo)}</td>
@@ -48,6 +52,7 @@ function renderFilaEtapaView(tabId) {
                 <td class="px-4 py-2.5 text-xs text-gray-600">${escapeHtml(p.area_solicitante || '—')}</td>
                 <td class="px-4 py-2.5">${saude.html}</td>
                 <td class="px-4 py-2.5">${prazo}</td>
+                <td class="px-4 py-2.5">${alerta}</td>
                 <td class="px-4 py-2.5 text-right">
                     <button onclick="event.stopPropagation(); abrirWorkspaceNaEtapa('${escapeHtml(p.codigo)}','${cfg.abaWs}')"
                         class="text-xs font-bold text-indigo-700 hover:text-indigo-900 whitespace-nowrap">
@@ -57,7 +62,7 @@ function renderFilaEtapaView(tabId) {
             </tr>`;
     }).join('');
 
-    const empty = `<tr><td colspan="6" class="px-4 py-8 text-center text-xs text-gray-400">Nenhum projeto em ${cfg.label} no momento.</td></tr>`;
+    const empty = `<tr><td colspan="7" class="px-4 py-8 text-center text-xs text-gray-400">Nenhum projeto em ${cfg.label} no momento.</td></tr>`;
 
     wrapper.innerHTML = `
         <div class="mb-4 flex items-center justify-between">
@@ -78,6 +83,7 @@ function renderFilaEtapaView(tabId) {
                         <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Área</th>
                         <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Saúde</th>
                         <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Prazo</th>
+                        <th class="px-4 py-2.5 text-[10px] font-bold uppercase tracking-wider text-gray-400">Alerta</th>
                         <th class="px-4 py-2.5"></th>
                     </tr>
                 </thead>

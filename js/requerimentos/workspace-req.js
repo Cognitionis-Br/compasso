@@ -332,14 +332,34 @@ function _reqRenderResumo() {
     // Ação principal conforme estado
     const acaoPrincipal = _reqAcaoPrincipal(estado, readOnly);
 
+    // D-09 — Prazo da revisão
+    const REQ_REVIEW_ESTADOS = new Set(['INTERNAL_REVIEW','READY_FOR_BUSINESS_REVIEW','BUSINESS_REVIEW','TECH_REVIEW']);
+    const dtEnvioReq = p.req_estado_desde ? p.req_estado_desde.split('T')[0] : null;
+    const slaReq = (typeof slaParaEtapa === 'function') ? slaParaEtapa('REQUIREMENTS') : null;
+    const timelineReqHtml = (REQ_REVIEW_ESTADOS.has(estado) && dtEnvioReq && typeof timelinePrazoHtml === 'function')
+        ? timelinePrazoHtml(dtEnvioReq, slaReq)
+        : '';
+
+    const corpoReqHtml = timelineReqHtml
+        ? `<div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
+               <div style="flex:1;min-width:0;" class="space-y-3">
+                   ${stepperHtml}${cardsHtml}${filHtml}
+                   ${acaoPrincipal ? `<div class="flex justify-end gap-2">${acaoPrincipal}</div>` : ''}
+               </div>
+               ${timelineReqHtml}
+           </div>`
+        : `<div class="space-y-3">
+               ${stepperHtml}
+               ${cardsHtml}
+               ${filHtml}
+               ${acaoPrincipal ? `<div class="flex justify-end gap-2">${acaoPrincipal}</div>` : ''}
+           </div>`;
+
     el.innerHTML = `
         <div class="space-y-3">
             ${bannerReadOnly}
             ${bannerAjuste}
-            ${stepperHtml}
-            ${cardsHtml}
-            ${filHtml}
-            ${acaoPrincipal ? `<div class="flex justify-end gap-2">${acaoPrincipal}</div>` : ''}
+            ${corpoReqHtml}
         </div>`;
 }
 

@@ -718,6 +718,8 @@
                      (js/meu-trabalho/meu-trabalho.js). Toggle Lista/Kanban,
                      preferência salva em user_preferences. -->
                 <div id="view-meu_trabalho" class="tab-content hidden max-w-6xl mx-auto space-y-4">
+                    <!-- D-09 — Alertas de Prazo: renderizado por _mtRenderAlertasPrazo() -->
+                    <div id="meuTrabalhoAlertasPrazo"></div>
                     <div class="flex items-center justify-between flex-wrap gap-2">
                         <h2 class="text-lg font-bold text-gray-900">Meu Trabalho</h2>
                         <div class="flex items-center gap-2">
@@ -6021,6 +6023,8 @@
     <script src="./js/requerimentos/workspace-req.js"></script>
     <script src="./js/especificacao/workspace-spec.js"></script>
     <script src="./js/workspace-projeto/etapa-dispatcher.js"></script>
+    <!-- Fase 4 — D-09: prazos, alertas e escalonamento (SLA config + badges + timeline) -->
+    <script src="./js/alertas/sla-utils.js"></script>
     <!-- Compasso 2.0 — Release 2 (Workspace Colaborativo do Projeto), 2026-09-23 -->
     <script src="./js/workspace-projeto/workspace-projeto.js"></script>
     <script src="./js/workspace-projeto/drawer-tarefa.js"></script>
