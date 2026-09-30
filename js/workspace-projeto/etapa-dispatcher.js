@@ -27,6 +27,15 @@ async function renderEtapaProjeto(projeto, aba, bodyId) {
         return;
     }
 
+    if (aba === 'etapa_execucao') {
+        if (typeof renderWorkspaceExec === 'function') {
+            await renderWorkspaceExec(projeto, bodyId);
+        } else {
+            _wsRenderAbaStub(bodyId, 'Execução', 'fa-gears');
+        }
+        return;
+    }
+
     // Demais etapas: stub com ícone específico por fase
     const etapaInfo = {
         etapa_execucao:    { label: 'Execução',     icon: 'fa-gears' },
