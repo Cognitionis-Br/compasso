@@ -97,10 +97,19 @@ function renderFechamentoAfAcaoFechar() {
     const podeFechar = (typeof usuarioPodeAlterar === 'function') && usuarioPodeAlterar('fechamento_af:avaliacao');
 
     if (fechamentoAfJaFechado()) {
+        const podeReabrir = (typeof usuarioPodeAlterar === 'function') && usuarioPodeAlterar('fechamento_af:avaliacao');
         el.innerHTML = `
             <div class="bg-emerald-50 border border-emerald-300 rounded-lg p-4 text-xs text-emerald-800">
-                <b><i class="fa-solid fa-lock mr-1"></i>${alvo} já foi fechado.</b> por ${escapeHtml(cfgAlvo.af_fechado_por) || '-'}${cfgAlvo.af_fechado_em ? ' em ' + formatDate(cfgAlvo.af_fechado_em) : ''}.
-                ${cfgAlvo.af_fechado_observacao ? `<div class="mt-1 text-emerald-700">Comentário: ${escapeHtml(cfgAlvo.af_fechado_observacao)}</div>` : ''}
+                <div class="flex items-start justify-between gap-4 flex-wrap">
+                    <div>
+                        <b><i class="fa-solid fa-lock mr-1"></i>${alvo} já foi fechado.</b> por ${escapeHtml(cfgAlvo.af_fechado_por) || '-'}${cfgAlvo.af_fechado_em ? ' em ' + formatDate(cfgAlvo.af_fechado_em) : ''}.
+                        ${cfgAlvo.af_fechado_observacao ? `<div class="mt-1 text-emerald-700">Comentário: ${escapeHtml(cfgAlvo.af_fechado_observacao)}</div>` : ''}
+                    </div>
+                    ${podeReabrir ? `
+                    <button onclick="reabrirAnoFiscal()" class="shrink-0 font-bold py-1.5 px-3 rounded text-xs bg-amber-600 hover:bg-amber-700 text-white">
+                        <i class="fa-solid fa-lock-open mr-1"></i>Reabrir ${alvo}
+                    </button>` : ''}
+                </div>
             </div>`;
         return;
     }
@@ -181,6 +190,41 @@ async function confirmarFecharAnoFiscal() {
 
     fecharModalFecharAnoFiscal();
     alert(`✅ Ano Fiscal ${alvo} fechado.`);
+    if (typeof loadProjects === 'function') await loadProjects();
+    if (typeof loadAnoFiscalConfig === 'function') await loadAnoFiscalConfig();
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
+    await renderFechamentoAfView();
+}
+
+// =========================================================================
+// Fase 3E — Reabrir Ano Fiscal (status REOPENED, M12A)
+// =========================================================================
+async function reabrirAnoFiscal() {
+    if (!(typeof usuarioPodeAlterar === 'function' && usuarioPodeAlterar('fechamento_af:avaliacao'))) {
+        return alert('Você não tem permissão para reabrir o Ano Fiscal.');
+    }
+    const alvo = fechamentoAfTargetAF();
+    if (!confirm(`Confirma a REABERTURA do Ano Fiscal ${alvo}?\n\nO status volta a REOPENED — o AF poderá receber novos tratamentos de projetos. O histórico de fechamento anterior é preservado.`)) return;
+
+    const quem = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.nome : 'desconhecido';
+    const agora = new Date().toISOString();
+
+    const { error } = await _supabase.from('fiscal_years').upsert({
+        codigo:              alvo,
+        ano_fiscal_fechado:  false,
+        status:              'REOPENED'
+    }, { onConflict: 'codigo' });
+    if (error) return alert('Erro ao reabrir o Ano Fiscal: ' + error.message);
+
+    const { error: errLog } = await _supabase.from('log_fechamento_ano_fiscal').insert([{
+        ano_fiscal:  alvo,
+        acao:        'REABERTURA',
+        fechado_por: quem,
+        observacao:  `Reaberto por ${quem} em ${agora}`
+    }]);
+    if (errLog) console.error('Reabertura concluída, mas erro ao gravar o log:', errLog.message);
+
+    alert(`✅ Ano Fiscal ${alvo} reaberto — status REOPENED.`);
     if (typeof loadProjects === 'function') await loadProjects();
     if (typeof loadAnoFiscalConfig === 'function') await loadAnoFiscalConfig();
     if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();

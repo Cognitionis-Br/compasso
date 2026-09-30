@@ -9,6 +9,7 @@
 // Código do BC atualmente aberto no workspace
 let _bcAtual = null;
 let _bcAbaAtual = 'bc_resumo';
+let _bcFiscalPlan = null; // cache do project_fiscal_plan do BC aberto
 
 // Mapa de abas do workspace BC (D-01)
 const BC_ABAS = [
@@ -102,15 +103,24 @@ function renderPortfolioBCView() {
 // -------------------------------------------------------------------------
 // WORKSPACE BC
 // -------------------------------------------------------------------------
-function abrirWorkspaceBC(codigo) {
+async function abrirWorkspaceBC(codigo) {
     _bcAtual = (typeof projectsData !== 'undefined' ? projectsData : [])
         .find(p => p.codigo === codigo) || { codigo };
     _bcAbaAtual = 'bc_resumo';
+    _bcFiscalPlan = null;
 
     const allViews = document.querySelectorAll('.tab-content');
     allViews.forEach(v => v.classList.add('hidden'));
     const ws = document.getElementById('view-workspace_bc');
     if (ws) ws.classList.remove('hidden');
+
+    // Fase 3D — carrega o plano fiscal do BC (se existir)
+    const { data: pfp } = await _supabase
+        .from('project_fiscal_plan')
+        .select('*')
+        .eq('business_case_codigo', codigo)
+        .maybeSingle();
+    _bcFiscalPlan = pfp || null;
 
     _bcRenderTabBar();
     _bcRenderAba('bc_resumo');
@@ -247,6 +257,77 @@ function _bcRenderResumo() {
             <p class="text-[11px] text-gray-400 mt-0.5">${c.sub}</p>
         </div>`).join('');
 
+    // Plano fiscal (Fase 3D)
+    const pfp = _bcFiscalPlan;
+    const regime = (pfp && pfp.regime_fiscal) || (p.regime_fiscal) || 'FY_BOUND';
+    const isCrossFy = regime === 'CROSS_FY';
+    const regimeBadge = isCrossFy
+        ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-100 text-purple-800">CROSS_FY</span>`
+        : `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">FY_BOUND</span>`;
+    const planFiscalHtml = `
+        <div class="bg-white border border-gray-200 rounded-lg p-3" id="bcPlanFiscalCard">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-bold text-gray-800"><i class="fa-solid fa-calendar-days mr-1 text-indigo-600"></i>Plano Fiscal</span>
+                <button onclick="_bcAbrirEditarPlanFiscal()" class="text-xs text-indigo-700 font-bold hover:text-indigo-900">
+                    <i class="fa-solid fa-pen-to-square mr-1"></i>Editar
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-3 text-xs">
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Regime</span>
+                    <div class="mt-1">${regimeBadge}</div>
+                </div>
+                ${isCrossFy ? `
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">FY Previsto</span>
+                    <p class="font-mono font-bold text-gray-800 mt-1">${escapeHtml(pfp.fy_previsto_inicio || '—')} → ${escapeHtml(pfp.fy_previsto_fim || '—')}</p>
+                </div>
+                <div>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Justificativa</span>
+                    <p class="text-gray-600 mt-1">${escapeHtml(pfp.justificativa || '—')}</p>
+                </div>` : '<div></div><div></div>'}
+            </div>
+            <div id="bcPlanFiscalEditPanel" class="hidden mt-3 border-t border-gray-100 pt-3">
+                <div class="grid grid-cols-1 gap-2 text-xs">
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Regime Fiscal</label>
+                        <select id="bcPfpRegime" class="mt-1 w-full border border-gray-300 rounded p-1.5 text-xs" onchange="_bcPfpToggleCrossFy()">
+                            <option value="FY_BOUND" ${regime === 'FY_BOUND' ? 'selected' : ''}>FY_BOUND — nasce e termina no mesmo exercício</option>
+                            <option value="CROSS_FY" ${regime === 'CROSS_FY' ? 'selected' : ''}>CROSS_FY — atravessa exercícios fiscais</option>
+                        </select>
+                    </div>
+                    <div id="bcPfpCrossFyFields" class="${isCrossFy ? '' : 'hidden'} grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500">FY Início Previsto</label>
+                            <select id="bcPfpFyInicio" class="mt-1 w-full border border-gray-300 rounded p-1.5 text-xs">
+                                <option value="">— selecione —</option>
+                                ${(typeof fiscalYearsCache !== 'undefined' ? fiscalYearsCache : []).map(fy =>
+                                    `<option value="${escapeHtml(fy.codigo)}" ${(pfp && pfp.fy_previsto_inicio === fy.codigo) ? 'selected' : ''}>${escapeHtml(fy.codigo)}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500">FY Fim Previsto</label>
+                            <select id="bcPfpFyFim" class="mt-1 w-full border border-gray-300 rounded p-1.5 text-xs">
+                                <option value="">— selecione —</option>
+                                ${(typeof fiscalYearsCache !== 'undefined' ? fiscalYearsCache : []).map(fy =>
+                                    `<option value="${escapeHtml(fy.codigo)}" ${(pfp && pfp.fy_previsto_fim === fy.codigo) ? 'selected' : ''}>${escapeHtml(fy.codigo)}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="text-[10px] font-bold uppercase tracking-wider text-gray-500">Justificativa</label>
+                            <textarea id="bcPfpJustificativa" rows="2" class="mt-1 w-full border border-gray-300 rounded p-1.5 text-xs resize-none" placeholder="Por que este projeto atravessa exercícios?">${escapeHtml((pfp && pfp.justificativa) || '')}</textarea>
+                        </div>
+                    </div>
+                    <div class="flex gap-2 justify-end">
+                        <button onclick="_bcFecharEditarPlanFiscal()" class="text-xs text-gray-500 hover:text-gray-700 font-bold px-3 py-1 border border-gray-300 rounded">Cancelar</button>
+                        <button onclick="_bcSalvarPlanFiscal()" class="text-xs bg-indigo-700 hover:bg-indigo-800 text-white font-bold px-3 py-1.5 rounded">Salvar Plano Fiscal</button>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
     el.innerHTML = `
         <div class="space-y-3">
             ${bannerDevolvido}
@@ -256,6 +337,7 @@ function _bcRenderResumo() {
                 </div>
             </div>
             <div class="grid grid-cols-4 gap-3">${cardsHtml}</div>
+            ${planFiscalHtml}
             <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
                 <div class="px-3 py-2 border-b border-gray-100 flex justify-between items-center">
                     <span class="text-sm font-bold text-gray-800">Pendências (V-01 a V-16)</span>
@@ -269,9 +351,77 @@ function _bcRenderResumo() {
 }
 
 // -------------------------------------------------------------------------
+// PLANO FISCAL (Fase 3D)
+// -------------------------------------------------------------------------
+function _bcAbrirEditarPlanFiscal() {
+    const painel = document.getElementById('bcPlanFiscalEditPanel');
+    if (painel) painel.classList.remove('hidden');
+}
+
+function _bcFecharEditarPlanFiscal() {
+    const painel = document.getElementById('bcPlanFiscalEditPanel');
+    if (painel) painel.classList.add('hidden');
+}
+
+function _bcPfpToggleCrossFy() {
+    const sel = document.getElementById('bcPfpRegime');
+    const fields = document.getElementById('bcPfpCrossFyFields');
+    if (!sel || !fields) return;
+    fields.classList.toggle('hidden', sel.value !== 'CROSS_FY');
+}
+
+async function _bcSalvarPlanFiscal() {
+    if (!_bcAtual) return;
+    const codigo = _bcAtual.codigo;
+    const regime = document.getElementById('bcPfpRegime').value;
+    const fyInicio = document.getElementById('bcPfpFyInicio') ? document.getElementById('bcPfpFyInicio').value || null : null;
+    const fyFim    = document.getElementById('bcPfpFyFim')    ? document.getElementById('bcPfpFyFim').value    || null : null;
+    const just     = document.getElementById('bcPfpJustificativa') ? document.getElementById('bcPfpJustificativa').value.trim() || null : null;
+
+    const quem = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.nome : 'desconhecido';
+
+    // 1. Atualiza regime_fiscal no business_case (via view projetos)
+    const { error: errProj } = await _supabase
+        .from('projetos')
+        .update({ regime_fiscal: regime })
+        .eq('codigo', codigo);
+    if (errProj) return alert('Erro ao salvar regime fiscal: ' + errProj.message);
+
+    // 2. Upsert project_fiscal_plan (só persiste se CROSS_FY ou já existia)
+    if (regime === 'CROSS_FY' || _bcFiscalPlan) {
+        const payload = {
+            business_case_codigo: codigo,
+            regime_fiscal:        regime,
+            fy_previsto_inicio:   regime === 'CROSS_FY' ? fyInicio : null,
+            fy_previsto_fim:      regime === 'CROSS_FY' ? fyFim    : null,
+            justificativa:        regime === 'CROSS_FY' ? just     : null,
+            criado_por:           _bcFiscalPlan ? undefined : quem,
+            atualizado_em:        new Date().toISOString()
+        };
+        if (!_bcFiscalPlan) payload.criado_por = quem;
+        const { data: pfpSalvo, error: errPfp } = await _supabase
+            .from('project_fiscal_plan')
+            .upsert(payload, { onConflict: 'business_case_codigo' })
+            .select()
+            .single();
+        if (errPfp) return alert('Erro ao salvar plano fiscal: ' + errPfp.message);
+        _bcFiscalPlan = pfpSalvo;
+    }
+
+    // Atualiza cache local do BC
+    if (_bcAtual) _bcAtual.regime_fiscal = regime;
+    const projIdx = (typeof projectsData !== 'undefined' ? projectsData : []).findIndex(x => x.codigo === codigo);
+    if (projIdx >= 0) projectsData[projIdx].regime_fiscal = regime;
+
+    _bcFecharEditarPlanFiscal();
+    _bcRenderResumo(); // re-renderiza com os novos dados
+}
+
+// -------------------------------------------------------------------------
 // FECHAR WORKSPACE BC
 // -------------------------------------------------------------------------
 function fecharWorkspaceBC() {
     _bcAtual = null;
+    _bcFiscalPlan = null;
     switchTab('portfolio_business_cases');
 }
