@@ -2,15 +2,19 @@
 -- 2026-09-29_fase3_req_spec.sql
 -- Compasso 2.0 — Fase 3: Requerimentos (M06) e Especificação (M07)
 --
--- Adiciona campos de estado do workflow nas tabelas projects (para SCR-05/SCR-06).
--- Recria a view `projetos` para expor as novas colunas.
+-- PROBLEMA CONHECIDO: `CREATE OR REPLACE VIEW` falha quando novas colunas
+-- de tabelas subjacentes se inserem no MEIO da lista alfabética existente
+-- (erro 42P16 "cannot change name of view column"). A solução correta é
+-- DROP VIEW CASCADE + CREATE VIEW + recriar os 3 triggers INSTEAD OF.
+-- As funções _v3_projetos_instead_* NÃO são dropadas pelo CASCADE (são
+-- objetos independentes) e são referenciadas diretamente na recriação.
 --
--- Idempotente: ADD COLUMN IF NOT EXISTS.
+-- Idempotente: ADD COLUMN IF NOT EXISTS + DROP/CREATE VIEW + DROP/CREATE
+-- TRIGGER.
 -- =========================================================================
 
 -- -------------------------------------------------------------------------
 -- 1. Colunas de estado M06 / M07 na tabela projects
---    (projects é onde vivem os projetos pós-BC, criados pelo trigger V3)
 -- -------------------------------------------------------------------------
 ALTER TABLE projects
     ADD COLUMN IF NOT EXISTS req_estado   TEXT DEFAULT 'NOT_STARTED',
@@ -18,8 +22,16 @@ ALTER TABLE projects
     ADD COLUMN IF NOT EXISTS spec_estado  TEXT DEFAULT 'NOT_STARTED';
 
 -- -------------------------------------------------------------------------
--- 2. Recria a view `projetos` para incluir as novas colunas.
---    Mesmo bloco dinâmico do V3/passo5 — roda sempre que colunas mudam.
+-- 2. Dropa a view (CASCADE remove os triggers INSTEAD OF dependentes).
+--    As funções _v3_projetos_instead_* NÃO são afetadas pelo CASCADE.
+-- -------------------------------------------------------------------------
+DROP VIEW IF EXISTS projetos CASCADE;
+
+-- -------------------------------------------------------------------------
+-- 3. Recria a view dinamicamente com TODAS as colunas atuais de
+--    business_cases e projects (mesmo algoritmo do V3/passo5, mas agora
+--    como CREATE VIEW puro, sem a restrição de compatibilidade do
+--    CREATE OR REPLACE).
 -- -------------------------------------------------------------------------
 DO $$
 DECLARE
@@ -52,8 +64,29 @@ BEGIN
     select_list := select_list || ', p.business_case_codigo';
 
     EXECUTE format(
-        'CREATE OR REPLACE VIEW projetos AS SELECT %s FROM business_cases bc LEFT JOIN projects p ON p.codigo = bc.codigo',
+        'CREATE VIEW projetos AS SELECT %s FROM business_cases bc LEFT JOIN projects p ON p.codigo = bc.codigo',
         select_list
     );
     RAISE NOTICE 'view projetos recriada com % colunas (Fase 3)', array_length(string_to_array(select_list, ','), 1);
 END $$;
+
+-- -------------------------------------------------------------------------
+-- 4. Recria os 3 triggers INSTEAD OF
+--    (funções já existem do V3/passo5 + passo5b — não precisam recriar)
+-- -------------------------------------------------------------------------
+DROP TRIGGER IF EXISTS trg_projetos_instead_insert ON projetos;
+CREATE TRIGGER trg_projetos_instead_insert INSTEAD OF INSERT ON projetos
+    FOR EACH ROW EXECUTE FUNCTION _v3_projetos_instead_insert();
+
+DROP TRIGGER IF EXISTS trg_projetos_instead_update ON projetos;
+CREATE TRIGGER trg_projetos_instead_update INSTEAD OF UPDATE ON projetos
+    FOR EACH ROW EXECUTE FUNCTION _v3_projetos_instead_update();
+
+DROP TRIGGER IF EXISTS trg_projetos_instead_delete ON projetos;
+CREATE TRIGGER trg_projetos_instead_delete INSTEAD OF DELETE ON projetos
+    FOR EACH ROW EXECUTE FUNCTION _v3_projetos_instead_delete();
+
+-- -------------------------------------------------------------------------
+-- 5. Notifica PostgREST para recarregar o schema
+-- -------------------------------------------------------------------------
+NOTIFY pgrst, 'reload schema';
