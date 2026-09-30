@@ -258,6 +258,19 @@ async function executarAprovacaoGlobalOrcamentoAF() {
         if (errorItensPacote) console.error('Erro ao registrar itens do Pacote FY:', errorItensPacote.message);
     }
 
+    // Fase 3A — cria project_fiscal_year para cada BC aprovado no pacote
+    const registrosParticipacao = projsAprovados.map(p => ({
+        projeto_codigo:     p.codigo,
+        fiscal_year_codigo: afStr,
+        status:             'ATIVO',
+        valor_alocado:      Number(p.val_bc) || Number(p.previsto) || 0,
+        criado_por:         currentUser ? currentUser.nome : 'desconhecido'
+    }));
+    const { error: errorPfy } = await _supabase
+        .from('project_fiscal_year')
+        .upsert(registrosParticipacao, { onConflict: 'projeto_codigo,fiscal_year_codigo' });
+    if (errorPfy) console.error('Erro ao registrar project_fiscal_year:', errorPfy.message);
+
     for (const prj of projsAprovados) {
         const diasSlaReq = obterSlaPorNomeEtapa('GERAR REQUERIMENTOS', prj.tamanho);
         const dt_limite_req = somarDiasUteis(dtAprovacaoHoje, diasSlaReq);
