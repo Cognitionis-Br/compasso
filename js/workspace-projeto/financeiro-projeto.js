@@ -159,18 +159,19 @@ function _estTotais() {
 }
 
 function _estRenderBloco(estConfig) {
-    const opcoesPapel = (rateCardData || []).map(r => `<option value="${escapeHtml(r.papel)}">${escapeHtml(r.papel)} (${formatCurrency(Number(r.valor_hora))}/h)</option>`).join('');
-
     const linhasHtml = _estLinhas.map((l, idx) => {
         const rc = _estPapelAtivo(l.papel);
         const valorHora = rc ? Number(rc.valor_hora) : 0;
         const subtotal = (Number(l.horas) || 0) * valorHora;
+        const opcoesPapelLinha = (rateCardData || []).map(r =>
+            `<option value="${escapeHtml(r.papel)}" ${l.papel === r.papel ? 'selected' : ''}>${escapeHtml(r.papel)} (${formatCurrency(Number(r.valor_hora))}/h)</option>`
+        ).join('');
         return `
             <tr>
                 <td class="p-2">
                     <select onchange="_estAtualizarLinha(${idx}, 'papel', this.value)" class="p-1.5 border border-gray-300 rounded text-xs w-full">
                         <option value="">-- Papel --</option>
-                        ${opcoesPapel}
+                        ${opcoesPapelLinha}
                     </select>
                 </td>
                 <td class="p-2"><input type="number" min="0" step="0.5" value="${l.horas || ''}" onchange="_estAtualizarLinha(${idx}, 'horas', this.value)" class="p-1.5 border border-gray-300 rounded text-xs w-24"></td>
