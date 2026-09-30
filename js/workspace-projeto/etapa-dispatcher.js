@@ -36,6 +36,33 @@ async function renderEtapaProjeto(projeto, aba, bodyId) {
         return;
     }
 
+    if (aba === 'etapa_uat') {
+        if (typeof renderWorkspaceUat === 'function') {
+            await renderWorkspaceUat(projeto, bodyId);
+        } else {
+            _wsRenderAbaStub(bodyId, 'UAT', 'fa-vial-circle-check');
+        }
+        return;
+    }
+
+    if (aba === 'etapa_golive') {
+        if (typeof renderWorkspaceGolive === 'function') {
+            await renderWorkspaceGolive(projeto, bodyId);
+        } else {
+            _wsRenderAbaStub(bodyId, 'Go Live', 'fa-rocket');
+        }
+        return;
+    }
+
+    if (aba === 'etapa_encerramento') {
+        if (typeof renderWorkspaceEncerramento === 'function') {
+            await renderWorkspaceEncerramento(projeto, bodyId);
+        } else {
+            _wsRenderAbaStub(bodyId, 'Encerramento', 'fa-flag-checkered');
+        }
+        return;
+    }
+
     // Demais etapas: stub com ícone específico por fase
     const etapaInfo = {
         etapa_execucao:    { label: 'Execução',     icon: 'fa-gears' },
