@@ -52,7 +52,7 @@ body {
     transition: max-height 0.3s ease-out;
 }
 .submenu.open {
-    max-height: 500px; /* Ajustável conforme necessidade */
+    max-height: 2400px; /* Aumentado para submenus aninhados (D-13) */
     transition: max-height 0.4s ease-in;
 }
 

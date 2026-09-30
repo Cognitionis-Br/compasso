@@ -193,10 +193,28 @@
             <!-- Navegação Principal -->
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-1">
 
-                <!-- GRUPO: TRABALHO PESSOAL (Compasso 2.0 Release 1, 2026-09-23) —
-                     vem primeiro no menu de propósito (UX010 do pacote: "o
-                     sistema prioriza ação sobre consulta"). Sem submenu
-                     colapsável — são só 4 links diretos, sempre visíveis. -->
+                <!-- ============================================================
+                     MENU D-11 (Fase 1 — 30/09/2026)
+                     Estrutura: Início · Meu Trabalho · Portfólio (Ano Fiscal,
+                     Business Cases) · Roadmap · Projetos · Governança · Financeiro
+                     · Conhecimento (condicional) · Relatórios · Administração
+                     (Cadastros / Administração / Configurações)
+                     Grupos removidos: FISCAL YEAR, BUSINESS CASE, REQUISITOS,
+                     TECHNICAL, EXECUTION, PARÂMETROS E CADASTROS, PERFIS DE ACESSO
+                     ============================================================ -->
+
+                <!-- AVISO: O MENU MUDOU (30 dias a partir de 2026-09-30) -->
+                <div id="menu-mudou-aviso" class="mb-3 mx-1 bg-indigo-50 border border-indigo-200 rounded-lg p-2.5 text-xs hidden">
+                    <div class="flex items-start justify-between gap-2">
+                        <div>
+                            <span class="font-bold text-indigo-700"><i class="fa-solid fa-arrows-rotate mr-1"></i>O menu mudou</span>
+                            <p class="text-indigo-600 mt-0.5">Items foram reorganizados. <button onclick="mostrarCorrespondenciasMenu()" class="underline font-semibold hover:text-indigo-800">Ver correspondências</button></p>
+                        </div>
+                        <button onclick="dispensarAvisoMenu()" class="text-indigo-400 hover:text-indigo-700 flex-shrink-0 mt-0.5" title="Fechar"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                </div>
+
+                <!-- GRUPO: TRABALHO PESSOAL — links diretos, sempre visíveis -->
                 <div class="mb-2 space-y-1">
                     <button onclick="switchTab('home')" id="link-home" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
                         <i class="fa-solid fa-house w-4 text-center"></i> Início
@@ -207,37 +225,18 @@
                     <button onclick="switchTab('meus_projetos')" id="link-meus_projetos" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
                         <i class="fa-solid fa-diagram-project w-4 text-center"></i> Meus Projetos
                     </button>
-                    <!-- NOVO (V2 do Plano de Evolução — Calendário Global, 2026-09-25):
-                         fecha SCR-05. Unifica Task + Approval (v_approvals, V1) +
-                         Milestone (etapas onde sou responsável) + Gate (tabela `gates`,
-                         V2) numa lista só, sem duplicar nenhum dos objetos de origem —
-                         clicar num item continua levando pra tela real dele.
-                         WORKFLOW_ACTION do catálogo oficial não entrou: mesma razão do
-                         filtro "Atividades" em Meu Trabalho — não existe esse objeto
-                         no Compasso hoje (decisão pendente, G5). -->
                     <button onclick="switchTab('calendario')" id="link-calendario" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
                         <i class="fa-solid fa-calendar-day w-4 text-center"></i> Calendário
                     </button>
                     <button onclick="switchTab('notificacoes')" id="link-notificacoes" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
                         <i class="fa-solid fa-bell w-4 text-center"></i> Notificações
                     </button>
-                    <!-- NOVO (Compasso 2.0 Release 3, 2026-09-23) -->
                     <button onclick="switchTab('minhas_aprovacoes')" id="link-minhas_aprovacoes" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
                         <i class="fa-solid fa-stamp w-4 text-center"></i> Minhas Aprovações
                     </button>
-                    <!-- NOVO (2026-09-25): Roadmap sai da barra horizontal de abas do
-                         topo (removida — referência real SCR-02 não tem esse padrão) e
-                         vira link direto aqui, mesma posição da ordem oficial de
-                         navegação (Documento 03: "...Minhas Aprovações | Portfólio |
-                         Roadmap | Financeiro | Governança | Relatórios..."). -->
-                    <button onclick="switchTab('roadmap')" id="link-roadmap" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
-                        <i class="fa-solid fa-timeline w-4 text-center"></i> Roadmap
-                    </button>
                 </div>
 
-                <!-- GRUPO: PORTFÓLIO (2026-09-25) — as telas de portfólio/visão
-                     agregada que viviam soltas na barra horizontal de abas do topo
-                     (removida) agora moram aqui, mesmos switchTab de sempre. -->
+                <!-- GRUPO: PORTFÓLIO (D-11) — Ano Fiscal + Business Cases como sub-grupos -->
                 <div class="mb-2">
                     <button onclick="toggleSidebarMenu('menu-portfolio', 'icon-portfolio')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
@@ -246,68 +245,66 @@
                         </div>
                         <i id="icon-portfolio" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
-                    <div id="menu-portfolio" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('dashboard')" id="link-dashboard" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Dashboard</button>
+                    <div id="menu-portfolio" class="submenu pl-5 pr-2 mt-1 space-y-1">
+                        <!-- Sub-grupo: Ano Fiscal (D-11, M12A) -->
+                        <div class="mb-1">
+                            <button onclick="toggleSidebarMenu('menu-portfolio-fy', 'icon-portfolio-fy')" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors group">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-calendar-days text-gray-400 text-[10px] w-3 text-center"></i>
+                                    <span class="uppercase tracking-wider text-[10px]">Ano Fiscal</span>
+                                </div>
+                                <i id="icon-portfolio-fy" class="fa-solid fa-chevron-down text-[9px] text-gray-400 chevron rotate"></i>
+                            </button>
+                            <div id="menu-portfolio-fy" class="submenu open pl-4 pr-1 mt-0.5 space-y-0.5">
+                                <button onclick="switchTab('ano_fiscal')" id="link-ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Abertura Ano Fiscal</button>
+                                <button onclick="switchTab('fechamento_af')" id="link-fechamento_af" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fechamento Ano Fiscal</button>
+                                <button onclick="switchTab('validacao_tradeoff')" id="link-validacao_tradeoff" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Validação de Trade-off</button>
+                                <button onclick="switchTab('retomar_hold')" id="link-retomar_hold" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Transições – Hold</button>
+                            </div>
+                        </div>
+                        <!-- Sub-grupo: Business Cases (D-11) -->
+                        <div class="mb-1">
+                            <button onclick="toggleSidebarMenu('menu-portfolio-bc', 'icon-portfolio-bc')" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors group">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-file-invoice text-gray-400 text-[10px] w-3 text-center"></i>
+                                    <span class="uppercase tracking-wider text-[10px]">Business Cases</span>
+                                </div>
+                                <i id="icon-portfolio-bc" class="fa-solid fa-chevron-down text-[9px] text-gray-400 chevron rotate"></i>
+                            </button>
+                            <div id="menu-portfolio-bc" class="submenu open pl-4 pr-1 mt-0.5 space-y-0.5">
+                                <button onclick="switchTab('portfolio_business_cases')" id="link-portfolio_business_cases" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Portfólio de BCs</button>
+                                <button onclick="switchTab('f1_formalizacao')" id="link-f1_formalizacao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Formalizar Demanda</button>
+                                <button onclick="switchTab('f1_orcamento')" id="link-f1_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Orçamentar Demanda</button>
+                                <button onclick="switchTab('aprov_comite')" id="link-aprov_comite" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Orçamento por Projeto</button>
+                                <button onclick="switchTab('aprov_orcamento_af')" id="link-aprov_orcamento_af" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Orçamento Ano Fiscal</button>
+                                <button onclick="switchTab('governanca')" id="link-governanca" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Filas – Ajustes e Complementos</button>
+                            </div>
+                        </div>
+                        <!-- Links gerais do Portfólio -->
                         <button onclick="switchTab('portfolio_executivo')" id="link-portfolio_executivo" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Portfólio Executivo</button>
-                        <button onclick="switchTab('portfolio_business_cases')" id="link-portfolio_business_cases" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Business Cases</button>
+                        <button onclick="switchTab('dashboard')" id="link-dashboard" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Dashboard</button>
                         <button onclick="switchTab('cronograma_evolucao')" id="link-cronograma_evolucao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cronograma & Evolução</button>
                         <button onclick="switchTab('consultas')" id="link-consultas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Consulta de Projetos</button>
                     </div>
                 </div>
 
-                <!-- GRUPO: FINANCEIRO (2026-09-25) — mesma origem da nota acima;
-                     "Financeiro" (aba antiga) renomeado aqui pra "Visão de
-                     Orçamento" só pra não colidir com o nome do grupo — o
-                     switchTab('visao_orcamento') continua o mesmo. -->
-                <div class="mb-2">
-                    <button onclick="toggleSidebarMenu('menu-financeiro', 'icon-financeiro')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-sack-dollar text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase tracking-wider">Financeiro</span>
-                        </div>
-                        <i id="icon-financeiro" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
+                <!-- ROADMAP — link direto (D-11) -->
+                <div class="mb-2 space-y-1">
+                    <button onclick="switchTab('roadmap')" id="link-roadmap" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-timeline w-4 text-center"></i> Roadmap
                     </button>
-                    <div id="menu-financeiro" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('financeiro_corporativo')" id="link-financeiro_corporativo" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Financeiro Corporativo</button>
-                        <button onclick="switchTab('visao_orcamento')" id="link-visao_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Visão de Orçamento</button>
-                        <button onclick="switchTab('alertas_orcamento')" id="link-alertas_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Alertas de Orçamento</button>
-                        <button onclick="switchTab('rate_card')" id="link-rate_card" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Rate Card</button>
-                    </div>
                 </div>
 
-                <!-- GRUPO: FISCAL YEAR (item 3, Fase 1) — leva "Ano Fiscal"
-                     (que estava em Administração) e "Carry Over" (que
-                     estava em Projetos) pra cá, com nomes atualizados.
-                     Os alvos de switchTab continuam os mesmos
-                     (ano_fiscal / carry_over) — só o link mudou de
-                     lugar, a tela e a lógica por trás continuam iguais. -->
-                <div class="mb-2">
-                    <button onclick="toggleSidebarMenu('menu-fy', 'icon-fy')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-calendar-days text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase tracking-wider">Ano Fiscal</span>
-                        </div>
-                        <i id="icon-fy" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron rotate"></i>
-                    </button>
-                    <div id="menu-fy" class="submenu open pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('ano_fiscal')" id="link-ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Abertura Ano Fiscal</button>
-                        <button onclick="switchTab('fechamento_af')" id="link-fechamento_af" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fechamento Ano Fiscal</button>
-                        <button onclick="switchTab('ajuste_orcamento')" id="link-ajuste_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Ajuste de Orçamento</button>
-                        <button onclick="switchTab('validacao_tradeoff')" id="link-validacao_tradeoff" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Validação de Trade-off Extraordinário</button>
-                    </div>
-                </div>
-
-
-                <!-- GRUPO: PROJETOS (Fase 1 — D-11, filas por etapa do ciclo de vida) -->
+                <!-- GRUPO: PROJETOS (D-11 — filas por etapa do ciclo de vida) -->
                 <div class="mb-2">
                     <button onclick="toggleSidebarMenu('menu-projetos', 'icon-projetos')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
                             <i class="fa-solid fa-diagram-project text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
                             <span class="uppercase tracking-wider">Projetos</span>
                         </div>
-                        <i id="icon-projetos" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron rotate"></i>
+                        <i id="icon-projetos" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
-                    <div id="menu-projetos" class="submenu open pl-9 pr-2 mt-1 space-y-1">
+                    <div id="menu-projetos" class="submenu pl-9 pr-2 mt-1 space-y-1">
                         <button onclick="switchTab('consultas')" id="link-projetos_todos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Todos os Projetos</button>
                         <button onclick="switchTab('projetos_requerimentos')" id="link-projetos_requerimentos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Requerimentos</button>
                         <button onclick="switchTab('projetos_especificacao')" id="link-projetos_especificacao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Especificação</button>
@@ -318,78 +315,10 @@
                     </div>
                 </div>
 
-                <!-- GRUPO: BUSINESS CASE -->
-                <div class="mb-2">
-                    <button onclick="toggleSidebarMenu('menu-bc', 'icon-bc')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-file-invoice text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase tracking-wider">Business Case</span>
-                        </div>
-                        <i id="icon-bc" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron rotate"></i>
-                    </button>
-                    <div id="menu-bc" class="submenu open pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('f1_formalizacao')" id="link-f1_formalizacao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Formalizar Demanda</button>
-                        <button onclick="switchTab('f1_orcamento')" id="link-f1_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Orçamentar Demanda</button>
-                        <button onclick="switchTab('aprov_comite')" id="link-aprov_comite" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Orçamento por Projeto</button>
-                        <button onclick="switchTab('aprov_orcamento_af')" id="link-aprov_orcamento_af" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Orçamento Ano Fiscal</button>
-                        <button onclick="switchTab('projetos_adhoc')" id="link-projetos_adhoc" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Demanda Extraordinária</button>
-                    </div>
-                </div>
-
-                <!-- GRUPO: REQUISITOS -->
-                <div class="mb-2">
-                    <button onclick="toggleSidebarMenu('menu-req', 'icon-req')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-list-check text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase tracking-wider">Requerimentos</span>
-                        </div>
-                        <i id="icon-req" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
-                    </button>
-                    <div id="menu-req" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('req_planejamento')" id="link-req_planejamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Gerar Requerimentos</button>
-                        <button onclick="switchTab('req_aprov_negocio')" id="link-req_aprov_negocio" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Avaliar Requerimentos – Por Negócio</button>
-                        <button onclick="switchTab('req_aprov_ti')" id="link-req_aprov_ti" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Avaliar Requerimentos – Por TI</button>
-                        <button onclick="switchTab('req_conclusao')" id="link-req_conclusao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Concluir Etapa de Requerimentos</button>
-                    </div>
-                </div>
-
-                <!-- GRUPO: TECHNICAL (item 9, relatório de melhorias) -->
-                <div class="mb-2">
-                    <button onclick="toggleSidebarMenu('menu-tech', 'icon-tech')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-drafting-compass text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase tracking-wider">Especificação</span>
-                        </div>
-                        <i id="icon-tech" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
-                    </button>
-                    <div id="menu-tech" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('fase_technical')" id="link-fase_technical" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Gerar Especificação</button>
-                        <button onclick="switchTab('tech_aval_negocio')" id="link-tech_aval_negocio" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Avaliar Especificação – Por Negócio</button>
-                        <button onclick="switchTab('tech_conclusao')" id="link-tech_conclusao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Concluir Etapa de Especificação</button>
-                    </div>
-                </div>
-
-                <!-- GRUPO: EXECUTION -->
-                <div class="mb-2">
-                    <button onclick="toggleSidebarMenu('menu-exec', 'icon-exec')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-code text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase whitespace-nowrap text-[10px] tracking-wide">Execução</span>
-                        </div>
-                        <i id="icon-exec" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
-                    </button>
-                    <div id="menu-exec" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('fase_execution')" id="link-fase_execution" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Execução</button>
-                        <button onclick="switchTab('fase_uat')" id="link-fase_uat" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">UAT</button>
-                        <button onclick="switchTab('fase_golive')" id="link-fase_golive" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Go Live</button>
-                        <button onclick="switchTab('conclusao_projeto')" id="link-conclusao_projeto" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Concluir Projeto / Subprojeto</button>
-                    </div>
-                </div>
-
                 <!-- DIVISOR -->
-                <hr class="my-4 border-gray-200">
+                <hr class="my-3 border-gray-200">
 
-                <!-- GRUPO: GOVERNANÇA (aba própria no menu, a pedido do usuário) -->
+                <!-- GRUPO: GOVERNANÇA (D-11) -->
                 <div class="mb-2">
                     <button onclick="toggleSidebarMenu('menu-gov', 'icon-gov')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
@@ -399,100 +328,67 @@
                         <i id="icon-gov" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
                     <div id="menu-gov" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <!-- NOVO (Compasso 2.0 Release 3, 2026-09-23): fila unificada — os
-                             4 links abaixo continuam existindo, acessíveis direto. -->
                         <button onclick="switchTab('governanca_unificada')" id="link-governanca_unificada" class="sidebar-link w-full text-left px-3 py-1.5 text-xs font-bold text-indigo-700 hover:text-indigo-900 rounded border-l-2 border-transparent transition-colors"><i class="fa-solid fa-list-check mr-1"></i>Fila de Governança</button>
-                        <button onclick="switchTab('governanca')" id="link-governanca" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cobrança de Ajustes</button>
-                        <button onclick="switchTab('retomar_hold')" id="link-retomar_hold" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Retomar Projetos em Hold</button>
                         <button onclick="switchTab('mudanca_orcamento')" id="link-mudanca_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Diferenças de Orçamento</button>
-                        <button onclick="switchTab('auditoria')" id="link-auditoria" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors"><i class="fa-solid fa-shield-halved mr-1"></i>Auditoria</button>
                         <button onclick="switchTab('troca_responsavel_atividade')" id="link-troca_responsavel_atividade" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Troca de Responsável de Atividade</button>
                     </div>
                 </div>
 
-                <!-- NOVO (2026-09-25): Relatórios sai da barra horizontal de abas do
-                     topo (removida) — ordem oficial de navegação, logo depois de
-                     Governança. -->
+                <!-- GRUPO: FINANCEIRO (D-11, D-3, D-6) -->
+                <div class="mb-2">
+                    <button onclick="toggleSidebarMenu('menu-financeiro', 'icon-financeiro')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid fa-sack-dollar text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
+                            <span class="uppercase tracking-wider">Financeiro</span>
+                        </div>
+                        <i id="icon-financeiro" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
+                    </button>
+                    <div id="menu-financeiro" class="submenu pl-5 pr-2 mt-1 space-y-1">
+                        <button onclick="switchTab('financeiro_corporativo')" id="link-financeiro_corporativo" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Financeiro Corporativo</button>
+                        <button onclick="switchTab('visao_orcamento')" id="link-visao_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Visão de Orçamento</button>
+                        <button onclick="switchTab('alertas_orcamento')" id="link-alertas_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Alertas de Orçamento</button>
+                        <button onclick="switchTab('rate_card')" id="link-rate_card" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Rate Card</button>
+                        <button onclick="switchTab('ajuste_orcamento')" id="link-ajuste_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Ajuste de Orçamento</button>
+                        <button onclick="switchTab('projetos_adhoc')" id="link-projetos_adhoc" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Aprovar Demanda Extraordinária</button>
+                        <!-- Sub-grupo: Contratos e Terceiros (D-6) -->
+                        <div class="mt-1">
+                            <button onclick="toggleSidebarMenu('menu-financeiro-contratos', 'icon-financeiro-contratos')" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors group">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-file-signature text-gray-400 text-[10px] w-3 text-center"></i>
+                                    <span class="uppercase tracking-wider text-[10px]">Contratos e Terceiros</span>
+                                </div>
+                                <i id="icon-financeiro-contratos" class="fa-solid fa-chevron-down text-[9px] text-gray-400 chevron"></i>
+                            </button>
+                            <div id="menu-financeiro-contratos" class="submenu pl-4 pr-1 mt-0.5 space-y-0.5">
+                                <button onclick="switchTab('contratos_projeto')" id="link-contratos_projeto" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Contratos Terceirizados</button>
+                                <button onclick="switchTab('contratos_vinculos')" id="link-contratos_vinculos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Vincular Projeto e Contrato</button>
+                                <button onclick="switchTab('registro_valores_contrato')" id="link-registro_valores_contrato" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Registro de Valores Realizados</button>
+                                <button onclick="switchTab('relatorio_projetos_contratos')" id="link-relatorio_projetos_contratos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Relatório de Projetos</button>
+                                <button onclick="switchTab('contratos_pendencias')" id="link-contratos_pendencias" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pendências de Contratos</button>
+                                <button onclick="switchTab('pagamentos_pendentes_nf')" id="link-pagamentos_pendentes_nf" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pagamentos Pendentes de NF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GRUPO: CONHECIMENTO (condicional — D-4, capability modulo_funcao) -->
+                <div id="grupo-conhecimento" class="mb-2 hidden">
+                    <button onclick="switchTab('conhecimento')" id="link-conhecimento" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
+                        <i class="fa-solid fa-book-open w-4 text-center"></i> Conhecimento
+                    </button>
+                </div>
+
+                <!-- RELATÓRIOS — link direto (D-11) -->
                 <div class="mb-2 space-y-1">
                     <button onclick="switchTab('relatorios')" id="link-relatorios" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
                         <i class="fa-solid fa-file-lines w-4 text-center"></i> Relatórios
                     </button>
                 </div>
 
-                <!-- GRUPO: CONTRATOS & TERCEIROS (item 6, primeiro documento) -->
-                <div class="mb-2">
-                    <button onclick="toggleSidebarMenu('menu-contratos', 'icon-contratos')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-file-signature text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase whitespace-nowrap text-[11px] tracking-wide">Contratos e Fornecedores</span>
-                        </div>
-                        <i id="icon-contratos" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
-                    </button>
-                    <div id="menu-contratos" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('empresas_terceirizadas')" id="link-empresas_terceirizadas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fornecedores</button>
-                        <button onclick="switchTab('contratos_projeto')" id="link-contratos_projeto" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Contratos Terceirizados</button>
-                        <button onclick="switchTab('contratos_vinculos')" id="link-contratos_vinculos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Vincular Projeto e Contrato</button>
-                        <button onclick="switchTab('registro_valores_contrato')" id="link-registro_valores_contrato" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Registro de Valores Realizados</button>
-                        <button onclick="switchTab('relatorio_projetos_contratos')" id="link-relatorio_projetos_contratos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Relatório de Projetos</button>
-                        <button onclick="switchTab('contratos_pendencias')" id="link-contratos_pendencias" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pendências de Contratos</button>
-                        <button onclick="switchTab('pagamentos_pendentes_nf')" id="link-pagamentos_pendentes_nf" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pagamentos Pendentes de NF</button>
-                    </div>
-                </div>
-
                 <!-- DIVISOR -->
-                <hr class="my-4 border-gray-200">
+                <hr class="my-3 border-gray-200">
 
-                <!-- GRUPO: PERFIS DE ACESSO -->
-                <!-- AJUSTADO (a pedido do usuário): "Responsáveis por Atividade" saiu
-                     daqui e foi pro grupo Administração (antes de Gestão de Templates). -->
-                <div class="mb-2">
-                    <button onclick="toggleSidebarMenu('menu-perfis', 'icon-perfis')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-user-shield text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase tracking-wider">Perfis de Acesso</span>
-                        </div>
-                        <i id="icon-perfis" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
-                    </button>
-                    <div id="menu-perfis" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('usuarios')" id="link-usuarios" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Usuários</button>
-                        <button onclick="switchTab('funcoes_permissoes')" id="link-funcoes_permissoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Funções e Permissões</button>
-                        <button onclick="switchTab('atribuicao_funcoes')" id="link-atribuicao_funcoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Atribuição de Funções aos Usuários</button>
-                        <button onclick="switchTab('restricao_area_atividades')" id="link-restricao_area_atividades" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Restrição de Área por Atividade</button>
-                    </div>
-                </div>
-
-                <!-- GRUPO: PARÂMETROS E CADASTROS GERAIS -->
-                <div class="mb-2">
-                    <button onclick="toggleSidebarMenu('menu-param', 'icon-param')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-sliders text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
-                            <span class="uppercase whitespace-nowrap text-[11px] tracking-wide">Parâmetros e Cadastros</span>
-                        </div>
-                        <i id="icon-param" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
-                    </button>
-                    <div id="menu-param" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('areas')" id="link-areas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Áreas Solicitantes</button>
-                        <button onclick="switchTab('pessoas_solicitantes')" id="link-pessoas_solicitantes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pessoas Solicitantes</button>
-                        <button onclick="switchTab('portes')" id="link-portes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cadastro de Porte</button>
-                        <button onclick="switchTab('tipos_projeto')" id="link-tipos_projeto" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Tipos de Projeto</button>
-                        <button onclick="switchTab('produtos')" id="link-produtos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cadastro de Produtos</button>
-                        <button onclick="switchTab('return_benefit')" id="link-return_benefit" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Retorno / Benefícios de Projeto</button>
-                        <button onclick="switchTab('planejamento_estrategico')" id="link-planejamento_estrategico" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Planejamento Estratégico</button>
-                        <!-- AJUSTADO (a pedido do usuário): "Cargos" veio do grupo Administração. -->
-                        <button onclick="switchTab('cargos')" id="link-cargos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cargos</button>
-                    </div>
-                </div>
-
-                <!-- NOVO (2026-09-25): Configurações sai da barra horizontal de abas
-                     do topo (removida) — ordem oficial de navegação: Cadastros |
-                     Administração | Configurações, na área inferior do menu. -->
-                <div class="mb-2 space-y-1">
-                    <button onclick="switchTab('configuracoes')" id="link-configuracoes" class="sidebar-link w-full flex items-center gap-3 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded border-l-2 border-transparent transition-colors">
-                        <i class="fa-solid fa-sliders w-4 text-center"></i> Configurações
-                    </button>
-                </div>
-
-                <!-- GRUPO: ADMINISTRAÇÃO -->
+                <!-- GRUPO: ADMINISTRAÇÃO (D-13 — Cadastros / Administração / Configurações) -->
                 <div class="mb-2">
                     <button onclick="toggleSidebarMenu('menu-adm', 'icon-adm')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
@@ -501,27 +397,73 @@
                         </div>
                         <i id="icon-adm" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
-                    <div id="menu-adm" class="submenu pl-9 pr-2 mt-1 space-y-1">
-                        <button onclick="switchTab('workflow_etapas')" id="link-workflow_etapas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fases e Etapas do Workflow</button>
-                        <button onclick="switchTab('prazos')" id="link-prazos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">SLA & Prazos</button>
-                        <!-- AJUSTADO (a pedido do usuário): "Responsáveis por Atividade" veio
-                             do grupo Perfis de Acesso e entra aqui, antes de Gestão de Templates. -->
-                        <button onclick="switchTab('responsaveis')" id="link-responsaveis" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Responsáveis por Atividade</button>
-                        <button onclick="switchTab('gestao_templates')" id="link-gestao_templates" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Envio de E-mail - Gestão de Templates</button>
-                        <button onclick="switchTab('gestao_fluxo_email')" id="link-gestao_fluxo_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Envio de E-mail - Gestão do Fluxo</button>
-                        <button onclick="switchTab('fila_email')" id="link-fila_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Envio de E-mail - Gestão de Fila de Envio</button>
-                        <button onclick="switchTab('percentual_bloqueio_orcamento')" id="link-percentual_bloqueio_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Percentual de Bloqueio de Orçamento</button>
-                        <button onclick="switchTab('controle_orcamento')" id="link-controle_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Controle Orçamentário</button>
-                        <button onclick="switchTab('periodo_ano_fiscal')" id="link-periodo_ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Período do Ano Fiscal</button>
-                        <button onclick="switchTab('ia_templates')" id="link-ia_templates" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Gestão de Templates de IA</button>
-                        <button onclick="switchTab('ia_config')" id="link-ia_config" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Configuração de IA</button>
+                    <div id="menu-adm" class="submenu pl-5 pr-2 mt-1 space-y-1">
+                        <!-- Sub-grupo: Cadastros (SCR-23) -->
+                        <div class="mb-1">
+                            <button onclick="toggleSidebarMenu('menu-adm-cad', 'icon-adm-cad')" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors group">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-database text-gray-400 text-[10px] w-3 text-center"></i>
+                                    <span class="uppercase tracking-wider text-[10px]">Cadastros</span>
+                                </div>
+                                <i id="icon-adm-cad" class="fa-solid fa-chevron-down text-[9px] text-gray-400 chevron"></i>
+                            </button>
+                            <div id="menu-adm-cad" class="submenu pl-4 pr-1 mt-0.5 space-y-0.5">
+                                <button onclick="switchTab('areas')" id="link-areas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Áreas Solicitantes</button>
+                                <button onclick="switchTab('pessoas_solicitantes')" id="link-pessoas_solicitantes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pessoas Solicitantes</button>
+                                <button onclick="switchTab('cargos')" id="link-cargos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cargos</button>
+                                <button onclick="switchTab('portes')" id="link-portes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cadastro de Porte</button>
+                                <button onclick="switchTab('tipos_projeto')" id="link-tipos_projeto" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Tipos de Projeto</button>
+                                <button onclick="switchTab('produtos')" id="link-produtos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cadastro de Produtos</button>
+                                <button onclick="switchTab('return_benefit')" id="link-return_benefit" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Retorno / Benefícios</button>
+                                <button onclick="switchTab('planejamento_estrategico')" id="link-planejamento_estrategico" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Planejamento Estratégico</button>
+                                <button onclick="switchTab('empresas_terceirizadas')" id="link-empresas_terceirizadas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fornecedores</button>
+                            </div>
+                        </div>
+                        <!-- Sub-grupo: Administração (SCR-24) -->
+                        <div class="mb-1">
+                            <button onclick="toggleSidebarMenu('menu-adm-adm', 'icon-adm-adm')" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors group">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-user-shield text-gray-400 text-[10px] w-3 text-center"></i>
+                                    <span class="uppercase tracking-wider text-[10px]">Administração</span>
+                                </div>
+                                <i id="icon-adm-adm" class="fa-solid fa-chevron-down text-[9px] text-gray-400 chevron"></i>
+                            </button>
+                            <div id="menu-adm-adm" class="submenu pl-4 pr-1 mt-0.5 space-y-0.5">
+                                <button onclick="switchTab('usuarios')" id="link-usuarios" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Usuários</button>
+                                <button onclick="switchTab('funcoes_permissoes')" id="link-funcoes_permissoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Funções e Permissões</button>
+                                <button onclick="switchTab('atribuicao_funcoes')" id="link-atribuicao_funcoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Atribuição de Funções</button>
+                                <button onclick="switchTab('restricao_area_atividades')" id="link-restricao_area_atividades" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Restrição de Área por Atividade</button>
+                                <button onclick="switchTab('responsaveis')" id="link-responsaveis" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Responsáveis por Atividade</button>
+                                <button onclick="switchTab('workflow_etapas')" id="link-workflow_etapas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fases e Etapas do Workflow</button>
+                                <button onclick="switchTab('prazos')" id="link-prazos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">SLA &amp; Prazos</button>
+                                <button onclick="switchTab('auditoria')" id="link-auditoria" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors"><i class="fa-solid fa-shield-halved mr-1"></i>Auditoria</button>
+                            </div>
+                        </div>
+                        <!-- Sub-grupo: Configurações (SCR-25) -->
+                        <div class="mb-1">
+                            <button onclick="toggleSidebarMenu('menu-adm-cfg', 'icon-adm-cfg')" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors group">
+                                <div class="flex items-center gap-2">
+                                    <i class="fa-solid fa-sliders text-gray-400 text-[10px] w-3 text-center"></i>
+                                    <span class="uppercase tracking-wider text-[10px]">Configurações</span>
+                                </div>
+                                <i id="icon-adm-cfg" class="fa-solid fa-chevron-down text-[9px] text-gray-400 chevron"></i>
+                            </button>
+                            <div id="menu-adm-cfg" class="submenu pl-4 pr-1 mt-0.5 space-y-0.5">
+                                <button onclick="switchTab('configuracoes')" id="link-configuracoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Configurações Gerais</button>
+                                <button onclick="switchTab('controle_orcamento')" id="link-controle_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Controle Orçamentário</button>
+                                <button onclick="switchTab('percentual_bloqueio_orcamento')" id="link-percentual_bloqueio_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Percentual de Bloqueio</button>
+                                <button onclick="switchTab('periodo_ano_fiscal')" id="link-periodo_ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Período do Ano Fiscal</button>
+                                <button onclick="switchTab('gestao_templates')" id="link-gestao_templates" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">E-mail – Templates</button>
+                                <button onclick="switchTab('gestao_fluxo_email')" id="link-gestao_fluxo_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">E-mail – Fluxo</button>
+                                <button onclick="switchTab('fila_email')" id="link-fila_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">E-mail – Fila de Envio</button>
+                                <button onclick="switchTab('ia_templates')" id="link-ia_templates" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">IA – Templates</button>
+                                <button onclick="switchTab('ia_config')" id="link-ia_config" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">IA – Configuração</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- GRUPO: FERRAMENTAS DE DEV -->
-                <!-- NOVO (a pedido do usuário 26/08/2026 — padronização/segregação
-                     de atividades, Fase 5): separado do grupo geral de
-                     Administração pra permitir permissão própria no futuro. -->
+                <!-- GRUPO: FERRAMENTAS DE DEV (inalterado) -->
                 <div class="mb-2">
                     <button onclick="toggleSidebarMenu('menu-devtools', 'icon-devtools')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
@@ -535,11 +477,7 @@
                     </div>
                 </div>
 
-                <!-- GRUPO: PROPRIETÁRIO -->
-                <!-- NOVO (papel Proprietário, 28/08/2026): separado e segregado do
-                     grupo Administração de propósito — o grupo inteiro (não só o
-                     link) fica escondido pra quem não é Proprietário, ver
-                     aplicarVisibilidadeGrupoProprietario (js/config/funcoes.js). -->
+                <!-- GRUPO: PROPRIETÁRIO (inalterado — visibilidade controlada por JS) -->
                 <div id="grupo-proprietario" class="mb-2 hidden">
                     <button onclick="toggleSidebarMenu('menu-proprietario', 'icon-proprietario')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-purple-700 hover:text-purple-900 hover:bg-purple-50 rounded transition-colors group">
                         <div class="flex items-start gap-3">
@@ -804,6 +742,9 @@
                     <h2 class="text-lg font-bold text-gray-900">Resultados da Busca — "<span id="buscaGlobalTermoDisplay"></span>"</h2>
                     <div id="buscaGlobalResultados"></div>
                 </div>
+
+                <!-- Conhecimento — stub D-4, Fase 1 (30/09/2026); tela completa na Fase 2 -->
+                <div id="view-conhecimento" class="tab-content hidden"></div>
 
                 <!-- Relatórios — Compasso 2.0 Release 4 (js/relatorios/relatorios.js) -->
                 <div id="view-relatorios" class="tab-content hidden max-w-3xl mx-auto space-y-4">
@@ -5964,6 +5905,7 @@
     <script src="./js/utils/health.js"></script>
     <script src="./js/utils/csv-export.js"></script>
     <script src="./js/utils/ui-badges.js"></script>
+    <script src="./js/core/router.js"></script>
     <script src="./js/ui/navigation.js"></script>
     <script src="./js/auth/auth.js"></script>
     <script src="./js/config/areas.js"></script>

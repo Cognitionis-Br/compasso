@@ -71,8 +71,16 @@ function fecharSidebarMobileSeAberto() {
 }
 
 function switchTab(tabId) {
+    // D-2: aliases de nomes antigos → tabId canônico
+    const _alias = { req_planejamento: 'req_planejamento', fase_technical: 'fase_technical', fase_execution: 'fase_execution' };
+    // (aliases são resolvidos pelo resolveTabRedirect quando chamado da busca; aqui
+    //  guardamos só o tabId direto; aliases de busca estão em _REDIR_MENU abaixo.)
+
     abaAtualId = tabId;
     if (tabId !== 'workspace_projeto') try { document.title = 'Compasso'; } catch(e) {} // V70
+
+    // D-7: atualiza o hash da URL sem recarregar
+    if (typeof routerPush === 'function') routerPush(tabId);
 
     fecharSidebarMobileSeAberto(); // fecha o menu sozinho no celular ao navegar
 
@@ -165,6 +173,14 @@ function switchTab(tabId) {
     if (tabId === 'rate_card') renderRateCardView();
     if (tabId === 'busca_global') renderBuscaGlobalView();
     if (tabId === 'relatorios') renderRelatoriosView();
+    // NOVO (D-4, Fase 1, 30/09/2026): stub Conhecimento — repositório read-only
+    // de documentos publicados no Encerramento de projeto. Tela completa na Fase 2.
+    if (tabId === 'conhecimento') {
+        const v = document.getElementById('view-conhecimento');
+        if (v && v.innerHTML.trim() === '') {
+            v.innerHTML = '<div class="p-8 text-center text-gray-400"><i class="fa-solid fa-book-open text-4xl mb-3 block"></i><p class="font-semibold">Conhecimento</p><p class="text-sm mt-1">Este módulo está em desenvolvimento.</p></div>';
+        }
+    }
     if (tabId === 'configuracoes') renderConfiguracoesView();
     if (tabId === 'periodo_ano_fiscal') {
         const restrito = document.getElementById('periodoAnoFiscalRestrito');
@@ -325,3 +341,99 @@ function toggleSidebarMenu(menuId, iconId) {
         icon.classList.add('rotate');
     }
 }
+
+// =============================================================================
+// AVISO "O MENU MUDOU" (D-2 — Fase 1, 30/09/2026)
+// Exibe um banner dispensável na sidebar por 30 dias após a reestruturação.
+// Data de início fixa: 2026-09-30. Armazenada em localStorage (conveniência
+// local; não sincroniza entre dispositivos).
+// =============================================================================
+const _AVISO_MENU_INICIO = new Date('2026-09-30T00:00:00');
+const _AVISO_MENU_DIAS   = 30;
+const _AVISO_MENU_KEY    = 'compasso_aviso_menu_dispensado';
+
+function iniciarAvisoMenuMudou() {
+    const aviso = document.getElementById('menu-mudou-aviso');
+    if (!aviso) return;
+    try {
+        if (localStorage.getItem(_AVISO_MENU_KEY) === '1') return;
+    } catch (e) { /* navegador bloqueado — mostra por padrão */ }
+    const agora = new Date();
+    const diasPassados = (agora - _AVISO_MENU_INICIO) / 86400000;
+    if (diasPassados >= 0 && diasPassados < _AVISO_MENU_DIAS) {
+        aviso.classList.remove('hidden');
+    }
+}
+
+function dispensarAvisoMenu() {
+    const aviso = document.getElementById('menu-mudou-aviso');
+    if (aviso) aviso.classList.add('hidden');
+    try { localStorage.setItem(_AVISO_MENU_KEY, '1'); } catch (e) { /* bloqueado */ }
+}
+
+function mostrarCorrespondenciasMenu() {
+    const linhas = Object.entries(_REDIR_MENU).map(([de, para]) =>
+        `<tr><td class="px-2 py-1 text-gray-500 text-xs line-through">${de}</td><td class="px-2 py-1 text-xs">→</td><td class="px-2 py-1 text-xs font-medium text-indigo-700">${para.label}</td></tr>`
+    ).join('');
+    const html = `<div class="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4" id="modal-corresp-menu">
+        <div class="bg-white rounded-xl shadow-xl max-w-sm w-full max-h-[80vh] overflow-y-auto p-4">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="font-bold text-sm text-gray-900">Onde foi parar cada item?</h3>
+                <button onclick="document.getElementById('modal-corresp-menu').remove()" class="text-gray-400 hover:text-gray-700"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <table class="w-full">${linhas}</table>
+        </div>
+    </div>`;
+    const div = document.createElement('div');
+    div.innerHTML = html;
+    document.body.appendChild(div.firstElementChild);
+}
+
+// =============================================================================
+// MAPA DE REDIRECIONAMENTO — nomes antigos do menu → nova localização (D-2)
+// Usado por switchTab (aliases de navegação) e pela busca global.
+// =============================================================================
+const _REDIR_MENU = {
+    'Ano Fiscal':                     { tabId: 'ano_fiscal',             label: 'Portfólio › Ano Fiscal › Abertura Ano Fiscal' },
+    'Fechamento Ano Fiscal':          { tabId: 'fechamento_af',          label: 'Portfólio › Ano Fiscal › Fechamento Ano Fiscal' },
+    'Ajuste de Orçamento':            { tabId: 'ajuste_orcamento',       label: 'Financeiro › Ajuste de Orçamento' },
+    'Validação de Trade-off':         { tabId: 'validacao_tradeoff',     label: 'Portfólio › Ano Fiscal › Validação de Trade-off' },
+    'Business Case':                  { tabId: 'portfolio_business_cases', label: 'Portfólio › Business Cases › Portfólio de BCs' },
+    'Formalizar Demanda':             { tabId: 'f1_formalizacao',        label: 'Portfólio › Business Cases › Formalizar Demanda' },
+    'Orçamentar Demanda':             { tabId: 'f1_orcamento',           label: 'Portfólio › Business Cases › Orçamentar Demanda' },
+    'Aprovar Orçamento por Projeto':  { tabId: 'aprov_comite',           label: 'Portfólio › Business Cases › Aprovar Orçamento por Projeto' },
+    'Aprovar Orçamento Ano Fiscal':   { tabId: 'aprov_orcamento_af',     label: 'Portfólio › Business Cases › Aprovar Orçamento Ano Fiscal' },
+    'Aprovar Demanda Extraordinária': { tabId: 'projetos_adhoc',         label: 'Financeiro › Aprovar Demanda Extraordinária' },
+    'Gerar Requerimentos':            { tabId: 'req_planejamento',       label: 'Projetos › Requerimentos' },
+    'Avaliar Requerimentos':          { tabId: 'req_aprov_ti',           label: 'Projetos › Requerimentos' },
+    'Gerar Especificação':            { tabId: 'fase_technical',         label: 'Projetos › Especificação' },
+    'Execução':                       { tabId: 'fase_execution',         label: 'Projetos › Execução' },
+    'Retomar Projetos em Hold':       { tabId: 'retomar_hold',           label: 'Portfólio › Ano Fiscal › Transições – Hold' },
+    'Cobrança de Ajustes':            { tabId: 'governanca',             label: 'Portfólio › Business Cases › Filas – Ajustes e Complementos' },
+    'Auditoria':                      { tabId: 'auditoria',              label: 'Administração › Administração › Auditoria' },
+    'Fornecedores':                   { tabId: 'empresas_terceirizadas', label: 'Administração › Cadastros › Fornecedores' },
+    'Contratos e Fornecedores':       { tabId: 'contratos_projeto',      label: 'Financeiro › Contratos e Terceiros' },
+    'Perfis de Acesso':               { tabId: 'usuarios',               label: 'Administração › Administração › Usuários' },
+    'Usuários':                       { tabId: 'usuarios',               label: 'Administração › Administração › Usuários' },
+    'Funções e Permissões':           { tabId: 'funcoes_permissoes',     label: 'Administração › Administração › Funções e Permissões' },
+    'Atribuição de Funções':          { tabId: 'atribuicao_funcoes',     label: 'Administração › Administração › Atribuição de Funções' },
+    'Restrição de Área':              { tabId: 'restricao_area_atividades', label: 'Administração › Administração › Restrição de Área por Atividade' },
+    'Parâmetros e Cadastros':         { tabId: 'areas',                  label: 'Administração › Cadastros' },
+    'Áreas Solicitantes':             { tabId: 'areas',                  label: 'Administração › Cadastros › Áreas Solicitantes' },
+    'Cargos':                         { tabId: 'cargos',                 label: 'Administração › Cadastros › Cargos' },
+    'Configurações':                  { tabId: 'configuracoes',          label: 'Administração › Configurações › Configurações Gerais' },
+    'Período do Ano Fiscal':          { tabId: 'periodo_ano_fiscal',     label: 'Administração › Configurações › Período do Ano Fiscal' },
+    'Rate Card':                      { tabId: 'rate_card',              label: 'Financeiro › Rate Card' },
+};
+
+// Retorna o tabId canônico para um alias de nome antigo, ou null se não houver.
+function resolveTabRedirect(query) {
+    const q = (query || '').trim().toLowerCase();
+    for (const [nome, dest] of Object.entries(_REDIR_MENU)) {
+        if (nome.toLowerCase() === q) return dest.tabId;
+    }
+    return null;
+}
+
+// Inicializa o aviso ao carregar a página.
+document.addEventListener('DOMContentLoaded', iniciarAvisoMenuMudou);
