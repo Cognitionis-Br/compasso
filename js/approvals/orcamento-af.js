@@ -302,6 +302,8 @@ async function executarAprovacaoGlobalOrcamentoAF() {
     }, { onConflict: 'codigo' });
     if (errorLogFechamento) console.error('Erro ao logar fechamento do AF:', errorLogFechamento.message);
 
+    if (typeof carregarFiscalYears === 'function') await carregarFiscalYears();
+    if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
     await loadProjects();
     switchTab('req_planejamento');
 }

@@ -21,6 +21,7 @@ function afAnteriorDe(afStr) {
 }
 
 async function loadAnoFiscalConfig() {
+    if (typeof carregarFiscalYears === 'function') await carregarFiscalYears();
     const infoAF = getInfoAnoFiscal();
     const afAnterior = afAnteriorDe(infoAF.afAtualStr);
     const { data, error } = await _supabase
@@ -195,6 +196,7 @@ async function inicializarAnoFiscalCorrente() {
     if (error) return alert('Erro ao inicializar o Ano Fiscal: ' + error.message);
 
     alert(`✅ ${infoAF.afAtualStr} inicializado e aberto para demandas.`);
+    if (typeof carregarFiscalYears === 'function') await carregarFiscalYears();
     await loadAnoFiscalConfig();
     if (typeof carregarAnosFiscaisLista === 'function') await carregarAnosFiscaisLista();
 }
