@@ -45,7 +45,7 @@ function renderPortfolioBCView() {
     const badge = (p) => {
         const s = (p.sub_status || '').toUpperCase();
         if (s === 'APROVADO')         return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-800">Aprovado</span>';
-        if (s === 'DEVOLVIDO_FY')     return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-800">Devolvido FY</span>';
+        if (s === 'DEVOLVED')         return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-yellow-100 text-yellow-800">Devolvido FY</span>';
         if (s === 'ORÇAMENTO REALIZADO') return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800">Orçamento OK</span>';
         if (s === 'PLANEJADO')        return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800">Planejado</span>';
         return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600">' + escapeHtml(p.sub_status || 'Rascunho') + '</span>';
@@ -197,7 +197,7 @@ function _bcRenderResumo() {
     if (!el || !_bcAtual) return;
 
     const p = _bcAtual;
-    const devolvido = (p.sub_status || '').toUpperCase() === 'DEVOLVIDO_FY';
+    const devolvido = p.sub_status === 'DEVOLVED';
     const motivo    = escapeHtml(p.motivo_devolucao_fy || '');
     const dtDev     = p.dt_devolucao_fy ? formatDate(p.dt_devolucao_fy) : '';
 

@@ -159,9 +159,9 @@ async function devolverBCDoFY(codigo) {
 
     const hoje = new Date().toISOString().split('T')[0];
 
-    // Atualiza o BC para DEVOLVIDO_FY com motivo
+    // Atualiza o BC para DEVOLVED com motivo (D-02: DEVOLVIDO_FY → DEVOLVED)
     const { error } = await _supabase.from('projetos').update({
-        sub_status: 'DEVOLVIDO_FY',
+        sub_status: 'DEVOLVED',
         motivo_devolucao_fy: motivo.trim(),
         dt_devolucao_fy: hoje,
     }).eq('codigo', codigo);
@@ -180,7 +180,7 @@ async function devolverBCDoFY(codigo) {
     // Atualiza cache local
     const prj = projectsData.find(p => p.codigo === codigo);
     if (prj) {
-        prj.sub_status = 'DEVOLVIDO_FY';
+        prj.sub_status = 'DEVOLVED';
         prj.motivo_devolucao_fy = motivo.trim();
         prj.dt_devolucao_fy = hoje;
     }
