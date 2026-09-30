@@ -11,10 +11,14 @@
 //   Plano de UAT, Casos de Teste, Histórico
 // =========================================================================
 
-let _uatProjetoAtual = null;
-let _uatAbaAtual     = 'uat_resumo';
-let _uatCiclos       = [];
-let _uatDefeitos     = [];
+let _uatProjetoAtual    = null;
+let _uatAbaAtual        = 'uat_resumo';
+let _uatCiclos          = [];
+let _uatDefeitos        = [];
+let _uatCasosTeste      = [];
+let _uatBlocoPlano      = null;   // plano_entrega_bloco do bloco UAT atual
+let _uatPlanoVersao     = 1;
+let _uatModoRetificacao = false;
 
 const UAT_ESTADO_META = {
     UAT_PLANNING:                     { label: 'Planejamento do UAT',  cor: 'indigo' },
@@ -60,8 +64,8 @@ async function renderWorkspaceUat(projeto, bodyId) {
 // DADOS
 // -------------------------------------------------------------------------
 async function _uatCarregarDados() {
-    _uatCiclos = [];
-    _uatDefeitos = [];
+    _uatCiclos = []; _uatDefeitos = []; _uatCasosTeste = [];
+    _uatBlocoPlano = null; _uatPlanoVersao = 1;
     if (!_uatProjetoAtual) return;
     const codigo = _uatProjetoAtual.codigo;
     try {
@@ -72,6 +76,20 @@ async function _uatCarregarDados() {
         const { data: d } = await _supabase.from('uat_defeitos').select('*')
             .eq('projeto_codigo', codigo).order('criado_em');
         _uatDefeitos = d || [];
+
+        const { data: ct } = await _supabase.from('uat_casos_teste').select('*')
+            .eq('projeto_codigo', codigo).order('codigo');
+        _uatCasosTeste = ct || [];
+
+        // Carrega bloco UAT do plano mais recente
+        const { data: planos } = await _supabase.from('plano_entrega').select('id, versao')
+            .eq('projeto_codigo', codigo).order('versao', { ascending: false }).limit(1);
+        if (planos?.length) {
+            _uatPlanoVersao = planos[0].versao;
+            const { data: blocos } = await _supabase.from('plano_entrega_bloco').select('*')
+                .eq('plano_id', planos[0].id).eq('bloco', 'UAT');
+            _uatBlocoPlano = blocos?.[0] || null;
+        }
     } catch (_) {}
 }
 
@@ -185,7 +203,9 @@ function mudarAbaUat(aba) {
         const el = document.getElementById(`uatBody_${id}`);
         if (el) el.classList.toggle('hidden', id !== aba);
     });
-    if (aba === 'uat_resumo')     _uatRenderResumo();
+    if (aba === 'uat_resumo')         _uatRenderResumo();
+    else if (aba === 'uat_plano')     _uatRenderPlanoUat();
+    else if (aba === 'uat_casos')     _uatRenderCasosTeste();
     else if (aba === 'uat_ciclos')    _uatRenderCiclos();
     else if (aba === 'uat_defeitos')  _uatRenderDefeitos();
     else if (aba === 'uat_aceite')    _uatRenderAceite();
@@ -467,20 +487,25 @@ async function _uatRatificarBloco() {
     if (!_uatProjetoAtual) return;
     if (!confirm('Ratificar o bloco de UAT sem alterações? A ação será registrada no Registro de Planejamento (D-12).')) return;
     try {
+        if (_uatBlocoPlano?.id) {
+            await _supabase.from('plano_entrega_bloco').update({ status: 'RATIFICADO' }).eq('id', _uatBlocoPlano.id);
+        }
+        const dtAnt = _uatBlocoPlano ? `${_uatBlocoPlano.dt_inicio || '—'} – ${_uatBlocoPlano.dt_fim || '—'}` : '—';
         await _supabase.from('registro_planejamento').insert({
             projeto_codigo: _uatProjetoAtual.codigo,
             data_acao:      new Date().toISOString().split('T')[0],
-            etapa:          'UAT',
-            bloco:          'UAT',
-            acao:           'Ratificado',
+            etapa: 'UAT', bloco: 'UAT', acao: 'Ratificado',
             autor:          currentUser?.email || '',
             justificativa:  'Bloco ratificado sem alterações ao entrar na etapa de UAT.',
-            versao:         1,
+            datas_antes: dtAnt, datas_depois: dtAnt,
+            versao: _uatPlanoVersao,
         });
         await _supabase.from('projetos').update({ uat_estado: 'UAT_READY' }).eq('codigo', _uatProjetoAtual.codigo);
         _uatProjetoAtual = { ..._uatProjetoAtual, uat_estado: 'UAT_READY' };
         const idx = projectsData.findIndex(p => p.codigo === _uatProjetoAtual.codigo);
         if (idx >= 0) projectsData[idx] = { ...projectsData[idx], uat_estado: 'UAT_READY' };
+        _execBlocoUatRequerRatificacao = false;
+        await _uatCarregarDados();
         mudarAbaUat('uat_ciclos');
     } catch (err) {
         alert('Erro: ' + (err.message || JSON.stringify(err)));
@@ -488,7 +513,101 @@ async function _uatRatificarBloco() {
 }
 
 function _uatAbrirFormRetificacao() {
-    alert('Retificação do bloco de UAT:\n\nAltera as datas com justificativa obrigatória. O bloco de Go Live passa automaticamente para "Requer ratificação" e o responsável é notificado.\n\n(Formulário completo — Fase 6+)');
+    _uatModoRetificacao = true;
+    mudarAbaUat('uat_plano');
+}
+
+function _uatRenderFormRetificacao() {
+    const b = _uatBlocoPlano;
+    return `
+        <div class="bg-white border border-amber-300 rounded-lg overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-amber-200 bg-amber-50 flex justify-between items-center">
+                <span class="text-sm font-bold text-amber-900"><i class="fa-solid fa-pencil mr-1"></i>Retificar bloco UAT</span>
+                <button onclick="_uatModoRetificacao=false; mudarAbaUat('uat_plano')" class="text-xs text-gray-500 hover:text-gray-800 font-semibold">Cancelar</button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data início atual</label>
+                        <p class="text-xs text-gray-600 mt-1">${b?.dt_inicio ? formatDate(b.dt_inicio) : '—'}</p>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-2 block">Nova data de início</label>
+                        <input type="date" id="uatRetifNovoInicio" value="${b?.dt_inicio || ''}" class="mt-1 w-full text-xs border border-gray-300 rounded px-2 py-1.5">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data fim atual</label>
+                        <p class="text-xs text-gray-600 mt-1">${b?.dt_fim ? formatDate(b.dt_fim) : '—'}</p>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-2 block">Nova data de fim</label>
+                        <input type="date" id="uatRetifNovaFim" value="${b?.dt_fim || ''}" class="mt-1 w-full text-xs border border-gray-300 rounded px-2 py-1.5">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Justificativa <span class="text-red-500">*</span></label>
+                    <textarea id="uatRetifJustificativa" rows="3" placeholder="Motivo da alteração (obrigatório)..."
+                        class="mt-1 w-full text-xs border border-gray-300 rounded px-2 py-1.5 resize-none"></textarea>
+                </div>
+                <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900">
+                    <b>Impacto:</b> o bloco de Go Live passará para "Requer ratificação" e o go/no-go ficará bloqueado até nova ratificação ou retificação naquela etapa.
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button onclick="_uatModoRetificacao=false; mudarAbaUat('uat_plano')" class="px-4 py-2 rounded-lg text-xs font-bold border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">Cancelar</button>
+                    <button onclick="_uatConfirmarRetificacao()" class="px-4 py-2 rounded-lg text-xs font-bold bg-indigo-700 text-white hover:bg-indigo-800">
+                        <i class="fa-solid fa-check mr-1"></i>Confirmar retificação (v${_uatPlanoVersao + 1})
+                    </button>
+                </div>
+            </div>
+        </div>`;
+}
+
+async function _uatConfirmarRetificacao() {
+    if (!_uatProjetoAtual) return;
+    const novoInicio    = document.getElementById('uatRetifNovoInicio')?.value;
+    const novaFim       = document.getElementById('uatRetifNovaFim')?.value;
+    const justificativa = document.getElementById('uatRetifJustificativa')?.value?.trim();
+    if (!novoInicio || !novaFim) { alert('Preencha as novas datas.'); return; }
+    if (!justificativa) { alert('A justificativa é obrigatória.'); return; }
+
+    const codigo     = _uatProjetoAtual.codigo;
+    const novaVersao = _uatPlanoVersao + 1;
+    const dtAnt      = `${_uatBlocoPlano?.dt_inicio || '—'} – ${_uatBlocoPlano?.dt_fim || '—'}`;
+
+    try {
+        // Busca todos os blocos do plano atual para copiar EXECUCAO e GO_LIVE
+        const { data: planos } = await _supabase.from('plano_entrega').select('id')
+            .eq('projeto_codigo', codigo).order('versao', { ascending: false }).limit(1);
+        if (!planos?.length) throw new Error('Plano não encontrado.');
+        const { data: todosB } = await _supabase.from('plano_entrega_bloco').select('*').eq('plano_id', planos[0].id);
+
+        const { data: novoPlano, error: ep } = await _supabase.from('plano_entrega').insert({
+            projeto_codigo: codigo, versao: novaVersao, eh_baseline: false, criado_por: currentUser?.email || '',
+        }).select().single();
+        if (ep) throw ep;
+
+        for (const b of ['EXECUCAO', 'UAT', 'GO_LIVE']) {
+            const ba = todosB?.find(x => x.bloco === b);
+            const st = b === 'UAT' ? 'RETIFICADO' : b === 'GO_LIVE' ? 'REQUER_RATIFICACAO' : 'RATIFICADO';
+            await _supabase.from('plano_entrega_bloco').insert({
+                plano_id: novoPlano.id, bloco: b,
+                dt_inicio:   b === 'UAT' ? novoInicio : (ba?.dt_inicio || null),
+                dt_fim:      b === 'UAT' ? novaFim    : (ba?.dt_fim    || null),
+                responsavel: ba?.responsavel || null, descricao: ba?.descricao || null, status: st,
+            });
+        }
+
+        await _supabase.from('registro_planejamento').insert({
+            projeto_codigo: codigo, data_acao: new Date().toISOString().split('T')[0],
+            etapa: 'UAT', bloco: 'UAT', acao: 'Retificado',
+            autor: currentUser?.email || '', justificativa,
+            datas_antes: dtAnt, datas_depois: `${novoInicio} – ${novaFim}`, versao: novaVersao,
+        });
+
+        // Sinaliza Go Live que precisa ratificar
+        _execBlocoUatRequerRatificacao = true;
+        _uatModoRetificacao = false;
+        await _uatCarregarDados();
+        mudarAbaUat('uat_plano');
+    } catch (err) {
+        alert('Erro ao retificar: ' + (err.message || JSON.stringify(err)));
+    }
 }
 
 async function _uatAbrirNovoCiclo() {
@@ -545,6 +664,170 @@ async function _uatRegistrarAceite(tipo) {
         const idx = projectsData.findIndex(p => p.codigo === _uatProjetoAtual.codigo);
         if (idx >= 0) projectsData[idx] = { ...projectsData[idx], uat_estado: novoEstado };
         mudarAbaUat('uat_aceite');
+    } catch (err) {
+        alert('Erro: ' + (err.message || JSON.stringify(err)));
+    }
+}
+
+// -------------------------------------------------------------------------
+// ABA: PLANO DE UAT
+// -------------------------------------------------------------------------
+function _uatRenderPlanoUat() {
+    const el = document.getElementById('uatBody_uat_plano');
+    if (!el || !_uatProjetoAtual) return;
+
+    if (_uatModoRetificacao) {
+        el.innerHTML = `<div class="space-y-3">${_uatRenderFormRetificacao()}</div>`;
+        return;
+    }
+
+    const b = _uatBlocoPlano;
+    const blocoHtml = b
+        ? `<div class="grid grid-cols-3 gap-3">
+            ${[
+                { lbl: 'Início planejado', val: b.dt_inicio ? formatDate(b.dt_inicio) : '—' },
+                { lbl: 'Fim planejado',    val: b.dt_fim   ? formatDate(b.dt_fim)   : '—' },
+                { lbl: 'Status do bloco',  val: b.status || '—' },
+            ].map(c => `<div class="bg-white border border-gray-200 rounded-lg p-3">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">${c.lbl}</span>
+                <p class="text-sm font-black text-gray-800 mt-1">${c.val}</p>
+            </div>`).join('')}
+        </div>`
+        : `<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900">Plano de Entrega não definido. Crie o plano na etapa de Execução primeiro.</div>`;
+
+    const ratHtml = b && (b.status === 'PLANEJADO' || b.status === 'REQUER_RATIFICACAO')
+        ? `<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-3">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 flex-shrink-0"></i>
+            <div class="flex-1 text-xs text-amber-900">
+                <b>Bloco UAT ainda não ratificado.</b> Confirme as datas sem alteração (Ratificar) ou ajuste-as com justificativa (Retificar) antes de iniciar o UAT.
+            </div>
+            <div class="flex gap-2 flex-shrink-0">
+                <button onclick="_uatRatificarBloco()" class="px-3 py-1.5 text-xs font-bold border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50">Ratificar</button>
+                <button onclick="_uatAbrirFormRetificacao()" class="px-3 py-1.5 text-xs font-bold bg-indigo-700 text-white rounded-lg hover:bg-indigo-800">Retificar</button>
+            </div>
+        </div>` : '';
+
+    el.innerHTML = `<div class="space-y-3">
+        ${ratHtml}
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-gray-100">
+                <span class="text-sm font-bold text-gray-800">Plano de UAT · Bloco do Plano de Entrega (D-12)</span>
+            </div>
+            <div class="p-4 space-y-3">${blocoHtml}</div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-gray-100 flex justify-between items-center">
+                <span class="text-sm font-bold text-gray-800">Ciclos planejados</span>
+                <button onclick="mudarAbaUat('uat_ciclos')" class="text-xs text-indigo-700 font-bold hover:text-indigo-900">Ver ciclos →</button>
+            </div>
+            <div class="p-3 text-xs text-gray-500">${_uatCiclos.length
+                ? `${_uatCiclos.length} ciclo${_uatCiclos.length > 1 ? 's' : ''} registrado${_uatCiclos.length > 1 ? 's' : ''}. Acesse a aba Ciclos para detalhes.`
+                : 'Nenhum ciclo cadastrado ainda. Use a aba Ciclos para adicionar o primeiro.'}</div>
+        </div>
+    </div>`;
+}
+
+// -------------------------------------------------------------------------
+// ABA: CASOS DE TESTE
+// -------------------------------------------------------------------------
+function _uatRenderCasosTeste() {
+    const el = document.getElementById('uatBody_uat_casos');
+    if (!el || !_uatProjetoAtual) return;
+
+    const SEV_BADGE = {
+        APROVADO:  '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-green-100 text-green-800">Aprovado</span>',
+        REPROVADO: '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-red-100 text-red-800">Reprovado</span>',
+        BLOQUEADO: '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800">Bloqueado</span>',
+        PENDENTE:  '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700">Pendente</span>',
+    };
+
+    const rows = _uatCasosTeste.map(ct => `
+        <tr>
+            <td class="px-3 py-2 text-xs font-mono text-indigo-700">${escapeHtml(ct.codigo || '')}</td>
+            <td class="px-3 py-2 text-xs text-gray-800 max-w-xs">${escapeHtml(ct.titulo || '')}
+                ${ct.criterio_ac ? `<br><span class="text-gray-400 text-[11px]">AC: ${escapeHtml(ct.criterio_ac)}</span>` : ''}
+            </td>
+            <td class="px-3 py-2 text-xs text-gray-500">${escapeHtml(ct.responsavel || '—')}</td>
+            <td class="px-3 py-2">${SEV_BADGE[ct.status] || SEV_BADGE.PENDENTE}</td>
+            <td class="px-3 py-2">
+                <select onchange="_uatAtualizarStatusCaso(${ct.id}, this.value)" class="text-[11px] border border-gray-200 rounded px-1 py-0.5">
+                    ${['PENDENTE','APROVADO','REPROVADO','BLOQUEADO'].map(s =>
+                        `<option value="${s}" ${ct.status === s ? 'selected' : ''}>${s.charAt(0)+s.slice(1).toLowerCase()}</option>`
+                    ).join('')}
+                </select>
+            </td>
+        </tr>`).join('');
+
+    const totais = { APROVADO: 0, REPROVADO: 0, BLOQUEADO: 0, PENDENTE: 0 };
+    _uatCasosTeste.forEach(ct => { if (totais[ct.status] !== undefined) totais[ct.status]++; });
+
+    el.innerHTML = `
+        <div class="space-y-3">
+            <div class="grid grid-cols-4 gap-2">
+                ${[
+                    { lbl: 'Total',      val: _uatCasosTeste.length, cls: 'text-gray-800' },
+                    { lbl: 'Aprovados',  val: totais.APROVADO,       cls: 'text-green-700' },
+                    { lbl: 'Reprovados', val: totais.REPROVADO,      cls: 'text-red-700'   },
+                    { lbl: 'Pendentes',  val: totais.PENDENTE + totais.BLOQUEADO, cls: 'text-amber-700' },
+                ].map(c => `<div class="bg-white border border-gray-200 rounded-lg p-3 text-center">
+                    <p class="text-xl font-black ${c.cls}">${c.val}</p>
+                    <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">${c.lbl}</span>
+                </div>`).join('')}
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                <div class="px-4 py-2.5 border-b border-gray-100 flex justify-between items-center">
+                    <span class="text-sm font-bold text-gray-800">Casos de Teste</span>
+                    <button onclick="_uatAdicionarCaso()" class="px-3 py-1.5 text-xs font-bold border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50">
+                        <i class="fa-solid fa-plus mr-1"></i>Novo caso
+                    </button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="border-b border-gray-100 bg-gray-50">
+                            <tr>
+                                <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Código</th>
+                                <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Título · AC</th>
+                                <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Responsável</th>
+                                <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Status</th>
+                                <th class="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-gray-400">Alterar</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-50">
+                            ${rows || `<tr><td colspan="5" class="px-3 py-8 text-center text-xs text-gray-400">Nenhum caso de teste cadastrado. Clique em "+ Novo caso".</td></tr>`}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>`;
+}
+
+async function _uatAdicionarCaso() {
+    if (!_uatProjetoAtual) return;
+    const proximoNum = (_uatCasosTeste.length + 1).toString().padStart(3, '0');
+    const codigo = `CT-${proximoNum}`;
+    const titulo = prompt(`${codigo} — Título do caso de teste:`);
+    if (!titulo) return;
+    const ac   = prompt('Critério de aceite associado (ex.: AC-001, opcional):') || '';
+    const resp = prompt('Responsável pelo teste:') || '';
+    try {
+        await _supabase.from('uat_casos_teste').insert({
+            projeto_codigo: _uatProjetoAtual.codigo,
+            codigo, titulo, criterio_ac: ac || null,
+            responsavel: resp || null, status: 'PENDENTE', obrigatorio: true,
+        });
+        await _uatCarregarDados();
+        _uatRenderCasosTeste();
+    } catch (err) {
+        alert('Erro: ' + (err.message || JSON.stringify(err)));
+    }
+}
+
+async function _uatAtualizarStatusCaso(id, novoStatus) {
+    try {
+        await _supabase.from('uat_casos_teste').update({ status: novoStatus }).eq('id', id);
+        const idx = _uatCasosTeste.findIndex(c => c.id === id);
+        if (idx >= 0) _uatCasosTeste[idx] = { ..._uatCasosTeste[idx], status: novoStatus };
+        _uatRenderCasosTeste();
     } catch (err) {
         alert('Erro: ' + (err.message || JSON.stringify(err)));
     }

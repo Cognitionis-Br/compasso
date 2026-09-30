@@ -15,6 +15,9 @@ let _glProjetoAtual   = null;
 let _glAbaAtual       = 'gl_resumo';
 let _glCriterios      = [];
 let _glTentativas     = [];
+let _glBlocoPlano     = null;
+let _glPlanoVersao    = 1;
+let _glModoRetificacao = false;
 
 const GL_ESTADO_META = {
     GO_LIVE_PLANNING:    { label: 'Planejamento',        cor: 'indigo' },
@@ -67,8 +70,8 @@ async function renderWorkspaceGolive(projeto, bodyId) {
 // DADOS
 // -------------------------------------------------------------------------
 async function _glCarregarDados() {
-    _glCriterios  = [];
-    _glTentativas = [];
+    _glCriterios = []; _glTentativas = [];
+    _glBlocoPlano = null; _glPlanoVersao = 1;
     if (!_glProjetoAtual) return;
     const codigo = _glProjetoAtual.codigo;
     try {
@@ -79,6 +82,15 @@ async function _glCarregarDados() {
         const { data: t } = await _supabase.from('golive_tentativas').select('*')
             .eq('projeto_codigo', codigo).order('numero');
         _glTentativas = t || [];
+
+        const { data: planos } = await _supabase.from('plano_entrega').select('id, versao')
+            .eq('projeto_codigo', codigo).order('versao', { ascending: false }).limit(1);
+        if (planos?.length) {
+            _glPlanoVersao = planos[0].versao;
+            const { data: blocos } = await _supabase.from('plano_entrega_bloco').select('*')
+                .eq('plano_id', planos[0].id).eq('bloco', 'GO_LIVE');
+            _glBlocoPlano = blocos?.[0] || null;
+        }
     } catch (_) {}
 }
 
@@ -195,10 +207,11 @@ function mudarAbaGolive(aba) {
         const el = document.getElementById(`glBody_${id}`);
         if (el) el.classList.toggle('hidden', id !== aba);
     });
-    if (aba === 'gl_resumo')      _glRenderResumo();
-    else if (aba === 'gl_rollback')    _glRenderRollback();
-    else if (aba === 'gl_tentativas')  _glRenderTentativas();
-    else if (aba === 'gl_aceite')      _glRenderAceite();
+    if (aba === 'gl_resumo')          _glRenderResumo();
+    else if (aba === 'gl_plano')      _glRenderPlano();
+    else if (aba === 'gl_rollback')   _glRenderRollback();
+    else if (aba === 'gl_tentativas') _glRenderTentativas();
+    else if (aba === 'gl_aceite')     _glRenderAceite();
     else _glRenderStub(aba);
 }
 
@@ -506,19 +519,170 @@ async function _glRatificarBlocoGolive() {
     if (!_glProjetoAtual) return;
     if (!confirm('Ratificar bloco de Go Live sem alterações?')) return;
     try {
+        if (_glBlocoPlano?.id) {
+            await _supabase.from('plano_entrega_bloco').update({ status: 'RATIFICADO' }).eq('id', _glBlocoPlano.id);
+        }
+        const dtAnt = _glBlocoPlano ? `${_glBlocoPlano.dt_inicio || '—'} – ${_glBlocoPlano.dt_fim || '—'}` : '—';
         await _supabase.from('registro_planejamento').insert({
             projeto_codigo: _glProjetoAtual.codigo,
             data_acao:      new Date().toISOString().split('T')[0],
-            etapa:          'Go Live', bloco: 'Go Live',
-            acao:           'Ratificado',
-            autor:          currentUser?.email || '',
-            justificativa:  'Bloco ratificado após retificação do UAT.',
-            versao:         1,
+            etapa: 'Go Live', bloco: 'Go Live', acao: 'Ratificado',
+            autor: currentUser?.email || '',
+            justificativa: 'Bloco ratificado após retificação do UAT.',
+            datas_antes: dtAnt, datas_depois: dtAnt,
+            versao: _glPlanoVersao,
         });
         _glBlocoRequerRatificacao = false;
+        await _glCarregarDados();
         mudarAbaGolive('gl_resumo');
     } catch (err) {
         alert('Erro: ' + (err.message || JSON.stringify(err)));
+    }
+}
+
+// -------------------------------------------------------------------------
+// ABA: PLANO (Go Live)
+// -------------------------------------------------------------------------
+function _glRenderPlano() {
+    const el = document.getElementById('glBody_gl_plano');
+    if (!el || !_glProjetoAtual) return;
+
+    if (_glModoRetificacao) {
+        el.innerHTML = `<div class="space-y-3">${_glRenderFormRetificacao()}</div>`;
+        return;
+    }
+
+    const b = _glBlocoPlano;
+    const blocoHtml = b
+        ? `<div class="grid grid-cols-3 gap-3">
+            ${[
+                { lbl: 'Início planejado', val: b.dt_inicio ? formatDate(b.dt_inicio) : '—' },
+                { lbl: 'Fim planejado',    val: b.dt_fim   ? formatDate(b.dt_fim)   : '—' },
+                { lbl: 'Status do bloco',  val: b.status || '—' },
+            ].map(c => `<div class="bg-white border border-gray-200 rounded-lg p-3">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-gray-400">${c.lbl}</span>
+                <p class="text-sm font-black text-gray-800 mt-1">${c.val}</p>
+            </div>`).join('')}
+        </div>`
+        : `<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900">Plano de Entrega não definido. Crie o plano na etapa de Execução primeiro.</div>`;
+
+    const ratHtml = b && (b.status === 'PLANEJADO' || b.status === 'REQUER_RATIFICACAO')
+        ? `<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-start gap-3">
+            <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 flex-shrink-0"></i>
+            <div class="flex-1 text-xs text-amber-900">
+                <b>Bloco Go Live aguarda ratificação.</b> Confirme as datas sem alteração (Ratificar) ou ajuste-as com justificativa (Retificar).
+            </div>
+            <div class="flex gap-2 flex-shrink-0">
+                <button onclick="_glRatificarBlocoGolive()" class="px-3 py-1.5 text-xs font-bold border border-gray-300 bg-white text-gray-700 rounded-lg hover:bg-gray-50">Ratificar</button>
+                <button onclick="_glModoRetificacao=true; _glRenderPlano()" class="px-3 py-1.5 text-xs font-bold bg-indigo-700 text-white rounded-lg hover:bg-indigo-800">Retificar janela</button>
+            </div>
+        </div>` : '';
+
+    el.innerHTML = `<div class="space-y-3">
+        ${ratHtml}
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-gray-100">
+                <span class="text-sm font-bold text-gray-800">Plano de Go Live · Bloco do Plano de Entrega (D-12)</span>
+            </div>
+            <div class="p-4 space-y-3">${blocoHtml}</div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-gray-100 flex justify-between items-center">
+                <span class="text-sm font-bold text-gray-800">Critérios de Rollback</span>
+                <button onclick="mudarAbaGolive('gl_rollback')" class="text-xs text-indigo-700 font-bold hover:text-indigo-900">Ver critérios →</button>
+            </div>
+            <div class="p-3 text-xs text-gray-500">${_glCriterios.length
+                ? `${_glCriterios.length} critério${_glCriterios.length > 1 ? 's' : ''} de rollback definido${_glCriterios.length > 1 ? 's' : ''}. Acesse a aba Rollback para detalhes.`
+                : 'Nenhum critério de rollback definido ainda. Use a aba Rollback para adicionar (RF-06).'}</div>
+        </div>
+    </div>`;
+}
+
+function _glRenderFormRetificacao() {
+    const b = _glBlocoPlano;
+    return `
+        <div class="bg-white border border-amber-300 rounded-lg overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-amber-200 bg-amber-50 flex justify-between items-center">
+                <span class="text-sm font-bold text-amber-900"><i class="fa-solid fa-pencil mr-1"></i>Retificar janela de Go Live</span>
+                <button onclick="_glModoRetificacao=false; _glRenderPlano()" class="text-xs text-gray-500 hover:text-gray-800 font-semibold">Cancelar</button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data início atual</label>
+                        <p class="text-xs text-gray-600 mt-1">${b?.dt_inicio ? formatDate(b.dt_inicio) : '—'}</p>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-2 block">Nova data de início</label>
+                        <input type="date" id="glRetifNovoInicio" value="${b?.dt_inicio || ''}" class="mt-1 w-full text-xs border border-gray-300 rounded px-2 py-1.5">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data fim atual</label>
+                        <p class="text-xs text-gray-600 mt-1">${b?.dt_fim ? formatDate(b.dt_fim) : '—'}</p>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-2 block">Nova data de fim</label>
+                        <input type="date" id="glRetifNovaFim" value="${b?.dt_fim || ''}" class="mt-1 w-full text-xs border border-gray-300 rounded px-2 py-1.5">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Justificativa <span class="text-red-500">*</span></label>
+                    <textarea id="glRetifJustificativa" rows="3" placeholder="Motivo da alteração de janela (obrigatório)..."
+                        class="mt-1 w-full text-xs border border-gray-300 rounded px-2 py-1.5 resize-none"></textarea>
+                </div>
+                <div class="flex justify-end gap-2">
+                    <button onclick="_glModoRetificacao=false; _glRenderPlano()" class="px-4 py-2 rounded-lg text-xs font-bold border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">Cancelar</button>
+                    <button onclick="_glConfirmarRetificacao()" class="px-4 py-2 rounded-lg text-xs font-bold bg-indigo-700 text-white hover:bg-indigo-800">
+                        <i class="fa-solid fa-check mr-1"></i>Confirmar (v${_glPlanoVersao + 1})
+                    </button>
+                </div>
+            </div>
+        </div>`;
+}
+
+async function _glConfirmarRetificacao() {
+    if (!_glProjetoAtual) return;
+    const novoInicio    = document.getElementById('glRetifNovoInicio')?.value;
+    const novaFim       = document.getElementById('glRetifNovaFim')?.value;
+    const justificativa = document.getElementById('glRetifJustificativa')?.value?.trim();
+    if (!novoInicio || !novaFim) { alert('Preencha as novas datas.'); return; }
+    if (!justificativa) { alert('A justificativa é obrigatória.'); return; }
+
+    const codigo     = _glProjetoAtual.codigo;
+    const novaVersao = _glPlanoVersao + 1;
+    const dtAnt      = `${_glBlocoPlano?.dt_inicio || '—'} – ${_glBlocoPlano?.dt_fim || '—'}`;
+
+    try {
+        const { data: planos } = await _supabase.from('plano_entrega').select('id')
+            .eq('projeto_codigo', codigo).order('versao', { ascending: false }).limit(1);
+        if (!planos?.length) throw new Error('Plano não encontrado.');
+        const { data: todosB } = await _supabase.from('plano_entrega_bloco').select('*').eq('plano_id', planos[0].id);
+
+        const { data: novoPlano, error: ep } = await _supabase.from('plano_entrega').insert({
+            projeto_codigo: codigo, versao: novaVersao, eh_baseline: false, criado_por: currentUser?.email || '',
+        }).select().single();
+        if (ep) throw ep;
+
+        for (const b of ['EXECUCAO', 'UAT', 'GO_LIVE']) {
+            const ba = todosB?.find(x => x.bloco === b);
+            const st = b === 'GO_LIVE' ? 'RETIFICADO' : 'RATIFICADO';
+            await _supabase.from('plano_entrega_bloco').insert({
+                plano_id: novoPlano.id, bloco: b,
+                dt_inicio:   b === 'GO_LIVE' ? novoInicio : (ba?.dt_inicio || null),
+                dt_fim:      b === 'GO_LIVE' ? novaFim    : (ba?.dt_fim    || null),
+                responsavel: ba?.responsavel || null, descricao: ba?.descricao || null, status: st,
+            });
+        }
+
+        await _supabase.from('registro_planejamento').insert({
+            projeto_codigo: codigo, data_acao: new Date().toISOString().split('T')[0],
+            etapa: 'Go Live', bloco: 'Go Live', acao: 'Retificado',
+            autor: currentUser?.email || '', justificativa,
+            datas_antes: dtAnt, datas_depois: `${novoInicio} – ${novaFim}`, versao: novaVersao,
+        });
+
+        _glBlocoRequerRatificacao = false;
+        _glModoRetificacao = false;
+        await _glCarregarDados();
+        _glRenderPlano();
+    } catch (err) {
+        alert('Erro ao retificar: ' + (err.message || JSON.stringify(err)));
     }
 }
 

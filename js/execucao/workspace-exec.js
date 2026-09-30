@@ -12,11 +12,13 @@
 //   Mudanças, Liberação para UAT, Histórico
 // =========================================================================
 
-let _execProjetoAtual  = null;
-let _execAbaAtual      = 'exe_resumo';
-let _execPlanoAtual    = null;   // linha de plano_entrega mais recente
-let _execBlocosAtual   = [];     // linhas de plano_entrega_bloco do plano atual
-let _execRegistro      = [];     // linhas de registro_planejamento
+let _execProjetoAtual      = null;
+let _execAbaAtual          = 'exe_resumo';
+let _execPlanoAtual        = null;
+let _execBlocosAtual       = [];
+let _execRegistro          = [];
+let _execModoRetificacao   = false;
+let _execBlocoRetificando  = null;
 
 const EXEC_READONLY_ESTADOS = new Set(['READY_FOR_UAT_REVIEW', 'ON_HOLD', 'CANCELLED']);
 
@@ -306,10 +308,8 @@ function _execRenderPlanoEntrega() {
     const el = document.getElementById('execBody_exe_plano_entrega');
     if (!el || !_execProjetoAtual) return;
 
-    if (!_execPlanoAtual) {
-        el.innerHTML = _execRenderFormCriarPlano();
-        return;
-    }
+    if (!_execPlanoAtual) { el.innerHTML = _execRenderFormCriarPlano(); return; }
+    if (_execModoRetificacao) { el.innerHTML = `<div class="space-y-4">${_execRenderFormRetificacao()}${_execRenderRegistroPlanejamento()}</div>`; return; }
 
     el.innerHTML = `
         <div class="space-y-4">
@@ -626,8 +626,155 @@ async function _execRatificarBloco(bloco) {
     }
 }
 
-function _execAbrirFormRetificacao() {
-    alert('Retificação de bloco — em desenvolvimento (Fase 5+).\n\nRetificar permite alterar as datas de um bloco com justificativa obrigatória, gerando nova versão do plano. Se o bloco retificado for UAT, o bloco de Go Live passa automaticamente para "Requer ratificação".');
+function _execAbrirFormRetificacao(blocoPresel) {
+    _execModoRetificacao  = true;
+    _execBlocoRetificando = blocoPresel || 'EXECUCAO';
+    mudarAbaExec('exe_plano_entrega');
+}
+
+function _execCancelarRetificacao() {
+    _execModoRetificacao  = false;
+    _execBlocoRetificando = null;
+    _execRenderPlanoEntrega();
+}
+
+function _execRenderFormRetificacao() {
+    if (!_execPlanoAtual || !_execBlocosAtual.length) return '<div class="text-xs text-gray-400">Sem plano carregado.</div>';
+
+    const BLOCOS = ['EXECUCAO', 'UAT', 'GO_LIVE'];
+    const blocoAtual = _execBlocosAtual.find(b => b.bloco === _execBlocoRetificando) || _execBlocosAtual[0];
+
+    const selectorHtml = BLOCOS.map(b => {
+        const meta = BLOCO_META[b] || { label: b };
+        return `<button type="button" onclick="_execBlocoRetificando='${b}'; document.getElementById('execRetifBlocoLabel').textContent='${meta.label}'; _execAtualizarFormRetif('${b}')"
+            class="px-3 py-1.5 text-xs font-bold rounded-full ${_execBlocoRetificando === b ? 'bg-indigo-700 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">${meta.label}</button>`;
+    }).join('');
+
+    const BLOCOS_ORDEM = BLOCOS;
+    const blocoIdx = BLOCOS_ORDEM.indexOf(_execBlocoRetificando);
+    const downstream = BLOCOS_ORDEM.filter((_, i) => i > blocoIdx);
+    const impactHtml = downstream.length
+        ? `<div class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900">
+                <b>Impacto nos blocos seguintes:</b> ${downstream.map(b => BLOCO_META[b]?.label || b).join(', ')} passarão para "Requer ratificação" e bloquearão o avanço até nova ratificação.
+           </div>`
+        : `<div class="bg-blue-50 border border-blue-200 rounded-lg p-3 text-xs text-blue-900">Go Live é o último bloco. A retificação não afeta blocos posteriores.</div>`;
+
+    return `
+        <div class="bg-white border border-amber-300 rounded-lg overflow-hidden">
+            <div class="px-4 py-2.5 border-b border-amber-200 flex justify-between items-center bg-amber-50">
+                <span class="text-sm font-bold text-amber-900"><i class="fa-solid fa-pencil mr-1"></i>Retificar bloco — <span id="execRetifBlocoLabel">${BLOCO_META[_execBlocoRetificando]?.label || _execBlocoRetificando}</span></span>
+                <button onclick="_execCancelarRetificacao()" class="text-xs text-gray-500 hover:text-gray-800 font-semibold">Cancelar</button>
+            </div>
+            <div class="p-4 space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Bloco a retificar</label>
+                    <div class="flex gap-2 mt-1">${selectorHtml}</div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data de início atual</label>
+                        <p id="execRetifInicioAtual" class="text-xs text-gray-600 mt-1">${blocoAtual?.dt_inicio ? formatDate(blocoAtual.dt_inicio) : '—'}</p>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-2 block">Nova data de início</label>
+                        <input type="date" id="execRetifNovoInicio" value="${blocoAtual?.dt_inicio || ''}"
+                            class="mt-1 w-full text-xs border border-gray-300 rounded px-2 py-1.5">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Data de fim atual</label>
+                        <p id="execRetifFimAtual" class="text-xs text-gray-600 mt-1">${blocoAtual?.dt_fim ? formatDate(blocoAtual.dt_fim) : '—'}</p>
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400 mt-2 block">Nova data de fim</label>
+                        <input type="date" id="execRetifNovoFim" value="${blocoAtual?.dt_fim || ''}"
+                            class="mt-1 w-full text-xs border border-gray-300 rounded px-2 py-1.5">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Justificativa <span class="text-red-500">*</span></label>
+                    <textarea id="execRetifJustificativa" rows="3" placeholder="Descreva o motivo da alteração de datas (obrigatório)..."
+                        class="mt-1 w-full text-xs border border-gray-300 rounded px-2 py-1.5 resize-none"></textarea>
+                </div>
+                ${impactHtml}
+                <div class="flex justify-end gap-2">
+                    <button onclick="_execCancelarRetificacao()" class="px-4 py-2 rounded-lg text-xs font-bold border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">Cancelar</button>
+                    <button onclick="_execConfirmarRetificacao()" class="px-4 py-2 rounded-lg text-xs font-bold bg-indigo-700 text-white hover:bg-indigo-800">
+                        <i class="fa-solid fa-check mr-1"></i>Confirmar retificação (nova versão v${(_execPlanoAtual?.versao || 0) + 1})
+                    </button>
+                </div>
+            </div>
+        </div>`;
+}
+
+function _execAtualizarFormRetif(bloco) {
+    const b = _execBlocosAtual.find(x => x.bloco === bloco);
+    if (!b) return;
+    const el = id => document.getElementById(id);
+    if (el('execRetifInicioAtual')) el('execRetifInicioAtual').textContent = b.dt_inicio ? formatDate(b.dt_inicio) : '—';
+    if (el('execRetifFimAtual'))   el('execRetifFimAtual').textContent   = b.dt_fim   ? formatDate(b.dt_fim)   : '—';
+    if (el('execRetifNovoInicio')) el('execRetifNovoInicio').value = b.dt_inicio || '';
+    if (el('execRetifNovoFim'))    el('execRetifNovoFim').value   = b.dt_fim   || '';
+    document.querySelectorAll('[onclick*="_execBlocoRetificando"]').forEach(btn => {
+        const isActive = btn.textContent.trim() === (BLOCO_META[bloco]?.label || bloco);
+        btn.className = btn.className.replace(/bg-\w+-\d+ text-\w+/g, '').trim();
+        btn.className += isActive ? ' bg-indigo-700 text-white' : ' bg-gray-100 text-gray-600 hover:bg-gray-200';
+    });
+}
+
+async function _execConfirmarRetificacao() {
+    if (!_execProjetoAtual || !_execPlanoAtual) return;
+    const novoInicio    = document.getElementById('execRetifNovoInicio')?.value;
+    const novaFim       = document.getElementById('execRetifNovoFim')?.value;
+    const justificativa = document.getElementById('execRetifJustificativa')?.value?.trim();
+    const bloco         = _execBlocoRetificando;
+
+    if (!novoInicio || !novaFim) { alert('Preencha as novas datas de início e fim.'); return; }
+    if (!justificativa) { alert('A justificativa é obrigatória para retificação.'); return; }
+
+    const BLOCOS_ORDEM  = ['EXECUCAO', 'UAT', 'GO_LIVE'];
+    const blocoIdx      = BLOCOS_ORDEM.indexOf(bloco);
+    const blocoAtual    = _execBlocosAtual.find(b => b.bloco === bloco);
+    const novaVersao    = _execPlanoAtual.versao + 1;
+    const codigo        = _execProjetoAtual.codigo;
+
+    try {
+        const { data: novoPlano, error: errPlano } = await _supabase.from('plano_entrega').insert({
+            projeto_codigo: codigo, versao: novaVersao,
+            eh_baseline: false, criado_por: currentUser?.email || '',
+        }).select().single();
+        if (errPlano) throw errPlano;
+
+        for (const b of BLOCOS_ORDEM) {
+            const ba    = _execBlocosAtual.find(x => x.bloco === b);
+            const bIdx  = BLOCOS_ORDEM.indexOf(b);
+            const st    = b === bloco ? 'RETIFICADO' : bIdx > blocoIdx ? 'REQUER_RATIFICACAO' : 'RATIFICADO';
+            const { error: errBloco } = await _supabase.from('plano_entrega_bloco').insert({
+                plano_id: novoPlano.id, bloco: b,
+                dt_inicio:   b === bloco ? novoInicio : (ba?.dt_inicio || null),
+                dt_fim:      b === bloco ? novaFim    : (ba?.dt_fim    || null),
+                responsavel: ba?.responsavel || null,
+                descricao:   ba?.descricao   || null,
+                status: st,
+            });
+            if (errBloco) throw errBloco;
+        }
+
+        await _supabase.from('registro_planejamento').insert({
+            projeto_codigo: codigo,
+            data_acao:      new Date().toISOString().split('T')[0],
+            etapa:          'Execução',
+            bloco:          BLOCO_META[bloco]?.label || bloco,
+            acao:           'Retificado',
+            autor:          currentUser?.email || '',
+            justificativa,
+            datas_antes:    `${blocoAtual?.dt_inicio || '—'} – ${blocoAtual?.dt_fim || '—'}`,
+            datas_depois:   `${novoInicio} – ${novaFim}`,
+            versao:         novaVersao,
+        });
+
+        _execModoRetificacao  = false;
+        _execBlocoRetificando = null;
+        await _execCarregarPlano();
+        _execRenderPlanoEntrega();
+    } catch (err) {
+        alert('Erro ao retificar: ' + (err.message || JSON.stringify(err)));
+    }
 }
 
 // -------------------------------------------------------------------------
