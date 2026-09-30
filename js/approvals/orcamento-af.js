@@ -298,7 +298,8 @@ async function executarAprovacaoGlobalOrcamentoAF() {
         fechado_em: new Date().toISOString(),
         valor_total_fechado: valorTotalAF,
         qtd_projetos_fechado: projsAprovados.length,
-        status: 'OPEN'
+        status: 'OPEN',
+        bc_package_status: 'FECHADO'
     }, { onConflict: 'codigo' });
     if (errorLogFechamento) console.error('Erro ao logar fechamento do AF:', errorLogFechamento.message);
 
