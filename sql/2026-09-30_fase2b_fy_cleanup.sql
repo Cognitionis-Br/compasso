@@ -77,12 +77,12 @@ SELECT
     af_fechado_observacao,
     valor_total_fechado,
     qtd_projetos_fechado,
-    -- Campos M12A
+    -- Campos M12A (ordem idêntica à VIEW da Fase 2A — novos campos só no final)
     status                      AS fy_status,
-    bc_package_status,
     data_inicio,
     data_fim,
-    id                          AS fy_id
+    id                          AS fy_id,
+    bc_package_status
 FROM fiscal_years;
 
 -- ============================================================
