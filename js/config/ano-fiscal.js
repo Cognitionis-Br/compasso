@@ -185,13 +185,13 @@ async function inicializarAnoFiscalCorrente() {
     if (!confirm(`Inicializar o Ano Fiscal ${infoAF.afAtualStr}?\n\nEle nasce ABERTO para recebimento de demandas normais, com o orçamento ainda em construção (não fechado).`)) {
         return;
     }
-    const { error } = await _supabase.from('anos_fiscais_config').upsert({
-        ano_fiscal: infoAF.afAtualStr,
+    const { error } = await _supabase.from('fiscal_years').upsert({
+        codigo: infoAF.afAtualStr,
         recebimento_demandas_aberto: true,
         orcamento_fechado: false,
         aberto_por: currentUser ? currentUser.nome : null,
         aberto_em: new Date().toISOString()
-    }, { onConflict: 'ano_fiscal' });
+    }, { onConflict: 'codigo' });
     if (error) return alert('Erro ao inicializar o Ano Fiscal: ' + error.message);
 
     alert(`✅ ${infoAF.afAtualStr} inicializado e aberto para demandas.`);
@@ -228,13 +228,13 @@ async function abrirRecebimentoProximoAF() {
     }
 
     const payload = {
-        ano_fiscal: infoAF.proximoAFStr,
+        codigo: infoAF.proximoAFStr,
         recebimento_demandas_aberto: true,
         aberto_por: currentUser ? currentUser.nome : null,
         aberto_em: new Date().toISOString()
     };
 
-    const { error } = await _supabase.from('anos_fiscais_config').upsert(payload);
+    const { error } = await _supabase.from('fiscal_years').upsert(payload, { onConflict: 'codigo' });
     if (error) return alert('Erro ao abrir o Ano Fiscal: ' + error.message);
 
     alert(`✅ ${infoAF.proximoAFStr} aberto para recebimento de demandas!`);

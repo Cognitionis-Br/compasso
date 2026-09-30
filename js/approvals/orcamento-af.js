@@ -290,15 +290,16 @@ async function executarAprovacaoGlobalOrcamentoAF() {
     alert(`✅ Orçamento do Ano Fiscal APROVADO e FECHADO com sucesso!\n\n${projsAprovados.length} projetos promovidos para a fase de REQUERIMENTOS.`);
 
     // Log formal do fechamento
-    const { error: errorLogFechamento } = await _supabase.from('anos_fiscais_config').upsert({
-        ano_fiscal: afStr,
+    const { error: errorLogFechamento } = await _supabase.from('fiscal_years').upsert({
+        codigo: afStr,
         orcamento_fechado: true,
         recebimento_demandas_aberto: false,
         fechado_por: currentUser ? currentUser.nome : 'desconhecido',
         fechado_em: new Date().toISOString(),
         valor_total_fechado: valorTotalAF,
-        qtd_projetos_fechado: projsAprovados.length
-    }, { onConflict: 'ano_fiscal' });
+        qtd_projetos_fechado: projsAprovados.length,
+        status: 'OPEN'
+    }, { onConflict: 'codigo' });
     if (errorLogFechamento) console.error('Erro ao logar fechamento do AF:', errorLogFechamento.message);
 
     await loadProjects();

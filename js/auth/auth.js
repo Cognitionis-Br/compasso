@@ -369,6 +369,7 @@ async function entrarNoSistema() {
     // modo de controle orçamentário (usado no trade-off da Extraordinária).
     if (typeof carregarConfigPeriodoAF === 'function') await carregarConfigPeriodoAF();
     if (typeof carregarConfigControleOrcamento === 'function') await carregarConfigControleOrcamento();
+    if (typeof carregarFiscalYears === 'function') await carregarFiscalYears(); // R-FY-03: AF ativo vem do banco
 
     const infoAF = getInfoAnoFiscal();
     const sidebarInfo = document.getElementById('sidebarInfoAF');

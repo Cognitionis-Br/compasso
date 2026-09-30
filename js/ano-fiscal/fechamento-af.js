@@ -158,13 +158,14 @@ async function confirmarFecharAnoFiscal() {
     const quem = currentUser ? currentUser.nome : 'desconhecido';
     const agora = new Date().toISOString();
 
-    const { error } = await _supabase.from('anos_fiscais_config').upsert({
-        ano_fiscal: alvo,
+    const { error } = await _supabase.from('fiscal_years').upsert({
+        codigo: alvo,
         ano_fiscal_fechado: true,
         af_fechado_por: quem,
         af_fechado_em: agora,
-        af_fechado_observacao: obs || null
-    }, { onConflict: 'ano_fiscal' });
+        af_fechado_observacao: obs || null,
+        status: 'CLOSED'
+    }, { onConflict: 'codigo' });
     if (error) return alert('Erro ao fechar o Ano Fiscal: ' + error.message);
 
     const { error: errLog } = await _supabase.from('log_fechamento_ano_fiscal').insert([{

@@ -267,7 +267,7 @@ async function resetarBaseParaFase1() {
     // fechado depois do reset, permitindo Extraordinário mesmo quando o usuário
     // esperava um AF limpo e aberto pra demandas normais.
     const infoAFReset = getInfoAnoFiscal();
-    const { error: errorAF } = await _supabase.from('anos_fiscais_config').update({ orcamento_fechado: false }).eq('ano_fiscal', infoAFReset.afAtualStr);
+    const { error: errorAF } = await _supabase.from('fiscal_years').update({ orcamento_fechado: false, status: 'PLANNING' }).eq('codigo', infoAFReset.afAtualStr);
     if (errorAF) {
         console.error('Reset concluído, mas houve erro ao reabrir o orçamento do AF:', errorAF.message);
     }

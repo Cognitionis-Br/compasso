@@ -1,55 +1,102 @@
 // =========================================================================
 // core/fiscal-year.js
-// Informações do Ano Fiscal vigente/próximo, calculadas a partir da data
-// real — ver Especificacao_Workflow_v2.md, seção 5.
+// Informações do Ano Fiscal vigente/próximo.
 //
 // CONVENÇÃO DE NOMEAÇÃO: o Ano Fiscal leva o nome do ano-calendário em que
 // cai o seu ÚLTIMO quarter (Q4). Ex. (período abril–março): abril/2026
 // inicia o AF2027 (termina em março/2027, daí o nome).
 //
-// PERÍODO PARAMETRIZÁVEL (Feature 1.2 — 03/09/2026): o mês de início do Ano
-// Fiscal NÃO é mais fixo em abril — vem de config_periodo_ano_fiscal, via
-// mesInicioAnoFiscal(dataRef) (js/config/periodo-ano-fiscal.js), COM
-// VIGÊNCIA (datas anteriores à 1ª vigência continuam em abril). Com o mês
-// de início = 4 esta função reproduz exatamente a regra antiga:
-//   Q1 = mês de início + 0/1/2      -> (abr,mai,jun)
-//   Q2 = mês de início + 3/4/5      -> (jul,ago,set)
-//   Q3 = mês de início + 6/7/8      -> (out,nov,dez)
-//   Q4 = mês de início + 9/10/11    -> (jan,fev,mar)
-// O cache do período é carregado no login (js/auth/auth.js), então esta
-// função continua SÍNCRONA.
+// PERÍODO PARAMETRIZÁVEL (Feature 1.2 — 03/09/2026): o mês de início do AF
+// vem de config_periodo_ano_fiscal via mesInicioAnoFiscal() (síncrono).
 //
-// isOrcamentoGlobalFechado (mantida como estava) verifica se o orçamento
-// do AF já foi fechado para novas demandas — ver
-// js/approvals/orcamento-af.js.
+// R-FY-03 (Fase 2A — 30/09/2026): o AF ativo NUNCA é derivado de YEAR(date).
+// carregarFiscalYears() preenche fiscalYearsCache no login; getInfoAnoFiscal()
+// consulta o cache para afAtualStr e cai para o cálculo por data só quando
+// o cache ainda está vazio (antes do login completar).
 // =========================================================================
+
+let fiscalYearsCache = [];
+
+// Carregado no login (js/auth/auth.js) antes de qualquer render.
+async function carregarFiscalYears() {
+    const { data, error } = await _supabase
+        .from('anos_fiscais_config')
+        .select('*')
+        .order('ano_fiscal');
+    fiscalYearsCache = error ? [] : (data || []);
+    return fiscalYearsCache;
+}
+
+// Retorna o FY com orçamento aprovado e ainda não encerrado (status OPEN).
+// Null quando nenhum AF está nesse estado.
+function getAFAberto() {
+    if (fiscalYearsCache.length === 0) return null;
+    return fiscalYearsCache.find(fy =>
+        (fy.fy_status === 'OPEN') ||
+        (fy.orcamento_fechado === true && !fy.ano_fiscal_fechado)
+    ) || null;
+}
+
+// Retorna o FY em fase de recebimento de demandas (status PLANNING / BUDGETING).
+function getAFEmPlanejamento() {
+    if (fiscalYearsCache.length === 0) return null;
+    return fiscalYearsCache.find(fy =>
+        (fy.fy_status === 'PLANNING' || fy.fy_status === 'BUDGETING') ||
+        (!fy.ano_fiscal_fechado && !fy.orcamento_fechado && fy.recebimento_demandas_aberto === true)
+    ) || null;
+}
+
+// Retorna o registro fiscal_years/anos_fiscais_config para um código específico.
+function getAFPorCodigo(codigo) {
+    return fiscalYearsCache.find(fy => fy.ano_fiscal === codigo) || null;
+}
 
 function getInfoAnoFiscal(dataRef) {
     const hoje = dataRef ? new Date(dataRef) : new Date();
-    const mes = hoje.getMonth() + 1; // getMonth() é 0-indexado
+    const mes = hoje.getMonth() + 1;
     const ano = hoje.getFullYear();
 
     const mesInicio = (typeof mesInicioAnoFiscal === 'function') ? mesInicioAnoFiscal(dataRef) : 4;
 
-    // Offset 0..11 desde o início do Ano Fiscal -> quarter.
     const offset = ((mes - mesInicio) % 12 + 12) % 12;
     const quarterAtual = 'Q' + (Math.floor(offset / 3) + 1);
 
-    // Ano-calendário em que o AF começou. Se ainda não chegamos ao mês de
-    // início neste ano-calendário, o AF em curso começou no ano anterior.
     const startYear = (mes >= mesInicio) ? ano : ano - 1;
-    // Nome = ano-calendário do último quarter. Só coincide com startYear
-    // quando o AF não cruza a virada de ano (mês de início = janeiro).
     const anoFiscalCorrente = (mesInicio === 1) ? startYear : startYear + 1;
 
-    return {
-        quarterAtual,
-        anoFiscalCorrente,
-        afAtualStr: `AF${anoFiscalCorrente}`,
-        proximoAFStr: `AF${anoFiscalCorrente + 1}`
-    };
+    // R-FY-03: AF ativo vem do banco (cache), não da data, exceto quando:
+    //   (a) dataRef é passado explicitamente — cálculo histórico para uma data;
+    //   (b) cache ainda está vazio — fallback durante inicialização.
+    let afAtualStr, proximoAFStr;
+    if (!dataRef && fiscalYearsCache.length > 0) {
+        const fyAberto = getAFAberto();
+        if (fyAberto) {
+            afAtualStr = fyAberto.ano_fiscal;
+            const idx = fiscalYearsCache.findIndex(fy => fy.ano_fiscal === afAtualStr);
+            const prox = fiscalYearsCache[idx + 1];
+            proximoAFStr = prox ? prox.ano_fiscal : `AF${anoFiscalCorrente + 1}`;
+        } else {
+            // Nenhum AF em OPEN: usa cálculo por data como fallback
+            afAtualStr = `AF${anoFiscalCorrente}`;
+            proximoAFStr = `AF${anoFiscalCorrente + 1}`;
+        }
+    } else {
+        afAtualStr = `AF${anoFiscalCorrente}`;
+        proximoAFStr = `AF${anoFiscalCorrente + 1}`;
+    }
+
+    return { quarterAtual, anoFiscalCorrente, afAtualStr, proximoAFStr };
 }
 
+// Verifica se o orçamento do AF corrente está aprovado/fechado para novas demandas.
+// R-FY-03: consulta o cache, não projectsData.
 function isOrcamentoGlobalFechado() {
+    if (fiscalYearsCache.length > 0) {
+        return fiscalYearsCache.some(fy =>
+            (fy.fy_status === 'OPEN') ||
+            (fy.orcamento_fechado === true && !fy.ano_fiscal_fechado)
+        );
+    }
+    // Fallback legado enquanto o cache não é carregado no login
     return projectsData.some(p => p.etapa_atual && p.etapa_atual !== 'BUSINESS CASE');
 }

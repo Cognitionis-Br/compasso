@@ -125,15 +125,16 @@ async function limparBaseSomenteAF2027() {
     }
 
     // Apaga a configuração de todo AF diferente do mantido.
-    const { error: errorAFs } = await _supabase.from('anos_fiscais_config').delete().neq('ano_fiscal', AF_MANTIDO);
-    if (errorAFs) console.error('Erro ao limpar anos_fiscais_config:', errorAFs.message);
+    const { error: errorAFs } = await _supabase.from('fiscal_years').delete().neq('codigo', AF_MANTIDO);
+    if (errorAFs) console.error('Erro ao limpar fiscal_years:', errorAFs.message);
 
     // Garante o AF2027 aberto pra demandas normais.
-    const { error: errorReabrir } = await _supabase.from('anos_fiscais_config').upsert({
-        ano_fiscal: AF_MANTIDO,
+    const { error: errorReabrir } = await _supabase.from('fiscal_years').upsert({
+        codigo: AF_MANTIDO,
         orcamento_fechado: false,
-        recebimento_demandas_aberto: true
-    }, { onConflict: 'ano_fiscal' });
+        recebimento_demandas_aberto: true,
+        status: 'PLANNING'
+    }, { onConflict: 'codigo' });
     if (errorReabrir) console.error('Erro ao reabrir o AF mantido:', errorReabrir.message);
 
     // NOVO (a pedido do usuário): zera a numeração de projetos de TODOS
@@ -247,7 +248,7 @@ async function limparBaseCompletamente() {
     // Diferente de limparBaseSomenteAF2027: apaga TODAS as linhas de
     // configuração, não reabre nenhum AF — é isso que "zera os totais"
     // (valor_total_fechado/qtd_projetos_fechado somem junto com a linha).
-    const { error: errorAFs } = await _supabase.from('anos_fiscais_config').delete().neq('ano_fiscal', '');
+    const { error: errorAFs } = await _supabase.from('fiscal_years').delete().neq('codigo', '');
     if (errorAFs) console.error('Erro ao limpar anos_fiscais_config:', errorAFs.message);
 
     const { error: errorContadores } = await _supabase.from('contadores_codigo_projeto').delete().neq('ano_fiscal', '');
