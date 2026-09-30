@@ -119,7 +119,7 @@ SELECT COUNT(*) AS total_papeis, SUM(CASE WHEN ativo THEN 1 ELSE 0 END) AS ativo
 FROM rate_card_papeis;
 
 -- Fila de e-mail (→ VIEW-ADM-INTEGRACOES)
-SELECT status, COUNT(*) AS qtd FROM email_queue GROUP BY status ORDER BY status;
+SELECT enviado, COUNT(*) AS qtd FROM emails_pendentes GROUP BY enviado ORDER BY enviado;
 
 -- modulo_funcao por módulo (D5)
 SELECT modulo, COUNT(*) AS qtd_funcoes
