@@ -7,23 +7,24 @@
 -- =============================================================================
 
 -- ─── FISCAL YEARS ────────────────────────────────────────────────────────────
--- FYs por ano_fiscal e ano_fiscal_fechado
+-- FYs por ano_fiscal e status
+-- Usa anos_fiscais_config (VIEW compat) que expõe ano_fiscal em vez de codigo.
 SELECT
     ano_fiscal,
     ano_fiscal_fechado,
-    status,
+    fy_status          AS status,
     bc_package_status
-FROM fiscal_years
+FROM anos_fiscais_config
 ORDER BY ano_fiscal;
 
 -- ─── BUSINESS CASES ──────────────────────────────────────────────────────────
--- BCs por sub_status e adhoc
+-- BCs por sub_status e is_adhoc
 SELECT
     sub_status,
-    COALESCE(adhoc, false) AS adhoc,
+    COALESCE(is_adhoc, false) AS adhoc,
     COUNT(*) AS qtd
 FROM business_cases
-GROUP BY sub_status, adhoc
+GROUP BY sub_status, is_adhoc
 ORDER BY sub_status;
 
 -- O que é ORÇAMENTO REALIZADO e em qual estado ele entra:

@@ -133,16 +133,16 @@ SELECT COUNT(*) AS total_modulos FROM licenca_modulos;
 SELECT
     ano_fiscal,
     ano_fiscal_fechado,
-    status,
+    fy_status AS status,
     bc_package_status
-FROM fiscal_years
+FROM anos_fiscais_config
 ORDER BY ano_fiscal;
 
--- BCs por sub_status e adhoc (D5)
+-- BCs por sub_status e is_adhoc (D5)
 SELECT
     sub_status,
-    COALESCE(adhoc, false) AS adhoc,
+    COALESCE(is_adhoc, false) AS adhoc,
     COUNT(*) AS qtd
 FROM business_cases
-GROUP BY sub_status, adhoc
+GROUP BY sub_status, is_adhoc
 ORDER BY sub_status;
