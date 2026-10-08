@@ -409,8 +409,10 @@ function admPerfisEditar(id) {
 }
 
 function _admPerfisAbrirForm(f) {
-    // Reutiliza a infraestrutura de renderMatrizPermissoesFormulario via
-    // container homônimo; saveFuncao() lê os mesmos IDs de input.
+    // IDs prefixados adm-pf-* evitam colisão com o form legado de funcoes_permissoes
+    // que coexiste no DOM (index.html:~3095). renderMatrizPermissoesFormulario() escreve
+    // em funcaoMatrizPermissoesContainer pelo ID — renomeamos o container legado antes
+    // de chamar a função para que ela encontre apenas o container do ADM panel.
     const panel = document.getElementById('adm-perfis-form-panel');
     if (!panel) return;
     const ehProp = typeof ehProprietario !== 'undefined' && ehProprietario;
@@ -423,49 +425,62 @@ function _admPerfisAbrirForm(f) {
         <div class="grid grid-cols-2 gap-3 mb-4">
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Nome *</label>
-                <input id="funcaoNomeInput" type="text" value="${escapeHtml(f?.nome || '')}"
+                <input id="adm-pf-nome" type="text" value="${escapeHtml(f?.nome || '')}"
                     class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-indigo-400" />
             </div>
             <div>
                 <label class="block text-xs font-medium text-gray-600 mb-1">Descrição</label>
-                <input id="funcaoDescricaoInput" type="text" value="${escapeHtml(f?.descricao || '')}"
+                <input id="adm-pf-desc" type="text" value="${escapeHtml(f?.descricao || '')}"
                     class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:outline-none focus:border-indigo-400" />
             </div>
         </div>
         <div class="flex flex-wrap gap-4 mb-4">
             <label class="flex items-center gap-2 text-xs">
-                <input id="funcaoAcessoIrrestritoInput" type="checkbox" ${f?.acesso_irrestrito ? 'checked' : ''}
+                <input id="adm-pf-irrestrito" type="checkbox" ${f?.acesso_irrestrito ? 'checked' : ''}
                     class="w-4 h-4 rounded border-gray-300 text-indigo-600" />
                 Acesso Irrestrito (Administrador)
             </label>
             <label class="flex items-center gap-2 text-xs">
-                <input id="funcaoIgnoraRestricaoAreaInput" type="checkbox" ${f?.ignora_restricao_area ? 'checked' : ''}
+                <input id="adm-pf-ignora-area" type="checkbox" ${f?.ignora_restricao_area ? 'checked' : ''}
                     class="w-4 h-4 rounded border-gray-300 text-sky-600" />
                 Ignora Restrição de Área
             </label>
             <label class="flex items-center gap-2 text-xs">
-                <input id="funcaoOperadorInput" type="checkbox" ${f?.restringe_por_atividade_responsavel ? 'checked' : ''}
+                <input id="adm-pf-operador" type="checkbox" ${f?.restringe_por_atividade_responsavel ? 'checked' : ''}
                     class="w-4 h-4 rounded border-gray-300 text-orange-500" />
                 Operador (restringe por atividade)
             </label>
-            ${ehProp ? `<label id="funcaoEhProprietarioBox" class="flex items-center gap-2 text-xs">
-                <input id="funcaoEhProprietarioInput" type="checkbox" ${f?.eh_proprietario ? 'checked' : ''}
+            ${ehProp ? `<label id="adm-pf-prop-box" class="flex items-center gap-2 text-xs">
+                <input id="adm-pf-proprietario" type="checkbox" ${f?.eh_proprietario ? 'checked' : ''}
                     class="w-4 h-4 rounded border-gray-300 text-purple-600" />
                 É Proprietário
             </label>` : ''}
         </div>
         <div class="text-xs font-semibold text-gray-600 mb-2 uppercase tracking-wider">Atividades permitidas</div>
         <div id="funcaoMatrizPermissoesContainer" class="mb-4"></div>
-        <input type="hidden" id="funcaoIdInput" value="${f?.id || ''}">
-        <button id="btnSalvarFuncao" onclick="saveFuncao(event)" class="px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded hover:bg-indigo-700">
+        <input type="hidden" id="adm-pf-id" value="${f?.id || ''}">
+        <button onclick="_admPerfisFormSalvar(event)" class="px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded hover:bg-indigo-700">
             <i class="fa-solid fa-floppy-disk mr-1"></i>${f ? 'Atualizar Perfil' : 'Salvar Perfil'}</button>
     </div>`;
     panel.classList.remove('hidden');
 
-    // Constrói a matriz com as atividades já marcadas do perfil
+    // Renomeia temporariamente o container legado para que renderMatrizPermissoesFormulario()
+    // encontre apenas o container recém-criado acima (mesmo ID, diferente posição no DOM).
     if (typeof renderMatrizPermissoesFormulario === 'function') {
+        const legacyMatriz = document.getElementById('funcaoMatrizPermissoesContainer');
+        // legacyMatriz SERÁ o do ADM panel porque acabamos de setar panel.innerHTML —
+        // mas o container legado do index.html tem o mesmo ID e vem ANTES no DOM.
+        // Forçamos a encontrar o do ADM panel pelo contexto do painel.
+        const admMatriz = panel.querySelector('#funcaoMatrizPermissoesContainer');
+        if (admMatriz) admMatriz.id = 'adm-pf-matriz-temp';
+        // Agora renomeamos o legado para liberar o ID canonical
+        const allMatriz = document.querySelectorAll('#funcaoMatrizPermissoesContainer');
+        allMatriz.forEach(el => { if (el !== admMatriz) el.id = '_admPfLegacyBak'; });
+        if (admMatriz) admMatriz.id = 'funcaoMatrizPermissoesContainer';
+
+        let marcadas;
         if (f && typeof funcaoAtividadesData !== 'undefined') {
-            const marcadas = new Map();
+            marcadas = new Map();
             funcaoAtividadesData.filter(fa => fa.funcao_id === f.id).forEach(fa => {
                 marcadas.set(fa.atividade_id, {
                     c: fa.pode_consultar !== false,
@@ -474,12 +489,85 @@ function _admPerfisAbrirForm(f) {
                     d: fa.pode_deletar === true,
                 });
             });
-            renderMatrizPermissoesFormulario(marcadas);
-        } else {
-            renderMatrizPermissoesFormulario();
         }
+        renderMatrizPermissoesFormulario(marcadas);
+
+        // Guarda a referência do container ADM com ID próprio e restaura o legado
+        if (admMatriz) admMatriz.id = 'adm-pf-matriz';
+        document.querySelectorAll('#_admPfLegacyBak').forEach(el => { el.id = 'funcaoMatrizPermissoesContainer'; });
     }
-    document.getElementById('funcaoNomeInput')?.focus();
+    document.getElementById('adm-pf-nome')?.focus();
+}
+
+async function _admPerfisFormSalvar(e) {
+    e.preventDefault();
+    if (!_admPodeAdmin()) return alert('Apenas ADMINISTRADOR ou PROPRIETÁRIO podem criar ou alterar perfis.');
+    const id   = (document.getElementById('adm-pf-id')?.value || '').trim();
+    const nome = (document.getElementById('adm-pf-nome')?.value || '').trim().toUpperCase();
+    const desc = (document.getElementById('adm-pf-desc')?.value || '').trim();
+    const irrestrito  = document.getElementById('adm-pf-irrestrito')?.checked || false;
+    const ignoraArea  = document.getElementById('adm-pf-ignora-area')?.checked || false;
+    const operador    = document.getElementById('adm-pf-operador')?.checked || false;
+    const eProp       = document.getElementById('adm-pf-proprietario')?.checked || false;
+    const acessoIrr   = eProp || irrestrito;
+
+    if (!nome) return alert('Informe o nome do perfil.');
+
+    // Segurança: só Proprietário gerencia perfil Proprietário
+    if (typeof podeGerenciarProprietario === 'function' && !podeGerenciarProprietario()) {
+        const orig = id ? (funcoesData || []).find(f => f.id === Number(id)) : null;
+        const ehFProp = typeof ehFuncaoProprietario === 'function' ? ehFuncaoProprietario(orig) : false;
+        if (eProp || ehFProp) return alert('Apenas o PROPRIETÁRIO pode criar, alterar ou marcar um perfil como Proprietário.');
+    }
+
+    // Lê checkboxes de atividade SOMENTE dentro do container ADM (adm-pf-matriz)
+    const matrizEl = document.getElementById('adm-pf-matriz');
+    const porAtiv = new Map();
+    (matrizEl ? matrizEl : document).querySelectorAll('.funcao-form-ativ-checkbox').forEach(c => {
+        if (!c.checked) return;
+        const aid = Number(c.getAttribute('data-atividade-id'));
+        if (!porAtiv.has(aid)) porAtiv.set(aid, { pode_consultar: false, pode_incluir: false, pode_alterar: false, pode_deletar: false });
+        porAtiv.get(aid)[c.getAttribute('data-campo')] = true;
+    });
+    for (const p of porAtiv.values()) {
+        if (p.pode_incluir || p.pode_alterar || p.pode_deletar) p.pode_consultar = true;
+    }
+    if (porAtiv.size === 0 && !acessoIrr) return alert('Selecione pelo menos uma atividade (ou marque Acesso Irrestrito).');
+
+    const payload = {
+        nome, descricao: desc,
+        acesso_irrestrito: acessoIrr,
+        eh_proprietario: eProp,
+        ignora_restricao_area: ignoraArea,
+        restringe_por_atividade_responsavel: operador,
+    };
+
+    let funcaoId;
+    if (id) {
+        funcaoId = Number(id);
+        const { error } = await _supabase.from('funcoes').update(payload).eq('id', funcaoId);
+        if (error) return alert('Erro ao atualizar: ' + error.message);
+    } else {
+        const { data, error } = await _supabase.from('funcoes').insert([payload]).select();
+        if (error) return alert('Erro ao cadastrar: ' + error.message);
+        funcaoId = data?.[0]?.id;
+        if (!funcaoId) return alert('Perfil criado, mas não foi possível obter o ID. Recarregue e edite para ajustar as atividades.');
+    }
+
+    const { error: delErr } = await _supabase.from('funcao_atividades').delete().eq('funcao_id', funcaoId);
+    if (delErr) return alert('Perfil salvo, mas houve erro ao atualizar atividades: ' + delErr.message);
+    if (porAtiv.size > 0) {
+        const rows = [...porAtiv.entries()].map(([atividade_id, p]) => ({ funcao_id: funcaoId, atividade_id, ...p }));
+        const { error: insErr } = await _supabase.from('funcao_atividades').insert(rows);
+        if (insErr) return alert('Perfil salvo, mas houve erro ao salvar atividades: ' + insErr.message);
+    }
+
+    alert(id ? 'Perfil atualizado com sucesso.' : 'Perfil cadastrado com sucesso.');
+    admPerfisFecharForm();
+    if (typeof loadFuncoes === 'function') await loadFuncoes();
+    if (typeof carregarPermissoesUsuarioAtual === 'function') await carregarPermissoesUsuarioAtual();
+    if (typeof aplicarVisibilidadeMenu === 'function') aplicarVisibilidadeMenu();
+    _admPerfisLoad();
 }
 
 function admPerfisFecharForm() {
