@@ -388,78 +388,58 @@
                 <!-- DIVISOR -->
                 <hr class="my-3 border-gray-200">
 
-                <!-- GRUPO: ADMINISTRAÇÃO (D-13 — Cadastros / Administração / Configurações) -->
-                <div class="mb-2">
-                    <button onclick="toggleSidebarMenu('menu-adm', 'icon-adm')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
-                        <div class="flex items-start gap-3">
-                            <i class="fa-solid fa-gears text-gray-400 group-hover:text-gray-600 w-4 text-center mt-0.5"></i>
+                <!-- SCR-23 · CADASTROS (D-13) -->
+                <div class="mb-1">
+                    <button onclick="switchTab('cadastros_home'); toggleSidebarMenu('menu-scr23', 'icon-scr23')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-database text-gray-400 group-hover:text-gray-600 w-4 text-center"></i>
+                            <span class="uppercase tracking-wider">Cadastros</span>
+                        </div>
+                        <i id="icon-scr23" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
+                    </button>
+                    <div id="menu-scr23" class="submenu pl-5 pr-2 mt-0.5 space-y-0.5">
+                        <button onclick="switchTab('cad_org')" id="link-cad_org" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Estrutura Organizacional</button>
+                        <button onclick="switchTab('cad_pessoas')" id="link-cad_pessoas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pessoas e Entidades</button>
+                        <button onclick="switchTab('cad_portes')" id="link-cad_portes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Portfólio e Projetos</button>
+                        <button onclick="switchTab('cad_estrategia')" id="link-cad_estrategia" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Estratégia</button>
+                    </div>
+                </div>
+
+                <!-- SCR-24 · ADMINISTRAÇÃO (D-13) -->
+                <div class="mb-1">
+                    <button onclick="switchTab('administracao_home'); toggleSidebarMenu('menu-scr24', 'icon-scr24')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-user-shield text-gray-400 group-hover:text-gray-600 w-4 text-center"></i>
                             <span class="uppercase tracking-wider">Administração</span>
                         </div>
-                        <i id="icon-adm" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
+                        <i id="icon-scr24" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
                     </button>
-                    <div id="menu-adm" class="submenu pl-5 pr-2 mt-1 space-y-1">
-                        <!-- Sub-grupo: Cadastros (SCR-23) -->
-                        <div class="mb-1">
-                            <button onclick="toggleSidebarMenu('menu-adm-cad', 'icon-adm-cad')" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors group">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid fa-database text-gray-400 text-[10px] w-3 text-center"></i>
-                                    <span class="uppercase tracking-wider text-[10px]">Cadastros</span>
-                                </div>
-                                <i id="icon-adm-cad" class="fa-solid fa-chevron-down text-[9px] text-gray-400 chevron"></i>
-                            </button>
-                            <div id="menu-adm-cad" class="submenu pl-4 pr-1 mt-0.5 space-y-0.5">
-                                <button onclick="switchTab('areas')" id="link-areas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Áreas Solicitantes</button>
-                                <button onclick="switchTab('pessoas_solicitantes')" id="link-pessoas_solicitantes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Pessoas Solicitantes</button>
-                                <button onclick="switchTab('cargos')" id="link-cargos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cargos</button>
-                                <button onclick="switchTab('portes')" id="link-portes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cadastro de Porte</button>
-                                <button onclick="switchTab('tipos_projeto')" id="link-tipos_projeto" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Tipos de Projeto</button>
-                                <button onclick="switchTab('produtos')" id="link-produtos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Cadastro de Produtos</button>
-                                <button onclick="switchTab('return_benefit')" id="link-return_benefit" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Retorno / Benefícios</button>
-                                <button onclick="switchTab('planejamento_estrategico')" id="link-planejamento_estrategico" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Planejamento Estratégico</button>
-                                <button onclick="switchTab('empresas_terceirizadas')" id="link-empresas_terceirizadas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fornecedores</button>
-                            </div>
+                    <div id="menu-scr24" class="submenu pl-5 pr-2 mt-0.5 space-y-0.5">
+                        <button onclick="switchTab('adm_usuarios')" id="link-adm_usuarios" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Acesso e Segurança</button>
+                        <button onclick="switchTab('adm_equipes')" id="link-adm_equipes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Organização do Trabalho</button>
+                        <button onclick="switchTab('adm_alcadas')" id="link-adm_alcadas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Governança de Autoridade</button>
+                        <button onclick="switchTab('adm_workflow')" id="link-adm_workflow" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Processos e SLA</button>
+                        <button onclick="switchTab('adm_integracoes')" id="link-adm_integracoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Integrações e Operação</button>
+                        <button onclick="switchTab('adm_auditoria')" id="link-adm_auditoria" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors"><i class="fa-solid fa-shield-halved mr-1"></i>Auditoria</button>
+                    </div>
+                </div>
+
+                <!-- SCR-25 · CONFIGURAÇÕES (D-13) -->
+                <div class="mb-2">
+                    <button onclick="switchTab('configuracoes_home'); toggleSidebarMenu('menu-scr25', 'icon-scr25')" class="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors group">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-sliders text-gray-400 group-hover:text-gray-600 w-4 text-center"></i>
+                            <span class="uppercase tracking-wider">Configurações</span>
                         </div>
-                        <!-- Sub-grupo: Administração (SCR-24) -->
-                        <div class="mb-1">
-                            <button onclick="toggleSidebarMenu('menu-adm-adm', 'icon-adm-adm')" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors group">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid fa-user-shield text-gray-400 text-[10px] w-3 text-center"></i>
-                                    <span class="uppercase tracking-wider text-[10px]">Administração</span>
-                                </div>
-                                <i id="icon-adm-adm" class="fa-solid fa-chevron-down text-[9px] text-gray-400 chevron"></i>
-                            </button>
-                            <div id="menu-adm-adm" class="submenu pl-4 pr-1 mt-0.5 space-y-0.5">
-                                <button onclick="switchTab('usuarios')" id="link-usuarios" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Usuários</button>
-                                <button onclick="switchTab('funcoes_permissoes')" id="link-funcoes_permissoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Funções e Permissões</button>
-                                <button onclick="switchTab('atribuicao_funcoes')" id="link-atribuicao_funcoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Atribuição de Funções</button>
-                                <button onclick="switchTab('restricao_area_atividades')" id="link-restricao_area_atividades" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Restrição de Área por Atividade</button>
-                                <button onclick="switchTab('responsaveis')" id="link-responsaveis" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Responsáveis por Atividade</button>
-                                <button onclick="switchTab('workflow_etapas')" id="link-workflow_etapas" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fases e Etapas do Workflow</button>
-                                <button onclick="switchTab('prazos')" id="link-prazos" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">SLA &amp; Prazos</button>
-                                <button onclick="switchTab('auditoria')" id="link-auditoria" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors"><i class="fa-solid fa-shield-halved mr-1"></i>Auditoria</button>
-                            </div>
-                        </div>
-                        <!-- Sub-grupo: Configurações (SCR-25) -->
-                        <div class="mb-1">
-                            <button onclick="toggleSidebarMenu('menu-adm-cfg', 'icon-adm-cfg')" class="w-full flex items-center justify-between px-3 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 hover:bg-gray-50 rounded transition-colors group">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid fa-sliders text-gray-400 text-[10px] w-3 text-center"></i>
-                                    <span class="uppercase tracking-wider text-[10px]">Configurações</span>
-                                </div>
-                                <i id="icon-adm-cfg" class="fa-solid fa-chevron-down text-[9px] text-gray-400 chevron"></i>
-                            </button>
-                            <div id="menu-adm-cfg" class="submenu pl-4 pr-1 mt-0.5 space-y-0.5">
-                                <button onclick="switchTab('configuracoes')" id="link-configuracoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Configurações Gerais</button>
-                                <button onclick="switchTab('controle_orcamento')" id="link-controle_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Controle Orçamentário</button>
-                                <button onclick="switchTab('percentual_bloqueio_orcamento')" id="link-percentual_bloqueio_orcamento" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Percentual de Bloqueio</button>
-                                <button onclick="switchTab('periodo_ano_fiscal')" id="link-periodo_ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Período do Ano Fiscal</button>
-                                <button onclick="switchTab('gestao_templates')" id="link-gestao_templates" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">E-mail – Templates</button>
-                                <button onclick="switchTab('gestao_fluxo_email')" id="link-gestao_fluxo_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">E-mail – Fluxo</button>
-                                <button onclick="switchTab('fila_email')" id="link-fila_email" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">E-mail – Fila de Envio</button>
-                                <button onclick="switchTab('ia_templates')" id="link-ia_templates" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">IA – Templates</button>
-                                <button onclick="switchTab('ia_config')" id="link-ia_config" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">IA – Configuração</button>
-                            </div>
-                        </div>
+                        <i id="icon-scr25" class="fa-solid fa-chevron-down text-[10px] text-gray-400 chevron"></i>
+                    </button>
+                    <div id="menu-scr25" class="submenu pl-5 pr-2 mt-0.5 space-y-0.5">
+                        <button onclick="switchTab('cfg_organizacao')" id="link-cfg_organizacao" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Organização e Licença</button>
+                        <button onclick="switchTab('cfg_fy')" id="link-cfg_fy" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Planejamento e Projetos</button>
+                        <button onclick="switchTab('cfg_financeiro')" id="link-cfg_financeiro" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Financeiro</button>
+                        <button onclick="switchTab('cfg_notificacoes')" id="link-cfg_notificacoes" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Comunicação</button>
+                        <button onclick="switchTab('cfg_ia')" id="link-cfg_ia" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Inteligência Artificial</button>
+                        <button onclick="switchTab('cfg_parametros')" id="link-cfg_parametros" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Parâmetros do Sistema</button>
                     </div>
                 </div>
 
@@ -4545,6 +4525,47 @@
                     </div>
                 </div>
 
+                <!-- ═══════════════════════════════════════════════════════════
+                     A1 · VIEWS ADM — SCR-23 Cadastros (7 VIEWs + home)
+                ════════════════════════════════════════════════════════════ -->
+                <div id="view-cadastros_home"    class="tab-content hidden"></div>
+                <div id="view-cad_org"           class="tab-content hidden"></div>
+                <div id="view-cad_cargos"        class="tab-content hidden"></div>
+                <div id="view-cad_pessoas"       class="tab-content hidden"></div>
+                <div id="view-cad_fornecedores"  class="tab-content hidden"></div>
+                <div id="view-cad_portes"        class="tab-content hidden"></div>
+                <div id="view-cad_classificacoes" class="tab-content hidden"></div>
+                <div id="view-cad_estrategia"   class="tab-content hidden"></div>
+
+                <!-- A1 · VIEWS ADM — SCR-24 Administração (12 VIEWs + home) -->
+                <div id="view-administracao_home" class="tab-content hidden"></div>
+                <div id="view-adm_usuarios"      class="tab-content hidden"></div>
+                <div id="view-adm_perfis"        class="tab-content hidden"></div>
+                <div id="view-adm_sessoes"       class="tab-content hidden"></div>
+                <div id="view-adm_equipes"       class="tab-content hidden"></div>
+                <div id="view-adm_aptidoes"      class="tab-content hidden"></div>
+                <div id="view-adm_alcadas"       class="tab-content hidden"></div>
+                <div id="view-adm_delegacoes"    class="tab-content hidden"></div>
+                <div id="view-adm_sod"           class="tab-content hidden"></div>
+                <div id="view-adm_workflow"      class="tab-content hidden"></div>
+                <div id="view-adm_sla"           class="tab-content hidden"></div>
+                <div id="view-adm_integracoes"   class="tab-content hidden"></div>
+                <div id="view-adm_auditoria"     class="tab-content hidden"></div>
+
+                <!-- A1 · VIEWS ADM — SCR-25 Configurações (11 VIEWs + home) -->
+                <div id="view-configuracoes_home"  class="tab-content hidden"></div>
+                <div id="view-cfg_organizacao"     class="tab-content hidden"></div>
+                <div id="view-cfg_licenca"         class="tab-content hidden"></div>
+                <div id="view-cfg_fy"              class="tab-content hidden"></div>
+                <div id="view-cfg_estimativas"     class="tab-content hidden"></div>
+                <div id="view-cfg_ratecards"       class="tab-content hidden"></div>
+                <div id="view-cfg_financeiro"      class="tab-content hidden"></div>
+                <div id="view-cfg_notificacoes"    class="tab-content hidden"></div>
+                <div id="view-cfg_eventos"         class="tab-content hidden"></div>
+                <div id="view-cfg_templates"       class="tab-content hidden"></div>
+                <div id="view-cfg_ia"              class="tab-content hidden"></div>
+                <div id="view-cfg_parametros"      class="tab-content hidden"></div>
+
                 <div id="view-dev_tools" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Ferramentas de Desenvolvimento</h2></div>
 
@@ -5993,6 +6014,8 @@
     <script src="./js/busca/busca-global.js"></script>
     <script src="./js/relatorios/relatorios.js"></script>
     <script src="./js/configuracoes/configuracoes.js"></script>
+    <!-- Compasso 2.0 — Fase 1A (ADM: SCR-23/24/25 — A1 Menu e esqueleto) -->
+    <script src="./js/administracao/adm-shell.js"></script>
     <!-- Compasso 2.0 — V2 do Plano de Evolução (Calendário Global + Gate/Exception), 2026-09-25 -->
     <script src="./js/calendario/calendario-global.js"></script>
     <script src="./js/dashboards/dashboard-filtro.js"></script>

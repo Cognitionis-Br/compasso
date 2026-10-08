@@ -327,6 +327,10 @@ function switchTab(tabId) {
     if (tabId === 'visao_orcamento') renderVisaoOrcamentoView();
     if (tabId === 'alertas_orcamento') renderAlertasOrcamentoView();
     if (tabId === 'roadmap') renderRoadmap();
+    // Fase 1A · A1: ADM shell (SCR-23/24/25 — adm-shell.js)
+    if (typeof renderAdmView === 'function' && typeof _admIsAdmTab === 'function' && _admIsAdmTab(tabId)) {
+        renderAdmView(tabId);
+    }
 }
 
 function toggleSidebarMenu(menuId, iconId) {
