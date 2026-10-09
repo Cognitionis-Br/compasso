@@ -195,15 +195,17 @@ async function _fyWSCarregarAba(aba, fy) {
     else if (aba === 'projetos')     { await _fyProjetosCarregar(fy); }
     else if (aba === 'calendario')   { await _fyCalendarioCarregar(fy); }
     else if (aba === 'planejamento') { await _fyPlanejamentoCarregar(fy); }
+    else if (aba === 'transicoes')   { await _fyTransicoesCarregar(fy); }
+    else if (aba === 'fechamento')   { await _fyFechamentoCarregar(fy); }
+    else if (aba === 'historico')    { await _fyHistoricoCarregar(fy); }
     else                             { _fyWSPlaceholder(content, aba); }
 }
 
 function _fyWSPlaceholder(content, aba) {
-    const nomes = { transicoes:'Transições', fechamento:'Fechamento', historico:'Histórico' };
     content.innerHTML = `
 <div class="fy-ws-card" style="padding:48px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;">
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#93a4c3" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16.5" r=".5" fill="#93a4c3"/></svg>
-  <span style="font-size:15px;font-weight:700;color:#0f1e3d;">${nomes[aba] || aba}</span>
+  <span style="font-size:15px;font-weight:700;color:#0f1e3d;">${aba}</span>
   <span class="fy-ws-sub">Esta funcionalidade estará disponível em breve.</span>
 </div>`;
 }
@@ -1387,4 +1389,464 @@ async function _fyPacoteDecisaoSalvar() {
     _fyPacoteDecisaoFechar();
     const fy = (typeof getAFPorCodigo === 'function') ? getAFPorCodigo((window.fyWorkspaceContext||{}).codigo||'') : null;
     if (fy) await _fyPlanCarregarDados(fy);
+}
+
+// =========================================================================
+// VIS-FY-06 — Transições (project_fiscal_transition)
+// =========================================================================
+
+const _TRANSICAO_TIPO_CFG = {
+    CARRYOVER:         { label: 'Carryover',       cls: 'fy-badge-wa' },
+    HOLD:              { label: 'Hold',             cls: 'fy-badge-nu' },
+    CROSS_FY_CONTINUE: { label: 'CROSS-FY Cont.',  cls: 'fy-badge-in' },
+    COMPLETE:          { label: 'Concluído',        cls: 'fy-badge-ok' },
+    TERMINATE:         { label: 'Encerrado',        cls: 'fy-badge-cr' },
+    CANCEL:            { label: 'Cancelado',        cls: 'fy-badge-cr' },
+};
+const _TRANSICAO_STATUS_CFG = {
+    DRAFT:        { label: 'Rascunho',    cls: 'fy-badge-nu' },
+    SUBMITTED:    { label: 'Submetido',   cls: 'fy-badge-in' },
+    UNDER_REVIEW: { label: 'Em análise',  cls: 'fy-badge-wa' },
+    APPROVED:     { label: 'Aprovado',    cls: 'fy-badge-ok' },
+    REJECTED:     { label: 'Rejeitado',   cls: 'fy-badge-cr' },
+    EXECUTED:     { label: 'Executado',   cls: 'fy-badge-ok' },
+    CANCELLED:    { label: 'Cancelado',   cls: 'fy-badge-nu' },
+};
+
+async function _fyTransicoesCarregar(fy) {
+    const content = document.getElementById('fy-ws-content');
+    if (!content) return;
+    content.innerHTML = '<div style="padding:40px;text-align:center;color:#93a4c3;font-size:12.5px;">Carregando…</div>';
+
+    const { data, error } = await _supabase
+        .from('project_fiscal_transition')
+        .select('*')
+        .eq('fiscal_year_origem', fy.ano_fiscal)
+        .order('criado_em', { ascending: false });
+
+    if (error) { content.innerHTML = `<div style="padding:24px;color:#dc2626;">${error.message}</div>`; return; }
+    const transicoes = data || [];
+
+    // KPIs
+    const exec     = transicoes.filter(t => t.status === 'EXECUTED').length;
+    const pendente = transicoes.filter(t => !['EXECUTED','CANCELLED','REJECTED'].includes(t.status)).length;
+    const carryover = transicoes.filter(t => t.tipo === 'CARRYOVER').length;
+    const crossFy   = transicoes.filter(t => t.tipo === 'CROSS_FY_CONTINUE').length;
+
+    const linhasHtml = transicoes.length === 0
+        ? `<tr><td colspan="7" style="padding:20px 9px;text-align:center;color:#93a4c3;">Nenhuma transição registrada para este exercício.</td></tr>`
+        : transicoes.map(t => {
+            const tipoCfg = _TRANSICAO_TIPO_CFG[t.tipo] || { label: t.tipo, cls: 'fy-badge-nu' };
+            const stCfg   = _TRANSICAO_STATUS_CFG[t.status] || { label: t.status, cls: 'fy-badge-nu' };
+            const pnome   = (typeof projectsData !== 'undefined') ? (projectsData.find(p => p.codigo === t.projeto_codigo)||{}).nome || '—' : '—';
+            const podExecutar = t.status === 'APPROVED';
+            return `<tr>
+                <td style="padding:6px 9px;white-space:nowrap;"><b>${t.projeto_codigo}</b></td>
+                <td style="padding:6px 9px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${pnome}</td>
+                <td style="padding:6px 9px;white-space:nowrap;"><span class="fy-b ${tipoCfg.cls}">${tipoCfg.label}</span></td>
+                <td style="padding:6px 9px;">${t.fiscal_year_destino||'—'}</td>
+                <td style="padding:6px 9px;white-space:nowrap;"><span class="fy-b ${stCfg.cls}">${stCfg.label}</span></td>
+                <td style="padding:6px 9px;white-space:nowrap;">${t.executado_em ? _fyWsFmtData(t.executado_em) : '—'}</td>
+                <td style="padding:6px 9px;white-space:nowrap;">
+                    ${podExecutar ? `<button class="fy-ws-btn-p" onclick="_fyTransicaoExecutar(${t.id})" style="padding:3px 9px;font-size:11.5px;">Executar</button>` : ''}
+                    ${t.status === 'DRAFT' ? `<button class="fy-ws-btn" onclick="_fyTransicaoSubmeter(${t.id})" style="padding:3px 9px;font-size:11.5px;">Submeter</button>` : ''}
+                </td>
+            </tr>`;
+          }).join('');
+
+    content.innerHTML = `
+<div class="fy-ws-card" style="padding:10px 14px;display:flex;align-items:center;gap:8px;">
+  <span class="fy-ws-h2">Transições · ${fy.ano_fiscal}</span>
+  <span style="flex-grow:1;"></span>
+  <button class="fy-ws-btn-p" onclick="_fyTransicaoAbrirModal('${fy.ano_fiscal}')">+ Nova Transição</button>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;">
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">Executadas</span><span class="num" style="color:#166534;">${exec}</span><span class="fy-ws-sub">de ${transicoes.length}</span></div>
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">Pendentes</span><span class="num" style="color:${pendente>0?'#d97706':'#166534'};">${pendente}</span><span class="fy-ws-sub">${pendente>0?'requerem ação':'tudo resolvido'}</span></div>
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">Carryover</span><span class="num">${carryover}</span><span class="fy-ws-sub">saldo p/ próximo FY</span></div>
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">CROSS-FY Cont.</span><span class="num" style="color:#1d4ed8;">${crossFy}</span><span class="fy-ws-sub">continuidade</span></div>
+</div>
+
+<div class="fy-ws-card" style="overflow:hidden;">
+  <div style="padding:10px 12px;"><span class="fy-ws-h2">Transições do ${fy.ano_fiscal}</span></div>
+  <div style="overflow-x:auto;">
+    <table class="fy-ws-table" style="min-width:700px;">
+      <thead><tr><th>Projeto</th><th>Nome</th><th>Tipo</th><th>FY Destino</th><th>Status</th><th>Executado em</th><th></th></tr></thead>
+      <tbody>${linhasHtml}</tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal nova transição -->
+<div id="fy-trans-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;">
+  <div class="fy-ws-card" style="width:440px;padding:20px;display:flex;flex-direction:column;gap:12px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span class="fy-ws-h2">Nova Transição</span>
+      <button onclick="_fyTransicaoFecharModal()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#64748b;">×</button>
+    </div>
+    <input type="hidden" id="fy-trans-fy-origem">
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:12.5px;font-weight:600;">Projeto</label>
+      <select id="fy-trans-projeto" class="fy-ws-select" style="width:100%;"></select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:12.5px;font-weight:600;">Tipo de Transição</label>
+      <select id="fy-trans-tipo" class="fy-ws-select" style="width:100%;">
+        <option value="CARRYOVER">Carryover (saldo vai pro próximo FY)</option>
+        <option value="CROSS_FY_CONTINUE">CROSS-FY Continuidade</option>
+        <option value="HOLD">Hold (pausa formal)</option>
+        <option value="COMPLETE">Concluído no FY</option>
+        <option value="TERMINATE">Encerrado antecipadamente</option>
+        <option value="CANCEL">Cancelado</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:12.5px;font-weight:600;">FY Destino (opcional)</label>
+      <select id="fy-trans-destino" class="fy-ws-select" style="width:100%;"><option value="">— nenhum —</option></select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:4px;">
+      <label style="font-size:12.5px;font-weight:600;">Justificativa</label>
+      <textarea id="fy-trans-just" class="fy-ws-input" rows="2" style="width:100%;box-sizing:border-box;resize:vertical;" placeholder="Descreva a razão da transição"></textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="fy-ws-btn" onclick="_fyTransicaoFecharModal()">Cancelar</button>
+      <button class="fy-ws-btn-p" onclick="_fyTransicaoSalvar()">Criar transição</button>
+    </div>
+  </div>
+</div>`;
+}
+
+function _fyTransicaoAbrirModal(fyOrigem) {
+    const modal = document.getElementById('fy-trans-modal');
+    if (!modal) return;
+    document.getElementById('fy-trans-fy-origem').value = fyOrigem;
+
+    // Popula projetos do FY
+    const selPrj = document.getElementById('fy-trans-projeto');
+    const pfyProjs = (typeof projectsData !== 'undefined')
+        ? projectsData.filter(p => p.ano_fiscal === fyOrigem || (p.etapa_atual !== 'BUSINESS CASE' && !['ENCERRADO','CANCELADO'].includes(p.etapa_atual||'')))
+        : [];
+    selPrj.innerHTML = '<option value="">— selecione —</option>' + pfyProjs.map(p => `<option value="${p.codigo}">${p.codigo} · ${p.nome||''}</option>`).join('');
+
+    // Popula FY destino
+    const selDest = document.getElementById('fy-trans-destino');
+    selDest.innerHTML = '<option value="">— nenhum —</option>';
+    if (typeof fiscalYearsCache !== 'undefined') {
+        fiscalYearsCache.filter(f => f.ano_fiscal !== fyOrigem).forEach(f => {
+            selDest.innerHTML += `<option value="${f.ano_fiscal}">${f.ano_fiscal}</option>`;
+        });
+    }
+
+    modal.style.display = 'flex';
+}
+
+function _fyTransicaoFecharModal() {
+    const modal = document.getElementById('fy-trans-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function _fyTransicaoSalvar() {
+    const fyOrigem  = document.getElementById('fy-trans-fy-origem').value;
+    const projeto   = document.getElementById('fy-trans-projeto').value;
+    const tipo      = document.getElementById('fy-trans-tipo').value;
+    const destino   = document.getElementById('fy-trans-destino').value || null;
+    const just      = document.getElementById('fy-trans-just').value.trim();
+
+    if (!projeto) { alert('Selecione um projeto.'); return; }
+
+    const { error } = await _supabase.from('project_fiscal_transition').insert([{
+        projeto_codigo:     projeto,
+        fiscal_year_origem: fyOrigem,
+        fiscal_year_destino: destino,
+        tipo,
+        status: 'DRAFT',
+        justificativa: just || null,
+        criado_por: (typeof currentUser !== 'undefined' && currentUser) ? currentUser.nome : 'desconhecido',
+    }]);
+
+    if (error) { alert('Erro: ' + error.message); return; }
+    _fyTransicaoFecharModal();
+    const fy = (typeof getAFPorCodigo === 'function') ? getAFPorCodigo(fyOrigem) : null;
+    if (fy) await _fyTransicoesCarregar(fy);
+}
+
+async function _fyTransicaoSubmeter(id) {
+    const { error } = await _supabase.from('project_fiscal_transition')
+        .update({ status: 'SUBMITTED' }).eq('id', id);
+    if (error) { alert('Erro: ' + error.message); return; }
+    const fy = (typeof getAFPorCodigo === 'function') ? getAFPorCodigo((window.fyWorkspaceContext||{}).codigo||'') : null;
+    if (fy) await _fyTransicoesCarregar(fy);
+}
+
+async function _fyTransicaoExecutar(id) {
+    if (!confirm('Executar esta transição? A operação será registrada.')) return;
+    const agora = new Date().toISOString();
+    const user  = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.nome : 'desconhecido';
+    const { error } = await _supabase.from('project_fiscal_transition')
+        .update({ status: 'EXECUTED', executado_por: user, executado_em: agora }).eq('id', id);
+    if (error) { alert('Erro: ' + error.message); return; }
+    const fy = (typeof getAFPorCodigo === 'function') ? getAFPorCodigo((window.fyWorkspaceContext||{}).codigo||'') : null;
+    if (fy) await _fyTransicoesCarregar(fy);
+}
+
+// =========================================================================
+// VIS-FY-07 — Fechamento (fiscal_year_closing)
+// =========================================================================
+
+async function _fyFechamentoCarregar(fy) {
+    const content = document.getElementById('fy-ws-content');
+    if (!content) return;
+    content.innerHTML = '<div style="padding:40px;text-align:center;color:#93a4c3;font-size:12.5px;">Carregando…</div>';
+
+    const [closingRes, transRes, projetosRes] = await Promise.all([
+        _supabase.from('fiscal_year_closing').select('*, fiscal_year_closing_item(*)').eq('fiscal_year_codigo', fy.ano_fiscal).maybeSingle(),
+        _supabase.from('project_fiscal_transition').select('id,status').eq('fiscal_year_origem', fy.ano_fiscal),
+        _supabase.from('project_fiscal_year').select('id,status').eq('fiscal_year_codigo', fy.ano_fiscal),
+    ]);
+
+    const closing     = closingRes.data || null;
+    const transicoes  = transRes.data || [];
+    const participacoes = projetosRes.data || [];
+
+    const jaClosed    = (fy.fy_status === 'CLOSED' || (closing && closing.status === 'EXECUTADO'));
+    const transExec   = transicoes.filter(t => t.status === 'EXECUTED').length;
+    const transPend   = transicoes.filter(t => !['EXECUTED','CANCELLED','REJECTED'].includes(t.status)).length;
+    const totalProj   = participacoes.length;
+
+    // Validações automáticas
+    const validas = [
+        { ok: transPend === 0, label: 'Todas as transições resolvidas', val: transPend === 0 ? 'OK' : `${transPend} pendentes` },
+        { ok: totalProj > 0,   label: 'Participações registradas',      val: `${totalProj} projetos` },
+        { ok: !!fy.data_fim,   label: 'Data de término configurada',    val: fy.data_fim ? _fyWsFmtData(fy.data_fim) : 'não configurado' },
+        { ok: fy.bc_package_status === 'FECHADO' || fy.bc_package_status === 'NAO_INICIADO',
+          label: 'Pacote de BC resolvido',
+          val:   fy.bc_package_status === 'FECHADO' ? 'Fechado' : (fy.bc_package_status === 'NAO_INICIADO' ? 'Sem BCs (OK)' : 'Em aberto') },
+    ];
+    const bloqueios = validas.filter(v => !v.ok).length;
+    const pronto    = !jaClosed && bloqueios === 0;
+
+    const validHtml = validas.map(v => `
+        <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;border-bottom:1px solid #f1f5f9;">
+          <span style="width:18px;height:18px;border-radius:50%;background:${v.ok?'#16a34a':'#dc2626'};color:#fff;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${v.ok?'✓':'!'}</span>
+          <span style="flex-grow:1;">${v.label}</span>
+          <b style="white-space:nowrap;color:${v.ok?'#166534':'#991b1b'};">${v.val}</b>
+        </div>`).join('');
+
+    const snapshotResumo = closing ? `
+        <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;">
+          <div style="display:flex;justify-content:space-between;"><span>Participações</span><b>${closing.total_projetos||totalProj}</b></div>
+          <div style="display:flex;justify-content:space-between;"><span>Transições executadas</span><b>${transExec}</b></div>
+          <div style="display:flex;justify-content:space-between;"><span>Blockers hard</span><b style="color:${(closing.total_blockers_hard||0)>0?'#dc2626':'#166534'};">${closing.total_blockers_hard||0}</b></div>
+          <div style="display:flex;justify-content:space-between;"><span>Executado por</span><b>${closing.executado_por||'—'}</b></div>
+          <div style="display:flex;justify-content:space-between;"><span>Executado em</span><b>${closing.executado_em?_fyWsFmtData(closing.executado_em):'—'}</b></div>
+        </div>` : '<span style="font-size:12px;color:#93a4c3;">Fechamento ainda não iniciado.</span>';
+
+    content.innerHTML = `
+<div class="fy-ws-card" style="padding:10px 14px;display:flex;align-items:center;gap:8px;">
+  <span class="fy-ws-h2">Fechamento · ${fy.ano_fiscal}</span>
+  ${jaClosed ? `<span class="fy-b fy-badge-ok" style="margin-left:8px;">Fechado</span>` : ''}
+  ${!jaClosed && bloqueios > 0 ? `<span class="fy-b fy-badge-cr" style="margin-left:8px;">${bloqueios} bloqueio(s)</span>` : ''}
+  ${!jaClosed && bloqueios === 0 ? `<span class="fy-b fy-badge-ok" style="margin-left:8px;">Pronto para fechar</span>` : ''}
+</div>
+
+<div style="display:flex;gap:14px;align-items:flex-start;">
+  <div style="flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:12px;">
+    <div class="fy-ws-card" style="padding:14px;">
+      <div style="padding-bottom:10px;"><span class="fy-ws-h2">Validações automáticas · R-FC-01</span></div>
+      <div style="display:flex;flex-direction:column;gap:0;">${validHtml}</div>
+    </div>
+    <div class="fy-ws-card" style="padding:14px;">
+      <div style="padding-bottom:10px;"><span class="fy-ws-h2">Resumo do fechamento</span></div>
+      ${snapshotResumo}
+    </div>
+  </div>
+
+  <div style="width:310px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
+    ${jaClosed
+        ? `<div class="fy-ws-card" style="padding:16px;border:2px solid #16a34a;">
+             <span class="fy-ws-h2" style="color:#16a34a;">FY fechado</span>
+             <p style="font-size:12px;margin:6px 0 0 0;color:#64748b;">Este exercício está encerrado. Para reabertura controlada, contate o Gestor Fiscal.</p>
+           </div>`
+        : `<div class="fy-ws-card" style="padding:16px;border:2px solid #4338ca;box-shadow:0 10px 30px rgba(15,30,61,.12);">
+             <span class="fy-ws-h2">Fechar o ${fy.ano_fiscal}</span>
+             <p style="font-size:12px;margin:8px 0 12px 0;color:#334155;">O FY fica somente leitura e o snapshot é gravado. O próximo FY não é ativado aqui — isso é uma ação separada.</p>
+             ${bloqueios > 0 ? `<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:7px 10px;font-size:11.5px;color:#7f1d1d;margin-bottom:10px;"><b>Bloqueado:</b> resolva os itens acima antes de fechar.</div>` : ''}
+             <textarea id="fy-fech-comentario" class="fy-ws-input" rows="2" style="width:100%;box-sizing:border-box;resize:none;margin-bottom:10px;" placeholder="Comentário de fechamento (opcional)"></textarea>
+             <div style="display:flex;justify-content:flex-end;gap:8px;">
+               <button class="fy-ws-btn-p" onclick="_fyExecutarFechamento('${fy.ano_fiscal}')"
+                 ${!pronto ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''}>
+                 Fechar o ${fy.ano_fiscal}
+               </button>
+             </div>
+           </div>`
+    }
+    <div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#78350f;line-height:1.45;">
+      <b>DV-07.</b> O fechamento termina em CLOSED nesta tela. A ativação do próximo FY é uma ação separada (R-FY-04). Mudança entre pré-validação e execução exige revalidar (R-FC-02).
+    </div>
+  </div>
+</div>`;
+}
+
+async function _fyExecutarFechamento(fyCodigo) {
+    if (!confirm(`Fechar o exercício ${fyCodigo}? O FY ficará somente leitura após esta ação.`)) return;
+    const agora = new Date().toISOString();
+    const user  = (typeof currentUser !== 'undefined' && currentUser) ? currentUser.nome : 'desconhecido';
+    const coment = (document.getElementById('fy-fech-comentario')||{}).value || '';
+
+    const { data: pfy } = await _supabase.from('project_fiscal_year')
+        .select('id').eq('fiscal_year_codigo', fyCodigo);
+    const totalProj = (pfy||[]).length;
+
+    const { data: transData } = await _supabase.from('project_fiscal_transition')
+        .select('id').eq('fiscal_year_origem', fyCodigo).eq('status', 'EXECUTED');
+    const transExec = (transData||[]).length;
+
+    const snapshot = { comentario: coment, gerado_em: agora, usuario: user, total_projetos: totalProj, transicoes_executadas: transExec };
+
+    // Upsert no registro de fechamento
+    const { error: ec } = await _supabase.from('fiscal_year_closing').upsert({
+        fiscal_year_codigo: fyCodigo,
+        status: 'EXECUTADO',
+        total_projetos: totalProj,
+        total_blockers_hard: 0,
+        total_blockers_soft: 0,
+        executado_por: user,
+        executado_em: agora,
+        snapshot,
+    }, { onConflict: 'fiscal_year_codigo' });
+    if (ec) { alert('Erro ao registrar fechamento: ' + ec.message); return; }
+
+    // Atualiza status do FY
+    const { error: ef } = await _supabase.from('fiscal_years')
+        .update({ status: 'CLOSED' }).eq('codigo', fyCodigo);
+    if (ef) { alert('Erro ao atualizar status do FY: ' + ef.message); return; }
+
+    // Invalida cache
+    if (typeof carregarFiscalYears === 'function') await carregarFiscalYears();
+    const fy = (typeof getAFPorCodigo === 'function') ? getAFPorCodigo(fyCodigo) : null;
+    if (fy) await _fyFechamentoCarregar(fy);
+}
+
+// =========================================================================
+// VIS-FY-08 — Histórico e auditoria
+// =========================================================================
+
+async function _fyHistoricoCarregar(fy) {
+    const content = document.getElementById('fy-ws-content');
+    if (!content) return;
+    content.innerHTML = '<div style="padding:40px;text-align:center;color:#93a4c3;font-size:12.5px;">Carregando…</div>';
+
+    const [closingRes, transRes, pacotesRes] = await Promise.all([
+        _supabase.from('fiscal_year_closing').select('*').eq('fiscal_year_codigo', fy.ano_fiscal).order('id', { ascending: false }),
+        _supabase.from('project_fiscal_transition').select('*').eq('fiscal_year_origem', fy.ano_fiscal).order('criado_em', { ascending: false }),
+        _supabase.from('pacotes_fy').select('*').eq('ano_fiscal', fy.ano_fiscal).order('fechado_em', { ascending: false }),
+    ]);
+
+    const closings  = closingRes.data  || [];
+    const transicoes = transRes.data   || [];
+    const pacotes   = pacotesRes.data  || [];
+
+    // Montar linha do tempo a partir de eventos concretos
+    const eventos = [];
+
+    pacotes.forEach(p => eventos.push({
+        data: p.fechado_em, tipo: 'FY_PACKAGE_CLOSED', cls: 'fy-badge-ok',
+        desc: `Pacote de BC fechado · ${p.qtd_projetos} projetos`,
+        por: p.fechado_por||'—',
+    }));
+
+    closings.forEach(c => {
+        if (c.executado_em) eventos.push({
+            data: c.executado_em, tipo: c.status === 'EXECUTADO' ? 'FY_CLOSED' : 'FY_CLOSING_INICIADO',
+            cls: c.status === 'EXECUTADO' ? 'fy-badge-ok' : 'fy-badge-in',
+            desc: `Fechamento ${c.status === 'EXECUTADO' ? 'executado' : 'iniciado'} · ${c.total_projetos||'?'} projetos`,
+            por: c.executado_por||c.iniciado_por||'—',
+        });
+        if (c.iniciado_em && c.iniciado_em !== c.executado_em) eventos.push({
+            data: c.iniciado_em, tipo: 'FY_CLOSING_INICIADO', cls: 'fy-badge-in',
+            desc: 'Processo de fechamento iniciado',
+            por: c.iniciado_por||'—',
+        });
+    });
+
+    transicoes.filter(t => t.executado_em).forEach(t => {
+        const tipoCfg = _TRANSICAO_TIPO_CFG[t.tipo] || { label: t.tipo };
+        eventos.push({
+            data: t.executado_em, tipo: 'FY_TRANSITION_EXECUTED', cls: 'fy-badge-in',
+            desc: `${t.projeto_codigo} · ${tipoCfg.label}`,
+            por: t.executado_por||'—',
+        });
+    });
+
+    // Criar eventos das transições submetidas/aprovadas
+    transicoes.filter(t => t.criado_em && t.status !== 'DRAFT').forEach(t => {
+        const tipoCfg = _TRANSICAO_TIPO_CFG[t.tipo] || { label: t.tipo };
+        eventos.push({
+            data: t.criado_em, tipo: 'FY_TRANSITION_CREATED', cls: 'fy-badge-nu',
+            desc: `Transição criada: ${t.projeto_codigo} · ${tipoCfg.label}`,
+            por: t.criado_por||'—',
+        });
+    });
+
+    if (fy.data_inicio) eventos.push({
+        data: fy.data_inicio + 'T00:00:00Z', tipo: 'FY_ACTIVATED', cls: 'fy-badge-in',
+        desc: `FY ${fy.ano_fiscal} ativado · início de execução`,
+        por: 'Sistema',
+    });
+
+    eventos.sort((a, b) => new Date(b.data) - new Date(a.data));
+
+    const eventoHtml = eventos.length === 0
+        ? `<tr><td colspan="5" style="padding:20px 9px;text-align:center;color:#93a4c3;">Nenhum evento registrado.</td></tr>`
+        : eventos.map(e => `<tr>
+            <td style="padding:6px 9px;white-space:nowrap;font-size:11.5px;">${_fyWsFmtData(e.data)}</td>
+            <td style="padding:6px 9px;white-space:nowrap;"><span class="fy-b ${e.cls}">${e.tipo}</span></td>
+            <td style="padding:6px 9px;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${e.desc}</td>
+            <td style="padding:6px 9px;white-space:nowrap;">${e.por}</td>
+          </tr>`).join('');
+
+    const snapshotHtml = closings.length === 0
+        ? `<tr><td colspan="3" style="padding:12px 9px;text-align:center;color:#93a4c3;">Nenhum fechamento registrado.</td></tr>`
+        : closings.map((c, i) => `<tr>
+            <td style="padding:6px 9px;white-space:nowrap;"><b>V${closings.length - i}</b>${i===0?' <span style="color:#166534;font-size:10.5px;">vigente</span>':''}</td>
+            <td style="padding:6px 9px;white-space:nowrap;">${c.executado_em?_fyWsFmtData(c.executado_em):'—'}</td>
+            <td style="padding:6px 9px;white-space:nowrap;">${c.total_projetos||'—'}</td>
+          </tr>`).join('');
+
+    content.innerHTML = `
+<div class="fy-ws-card" style="padding:10px 14px;display:flex;align-items:center;gap:8px;">
+  <span class="fy-ws-h2">Histórico e auditoria · ${fy.ano_fiscal}</span>
+  <span style="flex-grow:1;"></span>
+  <span class="fy-ws-sub">${eventos.length} evento(s)</span>
+</div>
+
+<div style="display:flex;gap:14px;align-items:flex-start;">
+  <div style="flex-grow:1;min-width:0;">
+    <div class="fy-ws-card" style="overflow:hidden;">
+      <div style="padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
+        <span class="fy-ws-h2">Eventos · somente leitura</span>
+        <span class="fy-ws-sub">${eventos.length} eventos</span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="fy-ws-table" style="min-width:600px;">
+          <thead><tr><th>Data e hora</th><th>Evento</th><th>Descrição</th><th>Por</th></tr></thead>
+          <tbody>${eventoHtml}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div style="width:280px;flex-shrink:0;">
+    <div class="fy-ws-card" style="overflow:hidden;">
+      <div style="padding:10px 12px;"><span class="fy-ws-h2">Snapshots de fechamento</span></div>
+      <div style="overflow-x:auto;">
+        <table class="fy-ws-table">
+          <thead><tr><th>Versão</th><th>Data</th><th>Projetos</th></tr></thead>
+          <tbody>${snapshotHtml}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>`;
 }
