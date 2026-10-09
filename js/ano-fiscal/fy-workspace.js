@@ -1594,6 +1594,9 @@ async function _fyTransicaoExecutar(id) {
 // VIS-FY-07 — Fechamento (fiscal_year_closing)
 // =========================================================================
 
+// Sub-chip ativo dentro da aba Fechamento: 'executar' | 'reabertura'
+let _fyFechSubChip = 'executar';
+
 async function _fyFechamentoCarregar(fy) {
     const content = document.getElementById('fy-ws-content');
     if (!content) return;
@@ -1602,17 +1605,20 @@ async function _fyFechamentoCarregar(fy) {
     const [closingRes, transRes, projetosRes] = await Promise.all([
         _supabase.from('fiscal_year_closing').select('*, fiscal_year_closing_item(*)').eq('fiscal_year_codigo', fy.ano_fiscal).maybeSingle(),
         _supabase.from('project_fiscal_transition').select('id,status').eq('fiscal_year_origem', fy.ano_fiscal),
-        _supabase.from('project_fiscal_year').select('id,status').eq('fiscal_year_codigo', fy.ano_fiscal),
+        _supabase.from('project_fiscal_year').select('id,status,projeto_codigo').eq('fiscal_year_codigo', fy.ano_fiscal),
     ]);
 
-    const closing     = closingRes.data || null;
-    const transicoes  = transRes.data || [];
+    const closing      = closingRes.data || null;
+    const transicoes   = transRes.data || [];
     const participacoes = projetosRes.data || [];
 
-    const jaClosed    = (fy.fy_status === 'CLOSED' || (closing && closing.status === 'EXECUTADO'));
-    const transExec   = transicoes.filter(t => t.status === 'EXECUTED').length;
-    const transPend   = transicoes.filter(t => !['EXECUTED','CANCELLED','REJECTED'].includes(t.status)).length;
-    const totalProj   = participacoes.length;
+    // Status real do FY a partir do cache
+    const fyStatus  = fy.fy_status || (closing && closing.status === 'EXECUTADO' ? 'CLOSED' : '');
+    const jaClosed  = fyStatus === 'CLOSED';
+    const reaberto  = fyStatus === 'REOPENED';
+    const transExec = transicoes.filter(t => t.status === 'EXECUTED').length;
+    const transPend = transicoes.filter(t => !['EXECUTED','CANCELLED','REJECTED'].includes(t.status)).length;
+    const totalProj = participacoes.length;
 
     // Validações automáticas
     const validas = [
@@ -1624,7 +1630,7 @@ async function _fyFechamentoCarregar(fy) {
           val:   fy.bc_package_status === 'FECHADO' ? 'Fechado' : (fy.bc_package_status === 'NAO_INICIADO' ? 'Sem BCs (OK)' : 'Em aberto') },
     ];
     const bloqueios = validas.filter(v => !v.ok).length;
-    const pronto    = !jaClosed && bloqueios === 0;
+    const pronto    = !jaClosed && !reaberto && bloqueios === 0;
 
     const validHtml = validas.map(v => `
         <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;border-bottom:1px solid #f1f5f9;">
@@ -1642,14 +1648,13 @@ async function _fyFechamentoCarregar(fy) {
           <div style="display:flex;justify-content:space-between;"><span>Executado em</span><b>${closing.executado_em?_fyWsFmtData(closing.executado_em):'—'}</b></div>
         </div>` : '<span style="font-size:12px;color:#93a4c3;">Fechamento ainda não iniciado.</span>';
 
-    content.innerHTML = `
-<div class="fy-ws-card" style="padding:10px 14px;display:flex;align-items:center;gap:8px;">
-  <span class="fy-ws-h2">Fechamento · ${fy.ano_fiscal}</span>
-  ${jaClosed ? `<span class="fy-b fy-badge-ok" style="margin-left:8px;">Fechado</span>` : ''}
-  ${!jaClosed && bloqueios > 0 ? `<span class="fy-b fy-badge-cr" style="margin-left:8px;">${bloqueios} bloqueio(s)</span>` : ''}
-  ${!jaClosed && bloqueios === 0 ? `<span class="fy-b fy-badge-ok" style="margin-left:8px;">Pronto para fechar</span>` : ''}
-</div>
+    // Badge de status no cabeçalho
+    const statusBadge = jaClosed  ? `<span class="fy-b fy-badge-ok" style="margin-left:8px;">Fechado</span>`
+                      : reaberto  ? `<span class="fy-b fy-badge-wa" style="margin-left:8px;">Reaberto</span>`
+                      : bloqueios > 0 ? `<span class="fy-b fy-badge-cr" style="margin-left:8px;">${bloqueios} bloqueio(s)</span>`
+                      : `<span class="fy-b fy-badge-ok" style="margin-left:8px;">Pronto para fechar</span>`;
 
+    const conteudoExecutar = `
 <div style="display:flex;gap:14px;align-items:flex-start;">
   <div style="flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:12px;">
     <div class="fy-ws-card" style="padding:14px;">
@@ -1661,19 +1666,26 @@ async function _fyFechamentoCarregar(fy) {
       ${snapshotResumo}
     </div>
   </div>
-
   <div style="width:310px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
-    ${jaClosed
+    ${(jaClosed && !reaberto)
         ? `<div class="fy-ws-card" style="padding:16px;border:2px solid #16a34a;">
              <span class="fy-ws-h2" style="color:#16a34a;">FY fechado</span>
-             <p style="font-size:12px;margin:6px 0 0 0;color:#64748b;">Este exercício está encerrado. Para reabertura controlada, contate o Gestor Fiscal.</p>
+             <p style="font-size:12px;margin:6px 0 0 0;color:#64748b;">Este exercício está encerrado. Use o sub-chip "Reabertura controlada" para reabrir pontualmente.</p>
+           </div>`
+        : reaberto
+        ? `<div class="fy-ws-card" style="padding:16px;border:2px solid #d97706;">
+             <span class="fy-ws-h2" style="color:#92400e;">FY reaberto</span>
+             <p style="font-size:12px;margin:6px 0 0 0;color:#64748b;">Finalize as correções do escopo e re-feche usando o botão abaixo.</p>
+             <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+               <button class="fy-ws-btn-p" onclick="_fyExecutarFechamento('${fy.ano_fiscal}')">Re-fechar o ${fy.ano_fiscal}</button>
+             </div>
            </div>`
         : `<div class="fy-ws-card" style="padding:16px;border:2px solid #4338ca;box-shadow:0 10px 30px rgba(15,30,61,.12);">
              <span class="fy-ws-h2">Fechar o ${fy.ano_fiscal}</span>
              <p style="font-size:12px;margin:8px 0 12px 0;color:#334155;">O FY fica somente leitura e o snapshot é gravado. O próximo FY não é ativado aqui — isso é uma ação separada.</p>
              ${bloqueios > 0 ? `<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:7px 10px;font-size:11.5px;color:#7f1d1d;margin-bottom:10px;"><b>Bloqueado:</b> resolva os itens acima antes de fechar.</div>` : ''}
              <textarea id="fy-fech-comentario" class="fy-ws-input" rows="2" style="width:100%;box-sizing:border-box;resize:none;margin-bottom:10px;" placeholder="Comentário de fechamento (opcional)"></textarea>
-             <div style="display:flex;justify-content:flex-end;gap:8px;">
+             <div style="display:flex;justify-content:flex-end;">
                <button class="fy-ws-btn-p" onclick="_fyExecutarFechamento('${fy.ano_fiscal}')"
                  ${!pronto ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''}>
                  Fechar o ${fy.ano_fiscal}
@@ -1683,6 +1695,133 @@ async function _fyFechamentoCarregar(fy) {
     }
     <div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#78350f;line-height:1.45;">
       <b>DV-07.</b> O fechamento termina em CLOSED nesta tela. A ativação do próximo FY é uma ação separada (R-FY-04). Mudança entre pré-validação e execução exige revalidar (R-FC-02).
+    </div>
+  </div>
+</div>`;
+
+    const conteudoRea = _fyReaberturaRender(fy, closing, jaClosed, reaberto, participacoes);
+
+    content.innerHTML = `
+<div class="fy-ws-card" style="padding:10px 14px;display:flex;align-items:center;gap:8px;">
+  <span class="fy-ws-h2" style="margin-right:8px;">Fechamento · ${fy.ano_fiscal}</span>
+  <button class="fy-ws-chip${_fyFechSubChip==='executar'?' on':''}" onclick="_fyFechChip('executar')">Executar fechamento</button>
+  <button class="fy-ws-chip${_fyFechSubChip==='reabertura'?' on':''}" onclick="_fyFechChip('reabertura')">Reabertura controlada</button>
+  ${statusBadge}
+</div>
+${_fyFechSubChip === 'reabertura' ? conteudoRea : conteudoExecutar}`;
+}
+
+async function _fyFechChip(chip) {
+    _fyFechSubChip = chip;
+    const fy = (typeof getAFPorCodigo === 'function') ? getAFPorCodigo((window.fyWorkspaceContext||{}).codigo||'') : null;
+    if (fy) await _fyFechamentoCarregar(fy);
+}
+
+// =========================================================================
+// VIS-FY-07B — Reabertura controlada
+// =========================================================================
+
+function _fyReaberturaRender(fy, closing, jaClosed, reaberto, participacoes) {
+    const podEditar = (typeof ehProprietario !== 'undefined' && ehProprietario);
+    const snapshotRea = closing && closing.snapshot && closing.snapshot.reabertura
+        ? closing.snapshot.reabertura : null;
+
+    if (!jaClosed && !reaberto) {
+        return `
+<div class="fy-ws-card" style="padding:48px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;">
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#93a4c3" stroke-width="1.5"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+  <span style="font-size:14px;font-weight:700;color:#0f1e3d;">Disponível apenas após o fechamento do FY</span>
+  <span class="fy-ws-sub">Feche o FY primeiro pelo sub-chip "Executar fechamento".</span>
+</div>`;
+    }
+
+    if (reaberto) {
+        const reaInfo = snapshotRea || {};
+        return `
+<div style="display:flex;gap:14px;align-items:flex-start;">
+  <div style="flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:12px;">
+    <div class="fy-ws-card" style="padding:16px;border-left:4px solid #d97706;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <span class="fy-b fy-badge-wa">FY REABERTO</span>
+        <span class="fy-ws-sub">desde ${reaInfo.executado_em ? _fyWsFmtData(reaInfo.executado_em) : '—'} por ${reaInfo.executado_por||'—'}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;">
+        <div><b style="font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">Escopo da reabertura</b><p style="margin:4px 0 0 0;">${reaInfo.escopo||'—'}</p></div>
+        <div><b style="font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">Justificativa</b><p style="margin:4px 0 0 0;">${reaInfo.justificativa||'—'}</p></div>
+        ${reaInfo.projetos && reaInfo.projetos.length > 0 ? `
+        <div><b style="font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:#64748b;">Projetos afetados</b>
+          <p style="margin:4px 0 0 0;">${reaInfo.projetos.join(', ')}</p></div>` : ''}
+      </div>
+    </div>
+    <div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:10px 12px;font-size:12px;color:#78350f;">
+      Finalize as correções do escopo acima e re-feche o FY pelo sub-chip <b>"Executar fechamento"</b>. Um novo snapshot será gerado.
+    </div>
+  </div>
+  <div style="width:310px;flex-shrink:0;">
+    <div class="fy-ws-card" style="padding:14px;display:flex;flex-direction:column;gap:8px;">
+      <span class="fy-ws-h2">Reverter reabertura</span>
+      <p style="font-size:12px;margin:0;color:#64748b;">Se a reabertura foi executada por engano e nenhuma alteração foi feita, você pode reverter para CLOSED.</p>
+      ${podEditar ? `<div style="display:flex;justify-content:flex-end;">
+        <button class="fy-ws-btn" onclick="_fyReverterRea('${fy.ano_fiscal}')" style="color:#991b1b;border-color:#fca5a5;">Reverter para fechado</button>
+      </div>` : `<span style="font-size:11.5px;color:#93a4c3;">Restrito a Proprietários.</span>`}
+    </div>
+  </div>
+</div>`;
+    }
+
+    // FY está CLOSED — mostrar formulário de reabertura
+    const projOpts = participacoes.map(p => {
+        const nome = (typeof projectsData !== 'undefined') ? ((projectsData.find(x => x.codigo === p.projeto_codigo)||{}).nome||'') : '';
+        return `<option value="${p.projeto_codigo}">${p.projeto_codigo}${nome ? ' · ' + nome : ''}</option>`;
+    }).join('');
+
+    return `
+<div style="display:flex;gap:14px;align-items:flex-start;">
+  <div style="flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:12px;">
+    <div class="fy-ws-card" style="padding:14px;">
+      <div style="padding-bottom:10px;"><span class="fy-ws-h2">O que é reabertura controlada?</span></div>
+      <div style="font-size:12.5px;color:#334155;display:flex;flex-direction:column;gap:6px;line-height:1.5;">
+        <p style="margin:0;">Uma reabertura permite corrigir pontualmente registros de um FY já fechado — por exemplo, acertar uma transição errada, ajustar um valor alocado ou incluir um carryover que ficou pendente.</p>
+        <p style="margin:0;">O escopo deve ser declarado antes: o sistema registra <b>o que</b> e <b>por quê</b> foi reaberto. Após as correções, o FY é re-fechado gerando um novo snapshot (V2, V3, …).</p>
+      </div>
+    </div>
+    ${closing ? `
+    <div class="fy-ws-card" style="padding:14px;">
+      <div style="padding-bottom:8px;"><span class="fy-ws-h2">Último fechamento registrado</span></div>
+      <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;">
+        <div style="display:flex;justify-content:space-between;"><span>Projetos</span><b>${closing.total_projetos||'—'}</b></div>
+        <div style="display:flex;justify-content:space-between;"><span>Executado por</span><b>${closing.executado_por||'—'}</b></div>
+        <div style="display:flex;justify-content:space-between;"><span>Executado em</span><b>${closing.executado_em?_fyWsFmtData(closing.executado_em):'—'}</b></div>
+      </div>
+    </div>` : ''}
+  </div>
+
+  <div style="width:360px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
+    <div class="fy-ws-card" style="padding:16px;border:2px solid #d97706;${!podEditar?'opacity:.7;':''}" >
+      <span class="fy-ws-h2">Executar reabertura · ${fy.ano_fiscal}</span>
+      ${!podEditar ? `<p style="font-size:12px;margin:6px 0 0 0;color:#64748b;">Restrito a Proprietários.</p>` : `
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12.5px;font-weight:600;">Escopo da reabertura <span style="color:#dc2626;">*</span></label>
+          <input id="fy-rea-escopo" type="text" class="fy-ws-input" style="width:100%;box-sizing:border-box;" placeholder="Ex.: corrigir carryover do PRJ-045">
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12.5px;font-weight:600;">Justificativa <span style="color:#dc2626;">*</span></label>
+          <textarea id="fy-rea-just" class="fy-ws-input" rows="2" style="width:100%;box-sizing:border-box;resize:none;" placeholder="Razão da reabertura (autorização, incidente, etc.)"></textarea>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;">
+          <label style="font-size:12.5px;font-weight:600;">Projetos afetados <span class="fy-ws-sub">(opcional, ctrl+clique para múltiplos)</span></label>
+          <select id="fy-rea-projetos" multiple class="fy-ws-select" style="width:100%;height:80px;">${projOpts}</select>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="fy-ws-btn-p" style="background:#d97706;border-color:#d97706;" onclick="_fyExecutarRea('${fy.ano_fiscal}')">
+            Executar reabertura do ${fy.ano_fiscal}
+          </button>
+        </div>
+      </div>`}
+    </div>
+    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#78350f;line-height:1.45;">
+      <b>R-FY-05.</b> A reabertura não desfaz o fechamento — apenas retorna o FY para edição temporária. O próximo fechamento gera um novo snapshot imutável.
     </div>
   </div>
 </div>`;
@@ -1726,6 +1865,73 @@ async function _fyExecutarFechamento(fyCodigo) {
     if (typeof carregarFiscalYears === 'function') await carregarFiscalYears();
     const fy = (typeof getAFPorCodigo === 'function') ? getAFPorCodigo(fyCodigo) : null;
     if (fy) await _fyFechamentoCarregar(fy);
+}
+
+async function _fyExecutarRea(fyCodigo) {
+    const escopo = (document.getElementById('fy-rea-escopo')||{}).value||'';
+    const just   = (document.getElementById('fy-rea-just')||{}).value||'';
+    if (!escopo.trim() || !just.trim()) {
+        alert('Preencha o escopo e a justificativa antes de executar a reabertura.');
+        return;
+    }
+    const sel = document.getElementById('fy-rea-projetos');
+    const projetos = sel ? [...sel.selectedOptions].map(o => o.value) : [];
+
+    const usuarioAtual = (typeof supabase !== 'undefined' && supabase.auth)
+        ? ((await supabase.auth.getUser()).data?.user?.email || 'sistema')
+        : 'sistema';
+    const agora = new Date().toISOString();
+
+    // 1. Busca o registro de closing existente para mesclar o snapshot
+    const { data: closingAtual } = await _supabase
+        .from('fiscal_year_closing')
+        .select('snapshot')
+        .eq('fiscal_year_codigo', fyCodigo)
+        .maybeSingle();
+
+    const snapshotAtualizado = {
+        ...(closingAtual?.snapshot || {}),
+        reabertura: { escopo, justificativa: just, projetos, executado_por: usuarioAtual, executado_em: agora },
+    };
+
+    // 2. Atualiza fiscal_year_closing: volta para PREPARANDO + grava escopo da reabertura no snapshot
+    const { error: errClosing } = await _supabase
+        .from('fiscal_year_closing')
+        .update({ status: 'PREPARANDO', snapshot: snapshotAtualizado })
+        .eq('fiscal_year_codigo', fyCodigo);
+    if (errClosing) { alert('Erro ao atualizar registro de closing: ' + errClosing.message); return; }
+
+    // 3. Atualiza status do FY para REOPENED
+    const { error: errFY } = await _supabase
+        .from('fiscal_years')
+        .update({ status: 'REOPENED' })
+        .eq('ano_fiscal', fyCodigo);
+    if (errFY) { alert('Erro ao atualizar status do FY: ' + errFY.message); return; }
+
+    // 4. Invalida cache e recarrega
+    if (typeof carregarFiscalYears === 'function') await carregarFiscalYears();
+    const fyAtualizado = (typeof fiscalYearsCache !== 'undefined' ? fiscalYearsCache : []).find(f => f.ano_fiscal === fyCodigo);
+    if (fyAtualizado) await _fyFechamentoCarregar(fyAtualizado);
+}
+
+async function _fyReverterRea(fyCodigo) {
+    if (!confirm(`Reverter o FY ${fyCodigo} de REOPENED para CLOSED?\n\nUse apenas se a reabertura foi executada por engano e nenhuma alteração foi feita.`)) return;
+
+    const { error: errClosing } = await _supabase
+        .from('fiscal_year_closing')
+        .update({ status: 'EXECUTADO' })
+        .eq('fiscal_year_codigo', fyCodigo);
+    if (errClosing) { alert('Erro ao reverter closing: ' + errClosing.message); return; }
+
+    const { error: errFY } = await _supabase
+        .from('fiscal_years')
+        .update({ status: 'CLOSED' })
+        .eq('ano_fiscal', fyCodigo);
+    if (errFY) { alert('Erro ao reverter FY: ' + errFY.message); return; }
+
+    if (typeof carregarFiscalYears === 'function') await carregarFiscalYears();
+    const fyAtualizado = (typeof fiscalYearsCache !== 'undefined' ? fiscalYearsCache : []).find(f => f.ano_fiscal === fyCodigo);
+    if (fyAtualizado) await _fyFechamentoCarregar(fyAtualizado);
 }
 
 // =========================================================================
