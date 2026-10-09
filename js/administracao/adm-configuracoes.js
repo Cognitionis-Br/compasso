@@ -355,12 +355,161 @@ async function cfgFySalvar() {
 }
 
 // =============================================================================
-// VIEW: cfg_estimativas — N/A (configurações de EST-01 são por projeto)
+// VIEW: cfg_estimativas — estimation_policies (PAD-ADM-03 · Configuração por Seções)
+// Tabela: estimation_policies
 // =============================================================================
-function _cfgEstimativasLoad() {
-    _cfgNaView('cfg_estimativas', 'fa-solid fa-calculator',
-        'Parâmetros de Estimativa',
-        'Configurações globais de EST-01 (templates de papéis, faixas de referência). Previsto para uma próxima fase do módulo de Estimation.');
+let _estPolCache = [];
+let _estPolAba = 'base_hours';
+
+async function _cfgEstimativasLoad() {
+    admSetState('cfg_estimativas', 'loading');
+    const el = admGetContentEl('cfg_estimativas'); if (!el) return;
+    const { data } = await _supabase.from('estimation_policies').select('*')
+        .eq('status', 'PUBLISHED').order('criado_em', { ascending: false }).limit(1);
+    const { data: todos } = await _supabase.from('estimation_policies').select('id,engine_version,status,criado_em')
+        .order('criado_em', { ascending: false });
+    _estPolCache = todos || [];
+    const pol = data?.[0] || null;
+    _cfgEstRender(el, pol);
+    admSetState('cfg_estimativas', 'content');
+}
+
+function _cfgEstRender(el, pol) {
+    const pode = _cfgEhProp();
+    const historico = _estPolCache.map(p => {
+        const badge = p.status === 'PUBLISHED' ? 'bg-green-100 text-green-800' : p.status === 'DRAFT' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-500';
+        return `<div class="flex items-center gap-3 py-2 border-b border-gray-100 text-xs">
+            <span class="font-mono text-gray-500 w-12">${p.engine_version}</span>
+            <span class="px-1.5 py-0.5 rounded text-xs ${badge}">${p.status}</span>
+            <span class="text-gray-400">${p.criado_em?.substring(0,10)||'—'}</span>
+            ${p.status === 'DRAFT' && pode ? `<button class="ml-auto text-indigo-600 hover:underline" onclick="cfgEstPublicar(${p.id})">Publicar</button>` : ''}
+            ${p.status === 'PUBLISHED' && pode ? `<button class="ml-auto text-indigo-600 hover:underline" onclick="cfgEstNovaDraft(${p.id})">Nova versão</button>` : ''}
+        </div>`;
+    }).join('');
+
+    if (!pol) {
+        el.innerHTML = `<div class="p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div><h2 class="text-sm font-bold text-gray-800">Política de Estimativa</h2>
+                    <p class="text-xs text-gray-500">VIEW-CFG-ESTIMATIVAS · PAD-ADM-03 · EST-01</p></div>
+                ${pode ? `<button class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-md" onclick="cfgEstCriarInicial()">+ Criar Política Inicial</button>` : ''}
+            </div>
+            <p class="text-xs text-gray-400 py-8 text-center">Nenhuma política de estimativa publicada. O SQL de inicialização precisa ser executado.</p>
+            ${historico ? `<div class="mt-4"><h3 class="text-xs font-semibold text-gray-600 mb-2">Histórico</h3>${historico}</div>` : ''}
+        </div>`;
+        return;
+    }
+
+    const baseHours = (pol.base_hours || []);
+    const fatores   = (pol.fatores_complexidade || []);
+
+    const tiposUniq  = [...new Set(baseHours.map(r => r.tipo_entregavel))];
+    const tamUniq    = [...new Set(baseHours.map(r => r.tamanho))];
+    const gridCols   = tamUniq.map(t => `<th class="text-center py-1 px-2 font-semibold text-gray-500">${t}</th>`).join('');
+    const gridRows   = tiposUniq.map(tipo => {
+        const cells = tamUniq.map(tam => {
+            const row = baseHours.find(r => r.tipo_entregavel === tipo && r.tamanho === tam);
+            return `<td class="text-center py-1 px-2 font-medium">${row ? row.horas_base + 'h' : '—'}</td>`;
+        }).join('');
+        return `<tr class="border-b border-gray-100 hover:bg-gray-50"><td class="py-1 px-2 text-gray-700">${tipo}</td>${cells}</tr>`;
+    }).join('');
+
+    const fatoresHtml = fatores.length === 0 ? '<p class="text-xs text-gray-400">Nenhum fator configurado.</p>' :
+        `<table class="w-full text-xs"><thead><tr class="border-b text-gray-500 font-semibold">
+            <th class="text-left py-1 pr-3">Chave</th><th class="text-left py-1 pr-3">Descrição</th>
+            <th class="text-center py-1">Multiplicador</th></tr></thead><tbody>
+            ${fatores.map(f => `<tr class="border-b border-gray-100 hover:bg-gray-50">
+                <td class="py-1 pr-3 font-mono">${f.chave}</td>
+                <td class="py-1 pr-3 text-gray-600">${f.descricao}</td>
+                <td class="py-1 text-center font-semibold">${f.multiplicador}×</td>
+            </tr>`).join('')}</tbody></table>`;
+
+    el.innerHTML = `
+<div class="p-4">
+    <div class="flex items-center justify-between mb-3">
+        <div><h2 class="text-sm font-bold text-gray-800">Política de Estimativa</h2>
+            <p class="text-xs text-gray-500">VIEW-CFG-ESTIMATIVAS · EST-01 · versão ${pol.engine_version} · PUBLISHED</p></div>
+        ${pode ? `<button class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-md" onclick="cfgEstNovaDraft(${pol.id})">+ Nova versão (rascunho)</button>` : ''}
+    </div>
+    <div class="flex gap-3 mb-4 border-b">
+        <button class="pb-2 text-xs font-semibold ${_estPolAba==='base_hours'?'border-b-2 border-indigo-600 text-indigo-600':'text-gray-500'}" onclick="cfgEstAba('base_hours')">Horas Base</button>
+        <button class="pb-2 text-xs font-semibold ${_estPolAba==='fatores'?'border-b-2 border-indigo-600 text-indigo-600':'text-gray-500'}" onclick="cfgEstAba('fatores')">Fatores de Complexidade</button>
+        <button class="pb-2 text-xs font-semibold ${_estPolAba==='outros'?'border-b-2 border-indigo-600 text-indigo-600':'text-gray-500'}" onclick="cfgEstAba('outros')">Outros Parâmetros</button>
+        <button class="pb-2 text-xs font-semibold ${_estPolAba==='historico'?'border-b-2 border-indigo-600 text-indigo-600':'text-gray-500'}" onclick="cfgEstAba('historico')">Histórico</button>
+    </div>
+    <div id="est-aba-base_hours" ${_estPolAba!=='base_hours'?'hidden':''}>
+        <table class="text-xs"><thead><tr class="border-b text-gray-500"><th class="text-left py-1 px-2 font-semibold">Entregável</th>${gridCols}</tr></thead>
+        <tbody>${gridRows}</tbody></table>
+    </div>
+    <div id="est-aba-fatores" ${_estPolAba!=='fatores'?'hidden':''}>${fatoresHtml}</div>
+    <div id="est-aba-outros" ${_estPolAba!=='outros'?'hidden':''}>
+        <div class="grid grid-cols-2 gap-6 text-xs max-w-sm">
+            <div><p class="text-gray-400 mb-0.5">Contingência</p><p class="font-semibold text-lg">${pol.contingencia_pct}%</p></div>
+            <div><p class="text-gray-400 mb-0.5">Arredondamento</p><p class="font-semibold text-lg">${pol.arredondamento_horas}h</p></div>
+        </div>
+    </div>
+    <div id="est-aba-historico" ${_estPolAba!=='historico'?'hidden':''}>${historico||'<p class="text-xs text-gray-400">Nenhum histórico.</p>'}</div>
+</div>`;
+}
+
+function cfgEstAba(aba) {
+    _estPolAba = aba;
+    ['base_hours','fatores','outros','historico'].forEach(a => {
+        document.getElementById(`est-aba-${a}`)?.classList.toggle('hidden', a !== aba);
+    });
+    document.querySelectorAll('[onclick^="cfgEstAba"]').forEach(b => {
+        const on = b.getAttribute('onclick').includes(`'${aba}'`);
+        b.className = `pb-2 text-xs font-semibold ${on ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500'}`;
+    });
+}
+
+async function cfgEstPublicar(id) {
+    if (!confirm('Publicar esta política? A atual PUBLISHED será inativada automaticamente.')) return;
+    const { error: e1 } = await _supabase.from('estimation_policies').update({ status: 'INACTIVE' }).eq('status', 'PUBLISHED');
+    if (e1) { alert('Erro ao inativar política atual: ' + e1.message); return; }
+    const { error: e2 } = await _supabase.from('estimation_policies').update({ status: 'PUBLISHED' }).eq('id', id);
+    if (e2) { alert('Erro: ' + e2.message); return; }
+    _cfgEstimativasLoad();
+}
+
+async function cfgEstNovaDraft(baseId) {
+    const { data: base } = await _supabase.from('estimation_policies').select('*').eq('id', baseId).single();
+    if (!base) { alert('Política base não encontrada.'); return; }
+    const partes = (base.engine_version || 'v1.0').split('.');
+    const novaVersao = `${partes[0]}.${(parseInt(partes[1]||'0')+1)}`;
+    const { error } = await _supabase.from('estimation_policies').insert([{
+        engine_version: novaVersao, base_hours: base.base_hours,
+        fatores_complexidade: base.fatores_complexidade,
+        contingencia_pct: base.contingencia_pct, arredondamento_horas: base.arredondamento_horas,
+        vigencia_inicio: base.vigencia_inicio, vigencia_fim: base.vigencia_fim,
+        status: 'DRAFT', criado_por: _cfgQuem(),
+    }]);
+    if (error) { alert('Erro: ' + error.message); return; }
+    alert('Rascunho criado. Edite-o pelo SQL Editor e publique quando pronto.');
+    _cfgEstimativasLoad();
+}
+
+async function cfgEstCriarInicial() {
+    const { error } = await _supabase.from('estimation_policies').insert([{
+        engine_version: 'v1.0',
+        base_hours: [
+            {tipo_entregavel:'Módulo de sistema',tamanho:'Pequeno',horas_base:40},
+            {tipo_entregavel:'Módulo de sistema',tamanho:'Médio',horas_base:120},
+            {tipo_entregavel:'Módulo de sistema',tamanho:'Grande',horas_base:280},
+            {tipo_entregavel:'Integração',tamanho:'Simples',horas_base:20},
+            {tipo_entregavel:'Integração',tamanho:'Complexa',horas_base:80},
+        ],
+        fatores_complexidade: [
+            {chave:'baixa',descricao:'Baixa complexidade',multiplicador:0.8},
+            {chave:'media',descricao:'Média complexidade',multiplicador:1.0},
+            {chave:'alta',descricao:'Alta complexidade',multiplicador:1.4},
+            {chave:'muito_alta',descricao:'Muito alta complexidade',multiplicador:2.0},
+        ],
+        contingencia_pct: 10.00, arredondamento_horas: 4,
+        status: 'PUBLISHED', criado_por: _cfgQuem(),
+    }]);
+    if (error) { alert('Erro: ' + error.message); return; }
+    _cfgEstimativasLoad();
 }
 
 // =============================================================================
@@ -756,10 +905,135 @@ async function cfgIaSalvar() {
 }
 
 // =============================================================================
-// VIEW: cfg_parametros — N/A
+// VIEW: cfg_parametros — parametros_sistema (PAD-ADM-01 · Catálogo Simples)
+// Tabela: parametros_sistema
 // =============================================================================
-function _cfgParametrosLoad() {
-    _cfgNaView('cfg_parametros', 'fa-solid fa-sliders',
-        'Parâmetros do Sistema',
-        'Configurações avançadas de comportamento do sistema (timeouts, limites, features flags). Previsto para uma próxima fase.');
+let _paramCache = [];
+
+const _PARAM_DOMINIO_LABEL = {
+    ACESSO:'Acesso', BUSINESS_CASE:'Business Case', ANO_FISCAL:'Ano Fiscal',
+    DOCUMENTOS:'Documentos', RELATORIOS:'Relatórios', GERAL:'Geral',
+};
+const _PARAM_NIVEL_LABEL = { 1:'Simples', 2:'Dependente', 3:'Crítico', 4:'Controlado' };
+const _PARAM_NIVEL_BADGE = {
+    1:'bg-green-100 text-green-800', 2:'bg-blue-100 text-blue-800',
+    3:'bg-amber-100 text-amber-800', 4:'bg-red-100 text-red-800',
+};
+
+async function _cfgParametrosLoad() {
+    admSetState('cfg_parametros', 'loading');
+    const el = admGetContentEl('cfg_parametros'); if (!el) return;
+    const { data } = await _supabase.from('parametros_sistema').select('*').order('dominio').order('chave');
+    _paramCache = data || [];
+    _cfgParamRender(el);
+    admSetState('cfg_parametros', 'content');
+}
+
+function _cfgParamRender(el) {
+    const params = _paramCache;
+    const pode   = _cfgEhProp();
+
+    const dominios = [...new Set(params.map(p => p.dominio))];
+    const secoes = dominios.map(dom => {
+        const itens = params.filter(p => p.dominio === dom);
+        return `<div class="mb-5">
+            <h3 class="text-xs font-bold uppercase tracking-wide text-indigo-700 mb-2 pb-1 border-b border-indigo-100">
+                ${_PARAM_DOMINIO_LABEL[dom]||dom}</h3>
+            <table class="w-full text-xs"><thead><tr class="text-gray-500 font-semibold border-b">
+                <th class="text-left py-1 pr-3">Chave</th>
+                <th class="text-left py-1 pr-3">Valor</th>
+                <th class="text-left py-1 pr-3">Tipo</th>
+                <th class="text-left py-1 pr-3">Nível</th>
+                <th class="text-left py-1 pr-3">Descrição</th>
+                <th class="py-1"></th></tr></thead><tbody>
+                ${itens.map(p => {
+                    const badge = _PARAM_NIVEL_BADGE[p.nivel_alteracao]||'bg-gray-100 text-gray-500';
+                    return `<tr class="border-b border-gray-100 hover:bg-gray-50">
+                        <td class="py-1 pr-3 font-mono font-medium">${p.chave}</td>
+                        <td class="py-1 pr-3 font-semibold">${p.valor}${p.unidade?' <span class="text-gray-400 font-normal">'+p.unidade+'</span>':''}</td>
+                        <td class="py-1 pr-3 text-gray-500">${p.tipo_dado}</td>
+                        <td class="py-1 pr-3"><span class="px-1.5 py-0.5 rounded text-xs ${badge}">${_PARAM_NIVEL_LABEL[p.nivel_alteracao]||p.nivel_alteracao}</span></td>
+                        <td class="py-1 pr-3 text-gray-500 max-w-xs">${p.descricao||'—'}</td>
+                        <td class="py-1">${(pode && !p.reservado) ? `<button class="text-indigo-600 hover:underline text-xs" onclick="cfgParamEditar('${p.chave}')">Editar</button>` : (p.reservado ? '<span class="text-gray-300 text-xs">Reservado</span>' : '')}</td>
+                    </tr>`;
+                }).join('')}
+            </tbody></table>
+        </div>`;
+    }).join('');
+
+    el.innerHTML = `
+<div class="p-4">
+    <div class="flex items-center justify-between mb-3">
+        <div><h2 class="text-sm font-bold text-gray-800">Parâmetros do Sistema</h2>
+            <p class="text-xs text-gray-500">VIEW-CFG-PARAMETROS · PAD-ADM-01 · ${params.length} parâmetro(s)</p></div>
+    </div>
+    <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+        <strong>Atenção:</strong> Parâmetros de nível <strong>Crítico (3)</strong> e <strong>Controlado (4)</strong> afetam fluxos de negócio em produção.
+        Parâmetros <strong>Reservados</strong> só podem ser alterados via SQL diretamente.
+    </div>
+    ${params.length === 0 ? '<p class="text-xs text-gray-400 py-8 text-center">Nenhum parâmetro encontrado. Execute o SQL de inicialização.</p>' : secoes}
+</div>
+<div id="param-drawer" class="hidden fixed inset-0 z-50 flex justify-end">
+    <div class="absolute inset-0 bg-black/30" onclick="cfgParamFecharDrawer()"></div>
+    <div class="relative w-[420px] bg-white h-full shadow-2xl p-6 flex flex-col gap-4 overflow-y-auto">
+        <h3 id="param-drawer-titulo" class="text-sm font-bold text-gray-800">Editar Parâmetro</h3>
+        <input type="hidden" id="param-form-chave">
+        <div class="p-3 bg-gray-50 rounded text-xs">
+            <p id="param-form-info-chave" class="font-mono font-semibold mb-1"></p>
+            <p id="param-form-info-desc" class="text-gray-500"></p>
+        </div>
+        <div class="flex flex-col gap-1">
+            <label class="text-xs font-medium text-gray-600">Valor atual</label>
+            <p id="param-form-valor-atual" class="text-xs text-gray-400 font-mono"></p>
+        </div>
+        <div class="flex flex-col gap-1" id="param-form-campo-wrapper">
+            <label class="text-xs font-medium text-gray-600">Novo valor <span class="text-red-500">*</span></label>
+            <input id="param-form-valor" type="text" class="border rounded text-xs px-2 py-1.5 font-mono">
+            <p id="param-form-hint" class="text-xs text-gray-400"></p>
+        </div>
+        <div id="param-form-nivel-aviso" class="hidden p-3 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+            Este parâmetro é de <strong>nível crítico</strong>. A alteração pode afetar fluxos em produção.
+            Confirme que você testou o impacto antes de salvar.
+        </div>
+        <div class="flex gap-2 mt-auto pt-2">
+            <button class="flex-1 px-3 py-1.5 text-xs border rounded text-gray-600" onclick="cfgParamFecharDrawer()">Cancelar</button>
+            <button class="flex-1 px-3 py-1.5 text-xs bg-indigo-600 text-white rounded" onclick="cfgParamSalvar()">Salvar</button>
+        </div>
+    </div>
+</div>`;
+}
+
+function cfgParamEditar(chave) {
+    const p = _paramCache.find(x => x.chave === chave); if (!p) return;
+    document.getElementById('param-drawer-titulo').textContent = 'Editar Parâmetro';
+    document.getElementById('param-form-chave').value       = chave;
+    document.getElementById('param-form-info-chave').textContent = chave;
+    document.getElementById('param-form-info-desc').textContent = p.descricao || '';
+    document.getElementById('param-form-valor-atual').textContent = p.valor + (p.unidade ? ' ' + p.unidade : '');
+    document.getElementById('param-form-valor').value = p.valor;
+    const hint = { INTEGER:'Número inteiro', DECIMAL:'Número decimal (use ponto)',
+        BOOLEAN:'true ou false', PERCENTAGE:'Percentual (0–100)',
+        MONEY:'Valor monetário (ex.: 50000.00)', DURATION:'Duração em dias',
+        ENUM: p.valores_permitidos?.length ? 'Valores: ' + p.valores_permitidos.join(' | ') : '', TEXT:'' };
+    document.getElementById('param-form-hint').textContent = hint[p.tipo_dado] || '';
+    const critico = p.nivel_alteracao >= 3;
+    document.getElementById('param-form-nivel-aviso').classList.toggle('hidden', !critico);
+    document.getElementById('param-drawer').classList.remove('hidden');
+}
+
+function cfgParamFecharDrawer() { document.getElementById('param-drawer')?.classList.add('hidden'); }
+
+async function cfgParamSalvar() {
+    const chave = document.getElementById('param-form-chave').value;
+    const valor = document.getElementById('param-form-valor').value.trim();
+    if (!valor) { alert('Valor não pode ser vazio.'); return; }
+    const p = _paramCache.find(x => x.chave === chave);
+    if (p?.nivel_alteracao >= 3) {
+        if (!confirm(`Você está alterando um parâmetro de nível ${_PARAM_NIVEL_LABEL[p.nivel_alteracao]}. Confirma?`)) return;
+    }
+    const { error } = await _supabase.from('parametros_sistema')
+        .update({ valor, atualizado_por: _cfgQuem(), atualizado_em: new Date().toISOString() })
+        .eq('chave', chave);
+    if (error) { alert('Erro: ' + error.message); return; }
+    cfgParamFecharDrawer(); _cfgParametrosLoad();
 }
