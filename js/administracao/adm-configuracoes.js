@@ -360,17 +360,20 @@ async function cfgFySalvar() {
 // =============================================================================
 let _estPolCache = [];
 let _estPolAba = 'base_hours';
+let _estDraftObj = null;
+let _estDraftAbaAtiva = 'base_hours';
 
 async function _cfgEstimativasLoad() {
     admSetState('cfg_estimativas', 'loading');
     const el = admGetContentEl('cfg_estimativas'); if (!el) return;
-    const { data } = await _supabase.from('estimation_policies').select('*')
-        .eq('status', 'PUBLISHED').order('criado_em', { ascending: false }).limit(1);
-    const { data: todos } = await _supabase.from('estimation_policies').select('id,engine_version,status,criado_em')
-        .order('criado_em', { ascending: false });
+    const [{ data: pub }, { data: draft }, { data: todos }] = await Promise.all([
+        _supabase.from('estimation_policies').select('*').eq('status', 'PUBLISHED').order('criado_em', { ascending: false }).limit(1),
+        _supabase.from('estimation_policies').select('*').eq('status', 'DRAFT').order('criado_em', { ascending: false }).limit(1),
+        _supabase.from('estimation_policies').select('id,engine_version,status,criado_em').order('criado_em', { ascending: false }),
+    ]);
     _estPolCache = todos || [];
-    const pol = data?.[0] || null;
-    _cfgEstRender(el, pol);
+    _estDraftObj = draft?.[0] || null;
+    _cfgEstRender(el, pub?.[0] || null);
     admSetState('cfg_estimativas', 'content');
 }
 
@@ -424,6 +427,15 @@ function _cfgEstRender(el, pol) {
                 <td class="py-1 text-center font-semibold">${f.multiplicador}×</td>
             </tr>`).join('')}</tbody></table>`;
 
+    const draftBanner = _estDraftObj && pode
+        ? `<div class="mb-3 p-3 bg-yellow-50 border border-yellow-300 rounded flex items-center justify-between">
+            <div class="text-xs text-yellow-800"><strong>Rascunho disponível:</strong> versão ${_estDraftObj.engine_version} criado em ${_estDraftObj.criado_em?.substring(0,10)||'—'}</div>
+            <div class="flex gap-2">
+                <button class="px-2.5 py-1 text-xs bg-yellow-600 text-white rounded hover:bg-yellow-700" onclick="cfgEstEditarDraft(${_estDraftObj.id})">Editar rascunho</button>
+                <button class="px-2.5 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700" onclick="cfgEstPublicar(${_estDraftObj.id})">Publicar</button>
+            </div>
+          </div>` : (_estDraftObj ? `<div class="mb-3 p-3 bg-yellow-50 border border-yellow-300 rounded text-xs text-yellow-800">Rascunho ${_estDraftObj.engine_version} disponível.</div>` : '');
+
     el.innerHTML = `
 <div class="p-4">
     <div class="flex items-center justify-between mb-3">
@@ -431,6 +443,7 @@ function _cfgEstRender(el, pol) {
             <p class="text-xs text-gray-500">VIEW-CFG-ESTIMATIVAS · EST-01 · versão ${pol.engine_version} · PUBLISHED</p></div>
         ${pode ? `<button class="px-3 py-1.5 text-xs bg-indigo-600 text-white rounded-md" onclick="cfgEstNovaDraft(${pol.id})">+ Nova versão (rascunho)</button>` : ''}
     </div>
+    ${draftBanner}
     <div class="flex gap-3 mb-4 border-b">
         <button class="pb-2 text-xs font-semibold ${_estPolAba==='base_hours'?'border-b-2 border-indigo-600 text-indigo-600':'text-gray-500'}" onclick="cfgEstAba('base_hours')">Horas Base</button>
         <button class="pb-2 text-xs font-semibold ${_estPolAba==='fatores'?'border-b-2 border-indigo-600 text-indigo-600':'text-gray-500'}" onclick="cfgEstAba('fatores')">Fatores de Complexidade</button>
@@ -477,15 +490,213 @@ async function cfgEstNovaDraft(baseId) {
     if (!base) { alert('Política base não encontrada.'); return; }
     const partes = (base.engine_version || 'v1.0').split('.');
     const novaVersao = `${partes[0]}.${(parseInt(partes[1]||'0')+1)}`;
-    const { error } = await _supabase.from('estimation_policies').insert([{
+    const { data: novo, error } = await _supabase.from('estimation_policies').insert([{
         engine_version: novaVersao, base_hours: base.base_hours,
         fatores_complexidade: base.fatores_complexidade,
         contingencia_pct: base.contingencia_pct, arredondamento_horas: base.arredondamento_horas,
         vigencia_inicio: base.vigencia_inicio, vigencia_fim: base.vigencia_fim,
         status: 'DRAFT', criado_por: _cfgQuem(),
-    }]);
+    }]).select().single();
     if (error) { alert('Erro: ' + error.message); return; }
-    alert('Rascunho criado. Edite-o pelo SQL Editor e publique quando pronto.');
+    await _cfgEstimativasLoad();
+    if (novo) cfgEstEditarDraft(novo.id);
+}
+
+// ---- Editor de rascunho ----
+function cfgEstEditarDraft(id) {
+    const draft = _estDraftObj && _estDraftObj.id === id
+        ? _estDraftObj
+        : null;
+    if (!draft) { _cfgEstimativasLoad(); return; }
+    _estDraftAbaAtiva = 'base_hours';
+    _cfgEstMontarDrawer(draft);
+    document.getElementById('est-draft-drawer')?.classList.remove('hidden');
+}
+
+function _cfgEstMontarDrawer(draft) {
+    const existing = document.getElementById('est-draft-drawer');
+    if (existing) existing.remove();
+
+    const baseHours = draft.base_hours || [];
+    const fatores   = draft.fatores_complexidade || [];
+
+    const baseRowsHtml = baseHours.map((r, i) => `
+        <div class="flex gap-2 items-center est-base-row" data-idx="${i}">
+            <input type="text" class="border rounded text-xs px-2 py-1 flex-1 est-bh-tipo" value="${r.tipo_entregavel||''}">
+            <input type="text" class="border rounded text-xs px-2 py-1 w-24 est-bh-tam" value="${r.tamanho||''}">
+            <input type="number" class="border rounded text-xs px-2 py-1 w-16 est-bh-horas" min="1" value="${r.horas_base||0}">
+            <button class="text-red-400 hover:text-red-600 text-xs" onclick="cfgEstRemoveBaseRow(${i})">✕</button>
+        </div>`).join('');
+
+    const fatoresRowsHtml = fatores.map((f, i) => `
+        <div class="flex gap-2 items-center est-fator-row" data-idx="${i}">
+            <input type="text" class="border rounded text-xs px-2 py-1 w-24 est-ft-chave font-mono" value="${f.chave||''}">
+            <input type="text" class="border rounded text-xs px-2 py-1 flex-1 est-ft-desc" value="${f.descricao||''}">
+            <input type="number" class="border rounded text-xs px-2 py-1 w-20 est-ft-mult" step="0.1" min="0.1" value="${f.multiplicador||1.0}">
+            <button class="text-red-400 hover:text-red-600 text-xs" onclick="cfgEstRemoveFator(${i})">✕</button>
+        </div>`).join('');
+
+    const drawer = document.createElement('div');
+    drawer.id = 'est-draft-drawer';
+    drawer.className = 'fixed inset-0 z-50 flex justify-end';
+    drawer.innerHTML = `
+<div class="absolute inset-0 bg-black/30" onclick="cfgEstFecharDrawer()"></div>
+<div class="relative w-[600px] bg-white h-full shadow-2xl flex flex-col overflow-hidden">
+    <div class="p-5 border-b flex items-center justify-between">
+        <div>
+            <h3 class="text-sm font-bold text-gray-800">Editar Rascunho · ${draft.engine_version}</h3>
+            <p class="text-xs text-gray-500">Alterações salvas como DRAFT · publique para ativar</p>
+        </div>
+        <button class="text-gray-400 hover:text-gray-600 text-lg leading-none" onclick="cfgEstFecharDrawer()">×</button>
+    </div>
+    <div class="flex gap-3 px-5 pt-3 border-b">
+        <button class="pb-2 text-xs font-semibold border-b-2 border-indigo-600 text-indigo-600 est-draft-tab" data-tab="base_hours" onclick="cfgEstDraftAba('base_hours')">Horas Base</button>
+        <button class="pb-2 text-xs font-semibold text-gray-500 est-draft-tab" data-tab="fatores" onclick="cfgEstDraftAba('fatores')">Fatores</button>
+        <button class="pb-2 text-xs font-semibold text-gray-500 est-draft-tab" data-tab="outros" onclick="cfgEstDraftAba('outros')">Outros</button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-5">
+        <!-- Aba: Horas Base -->
+        <div id="est-draft-aba-base_hours">
+            <div class="flex items-center justify-between mb-2">
+                <div class="grid grid-cols-4 gap-2 text-xs font-semibold text-gray-500 flex-1 mr-6">
+                    <span>Tipo de entregável</span><span>Tamanho</span><span>Horas base</span><span></span>
+                </div>
+            </div>
+            <div id="est-base-rows" class="flex flex-col gap-2">
+                ${baseRowsHtml}
+            </div>
+            <button class="mt-3 text-xs text-indigo-600 hover:underline" onclick="cfgEstAddBaseRow()">+ Adicionar linha</button>
+        </div>
+        <!-- Aba: Fatores -->
+        <div id="est-draft-aba-fatores" hidden>
+            <div class="grid grid-cols-4 gap-2 text-xs font-semibold text-gray-500 mb-2">
+                <span>Chave</span><span class="col-span-2">Descrição</span><span>Multiplicador</span>
+            </div>
+            <div id="est-fator-rows" class="flex flex-col gap-2">
+                ${fatoresRowsHtml}
+            </div>
+            <button class="mt-3 text-xs text-indigo-600 hover:underline" onclick="cfgEstAddFator()">+ Adicionar fator</button>
+        </div>
+        <!-- Aba: Outros -->
+        <div id="est-draft-aba-outros" hidden>
+            <div class="flex flex-col gap-4 max-w-xs">
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-gray-600">Contingência (%)</label>
+                    <input id="est-draft-contingencia" type="number" step="0.5" min="0" max="100"
+                        class="border rounded text-xs px-2 py-1.5" value="${draft.contingencia_pct||10}">
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-gray-600">Arredondamento (horas)</label>
+                    <input id="est-draft-arredondamento" type="number" min="1" step="1"
+                        class="border rounded text-xs px-2 py-1.5" value="${draft.arredondamento_horas||1}">
+                </div>
+                <div class="flex flex-col gap-1">
+                    <label class="text-xs font-medium text-gray-600">Versão do engine</label>
+                    <input id="est-draft-versao" type="text" class="border rounded text-xs px-2 py-1.5 font-mono" value="${draft.engine_version||'v1.0'}">
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="p-5 border-t flex gap-3 justify-between items-center">
+        <button class="px-3 py-1.5 text-xs border rounded text-gray-600" onclick="cfgEstFecharDrawer()">Fechar sem salvar</button>
+        <div class="flex gap-2">
+            <button class="px-4 py-1.5 text-xs bg-indigo-600 text-white rounded hover:bg-indigo-700" onclick="cfgEstDraftSalvar()">Salvar rascunho</button>
+            <button class="px-4 py-1.5 text-xs bg-green-600 text-white rounded hover:bg-green-700" onclick="cfgEstDraftSalvarEPublicar()">Salvar e Publicar</button>
+        </div>
+    </div>
+</div>`;
+    document.body.appendChild(drawer);
+}
+
+function cfgEstDraftAba(aba) {
+    _estDraftAbaAtiva = aba;
+    ['base_hours','fatores','outros'].forEach(a => {
+        const el = document.getElementById(`est-draft-aba-${a}`); if (el) el.hidden = (a !== aba);
+    });
+    document.querySelectorAll('.est-draft-tab').forEach(b => {
+        const on = b.dataset.tab === aba;
+        b.className = `pb-2 text-xs font-semibold est-draft-tab ${on ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500'}`;
+    });
+}
+
+function cfgEstAddBaseRow() {
+    const cont = document.getElementById('est-base-rows');
+    const i = cont.children.length;
+    const div = document.createElement('div');
+    div.className = 'flex gap-2 items-center est-base-row';
+    div.dataset.idx = i;
+    div.innerHTML = `
+        <input type="text" class="border rounded text-xs px-2 py-1 flex-1 est-bh-tipo" placeholder="Tipo de entregável">
+        <input type="text" class="border rounded text-xs px-2 py-1 w-24 est-bh-tam" placeholder="Tamanho">
+        <input type="number" class="border rounded text-xs px-2 py-1 w-16 est-bh-horas" min="1" value="8" placeholder="h">
+        <button class="text-red-400 hover:text-red-600 text-xs" onclick="this.closest('.est-base-row').remove()">✕</button>`;
+    cont.appendChild(div);
+}
+
+function cfgEstRemoveBaseRow(idx) {
+    document.querySelectorAll('.est-base-row')[idx]?.remove();
+}
+
+function cfgEstAddFator() {
+    const cont = document.getElementById('est-fator-rows');
+    const div = document.createElement('div');
+    div.className = 'flex gap-2 items-center est-fator-row';
+    div.innerHTML = `
+        <input type="text" class="border rounded text-xs px-2 py-1 w-24 est-ft-chave font-mono" placeholder="chave">
+        <input type="text" class="border rounded text-xs px-2 py-1 flex-1 est-ft-desc" placeholder="Descrição">
+        <input type="number" class="border rounded text-xs px-2 py-1 w-20 est-ft-mult" step="0.1" min="0.1" value="1.0">
+        <button class="text-red-400 hover:text-red-600 text-xs" onclick="this.closest('.est-fator-row').remove()">✕</button>`;
+    cont.appendChild(div);
+}
+
+function cfgEstRemoveFator(idx) {
+    document.querySelectorAll('.est-fator-row')[idx]?.remove();
+}
+
+function cfgEstFecharDrawer() {
+    document.getElementById('est-draft-drawer')?.remove();
+}
+
+function _cfgEstLerDraft() {
+    const base_hours = [...document.querySelectorAll('.est-base-row')].map(row => ({
+        tipo_entregavel: row.querySelector('.est-bh-tipo')?.value.trim() || '',
+        tamanho:         row.querySelector('.est-bh-tam')?.value.trim() || '',
+        horas_base:      Number(row.querySelector('.est-bh-horas')?.value || 0),
+    })).filter(r => r.tipo_entregavel && r.tamanho && r.horas_base > 0);
+
+    const fatores_complexidade = [...document.querySelectorAll('.est-fator-row')].map(row => ({
+        chave:          row.querySelector('.est-ft-chave')?.value.trim() || '',
+        descricao:      row.querySelector('.est-ft-desc')?.value.trim() || '',
+        multiplicador:  Number(row.querySelector('.est-ft-mult')?.value || 1),
+    })).filter(f => f.chave && f.multiplicador > 0);
+
+    const contingencia_pct    = Number(document.getElementById('est-draft-contingencia')?.value || 10);
+    const arredondamento_horas = Number(document.getElementById('est-draft-arredondamento')?.value || 1);
+    const engine_version       = document.getElementById('est-draft-versao')?.value.trim() || _estDraftObj?.engine_version;
+
+    return { base_hours, fatores_complexidade, contingencia_pct, arredondamento_horas, engine_version };
+}
+
+async function cfgEstDraftSalvar() {
+    if (!_estDraftObj) return;
+    const payload = _cfgEstLerDraft();
+    const { error } = await _supabase.from('estimation_policies').update(payload).eq('id', _estDraftObj.id);
+    if (error) { alert('Erro: ' + error.message); return; }
+    cfgEstFecharDrawer();
+    _cfgEstimativasLoad();
+}
+
+async function cfgEstDraftSalvarEPublicar() {
+    if (!_estDraftObj) return;
+    const payload = _cfgEstLerDraft();
+    const { error: e1 } = await _supabase.from('estimation_policies').update(payload).eq('id', _estDraftObj.id);
+    if (e1) { alert('Erro ao salvar: ' + e1.message); return; }
+    if (!confirm('Salvar e publicar? A versão PUBLISHED atual será inativada.')) return;
+    const { error: e2 } = await _supabase.from('estimation_policies').update({ status: 'INACTIVE' }).eq('status', 'PUBLISHED');
+    if (e2) { alert('Erro ao inativar: ' + e2.message); return; }
+    const { error: e3 } = await _supabase.from('estimation_policies').update({ status: 'PUBLISHED' }).eq('id', _estDraftObj.id);
+    if (e3) { alert('Erro ao publicar: ' + e3.message); return; }
+    cfgEstFecharDrawer();
     _cfgEstimativasLoad();
 }
 

@@ -1182,6 +1182,10 @@ function _fyPacoteBCRender(fy, bcs, crossFyList, pacote) {
     const pacoteItens  = pacote ? (pacote.pacote_fy_itens || []) : [];
     const pacoteFechado = pacote && pacote.status === 'FECHADO';
 
+    // Mapa de itens por BC para leitura de decisao_fy
+    const itensMap = {};
+    pacoteItens.forEach(i => { itensMap[i.business_case_codigo] = i; });
+
     // BCs com alguma decisão (estão no pacote ou foram devolvidos/postergados)
     const bcsPacote = bcs.filter(p => {
         const ss = (p.sub_status||'').toUpperCase();
@@ -1199,11 +1203,15 @@ function _fyPacoteBCRender(fy, bcs, crossFyList, pacote) {
     }
 
     function decisaoCfg(bc) {
-        const ss = (bc.sub_status||'').toUpperCase();
+        // Quando pacote fechado, preferir decisao_fy do item; caso contrário, usar sub_status
+        const item = itensMap[bc.codigo];
+        const ss = (pacoteFechado && item?.decisao_fy && item.decisao_fy !== 'SEM_DECISAO')
+            ? item.decisao_fy.toUpperCase()
+            : (bc.sub_status||'').toUpperCase();
         if (ss === 'APROVADO')  return { label: 'Aprovado',    cls: 'fy-badge-ok' };
         if (ss === 'DEVOLVED' || ss === 'DEVOLVIDO') return { label: 'Devolvido', cls: 'fy-badge-wa' };
         if (ss === 'POSTERGADO') return { label: 'Postergado', cls: 'fy-badge-nu' };
-        return { label: 'Sem decisão', cls: 'fy-badge-cr' };
+        return { label: 'Sem decisão FY', cls: 'fy-badge-cr' };
     }
 
     const regimeCfg = { CROSS_FY: { label:'CROSS_FY', cls:'fy-badge-in' }, FY_BOUND: { label:'FY_BOUND', cls:'fy-badge-nu' } };
@@ -1215,7 +1223,9 @@ function _fyPacoteBCRender(fy, bcs, crossFyList, pacote) {
             const rCfg = regimeCfg[bc.regime||'FY_BOUND'] || regimeCfg['FY_BOUND'];
             const val  = Number(bc.val_bc)||Number(bc.previsto)||0;
             const ss   = (bc.sub_status||'').toUpperCase();
-            const mostrarAcao = !pacoteFechado && ss !== 'APROVADO';
+            const mostrarDecidirPre  = !pacoteFechado && ss !== 'APROVADO';
+            const mostrarDevolverPre = !pacoteFechado && ss === 'APROVADO';
+            const mostrarAlterarPos  = pacoteFechado;
             return `<tr>
                 <td style="padding:6px 9px;white-space:nowrap;"><b>${bc.codigo}</b></td>
                 <td style="padding:6px 9px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${bc.nome||'—'}</td>
@@ -1223,8 +1233,9 @@ function _fyPacoteBCRender(fy, bcs, crossFyList, pacote) {
                 <td style="padding:6px 9px;white-space:nowrap;text-align:right;">${val > 0 ? fmtBRL(val) : 'em estimativa'}</td>
                 <td style="padding:6px 9px;white-space:nowrap;"><span class="fy-b ${dec.cls}">${dec.label}</span></td>
                 <td style="padding:6px 9px;white-space:nowrap;">
-                    ${!pacoteFechado && ss === 'APROVADO' ? `<button class="fy-ws-btn" onclick="_fyPacoteDevolverBC('${bc.codigo}')" style="padding:3px 9px;font-size:11.5px;">Devolver</button>` : ''}
-                    ${mostrarAcao ? `<button class="fy-ws-btn-p" onclick="_fyPacoteDecidirBC('${bc.codigo}')" style="padding:3px 9px;font-size:11.5px;">Decidir</button>` : ''}
+                    ${mostrarDevolverPre ? `<button class="fy-ws-btn" onclick="_fyPacoteDevolverBC('${bc.codigo}')" style="padding:3px 9px;font-size:11.5px;">Devolver</button>` : ''}
+                    ${mostrarDecidirPre ? `<button class="fy-ws-btn-p" onclick="_fyPacoteDecidirBC('${bc.codigo}')" style="padding:3px 9px;font-size:11.5px;">Decidir</button>` : ''}
+                    ${mostrarAlterarPos ? `<button class="fy-ws-btn" onclick="_fyPacoteDecidirBC('${bc.codigo}')" style="padding:3px 9px;font-size:11.5px;">Alterar decisão</button>` : ''}
                 </td>
             </tr>`;
           }).join('');
@@ -1382,6 +1393,13 @@ async function _fyPacoteDecisaoSalvar() {
 
     const { error } = await _supabase.from('projetos').update(payload).eq('codigo', codigo);
     if (error) { alert('Erro: ' + error.message); return; }
+
+    // Registrar decisao_fy em pacote_fy_itens (quando o pacote já existe)
+    const decisaoFyMap = { 'APROVADO': 'APROVADO', 'DEVOLVED': 'DEVOLVIDO', 'POSTERGADO': 'POSTERGADO' };
+    const decisaoFy = decisaoFyMap[decisao] || 'SEM_DECISAO';
+    await _supabase.from('pacote_fy_itens')
+        .update({ decisao_fy: decisaoFy })
+        .eq('business_case_codigo', codigo);
 
     const prj = (typeof projectsData !== 'undefined') ? projectsData.find(p => p.codigo === codigo) : null;
     if (prj) Object.assign(prj, payload);
