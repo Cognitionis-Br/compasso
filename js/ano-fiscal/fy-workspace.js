@@ -191,14 +191,15 @@ async function _fyWSCarregarAba(aba, fy) {
     if (!content) return;
     content.innerHTML = '<div style="padding:40px;text-align:center;color:#93a4c3;font-size:12.5px;">Carregando…</div>';
 
-    if      (aba === 'visao')      { await _fyVisaoCarregar(fy); }
-    else if (aba === 'projetos')   { await _fyProjetosCarregar(fy); }
-    else if (aba === 'calendario') { await _fyCalendarioCarregar(fy); }
-    else                           { _fyWSPlaceholder(content, aba); }
+    if      (aba === 'visao')        { await _fyVisaoCarregar(fy); }
+    else if (aba === 'projetos')     { await _fyProjetosCarregar(fy); }
+    else if (aba === 'calendario')   { await _fyCalendarioCarregar(fy); }
+    else if (aba === 'planejamento') { await _fyPlanejamentoCarregar(fy); }
+    else                             { _fyWSPlaceholder(content, aba); }
 }
 
 function _fyWSPlaceholder(content, aba) {
-    const nomes = { planejamento:'Planejamento', transicoes:'Transições', fechamento:'Fechamento', historico:'Histórico' };
+    const nomes = { transicoes:'Transições', fechamento:'Fechamento', historico:'Histórico' };
     content.innerHTML = `
 <div class="fy-ws-card" style="padding:48px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:12px;">
   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#93a4c3" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><circle cx="12" cy="16.5" r=".5" fill="#93a4c3"/></svg>
@@ -982,4 +983,408 @@ async function _fyJanelaSalvar() {
     _fyJanelaModalFechar();
     const fy = (typeof getAFPorCodigo === 'function') ? getAFPorCodigo(fyCodigo) : null;
     if (fy) await _fyCalendarioCarregar(fy);
+}
+
+// =========================================================================
+// VIS-FY-03 — Planejamento (Carteira Candidata + Pacote de BC)
+// =========================================================================
+
+// Sub-chip ativo dentro da aba Planejamento: 'carteira' | 'pacote'
+let _fyPlanSubChip = 'carteira';
+
+async function _fyPlanejamentoCarregar(fy) {
+    _fyPlanSubChip = 'carteira';
+    await _fyPlanCarregarDados(fy);
+}
+
+async function _fyPlanCarregarDados(fy) {
+    const content = document.getElementById('fy-ws-content');
+    if (!content) return;
+    content.innerHTML = '<div style="padding:40px;text-align:center;color:#93a4c3;font-size:12.5px;">Carregando…</div>';
+
+    // BCs do FY: business_cases com ano_fiscal = fy.codigo, via view projetos
+    const bcs = (typeof projectsData !== 'undefined')
+        ? projectsData.filter(p => p.etapa_atual === 'BUSINESS CASE' && p.ano_fiscal === fy.ano_fiscal)
+        : [];
+
+    // Participações CROSS_FY já confirmadas (project_fiscal_year com regime=CROSS_FY)
+    const { data: crossFyRows } = await _supabase
+        .from('project_fiscal_year')
+        .select('*')
+        .eq('fiscal_year_codigo', fy.ano_fiscal)
+        .eq('regime', 'CROSS_FY');
+    const crossFyList = crossFyRows || [];
+
+    // Itens do pacote (se já existe pacote fechado)
+    const pacoteFy = await _fyPlanObterPacote(fy.ano_fiscal);
+
+    if (_fyPlanSubChip === 'pacote') {
+        _fyPacoteBCRender(fy, bcs, crossFyList, pacoteFy);
+    } else {
+        _fyCarteiraCandidataRender(fy, bcs, crossFyList, pacoteFy);
+    }
+}
+
+async function _fyPlanObterPacote(anofiscal) {
+    const { data } = await _supabase
+        .from('pacotes_fy')
+        .select('*, pacote_fy_itens(*)')
+        .eq('ano_fiscal', anofiscal)
+        .order('id', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+    return data || null;
+}
+
+// ---- Sub-chip toggle ----
+async function _fyPlanChip(chip) {
+    _fyPlanSubChip = chip;
+    const fy = (typeof getAFPorCodigo === 'function') ? getAFPorCodigo((window.fyWorkspaceContext||{}).codigo||'') : null;
+    if (fy) await _fyPlanCarregarDados(fy);
+}
+
+// ---- Situação de planejamento derivada ----
+function _fyPlanSituacao(bc, pacoteItens) {
+    const ss = (bc.sub_status||'').toUpperCase();
+    if (ss === 'APROVADO')  return { label: 'No pacote',         cls: 'fy-badge-ok' };
+    if (ss === 'DEVOLVED' || ss === 'DEVOLVIDO') return { label: 'Devolvido pelo FY', cls: 'fy-badge-wa' };
+    if (ss === 'POSTERGADO') return { label: 'Postergado',       cls: 'fy-badge-nu' };
+    if (ss === 'ORÇAMENTO REALIZADO' || ss === 'EM ESTIMATIVA') return { label: 'Em estimativa', cls: 'fy-badge-in' };
+    if (ss === 'PLANEJADO')  return { label: 'Planejado',        cls: 'fy-badge-in' };
+    return { label: 'Em análise', cls: 'fy-badge-nu' };
+}
+
+// =========================================================================
+// VIS-FY-03 · Sub-tela A: Carteira Candidata
+// =========================================================================
+function _fyCarteiraCandidataRender(fy, bcs, crossFyList, pacote) {
+    const content = document.getElementById('fy-ws-content');
+    if (!content) return;
+
+    const projetosMap = {};
+    if (typeof projectsData !== 'undefined') projectsData.forEach(p => { projetosMap[p.codigo] = p; });
+
+    const pacoteItens = pacote ? (pacote.pacote_fy_itens || []) : [];
+
+    // Totais KPI
+    const noPackCount = bcs.filter(p => (p.sub_status||'').toUpperCase() === 'APROVADO').length;
+    const emConstrCount = bcs.filter(p => !['APROVADO','DEVOLVED','DEVOLVIDO'].includes((p.sub_status||'').toUpperCase())).length;
+    const crossCount = crossFyList.length;
+    const postergCount = bcs.filter(p => (p.sub_status||'').toUpperCase() === 'POSTERGADO').length;
+    const semDecisaoCount = bcs.filter(p => {
+        const ss = (p.sub_status||'').toUpperCase();
+        return ss !== 'APROVADO' && ss !== 'DEVOLVED' && ss !== 'DEVOLVIDO' && ss !== 'POSTERGADO';
+    }).length;
+
+    const pacoteFechado = pacote && pacote.status === 'FECHADO';
+    const valorNoPackTotal = bcs
+        .filter(p => (p.sub_status||'').toUpperCase() === 'APROVADO')
+        .reduce((a, p) => a + (Number(p.val_bc)||Number(p.previsto)||0), 0);
+    const valorCross = crossFyList.reduce((a, r) => a + (Number(r.valor_alocado)||0), 0);
+
+    function fmtBRL(v) {
+        if (!v) return '—';
+        return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    // Linhas da tabela
+    const allRows = [
+        ...bcs.map(bc => ({ tipo: 'BC', codigo: bc.codigo, nome: bc.nome, regime: bc.regime || 'FY_BOUND', classif: bc.classificacao_estrategica || '—', sit: _fyPlanSituacao(bc, pacoteItens), valor: Number(bc.val_bc)||Number(bc.previsto)||0 })),
+        ...crossFyList.map(r => {
+            const p = projetosMap[r.projeto_codigo] || {};
+            return { tipo: 'Projeto', codigo: r.projeto_codigo, nome: p.nome||'—', regime: 'CROSS_FY', classif: p.classificacao_estrategica||'—', sit: { label: 'Continuidade aprovada', cls: 'fy-badge-ok' }, valor: Number(r.valor_alocado)||0 };
+        }),
+    ];
+
+    const regimeCfg = { CROSS_FY: { label:'CROSS_FY', cls:'fy-badge-in' }, FY_BOUND: { label:'FY_BOUND', cls:'fy-badge-nu' } };
+
+    const rowsHtml = allRows.length === 0
+        ? `<tr><td colspan="7" style="padding:20px 9px;text-align:center;color:#93a4c3;">Nenhum BC ou projeto vinculado a este exercício.</td></tr>`
+        : allRows.map(r => {
+            const rCfg = regimeCfg[r.regime] || regimeCfg['FY_BOUND'];
+            return `<tr>
+                <td style="padding:6px 9px;white-space:nowrap;">${r.tipo}</td>
+                <td style="padding:6px 9px;white-space:nowrap;"><b>${r.codigo}</b></td>
+                <td style="padding:6px 9px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.nome}</td>
+                <td style="padding:6px 9px;white-space:nowrap;"><span class="fy-b ${rCfg.cls}">${rCfg.label}</span></td>
+                <td style="padding:6px 9px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.classif}</td>
+                <td style="padding:6px 9px;white-space:nowrap;"><span class="fy-b ${r.sit.cls}">${r.sit.label}</span></td>
+                <td style="padding:6px 9px;white-space:nowrap;text-align:right;">${r.valor > 0 ? fmtBRL(r.valor) : 'em estimativa'}</td>
+            </tr>`;
+          }).join('');
+
+    content.innerHTML = `
+<!-- Sub-chips + header -->
+<div class="fy-ws-card" style="padding:10px 14px;display:flex;align-items:center;gap:8px;">
+  <span class="fy-ws-h2" style="margin-right:8px;">Planejamento · ${fy.ano_fiscal}</span>
+  <button class="fy-ws-chip${_fyPlanSubChip==='carteira'?' on':''}" onclick="_fyPlanChip('carteira')">Carteira candidata</button>
+  <button class="fy-ws-chip${_fyPlanSubChip==='pacote'?' on':''}" onclick="_fyPlanChip('pacote')">Pacote de BC <b>${noPackCount}</b></button>
+  <span style="flex-grow:1;"></span>
+  ${!pacoteFechado ? `<button class="fy-ws-btn-p" onclick="switchTab('aprov_orcamento_af')">+ Nova Demanda</button>` : ''}
+</div>
+
+<!-- KPIs -->
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;">
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">BCs no pacote</span><span class="num" style="color:#3730a3;">${noPackCount}</span><span class="fy-ws-sub">${fmtBRL(valorNoPackTotal)}</span></div>
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">BCs em construção/avaliação</span><span class="num">${emConstrCount}</span><span class="fy-ws-sub">entram até o fechamento</span></div>
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">CROSS-FY previstos</span><span class="num" style="color:#1d4ed8;">${crossCount}</span><span class="fy-ws-sub">${fmtBRL(valorCross)}</span></div>
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">Postergados</span><span class="num" style="color:#64748b;">${postergCount}</span><span class="fy-ws-sub">do FY anterior</span></div>
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">Decisão pendente</span><span class="num" style="color:${semDecisaoCount>0?'#991b1b':'#166534'};">${semDecisaoCount}</span><span class="fy-ws-sub">${semDecisaoCount>0?'requer ação':'tudo definido'}</span></div>
+</div>
+
+<!-- Tabela + sidebar -->
+<div style="display:flex;gap:14px;align-items:flex-start;">
+  <div class="fy-ws-card" style="flex-grow:1;overflow:hidden;">
+    <div style="padding:10px 12px;display:flex;justify-content:space-between;align-items:center;">
+      <span class="fy-ws-h2">Carteira candidata do ${fy.ano_fiscal}</span>
+      <span class="fy-ws-sub">${allRows.length} itens</span>
+    </div>
+    <div style="overflow-x:auto;">
+      <table class="fy-ws-table" style="min-width:800px;">
+        <thead><tr><th>Origem</th><th>Código</th><th>Nome</th><th>Regime</th><th>Classif. Estratégica</th><th>Situação de planejamento</th><th style="text-align:right;">Valor</th></tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Sidebar composição -->
+  <div style="width:280px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
+    <div class="fy-ws-card" style="overflow:hidden;">
+      <div style="padding:10px 12px 0 12px;"><span class="fy-ws-h2">Composição do ${fy.ano_fiscal}</span></div>
+      <div style="padding:8px 12px 12px;display:flex;flex-direction:column;gap:6px;font-size:12px;">
+        <div style="display:flex;justify-content:space-between;gap:8px;"><span>Novos BCs (pacote)</span><b style="white-space:nowrap;">${fmtBRL(valorNoPackTotal)}</b></div>
+        <div style="display:flex;justify-content:space-between;gap:8px;"><span>CROSS-FY (alocação anual)</span><b style="white-space:nowrap;">${fmtBRL(valorCross)}</b></div>
+        <div style="border-top:1px solid #e5e7eb;padding-top:6px;display:flex;justify-content:space-between;">
+          <span style="font-weight:700;">Total planejado</span>
+          <b>${fmtBRL(valorNoPackTotal + valorCross)}</b>
+        </div>
+      </div>
+    </div>
+    <div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#78350f;line-height:1.45;">
+      <b>DV-02 e DV-03.</b> "+ Nova Demanda" abre o fluxo M05. Não há Novo Projeto nesta tela. Regime e classificação estratégica são colunas distintas.
+    </div>
+    <div style="background:#fffbeb;border:1px solid #f59e0b;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#78350f;line-height:1.45;">
+      <b>R-IN-07.</b> CROSS-FY e Carryover entram como participações do projeto existente, nunca como nova demanda.
+    </div>
+  </div>
+</div>`;
+}
+
+// =========================================================================
+// VIS-FY-03 · Sub-tela B: Pacote de BC
+// =========================================================================
+function _fyPacoteBCRender(fy, bcs, crossFyList, pacote) {
+    const content = document.getElementById('fy-ws-content');
+    if (!content) return;
+
+    const pacoteItens  = pacote ? (pacote.pacote_fy_itens || []) : [];
+    const pacoteFechado = pacote && pacote.status === 'FECHADO';
+
+    // BCs com alguma decisão (estão no pacote ou foram devolvidos/postergados)
+    const bcsPacote = bcs.filter(p => {
+        const ss = (p.sub_status||'').toUpperCase();
+        return ['APROVADO','DEVOLVED','DEVOLVIDO','POSTERGADO'].includes(ss);
+    });
+    const semDecisao = bcsPacote.filter(p => (p.sub_status||'').toUpperCase() === 'SEM_DECISAO').length;
+    const aprovados  = bcsPacote.filter(p => (p.sub_status||'').toUpperCase() === 'APROVADO');
+    const valorTotal = aprovados.reduce((a, p) => a + (Number(p.val_bc)||Number(p.previsto)||0), 0);
+    const valorAprov = aprovados.reduce((a, p) => a + (Number(p.val_bc)||Number(p.previsto)||0), 0);
+    const bcsSemDec  = bcsPacote.filter(p => (p.sub_status||'').toUpperCase() === 'SEM_DECISAO');
+
+    function fmtBRL(v) {
+        if (!v) return '—';
+        return 'R$ ' + Number(v).toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+    }
+
+    function decisaoCfg(bc) {
+        const ss = (bc.sub_status||'').toUpperCase();
+        if (ss === 'APROVADO')  return { label: 'Aprovado',    cls: 'fy-badge-ok' };
+        if (ss === 'DEVOLVED' || ss === 'DEVOLVIDO') return { label: 'Devolvido', cls: 'fy-badge-wa' };
+        if (ss === 'POSTERGADO') return { label: 'Postergado', cls: 'fy-badge-nu' };
+        return { label: 'Sem decisão', cls: 'fy-badge-cr' };
+    }
+
+    const regimeCfg = { CROSS_FY: { label:'CROSS_FY', cls:'fy-badge-in' }, FY_BOUND: { label:'FY_BOUND', cls:'fy-badge-nu' } };
+
+    const rowsHtml = bcsPacote.length === 0
+        ? `<tr><td colspan="6" style="padding:20px 9px;text-align:center;color:#93a4c3;">Nenhum BC com decisão registrada para este exercício.</td></tr>`
+        : bcsPacote.map(bc => {
+            const dec  = decisaoCfg(bc);
+            const rCfg = regimeCfg[bc.regime||'FY_BOUND'] || regimeCfg['FY_BOUND'];
+            const val  = Number(bc.val_bc)||Number(bc.previsto)||0;
+            const ss   = (bc.sub_status||'').toUpperCase();
+            const mostrarAcao = !pacoteFechado && ss !== 'APROVADO';
+            return `<tr>
+                <td style="padding:6px 9px;white-space:nowrap;"><b>${bc.codigo}</b></td>
+                <td style="padding:6px 9px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${bc.nome||'—'}</td>
+                <td style="padding:6px 9px;white-space:nowrap;"><span class="fy-b ${rCfg.cls}">${rCfg.label}</span></td>
+                <td style="padding:6px 9px;white-space:nowrap;text-align:right;">${val > 0 ? fmtBRL(val) : 'em estimativa'}</td>
+                <td style="padding:6px 9px;white-space:nowrap;"><span class="fy-b ${dec.cls}">${dec.label}</span></td>
+                <td style="padding:6px 9px;white-space:nowrap;">
+                    ${!pacoteFechado && ss === 'APROVADO' ? `<button class="fy-ws-btn" onclick="_fyPacoteDevolverBC('${bc.codigo}')" style="padding:3px 9px;font-size:11.5px;">Devolver</button>` : ''}
+                    ${mostrarAcao ? `<button class="fy-ws-btn-p" onclick="_fyPacoteDecidirBC('${bc.codigo}')" style="padding:3px 9px;font-size:11.5px;">Decidir</button>` : ''}
+                </td>
+            </tr>`;
+          }).join('');
+
+    // Card de extraordinários (do pacote fechado)
+    const extrasHtml = pacoteItens.filter(i => {
+        const p = (typeof projectsData !== 'undefined') ? projectsData.find(x => x.codigo === i.business_case_codigo) : null;
+        return p && p.is_adhoc === true;
+    }).map(i => {
+        const p = (typeof projectsData !== 'undefined') ? projectsData.find(x => x.codigo === i.business_case_codigo) : {};
+        return `<tr>
+            <td style="padding:6px 9px;white-space:nowrap;"><b>${i.business_case_codigo}</b></td>
+            <td style="padding:6px 9px;">${(p&&p.nome)||'—'}</td>
+            <td style="padding:6px 9px;white-space:nowrap;text-align:right;">${fmtBRL(i.valor_incluido)}</td>
+            <td style="padding:6px 9px;white-space:nowrap;"><span class="fy-b fy-badge-ok">Convertido</span></td>
+        </tr>`;
+    }).join('') || `<tr><td colspan="4" style="padding:12px 9px;text-align:center;color:#93a4c3;">Nenhum extraordinário.</td></tr>`;
+
+    const bloqueio = bcsSemDec.length > 0;
+    const podeFechar = !pacoteFechado && !bloqueio && aprovados.length > 0;
+
+    content.innerHTML = `
+<!-- Sub-chips -->
+<div class="fy-ws-card" style="padding:10px 14px;display:flex;align-items:center;gap:8px;">
+  <span class="fy-ws-h2" style="margin-right:8px;">Planejamento · ${fy.ano_fiscal}</span>
+  <button class="fy-ws-chip${_fyPlanSubChip==='carteira'?' on':''}" onclick="_fyPlanChip('carteira')">Carteira candidata</button>
+  <button class="fy-ws-chip${_fyPlanSubChip==='pacote'?' on':''}" onclick="_fyPlanChip('pacote')">Pacote de BC <b>${bcsPacote.length}</b></button>
+  ${pacoteFechado ? `<span class="fy-b fy-badge-ok" style="margin-left:8px;">Pacote fechado</span>` : ''}
+</div>
+
+<!-- KPIs -->
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;">
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">Teto do exercício</span><span class="num">—</span><span class="fy-ws-sub">configurar em Financeiro</span></div>
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">No pacote</span><span class="num" style="color:#3730a3;">${fmtBRL(valorTotal)}</span><span class="fy-ws-sub">${bcsPacote.length} BCs</span></div>
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">Aprovados</span><span class="num" style="color:#166534;">${fmtBRL(valorAprov)}</span><span class="fy-ws-sub">${aprovados.length} BCs</span></div>
+  <div class="fy-ws-card fy-ws-kpi"><span class="fy-ws-lbl">Sem decisão</span><span class="num" style="color:${bcsSemDec.length>0?'#991b1b':'#166534'};">${bcsSemDec.length}</span><span class="fy-ws-sub">${bcsSemDec.length>0?'bloqueia o fechamento':'pronto para fechar'}</span></div>
+</div>
+
+<!-- Tabela + sidebar -->
+<div style="display:flex;gap:14px;align-items:flex-start;">
+  <div style="flex-grow:1;min-width:0;display:flex;flex-direction:column;gap:12px;">
+    <div class="fy-ws-card" style="overflow:hidden;">
+      <div style="padding:10px 12px;"><span class="fy-ws-h2">BCs no pacote · M05 item C</span></div>
+      <div style="overflow-x:auto;">
+        <table class="fy-ws-table" style="min-width:700px;">
+          <thead><tr><th>BC</th><th>Nome</th><th>Regime previsto</th><th style="text-align:right;">Valor aprovado</th><th>Decisão do FY</th><th></th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+    </div>
+    <div class="fy-ws-card" style="overflow:hidden;">
+      <div style="padding:10px 12px;"><span class="fy-ws-h2">Extraordinários · orçamento próprio (D-07)</span></div>
+      <div style="overflow-x:auto;">
+        <table class="fy-ws-table">
+          <thead><tr><th>BC</th><th>Nome</th><th style="text-align:right;">Valor</th><th>Status</th></tr></thead>
+          <tbody>${extrasHtml}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar fechar pacote -->
+  <div style="width:300px;flex-shrink:0;display:flex;flex-direction:column;gap:10px;">
+    ${pacoteFechado
+        ? `<div class="fy-ws-card" style="padding:16px;display:flex;flex-direction:column;gap:8px;border:2px solid #16a34a;">
+             <span class="fy-ws-h2" style="color:#16a34a;">Pacote fechado</span>
+             <span class="fy-ws-sub">Fechado em ${_fyWsFmtData(pacote.fechado_em||'')} por ${pacote.fechado_por||'—'}.</span>
+             <span class="fy-ws-sub">${pacote.qtd_projetos} projetos criados · ${fmtBRL(pacote.valor_total)}</span>
+           </div>`
+        : `<div class="fy-ws-card" style="padding:14px;display:flex;flex-direction:column;gap:8px;border:2px solid #4338ca;box-shadow:0 10px 30px rgba(15,30,61,.12);">
+             <span class="fy-ws-h2">Fechar pacote do ${fy.ano_fiscal}</span>
+             ${bloqueio ? `<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:7px 10px;font-size:11.5px;color:#7f1d1d;"><b>PA.8:</b> ${bcsSemDec.length} BC(s) sem decisão. Decida antes de fechar.</div>` : ''}
+             <div style="font-size:12px;display:flex;flex-direction:column;gap:4px;">
+               <span>Serão criados <b>${aprovados.length} projetos</b> em lote, em Requerimentos.</span>
+               <span>Orçamento será fechado: <b>${fmtBRL(valorAprov)}</b>.</span>
+               <span>Após fechar, apenas BCs extraordinários serão aceitos neste FY.</span>
+             </div>
+             <div style="display:flex;justify-content:flex-end;gap:8px;">
+               <button class="fy-ws-btn-p" onclick="executarAprovacaoGlobalOrcamentoAF()"
+                 ${!podeFechar ? 'disabled style="opacity:.5;cursor:not-allowed;"' : ''}>
+                 Fechar pacote e criar projetos
+               </button>
+             </div>
+           </div>`
+    }
+    <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:8px;padding:9px 11px;font-size:11.5px;color:#78350f;line-height:1.45;">
+      <b>R-IN-01.</b> Submeter o pacote leva o ${fy.ano_fiscal} para Em orçamentação (R-IN-02). Após fechar, só BC extraordinário é aceito (R-IN-04).
+    </div>
+  </div>
+</div>
+
+<!-- Modal decisão individual -->
+<div id="fy-plan-decisao-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;align-items:center;justify-content:center;">
+  <div class="fy-ws-card" style="width:400px;padding:20px;display:flex;flex-direction:column;gap:14px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span class="fy-ws-h2" id="fy-plan-decisao-titulo">Decidir BC</span>
+      <button onclick="_fyPacoteDecisaoFechar()" style="background:none;border:none;cursor:pointer;font-size:18px;color:#64748b;">×</button>
+    </div>
+    <input type="hidden" id="fy-plan-decisao-bc">
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label style="font-size:12.5px;font-weight:600;">Decisão</label>
+      <select id="fy-plan-decisao-sel" class="fy-ws-select" style="width:100%;">
+        <option value="APROVADO">Aprovado</option>
+        <option value="DEVOLVED">Devolvido</option>
+        <option value="POSTERGADO">Postergado</option>
+      </select>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;" id="fy-plan-motivo-wrap">
+      <label style="font-size:12.5px;font-weight:600;">Motivo (obrigatório para Devolvido)</label>
+      <input id="fy-plan-motivo-input" type="text" class="fy-ws-input" style="width:100%;box-sizing:border-box;" placeholder="Descreva o motivo">
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;">
+      <button class="fy-ws-btn" onclick="_fyPacoteDecisaoFechar()">Cancelar</button>
+      <button class="fy-ws-btn-p" onclick="_fyPacoteDecisaoSalvar()">Salvar decisão</button>
+    </div>
+  </div>
+</div>`;
+}
+
+// ---- Ações do Pacote de BC ----
+function _fyPacoteDevolverBC(codigo) {
+    if (typeof devolverBCDoFY === 'function') {
+        devolverBCDoFY(codigo);
+    } else {
+        alert('Função de devolução não disponível.');
+    }
+}
+
+function _fyPacoteDecidirBC(codigo) {
+    const modal = document.getElementById('fy-plan-decisao-modal');
+    if (!modal) return;
+    document.getElementById('fy-plan-decisao-bc').value = codigo;
+    document.getElementById('fy-plan-decisao-titulo').textContent = 'Decidir · ' + codigo;
+    document.getElementById('fy-plan-decisao-sel').value = 'APROVADO';
+    modal.style.display = 'flex';
+}
+
+function _fyPacoteDecisaoFechar() {
+    const modal = document.getElementById('fy-plan-decisao-modal');
+    if (modal) modal.style.display = 'none';
+}
+
+async function _fyPacoteDecisaoSalvar() {
+    const codigo  = document.getElementById('fy-plan-decisao-bc').value;
+    const decisao = document.getElementById('fy-plan-decisao-sel').value;
+    const motivo  = document.getElementById('fy-plan-motivo-input').value.trim();
+    if (decisao === 'DEVOLVED' && !motivo) { alert('Informe o motivo da devolução.'); return; }
+
+    const hoje = new Date().toISOString().split('T')[0];
+    const payload = { sub_status: decisao };
+    if (decisao === 'DEVOLVED') {
+        payload.motivo_devolucao_fy = motivo;
+        payload.dt_devolucao_fy = hoje;
+    }
+
+    const { error } = await _supabase.from('projetos').update(payload).eq('codigo', codigo);
+    if (error) { alert('Erro: ' + error.message); return; }
+
+    const prj = (typeof projectsData !== 'undefined') ? projectsData.find(p => p.codigo === codigo) : null;
+    if (prj) Object.assign(prj, payload);
+
+    _fyPacoteDecisaoFechar();
+    const fy = (typeof getAFPorCodigo === 'function') ? getAFPorCodigo((window.fyWorkspaceContext||{}).codigo||'') : null;
+    if (fy) await _fyPlanCarregarDados(fy);
 }
