@@ -88,6 +88,18 @@ function getInfoAnoFiscal(dataRef) {
     return { quarterAtual, anoFiscalCorrente, afAtualStr, proximoAFStr };
 }
 
+// Retorna um FY pelo seu id numérico (fiscal_years.fy_id / fiscal_years.id).
+function getFYById(id) {
+    if (!id) return null;
+    const numId = Number(id);
+    return fiscalYearsCache.find(fy => Number(fy.fy_id) === numId) || null;
+}
+
+// Retorna todos os FYs com um determinado status (ex.: 'OPEN', 'PLANNING').
+function getFYByStatus(status) {
+    return fiscalYearsCache.filter(fy => fy.fy_status === status);
+}
+
 // Verifica se o orçamento do AF corrente está aprovado/fechado para novas demandas.
 // R-FY-03: consulta o cache, não projectsData.
 function isOrcamentoGlobalFechado() {

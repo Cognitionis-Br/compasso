@@ -331,6 +331,9 @@ function switchTab(tabId) {
     if (typeof renderAdmView === 'function' && typeof _admIsAdmTab === 'function' && _admIsAdmTab(tabId)) {
         renderAdmView(tabId);
     }
+    // Fase 2A · M12A: Workspace Fiscal (fy-lista.js, fy-workspace.js)
+    if (tabId === 'fy_lista') { if (typeof renderFYListaView === 'function') renderFYListaView(); }
+    if (tabId === 'fy_workspace') { if (typeof renderFYWorkspace === 'function') renderFYWorkspace(); }
 }
 
 function toggleSidebarMenu(menuId, iconId) {

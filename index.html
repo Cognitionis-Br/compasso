@@ -256,6 +256,7 @@
                                 <i id="icon-portfolio-fy" class="fa-solid fa-chevron-down text-[9px] text-gray-400 chevron rotate"></i>
                             </button>
                             <div id="menu-portfolio-fy" class="submenu open pl-4 pr-1 mt-0.5 space-y-0.5">
+                                <button onclick="switchTab('fy_lista')" id="link-fy_lista" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Exercícios Fiscais</button>
                                 <button onclick="switchTab('ano_fiscal')" id="link-ano_fiscal" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Abertura Ano Fiscal</button>
                                 <button onclick="switchTab('fechamento_af')" id="link-fechamento_af" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Fechamento Ano Fiscal</button>
                                 <button onclick="switchTab('validacao_tradeoff')" id="link-validacao_tradeoff" class="sidebar-link w-full text-left px-3 py-1.5 text-xs text-gray-500 hover:text-gray-900 rounded border-l-2 border-transparent transition-colors">Validação de Trade-off</button>
@@ -2665,6 +2666,11 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Fase 2A · VIS-FY-01: lista de exercícios fiscais -->
+                <div id="view-fy_lista" class="tab-content hidden"></div>
+                <!-- Fase 2A · VIS-FY-02/04/05: workspace fiscal (aba por exercício) -->
+                <div id="view-fy_workspace" class="tab-content hidden"></div>
 
                 <div id="view-ano_fiscal" class="tab-content hidden">
                     <div class="mb-6 border-b pb-2"><h2 class="text-xl font-bold text-gray-800">Gestão do Ano Fiscal</h2></div>
@@ -6021,6 +6027,9 @@
     <script src="./js/administracao/adm-organizacao.js"></script>
     <script src="./js/administracao/adm-configuracoes.js"></script>
     <script src="./js/administracao/adm-integracoes.js"></script>
+    <!-- Compasso 2.0 — Fase 2A (Workspace Fiscal M12A: VIS-FY-01/02/04/05), 2026-10-09 -->
+    <script src="./js/ano-fiscal/fy-lista.js"></script>
+    <script src="./js/ano-fiscal/fy-workspace.js"></script>
     <!-- Compasso 2.0 — V2 do Plano de Evolução (Calendário Global + Gate/Exception), 2026-09-25 -->
     <script src="./js/calendario/calendario-global.js"></script>
     <script src="./js/dashboards/dashboard-filtro.js"></script>
