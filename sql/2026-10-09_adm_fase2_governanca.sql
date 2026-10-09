@@ -38,7 +38,7 @@ ALTER TABLE aptidoes DISABLE ROW LEVEL SECURITY;
 -- ============================================================
 CREATE TABLE IF NOT EXISTS usuario_aptidoes (
     id          BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    usuario_id  BIGINT NOT NULL REFERENCES perfis_usuarios(id) ON DELETE CASCADE,
+    usuario_id  UUID NOT NULL REFERENCES perfis_usuarios(id) ON DELETE CASCADE,
     aptidao_id  BIGINT NOT NULL REFERENCES aptidoes(id) ON DELETE CASCADE,
     nivel       INT    NOT NULL DEFAULT 1 CHECK (nivel BETWEEN 1 AND 5),
     validado_por TEXT,
@@ -80,8 +80,8 @@ ALTER TABLE authority_rules DISABLE ROW LEVEL SECURITY;
 -- ============================================================
 CREATE TABLE IF NOT EXISTS delegacoes (
     id                BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    delegante_id      BIGINT NOT NULL REFERENCES perfis_usuarios(id),
-    delegado_id       BIGINT NOT NULL REFERENCES perfis_usuarios(id),
+    delegante_id      UUID NOT NULL REFERENCES perfis_usuarios(id),
+    delegado_id       UUID NOT NULL REFERENCES perfis_usuarios(id),
     authority_rule_id BIGINT REFERENCES authority_rules(id),
     periodo_inicio    DATE NOT NULL,
     periodo_fim       DATE NOT NULL,

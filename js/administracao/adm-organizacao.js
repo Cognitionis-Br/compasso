@@ -395,7 +395,7 @@ async function admAptToggle(id, ativo) {
     _admAptidoesLoad();
 }
 async function admAptAssociar() {
-    const usuId = Number(document.getElementById('apt-assoc-usu')?.value);
+    const usuId = document.getElementById('apt-assoc-usu')?.value;   // UUID
     const aptId = Number(document.getElementById('apt-assoc-apt')?.value);
     const nivel = Number(document.getElementById('apt-assoc-niv')?.value);
     if (!usuId || !aptId) return;
@@ -727,18 +727,18 @@ function _admDelRender(el, usuarios, alcadas) {
 function admDelNovo() { document.getElementById('del-drawer').classList.remove('hidden'); }
 function admDelFecharDrawer() { document.getElementById('del-drawer')?.classList.add('hidden'); }
 async function admDelSalvar() {
-    const delante = Number(document.getElementById('del-form-delegante')?.value);
-    const delado  = Number(document.getElementById('del-form-delegado')?.value);
+    const delante = document.getElementById('del-form-delegante')?.value;
+    const delado  = document.getElementById('del-form-delegado')?.value;
     const ini     = document.getElementById('del-form-ini')?.value;
     const fim     = document.getElementById('del-form-fim')?.value;
     const motivo  = document.getElementById('del-form-motivo')?.value.trim();
     const alcId   = document.getElementById('del-form-alcada')?.value || null;
     if (!delante || !delado || !ini || !fim || !motivo) { alert('Preencha todos os campos obrigatórios.'); return; }
-    if (delante === delado) { alert('Delegante e Delegado devem ser pessoas diferentes.'); return; }
+    if (String(delante) === String(delado)) { alert('Delegante e Delegado devem ser pessoas diferentes.'); return; }
     if (fim <= ini) { alert('A data de fim deve ser posterior ao início.'); return; }
     const { error } = await _supabase.from('delegacoes').insert([{
         delegante_id: delante, delegado_id: delado,
-        authority_rule_id: alcId ? Number(alcId) : null,
+        authority_rule_id: alcId ? Number(alcId) : null,   // authority_rules.id é BIGINT
         periodo_inicio: ini, periodo_fim: fim, motivo,
         status: 'ACTIVE', criado_por: _admOrgQuem(), atualizado_por: _admOrgQuem(),
     }]);
